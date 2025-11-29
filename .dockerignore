@@ -1,0 +1,20 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+LICENSE
+
+# OS files
+.DS_Store
+
+# Logs
+*.log
+
+# Local binaries
+server
+
+# IDE
+.vscode/
+.idea/

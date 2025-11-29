@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="assets/logos/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="assets/logos/favicon.ico" type="image/x-icon">
+    <title>gitGost - Anonymous Git Contributions</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="apple-touch-icon" sizes="57x57" href="assets/logos/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="assets/logos/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="assets/logos/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="assets/logos/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="assets/logos/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="assets/logos/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="assets/logos/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="assets/logos/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/logos/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192"  href="assets/logos/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/logos/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="assets/logos/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/logos/favicon-16x16.png">
+    <link rel="manifest" href="assets/logos/manifest.json">
+    <meta name="msapplication-TileColor" content="#d16014">
+    <meta name="msapplication-TileImage" content="assets/logos/ms-icon-144x144.png">
+    <meta name="theme-color" content="#d16014">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: #313715;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            background: white;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        nav {
+            margin: 20px 0;
+        }
+        nav a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: #d16014;
+            font-weight: 500;
+        }
+        .hero {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 40px;
+        }
+        .terminal {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        .terminal .prompt {
+            color: #4ade80;
+        }
+        .section {
+            padding: 25px 0;
+            margin: 40px 0;
+        }
+        h1, h2 {
+            color: #313715;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin: 20px 0;
+        }
+        .feature {
+            padding: 15px;
+        }
+        .github-link {
+            display: inline-block;
+            background: #d16014;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            margin: 20px 0;
+        }
+        .github-link:hover {
+            background: #b84f0f;
+        }
+        .feature h3 img {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>gitGost</h1>
+        <nav>
+            <a href="#usage">Usage</a>
+            <a href="#features">Features</a>
+            <a href="#why">Why</a>
+            <a href="#about">About</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h1>Anonymous Git Contributions</h1>
+        <p>Contribute to open source projects anonymously. gitGost strips identifying information from your commits and creates pull requests on your behalf.</p>
+        <a href="https://github.com/livrasand/gitGost" class="github-link">View on GitHub</a>
+    </section>
+
+    <section id="usage" class="section">
+        <h2>Usage</h2>
+        <p>Add gitGost as a remote and push anonymously:</p>
+        <div class="terminal">
+            <div>Last login: <span id="currentDate"></span></div>
+            <div><span class="prompt">➜</span> ~ git remote add gitgost https://gitgost.leapcell.app/v1/gh/owner/repo</div>
+            <div><span class="prompt">➜</span> ~ git checkout -b my-feature</div>
+            <div><span class="prompt">➜</span> ~ echo "my changes" >> file.txt</div>
+            <div><span class="prompt">➜</span> ~ git commit -am "Add feature"</div>
+            <div><span class="prompt">➜</span> ~ git push gitgost my-feature:main</div>
+            <div># gitGost will anonymize your commits and create a PR</div>
+            <div><span class="prompt">➜</span> ~</div>
+        </div>
+    </section>
+
+    <section id="features" class="section">
+        <h2>Features</h2>
+        <div class="features">
+            <div class="feature">
+                <h3><img src="assets/logos/noun-anonymous-6758229.svg" alt="anonymous icon"> Privacy First</h3>
+                <p>Strips author names, emails, and timestamps from commits</p>
+            </div>
+            <div class="feature">
+                <h3><img src="assets/logos/noun-anonymous-6758229.svg" alt="anonymous icon"> Automated PRs</h3>
+                <p>Automatically creates pull requests on GitHub</p>
+            </div>
+            <div class="feature">
+                <h3><img src="assets/logos/noun-anonymous-6758229.svg" alt="anonymous icon"> Secure</h3>
+                <p>Rate limiting, size limits, and input validation</p>
+            </div>
+            <div class="feature">
+                <h3><img src="assets/logos/noun-anonymous-6758229.svg" alt="anonymous icon"> Simple</h3>
+                <p>Just add a remote and push - no complex setup</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="why" class="section">
+        <h2>Why gitGost?</h2>
+        <p>Just because you support open source doesn't mean you want your name forever associated with every project you touch.</p>
+
+        <h3>Privacy</h3>
+        <p>GitHub's social coding means every commit is visible forever. Sometimes you want to contribute without the personal association.</p>
+
+        <h3>Controversial Projects</h3>
+        <p>Government tracking, corporate restrictions, or simply wanting to prove a point - contribute privately when needed.</p>
+
+        <h3>Simple & Trustworthy</h3>
+        <p>Adding a git remote is easier than managing multiple GitHub accounts. Built with Go, minimal dependencies, and open source.</p>
+    </section>
+
+    <section id="about" class="section">
+        <h2>About</h2>
+        <p>gitGost is built for developers who value privacy. It uses go-git for Git operations and creates anonymous contributions to GitHub repositories.</p>
+        <p>Built with Go 1.22, AGPL-3.0 licensed, and designed for minimalism and security.</p>
+    </section>
+
+    <script>
+        // Set current date in terminal
+        document.getElementById('currentDate').textContent = new Date().toDateString();
+    </script>
+</body>
+</html>

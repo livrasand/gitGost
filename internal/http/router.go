@@ -83,17 +83,15 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 
-	// Middleware for static routes
-	r.Use(sizeLimitMiddleware())
-	r.Use(authMiddleware(cfg.APIKey))
-
-	// Health and metrics endpoints (no auth required, defined before static routes)
+	// Health and metrics endpoints (no auth required)
 	r.GET("/health", HealthHandler)
 	r.GET("/metrics", MetricsHandler)
 
-	// Routes
-	r.Static("/", "./web")
+	// Middleware for other routes
+	r.Use(sizeLimitMiddleware())
+	r.Use(authMiddleware(cfg.APIKey))
 
+	// Routes
 	v1 := r.Group("/v1")
 	{
 		gh := v1.Group("/gh")
@@ -102,6 +100,14 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 			gh.POST("/:owner/:repo/git-receive-pack", ReceivePackHandler)
 		}
 	}
+
+	// Static assets
+	r.Static("/assets", "./web/assets")
+
+	// SPA fallback: serve index.html for unmatched routes
+	r.NoRoute(func(c *gin.Context) {
+		c.File("./web/index.html")
+	})
 
 	return r
 }

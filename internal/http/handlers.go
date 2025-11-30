@@ -14,10 +14,10 @@ import (
 
 func ReceivePackDiscoveryHandler(c *gin.Context) {
 	// Git receive-pack discovery: respond with capabilities
-	c.Header("Content-Type", "application/x-git-receive-pack-advertisement")
-	c.Header("Cache-Control", "no-cache")
-	// For a new repo, no refs, just capabilities
-	c.String(http.StatusOK, "001e# service=git-receive-pack\n0000")
+	c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-advertisement")
+	c.Writer.WriteHeader(http.StatusOK)
+	data := []byte("001a# service=git-receive-pack\n0000006a0000000000000000000000000000000000000000 refs/heads/main\x00report-status delete-refs ofs-delta side-band-64k\n0000")
+	c.Writer.Write(data)
 }
 
 func ReceivePackHandler(c *gin.Context) {

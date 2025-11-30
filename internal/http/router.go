@@ -96,7 +96,13 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	{
 		gh := v1.Group("/gh")
 		{
-			gh.GET("/:owner/:repo/git-receive-pack", ReceivePackDiscoveryHandler)
+			gh.GET("/:owner/:repo/info/refs", func(c *gin.Context) {
+				if c.Query("service") == "git-receive-pack" {
+					ReceivePackDiscoveryHandler(c)
+				} else {
+					c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid service"})
+				}
+			})
 			gh.POST("/:owner/:repo/git-receive-pack", ReceivePackHandler)
 		}
 	}

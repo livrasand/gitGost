@@ -8,6 +8,11 @@ import (
 	"os"
 )
 
+type Ref struct {
+	Ref string `json:"ref"`
+	Sha string `json:"sha"`
+}
+
 func CreatePR(owner, repo, branch string) (string, error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
@@ -57,4 +62,37 @@ func CreatePR(owner, repo, branch string) (string, error) {
 	}
 
 	return prURL, nil
+}
+
+func GetRefs(owner, repo string) ([]Ref, error) {
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		return nil, fmt.Errorf("GITHUB_TOKEN not set")
+	}
+
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/git/refs", owner, repo)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "token "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("Failed to get refs: %s", resp.Status)
+	}
+
+	var refs []Ref
+	err = json.NewDecoder(resp.Body).Decode(&refs)
+	if err != nil {
+		return nil, err
+	}
+
+	return refs, nil
 }

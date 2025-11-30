@@ -1,23 +1,61 @@
 package http
 
 import (
+	"bytes"
+	"fmt"
 	"gitGost/internal/git"
 	"gitGost/internal/github"
 	"gitGost/internal/utils"
 	"io"
 	"net/http"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 func ReceivePackDiscoveryHandler(c *gin.Context) {
-	// Git receive-pack discovery: respond with capabilities
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+
+	// Get refs from GitHub
+	refs, err := github.GetRefs(owner, repo)
+	if err != nil {
+		utils.Log("Error getting refs: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get refs"})
+		return
+	}
+
+	// Build advertisement
+	var advertisement bytes.Buffer
+
+	// Service line
+	advertisement.WriteString("001a# service=git-receive-pack\n")
+
+	// Refs
+	capabilities := "report-status delete-refs ofs-delta side-band-64k"
+	first := true
+	for _, ref := range refs {
+		if strings.HasPrefix(ref.Ref, "refs/heads/") || strings.HasPrefix(ref.Ref, "refs/tags/") {
+			line := ref.Sha + " " + ref.Ref
+			if first {
+				line += "\x00" + capabilities
+				first = false
+			}
+			line += "\n"
+			length := len(line) + 4 // +4 for length prefix
+			advertisement.WriteString(fmt.Sprintf("%04x", length))
+			advertisement.WriteString(line)
+		}
+	}
+
+	// Flush
+	advertisement.WriteString("0000")
+
 	c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-advertisement")
 	c.Writer.WriteHeader(http.StatusOK)
-	data := []byte("001a# service=git-receive-pack\n0000006a0000000000000000000000000000000000000000 refs/heads/main\x00report-status delete-refs ofs-delta side-band-64k\n0000")
-	c.Writer.Write(data)
+	c.Writer.Write(advertisement.Bytes())
 }
 
 func ReceivePackHandler(c *gin.Context) {

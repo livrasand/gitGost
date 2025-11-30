@@ -8,9 +8,14 @@ import (
 	"gitGost/internal/config"
 	handler "gitGost/internal/http"
 	"gitGost/internal/utils"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Load .env file (ignore error if file doesn't exist)
+	_ = godotenv.Load()
+
 	// Load configuration
 	cfg := config.Load()
 

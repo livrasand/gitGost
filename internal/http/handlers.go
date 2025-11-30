@@ -30,15 +30,18 @@ func ReceivePackDiscoveryHandler(c *gin.Context) {
 	// Build advertisement
 	var advertisement bytes.Buffer
 
-	// Service line
-	advertisement.WriteString("001a# service=git-receive-pack\n")
+	// Service line with proper pkt-line format
+	serviceLine := "# service=git-receive-pack\n"
+	advertisement.WriteString(fmt.Sprintf("%04x", len(serviceLine)+4))
+	advertisement.WriteString(serviceLine)
+	advertisement.WriteString("0000") // flush packet
 
 	// Refs
 	capabilities := "report-status delete-refs ofs-delta side-band-64k"
 	first := true
 	for _, ref := range refs {
 		if strings.HasPrefix(ref.Ref, "refs/heads/") || strings.HasPrefix(ref.Ref, "refs/tags/") {
-			line := ref.Sha + " " + ref.Ref
+			line := ref.GetSha() + " " + ref.Ref
 			if first {
 				line += "\x00" + capabilities
 				first = false
@@ -50,7 +53,7 @@ func ReceivePackDiscoveryHandler(c *gin.Context) {
 		}
 	}
 
-	// Flush
+	// Final flush packet
 	advertisement.WriteString("0000")
 
 	c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-advertisement")

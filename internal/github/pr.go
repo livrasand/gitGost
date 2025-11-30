@@ -9,8 +9,15 @@ import (
 )
 
 type Ref struct {
-	Ref string `json:"ref"`
-	Sha string `json:"sha"`
+	Ref    string `json:"ref"`
+	Object struct {
+		Sha string `json:"sha"`
+	} `json:"object"`
+}
+
+// GetSha returns the SHA of the ref
+func (r *Ref) GetSha() string {
+	return r.Object.Sha
 }
 
 func CreatePR(owner, repo, branch string) (string, error) {
@@ -83,6 +90,11 @@ func GetRefs(owner, repo string) ([]Ref, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == 409 {
+		// Repository is empty, return empty refs
+		return []Ref{}, nil
+	}
 
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("Failed to get refs: %s", resp.Status)

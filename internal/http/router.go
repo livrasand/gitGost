@@ -87,12 +87,13 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.GET("/health", HealthHandler)
 	r.GET("/metrics", MetricsHandler)
 
-	// Middleware for other routes
-	r.Use(sizeLimitMiddleware())
-	r.Use(authMiddleware(cfg.APIKey))
+	// Static assets (no auth required)
+	r.Static("/assets", "./web/assets")
 
-	// Routes
+	// API routes with authentication
 	v1 := r.Group("/v1")
+	v1.Use(sizeLimitMiddleware())
+	v1.Use(authMiddleware(cfg.APIKey))
 	{
 		gh := v1.Group("/gh")
 		{
@@ -107,10 +108,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		}
 	}
 
-	// Static assets
-	r.Static("/assets", "./web/assets")
-
-	// SPA fallback: serve index.html for unmatched routes
+	// SPA fallback: serve index.html for unmatched routes (no auth required)
 	r.NoRoute(func(c *gin.Context) {
 		c.File("./web/index.html")
 	})

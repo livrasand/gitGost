@@ -23,4 +23,7 @@ go.work
 .DS_Store
 
 # Logs
+
+# Environment variables
+.env
 *.log

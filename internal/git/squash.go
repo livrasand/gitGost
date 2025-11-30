@@ -14,14 +14,47 @@ func SquashCommits(tempDir string) (string, error) {
 		return "", err
 	}
 
-	ref, err := r.Head()
+	// Get all references
+	refs, err := r.References()
 	if err != nil {
 		return "", err
 	}
 
-	commit, err := r.CommitObject(ref.Hash())
+	var latestCommit *object.Commit
+	var treeHash plumbing.Hash
+
+	// Find the latest commit from any branch
+	err = refs.ForEach(func(ref *plumbing.Reference) error {
+		if ref.Name().IsBranch() {
+			commit, err := r.CommitObject(ref.Hash())
+			if err != nil {
+				return nil // Skip invalid refs
+			}
+			if latestCommit == nil || commit.Committer.When.After(latestCommit.Committer.When) {
+				latestCommit = commit
+				treeHash = commit.TreeHash
+			}
+		}
+		return nil
+	})
+
 	if err != nil {
 		return "", err
+	}
+
+	// If no commits found, create initial commit with empty tree
+	if latestCommit == nil {
+		// Create empty tree
+		tree := &object.Tree{}
+		obj := r.Storer.NewEncodedObject()
+		err = tree.Encode(obj)
+		if err != nil {
+			return "", err
+		}
+		treeHash, err = r.Storer.SetEncodedObject(obj)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	// Create new anonymous commit
@@ -37,7 +70,7 @@ func SquashCommits(tempDir string) (string, error) {
 			When:  time.Now(),
 		},
 		Message:  "Anonymous contribution via gitGost",
-		TreeHash: commit.TreeHash,
+		TreeHash: treeHash,
 	}
 
 	obj := r.Storer.NewEncodedObject()

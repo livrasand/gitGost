@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os/exec"
 	"strconv"
+
+	"github.com/go-git/go-git/v5"
 )
 
 func ReceivePack(tempDir string, body []byte) error {
@@ -99,11 +101,4 @@ func parseReceivePackBody(body []byte) ([]byte, error) {
 	}
 
 	return nil, fmt.Errorf("no packfile found in receive-pack body")
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }

@@ -65,7 +65,17 @@ func ReceivePackHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
 
+	// Handle 100 Continue for large requests
+	if c.GetHeader("Expect") == "100-continue" {
+		c.Writer.WriteHeader(http.StatusContinue)
+	}
+
 	// Read body
+	utils.Log("Content-Type: %s", c.GetHeader("Content-Type"))
+	utils.Log("Content-Length: %s", c.GetHeader("Content-Length"))
+	utils.Log("Transfer-Encoding: %s", c.GetHeader("Transfer-Encoding"))
+	utils.Log("Expect: %s", c.GetHeader("Expect"))
+
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		utils.Log("Error reading body: %v", err)
@@ -74,6 +84,9 @@ func ReceivePackHandler(c *gin.Context) {
 	}
 
 	utils.Log("Received push for %s/%s, size: %d bytes", owner, repo, len(body))
+	if len(body) > 0 {
+		utils.Log("Body starts with: %x", body[:min(20, len(body))])
+	}
 
 	// Create temp repo
 	tempDir, err := utils.CreateTempDir()
@@ -122,12 +135,21 @@ func ReceivePackHandler(c *gin.Context) {
 
 	utils.Log("Created PR: %s", prURL)
 
-	// Respond
-	c.JSON(http.StatusOK, gin.H{
-		"pr_url": prURL,
-		"branch": branch,
-		"status": "ok",
-	})
+	// Respond with Git protocol success
+	c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
+	c.Writer.WriteHeader(http.StatusOK)
+
+	// Write pkt-lined response
+	// unpack ok\n
+	unpackLine := "unpack ok\n"
+	c.Writer.WriteString(fmt.Sprintf("%04x%s", len(unpackLine), unpackLine))
+
+	// ok refs/heads/main\n (assuming push to main)
+	okLine := "ok refs/heads/main\n"
+	c.Writer.WriteString(fmt.Sprintf("%04x%s", len(okLine), okLine))
+
+	// flush
+	c.Writer.WriteString("0000")
 }
 
 // HealthHandler provides basic health check

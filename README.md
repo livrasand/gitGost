@@ -1,165 +1,99 @@
-# gitGost [BETA Project]
+# gitGost 👻
 
-[![Go Version](https://img.shields.io/badge/go-%3E%3D1.22-blue.svg)](https://golang.org/)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Go Report Card](https://goreportcard.com/badge/github.com/livrasand/gitGost)](https://goreportcard.com/report/github.com/livrasand/gitGost)
-[![CI](https://github.com/livrasand/gitGost/workflows/CI/badge.svg)](https://github.com/livrasand/gitGost/actions)
+**Contribute to any GitHub repo without leaving a trace.**
 
-A Go server that allows anonymous Git contributions to GitHub repositories by receiving pushes, anonymizing commits, and creating pull requests.
+Zero accounts • Zero tokens • Zero metadata • 100% anonymous
 
-## Description
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Powered by Go](https://img.shields.io/badge/Powered%20by-Go-00ADD8.svg?logo=go)](https://go.dev)
+[![Privacy First](https://img.shields.io/badge/Privacy-First-success)](https://github.com/livrasand/gitGost)
 
-gitGost acts as a Git remote that accepts pushes from users, processes the commits to remove author identity, pushes the anonymized changes to a GitHub repository, and automatically creates a pull request.
+https://gitgost.leapcell.app
+
+## One-liner demo
+
+```bash
+# Add as remote → fix → push → done. Fully anonymous.
+git remote add gost https://gitgost.leapcell.app/v1/gh/torvalds/linux
+git checkout -b fix-typo
+git commit -am "fix: obvious typo in README"
+git push gost fix-typo:main
+# → PR opened as @ghost-contributor with zero trace to you
+```
+
+That’s it. No login. No token. No name. No email. No history.
 
 ## Features
 
-- Git Smart HTTP receive-pack support
-- Commit anonymization (squash to single anonymous commit)
-- Automatic push to GitHub with unique branch names
-- Pull request creation via GitHub API
-- Security features: size limits, input validation
-- Automatic cleanup of temporary directories
+| Feature                     | Description                                                                 |
+|-----------------------------|-----------------------------------------------------------------------------|
+| **Total Anonymity**         | Strips author name, email, timestamps, and all identifying metadata. PRs created by neutral `@ghost-contributor` bot. |
+| **One-Command Setup**       | Just `git remote add gost <url>` – no accounts, tokens, or browser extensions. |
+| **Battle-tested Security**  | Rate limiting, repository size caps, commit validation. Written in pure Go with minimal dependencies – fully auditable. |
+| **Works Everywhere**        | Terminal, CI/CD, Docker, scripts – any public GitHub repo, anywhere Git runs. |
+| **Open Source & AGPL**      | 100% transparent. Fork it, audit it, host it yourself.                     |
 
-## Configuration
+## Why developers love gitGost
 
-gitGost can be configured using environment variables:
+> “Your commit history shouldn’t be an HR liability forever.”
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `8080` | Port to run the server on |
-| `READ_TIMEOUT` | `30s` | HTTP read timeout |
-| `WRITE_TIMEOUT` | `30s` | HTTP write timeout |
-| `GITHUB_TOKEN` | *required* | GitHub personal access token with repo permissions |
-| `GITGOST_API_KEY` | *optional* | API key for authentication |
-| `LOG_FORMAT` | `text` | Log format: `text` or `json` |
+- No permanent public record of your activity  
+- Safely contribute to controversial projects (employer or country doesn’t like it? no problem)  
+- Stop email harvesting & doxxing from public commits  
+- Fix that one annoying typo without attaching your name for eternity  
+- Be a ghost when you want to be
 
-## Usage
+Built for developers who actually care about privacy.
 
-### Local Development
-
-1. Set the required environment variables.
-
-2. Build the binary:
-    ```bash
-    go build -o gitgost cmd/server/main.go
-    ```
-
-3. Run the server:
-    ```bash
-    ./gitgost
-    ```
-
-Or run directly without building:
-```bash
-go run cmd/server/main.go
-```
-
-### Docker
-
-Build and run with Docker:
+## Quick Start
 
 ```bash
-# Build the image
-docker build -t gitgost .
+# 1. Add the remote (replace with any public repo)
+git remote add gost https://gitgost.leapcell.app/v1/gh/username/repo
 
-# Run the container
-docker run -p 8080:8080 \
-  -e GITHUB_TOKEN=your_github_token \
-  -e GITGOST_API_KEY=your_api_key \
-  gitgost
+# 2. Create your branch and commit as usual
+git checkout -b my-cool-fix
+git commit -am "fix: something obvious"
+
+# 3. Push – PR opens anonymously
+git push gost my-cool-fix:main
 ```
 
-Or use docker-compose:
+Done. The PR appears instantly from `@ghost-contributor`.
 
-```yaml
-version: '3.8'
-services:
-  gitgost:
-    build: .
-    ports:
-      - "8080:8080"
-    environment:
-      - GITHUB_TOKEN=your_github_token
-      - GITGOST_API_KEY=your_api_key
-    restart: unless-stopped
+### Want to contribute to this project anonymously?
+
+```bash
+git remote add gost https://gitgost.leapcell.app/v1/gh/livrasand/gitGost
+git push gost my-feature:main
 ```
 
-3. From a Git repository, add gitGost as a remote:
-   ```bash
-   git remote add gitgost https://gitgost.leapcell.app/v1/gh/owner/repo
-   ```
+(Yes, even gitGost eats its own dogfood 👻)
 
-4. Push to the remote:
-   ```bash
-   git push gitgost your-branch:main
-   ```
+## Security & Limits (we’re not reckless)
 
-The server will:
-- Receive the push
-- Create an anonymous commit
-- Push to a new branch on GitHub (e.g., `gitgost/pr-1234567890-123`)
-- Create a pull request titled "Anonymous contribution (via gitGost)"
+- Max 5 PRs/IP/hour
+- Repository size ≤ 500 MB
+- Commit size ≤ 10 MB
+- Full validation of refs and objects
+- No persistence of your data
 
-## API
+Everything is designed to prevent abuse while keeping you anonymous.
 
-### Authentication
+## License
 
-If `GITGOST_API_KEY` is set, all API requests must include the header:
-```
-X-Gitgost-Key: your-api-key
-```
+**AGPL-3.0** – Free forever, open source, and copyleft.  
+If you run a public instance, you must provide source code.
 
-### POST /v1/gh/:owner/:repo/git-receive-pack
+→ [LICENSE](LICENSE)
 
-Receives Git push data and processes it anonymously.
+## Made with ❤️ for privacy
 
-**Parameters:**
-- `owner`: GitHub repository owner
-- `repo`: GitHub repository name
+Star this repo if you believe developers deserve the right to contribute anonymously.
 
-**Request Body:** Git packfile data
+[![GitHub stars](https://img.shields.io/github/stars/livrasand/gitGost?style=social)](https://github.com/livrasand/gitGost/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/livrasand/gitGost?style=social)](https://github.com/livrasand/gitGost/network/members)
 
-**Response:**
-```json
-{
-  "pr_url": "https://github.com/owner/repo/pull/123",
-  "branch": "gitgost/pr-1234567890-123",
-  "status": "ok"
-}
-```
+**github.com/livrasand/gitGost**
 
-### GET /health
-
-Health check endpoint.
-
-**Response:**
-```json
-{
-  "status": "healthy",
-  "time": "2025-11-29T20:39:17Z"
-}
-```
-
-### GET /metrics
-
-Basic system metrics.
-
-**Response:**
-```json
-{
-  "memory": {
-    "alloc": 1048576,
-    "total_alloc": 2097152,
-    "sys": 4194304,
-    "num_gc": 5
-  },
-  "goroutines": 8,
-  "uptime": "1h30m45s"
-}
-```
-
-## Security
-
-- Size limit: 100MB per push
-- Input validation for owner/repo names
-- No path traversal allowed
+Be a ghost. Fix the internet.

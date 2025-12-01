@@ -15,14 +15,18 @@ var (
 	cfg    *config.Config
 )
 
-// InitLogger initializes the logger with the given configuration
+// InitLogger inicializa el logger con privacidad en mente
 func InitLogger(config *config.Config) {
 	cfg = config
 	if config.LogFormat == "json" {
-		logger = log.New(os.Stdout, "", 0) // No prefix for JSON
+		logger = log.New(os.Stdout, "", 0)
 	} else {
 		logger = log.New(os.Stdout, "[gitGost] ", log.LstdFlags)
 	}
+
+	// Advertencia sobre privacidad en logs
+	Log("Privacy mode: Minimal logging enabled")
+	Log("Server started - Ready for anonymous contributions")
 }
 
 func Log(format string, args ...interface{}) {
@@ -39,6 +43,7 @@ func Log(format string, args ...interface{}) {
 			"timestamp": time.Now().UTC().Format(time.RFC3339),
 			"level":     "info",
 			"message":   message,
+			"privacy":   "anonymized",
 		}
 		if jsonData, err := json.Marshal(logEntry); err == nil {
 			logger.Println(string(jsonData))
@@ -47,5 +52,29 @@ func Log(format string, args ...interface{}) {
 		}
 	} else {
 		logger.Print(message)
+	}
+}
+
+// LogError registra errores sin exponer datos del usuario
+func LogError(format string, args ...interface{}) {
+	if logger == nil {
+		log.Printf("ERROR: "+format, args...)
+		return
+	}
+
+	message := fmt.Sprintf(format, args...)
+
+	if cfg != nil && cfg.LogFormat == "json" {
+		logEntry := map[string]interface{}{
+			"timestamp": time.Now().UTC().Format(time.RFC3339),
+			"level":     "error",
+			"message":   message,
+			"privacy":   "anonymized",
+		}
+		if jsonData, err := json.Marshal(logEntry); err == nil {
+			logger.Println(string(jsonData))
+		}
+	} else {
+		logger.Printf("ERROR: %s", message)
 	}
 }

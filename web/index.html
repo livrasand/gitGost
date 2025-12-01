@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="assets/logos/favicon.ico" type="image/x-icon">
     <link rel="icon" href="assets/logos/favicon.ico" type="image/x-icon">
-    <title>gitGost - Anonymous Git Contributions</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>gitGost — Anonymous Git Contributions</title>
     <link rel="apple-touch-icon" sizes="57x57" href="assets/logos/apple-icon-57x57.png">
     <link rel="apple-touch-icon" sizes="60x60" href="assets/logos/apple-icon-60x60.png">
     <link rel="apple-touch-icon" sizes="72x72" href="assets/logos/apple-icon-72x72.png">
@@ -24,157 +23,256 @@
     <meta name="msapplication-TileColor" content="#d16014">
     <meta name="msapplication-TileImage" content="assets/logos/ms-icon-144x144.png">
     <meta name="theme-color" content="#d16014">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg: #0d1117;
+            --fg: #c9d1d9;
+            --accent: #ffa657;
+            --accent-dark: #f0883e;
+            --border: #30363d;
+            --card: #161b22;
+            --code-bg: #010409;
+        }
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg: #ffffff;
+                --fg: #24292f;
+                --accent: #d16014;
+                --accent-dark: #b84f0f;
+                --border: #d0d7de;
+                --card: #f6f8fa;
+                --code-bg: #f6f8fa;
+            }
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
         body {
-            font-family: 'Inter', sans-serif;
+            margin: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--fg);
             line-height: 1.6;
-            color: #313715;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 40px;
-            background: white;
+            min-height: 100dvh;
+            display: grid;
+            place-items: center;
+            padding: 2rem 1rem;
         }
-        header {
-            text-align: center;
-            margin-bottom: 40px;
+        main { width: 100%; max-width: 900px; }
+
+        header { text-align: center; margin-bottom: 3rem; }
+        h1 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: clamp(2.8rem, 8vw, 4.5rem);
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--accent), #ff6b6b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0 0 .4rem;
+            letter-spacing: -0.02em;
         }
-        nav {
-            margin: 20px 0;
+        .tagline {
+            font-size: clamp(1.1rem, 4vw, 1.35rem);
+            opacity: 0.85;
+            max-width: 680px;
+            margin: 0 auto 1.5rem;
         }
-        nav a {
-            margin: 0 15px;
-            text-decoration: none;
-            color: #d16014;
+        .badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .6rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        .badge {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: .35rem .9rem;
+            border-radius: 6px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: .8rem;
             font-weight: 500;
         }
-        .hero {
-            text-align: center;
-            padding: 30px 0;
-            margin-bottom: 40px;
+
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.8rem;
+            margin: 2.5rem 0 4rem;
+            font-weight: 500;
         }
-        .terminal {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 20px;
-            font-family: 'Courier New', monospace;
-            margin: 20px 0;
-            overflow-x: auto;
-        }
-        .terminal .prompt {
-            color: #4ade80;
-        }
-        .section {
-            padding: 25px 0;
-            margin: 40px 0;
-        }
-        h1, h2 {
-            color: #313715;
-        }
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-            margin: 20px 0;
-        }
-        .feature {
-            padding: 15px;
-        }
-        .github-link {
-            display: inline-block;
-            background: #d16014;
-            color: white;
-            padding: 10px 20px;
+        nav a {
+            color: var(--fg);
             text-decoration: none;
-            margin: 20px 0;
+            opacity: 0.7;
+            transition: all .2s;
         }
-        .github-link:hover {
-            background: #b84f0f;
+        nav a:hover { opacity: 1; color: var(--accent); }
+
+        .terminal {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            overflow-x: auto;
+            margin: 2rem 0;
+            box-shadow: 0 8px 32px rgba(0,0,0,.35);
+            white-space: pre;
         }
-        .feature h3 img {
-            width: 24px;
-            height: 24px;
-            margin-right: 8px;
-            vertical-align: middle;
+        .terminal .comment { color: #5c98ff; }
+        .terminal .prompt { color: #79c0ff; }
+        .terminal .success { color: #7ee787; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+            gap: 1.5rem;
+            margin: 3rem 0;
+        }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.8rem;
+            transition: all .25s ease;
+        }
+        .card:hover {
+            transform: translateY(-6px);
+            border-color: var(--accent);
+            box-shadow: 0 12px 32px rgba(0,0,0,.3);
+        }
+        .card h3 {
+            font-family: 'IBM Plex Mono', monospace;
+            color: var(--accent);
+            margin-bottom: .8rem;
+            font-size: 1.15rem;
+        }
+
+        .btn {
+            display: inline-block;
+            background: var(--accent);
+            color: #fff;
+            padding: .9rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1rem;
+            transition: all .25s;
+            box-shadow: 0 4px 16px rgba(255,166,87,.4);
+        }
+        .btn:hover {
+            background: var(--accent-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(255,166,87,.5);
+        }
+        .btn-center { text-align: center; margin: 2rem 0; }
+
+        h2 {
+            text-align: center;
+            font-size: clamp(1.8rem, 5vw, 2.2rem);
+            margin: 4rem 0 2rem;
+            font-weight: 600;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 6rem;
+            padding-top: 3rem;
+            opacity: 0.6;
+            font-size: .9rem;
+            border-top: 1px solid var(--border);
+        }
+        .footer a { color: var(--accent); text-decoration: none; }
+
+        @media (max-width: 480px) {
+            body { padding: 1.5rem .8rem; }
+            nav { gap: 1.2rem; font-size: .95rem; }
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>gitGost</h1>
+    <main>
+        <header>
+            <h1>gitGost</h1>
+            <div class="tagline">Contribute to any GitHub repo without leaving a trace.</div>
+            <div class="badges">
+                <span class="badge">Privacy-first</span>
+                <span class="badge">Zero accounts</span>
+                <span class="badge">AGPL-3.0</span>
+                <span class="badge">Go-powered</span>
+            </div>
+        </header>
+
         <nav>
             <a href="#usage">Usage</a>
             <a href="#features">Features</a>
             <a href="#why">Why</a>
-            <a href="#about">About</a>
+            <a href="https://github.com/livrasand/gitGost" target="_blank">GitHub ↗</a>
         </nav>
-    </header>
 
-    <section class="hero">
-        <h1>Anonymous Git Contributions</h1>
-        <p>Contribute to open source projects anonymously. gitGost strips identifying information from your commits and creates pull requests on your behalf.</p>
-        <a href="https://github.com/livrasand/gitGost" class="github-link">View on GitHub</a>
-    </section>
+        <section id="usage">
+            <div class="terminal">
+<span class="comment"># Add as remote → push → done. Fully anonymous.</span>
+<span class="prompt">$</span> git remote add gost https://gitgost.leapcell.app/v1/gh/torvalds/linux
+<span class="prompt">$</span> git checkout -b fix-typo
+<span class="prompt">$</span> git commit -am "fix: obvious typo in README"
+<span class="prompt">$</span> git push gost fix-typo:main
+<span class="success">→</span> Anonymized commit + PR opened as @ghost-contributor
+            </div>
+            <div class="btn-center">
+                <a href="https://github.com/livrasand/gitGost" class="btn" target="_blank">View on GitHub</a>
+            </div>
+        </section>
 
-    <section id="usage" class="section">
-        <h2>Usage</h2>
-        <p>Add gitGost as a remote and push anonymously:</p>
-        <div class="terminal">
-            <div>Last login: <span id="currentDate"></span></div>
-            <div><span class="prompt">➜</span> ~ git remote add gitgost https://gitgost.leapcell.app/v1/gh/owner/repo</div>
-            <div><span class="prompt">➜</span> ~ git checkout -b my-feature</div>
-            <div><span class="prompt">➜</span> ~ echo "my changes" >> file.txt</div>
-            <div><span class="prompt">➜</span> ~ git commit -am "Add feature"</div>
-            <div><span class="prompt">➜</span> ~ git push gitgost my-feature:main</div>
-            <div># gitGost will anonymize your commits and create a PR</div>
-            <div><span class="prompt">➜</span> ~</div>
-        </div>
-    </section>
-
-    <section id="features" class="section">
         <h2>Features</h2>
-        <div class="features">
-            <div class="feature">
-                <h3><img src="assets/logos/noun-anonymous-6758229.svg" alt="anonymous icon"> Privacy First</h3>
-                <p>Strips author names, emails, and timestamps from commits</p>
+        <section id="features" class="grid">
+            <div class="card">
+                <h3>Total Anonymity</h3>
+                <p>Strips name, email, timestamps, and all metadata. PR created from a neutral bot.</p>
             </div>
-            <div class="feature">
-                <h3><img src="assets/logos/noun-anonymous-6758229.svg" alt="anonymous icon"> Automated PRs</h3>
-                <p>Automatically creates pull requests on GitHub</p>
+            <div class="card">
+                <h3>One Command Setup</h3>
+                <p>No tokens, no accounts, no extensions. Just <code>git remote add</code>.</p>
             </div>
-            <div class="feature">
-                <h3><img src="assets/logos/noun-anonymous-6758229.svg" alt="anonymous icon"> Secure</h3>
-                <p>Rate limiting, size limits, and input validation</p>
+            <div class="card">
+                <h3>Battle-tested Security</h3>
+                <p>Rate limiting, size caps, validation. Pure Go, minimal deps, fully auditable.</p>
             </div>
-            <div class="feature">
-                <h3><img src="assets/logos/noun-anonymous-6758229.svg" alt="anonymous icon"> Simple</h3>
-                <p>Just add a remote and push - no complex setup</p>
+            <div class="card">
+                <h3>Works Anywhere</h3>
+                <p>Any public GitHub repo. Terminal, CI, containers, scripts — zero friction.</p>
             </div>
+        </section>
+
+        <h2>Why developers love gitGost</h2>
+        <section id="why" class="grid">
+            <div class="card">
+                <h3>No permanent public record</h3>
+                <p>Your commit history shouldn’t be an HR liability forever.</p>
+            </div>
+            <div class="card">
+                <h3>Contribute safely to anything</h3>
+                <p>Fix bugs in repos your employer or country hates. No trace.</p>
+            </div>
+            <div class="card">
+                <h3>Stop email harvesting</h3>
+                <p>Public commits = spam & doxxing. gitGost ends that.</p>
+            </div>
+            <div class="card">
+                <h3>Sometimes you just want to be a ghost</h3>
+                <p>One-line typo fixes don’t need your name attached for eternity.</p>
+            </div>
+        </section>
+
+        <div class="footer">
+            Built for developers who actually care about privacy • <a href="https://github.com/livrasand/gitGost" target="_blank">github.com/livrasand/gitGost</a>
         </div>
-    </section>
-
-    <section id="why" class="section">
-        <h2>Why gitGost?</h2>
-        <p>Just because you support open source doesn't mean you want your name forever associated with every project you touch.</p>
-
-        <h3>Privacy</h3>
-        <p>GitHub's social coding means every commit is visible forever. Sometimes you want to contribute without the personal association.</p>
-
-        <h3>Controversial Projects</h3>
-        <p>Government tracking, corporate restrictions, or simply wanting to prove a point - contribute privately when needed.</p>
-
-        <h3>Simple & Trustworthy</h3>
-        <p>Adding a git remote is easier than managing multiple GitHub accounts. Built with Go, minimal dependencies, and open source.</p>
-    </section>
-
-    <section id="about" class="section">
-        <h2>About</h2>
-        <p>gitGost is built for developers who value privacy. It uses go-git for Git operations and creates anonymous contributions to GitHub repositories.</p>
-        <p>Built with Go 1.22, AGPL-3.0 licensed, and designed for minimalism and security.</p>
-    </section>
-
-    <script>
-        // Set current date in terminal
-        document.getElementById('currentDate').textContent = new Date().toDateString();
-    </script>
+    </main>
 </body>
 </html>

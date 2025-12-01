@@ -1,6 +1,7 @@
 package http
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -76,7 +77,7 @@ type mockReadCloser struct {
 
 func (m *mockReadCloser) Read(p []byte) (n int, err error) {
 	if m.pos >= len(m.data) {
-		return 0, nil
+		return 0, io.EOF
 	}
 	n = copy(p, m.data[m.pos:])
 	m.pos += n
@@ -87,12 +88,12 @@ func (m *mockReadCloser) Close() error {
 	return nil
 }
 
-func TestAuthMiddleware(t *testing.T) {
+func TestAnonymousAuthMiddleware(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	// Test without API key set (should allow)
 	r := gin.New()
-	r.Use(authMiddleware(""))
+	r.Use(anonymousAuthMiddleware(""))
 	r.GET("/test", func(c *gin.Context) {
 		c.String(200, "ok")
 	})
@@ -106,7 +107,7 @@ func TestAuthMiddleware(t *testing.T) {
 
 	// Test with API key set
 	r = gin.New()
-	r.Use(authMiddleware("test-key"))
+	r.Use(anonymousAuthMiddleware("test-key"))
 	r.GET("/test", func(c *gin.Context) {
 		c.String(200, "ok")
 	})
@@ -135,5 +136,31 @@ func TestAuthMiddleware(t *testing.T) {
 	r.ServeHTTP(w, req)
 	if w.Code != 200 {
 		t.Errorf("Request with correct API key should succeed, got status %d", w.Code)
+	}
+
+	// Test Git routes allow anonymous access even with API key
+	r = gin.New()
+	r.Use(anonymousAuthMiddleware("test-key"))
+	r.GET("/v1/gh/:owner/:repo/info/refs", func(c *gin.Context) {
+		c.String(200, "ok")
+	})
+	r.POST("/v1/gh/:owner/:repo/git-receive-pack", func(c *gin.Context) {
+		c.String(200, "ok")
+	})
+
+	// Git info/refs should work without auth
+	req, _ = http.NewRequest("GET", "/v1/gh/owner/repo/info/refs?service=git-receive-pack", nil)
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != 200 {
+		t.Errorf("Git info/refs should allow anonymous access, got status %d", w.Code)
+	}
+
+	// Git receive-pack should work without auth
+	req, _ = http.NewRequest("POST", "/v1/gh/owner/repo/git-receive-pack", nil)
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != 200 {
+		t.Errorf("Git receive-pack should allow anonymous access, got status %d", w.Code)
 	}
 }

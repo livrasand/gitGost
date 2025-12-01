@@ -23,7 +23,7 @@ func ReceivePack(tempDir string, body []byte) error {
 	// Para debug: mostrar los primeros bytes
 	fmt.Printf("DEBUG: Body length: %d bytes\n", len(body))
 	if len(body) > 0 {
-		fmt.Printf("DEBUG: First 100 bytes: %x\n", body[:min(100, len(body))])
+		fmt.Printf("DEBUG: First 100 bytes: %x\n", body[:minInt(100, len(body))])
 	}
 
 	// Buscar directamente el packfile (empieza con "PACK")
@@ -46,7 +46,7 @@ func ReceivePack(tempDir string, body []byte) error {
 	return err
 }
 
-func min(a, b int) int {
+func minInt(a, b int) int {
 	if a < b {
 		return a
 	}

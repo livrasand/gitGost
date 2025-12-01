@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 
-	"gitGost/internal/config"
-	handler "gitGost/internal/http"
-	"gitGost/internal/utils"
+	"github.com/livrasand/gitGost/internal/config"
+	handler "github.com/livrasand/gitGost/internal/http"
+	"github.com/livrasand/gitGost/internal/utils"
 
 	"github.com/joho/godotenv"
 )

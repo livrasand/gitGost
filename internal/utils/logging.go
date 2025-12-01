@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"gitGost/internal/config"
+	"github.com/livrasand/gitGost/internal/config"
 )
 
 var (

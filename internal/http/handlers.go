@@ -3,14 +3,15 @@ package http
 import (
 	"bytes"
 	"fmt"
-	"gitGost/internal/git"
-	"gitGost/internal/github"
-	"gitGost/internal/utils"
 	"io"
 	"net/http"
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/livrasand/gitGost/internal/git"
+	"github.com/livrasand/gitGost/internal/github"
+	"github.com/livrasand/gitGost/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )

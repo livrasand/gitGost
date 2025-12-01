@@ -1,9 +1,10 @@
 package http
 
 import (
-	"gitGost/internal/config"
 	"net/http"
 	"strings"
+
+	"github.com/livrasand/gitGost/internal/config"
 
 	"github.com/gin-gonic/gin"
 )

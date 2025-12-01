@@ -17,7 +17,7 @@ func min(a, b int) int {
 	return b
 }
 
-func PushToGitHub(owner, repo, tempDir string) (string, error) {
+func PushToGitHub(owner, repo, tempDir, forkOwner string) (string, error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
@@ -28,35 +28,40 @@ func PushToGitHub(owner, repo, tempDir string) (string, error) {
 
 	// Generate unique branch name (valid Git ref name)
 	timestamp := time.Now().Unix()
-	branch := fmt.Sprintf("test-%d", timestamp)
+	branch := fmt.Sprintf("gitgost-%d", timestamp)
 
 	r, err := git.PlainOpen(tempDir)
 	if err != nil {
 		return "", err
 	}
 
-	// Create remote
-	remoteURL := fmt.Sprintf("https://github.com/%s/%s.git", owner, repo)
-	fmt.Printf("DEBUG: Remote URL: %s\n", remoteURL)
+	// Push to fork, not original repo
+	forkURL := fmt.Sprintf("https://github.com/%s/%s.git", forkOwner, repo)
+	fmt.Printf("DEBUG: Pushing to fork: %s\n", forkURL)
 	fmt.Printf("DEBUG: Branch name: %s\n", branch)
+
+	// Eliminar remote origin si existe y crear uno nuevo apuntando al fork
+	_ = r.DeleteRemote("origin")
+
 	_, err = r.CreateRemote(&config.RemoteConfig{
-		Name: "origin",
-		URLs: []string{remoteURL},
+		Name: "fork",
+		URLs: []string{forkURL},
 	})
 	if err != nil {
 		fmt.Printf("DEBUG: CreateRemote error: %v\n", err)
 		return "", err
 	}
+	fmt.Printf("DEBUG: Remote 'fork' is ready\n")
 
 	// Push to new branch with authentication
-	refSpec := config.RefSpec("HEAD:" + branch)
+	refSpec := config.RefSpec(fmt.Sprintf("HEAD:refs/heads/%s", branch))
 	fmt.Printf("DEBUG: RefSpec: %s\n", refSpec)
 	err = r.Push(&git.PushOptions{
-		RemoteName: "origin",
+		RemoteName: "fork",
 		RefSpecs:   []config.RefSpec{refSpec},
 		Auth: &http.BasicAuth{
-			Username: token, // GitHub tokens can be used as username
-			Password: "",    // Password is empty for token auth
+			Username: "x-access-token", // GitHub requires this for token auth
+			Password: token,            // Token goes in password field
 		},
 	})
 	if err != nil {

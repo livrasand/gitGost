@@ -39,10 +39,20 @@ gitGost can be configured using environment variables:
 
 1. Set the required environment variables.
 
-2. Run the server:
+2. Build the binary:
     ```bash
-    go run cmd/server/main.go
+    go build -o gitgost cmd/server/main.go
     ```
+
+3. Run the server:
+    ```bash
+    ./gitgost
+    ```
+
+Or run directly without building:
+```bash
+go run cmd/server/main.go
+```
 
 ### Docker
 

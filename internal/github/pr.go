@@ -20,7 +20,82 @@ func (r *Ref) GetSha() string {
 	return r.Object.Sha
 }
 
-func CreatePR(owner, repo, branch string) (string, error) {
+// ForkRepo creates a fork of the repository for the authenticated user
+func ForkRepo(owner, repo string) (string, error) {
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		return "", fmt.Errorf("GITHUB_TOKEN not set")
+	}
+
+	// Check if fork already exists
+	userURL := "https://api.github.com/user"
+	req, err := http.NewRequest("GET", userURL, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Authorization", "token "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var user map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		return "", err
+	}
+
+	forkOwner, ok := user["login"].(string)
+	if !ok {
+		return "", fmt.Errorf("could not get user login")
+	}
+
+	// Check if fork already exists
+	forkURL := fmt.Sprintf("https://api.github.com/repos/%s/%s", forkOwner, repo)
+	req, err = http.NewRequest("GET", forkURL, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Authorization", "token "+token)
+
+	resp, err = http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode == 200 {
+		// Fork already exists
+		fmt.Printf("DEBUG: Fork already exists: %s/%s\n", forkOwner, repo)
+		return forkOwner, nil
+	}
+
+	// Create fork
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/forks", owner, repo)
+	req, err = http.NewRequest("POST", url, nil)
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Authorization", "token "+token)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err = http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 202 {
+		return "", fmt.Errorf("failed to create fork: %s", resp.Status)
+	}
+
+	fmt.Printf("DEBUG: Fork created: %s/%s\n", forkOwner, repo)
+	return forkOwner, nil
+}
+
+func CreatePR(owner, repo, branch, forkOwner string) (string, error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
@@ -28,10 +103,10 @@ func CreatePR(owner, repo, branch string) (string, error) {
 
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls", owner, repo)
 	data := map[string]interface{}{
-		"title": "Contribution",
-		"head":  branch,
+		"title": "Anonymous contribution via gitGost",
+		"head":  fmt.Sprintf("%s:%s", forkOwner, branch),
 		"base":  "main",
-		"body":  "Anonymous contribution.",
+		"body":  "This is an anonymous contribution made via [gitGost](https://github.com/livrasand/gitGost).\n\nThe original author's identity has been anonymized to protect their privacy.",
 	}
 
 	jsonData, err := json.Marshal(data)
@@ -54,6 +129,9 @@ func CreatePR(owner, repo, branch string) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 201 {
+		var errResp map[string]interface{}
+		json.NewDecoder(resp.Body).Decode(&errResp)
+		fmt.Printf("DEBUG: PR creation failed: %s, response: %+v\n", resp.Status, errResp)
 		return "", fmt.Errorf("Failed to create PR: %s", resp.Status)
 	}
 

@@ -16,6 +16,25 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// WritePktLine escribe una línea en formato pkt-line
+func WritePktLine(w io.Writer, data string) error {
+	if data == "" {
+		_, err := w.Write([]byte("0000"))
+		return err
+	}
+
+	length := len(data) + 4
+	_, err := fmt.Fprintf(w, "%04x%s", length, data)
+	return err
+}
+
 func ReceivePackDiscoveryHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
@@ -31,31 +50,36 @@ func ReceivePackDiscoveryHandler(c *gin.Context) {
 	// Build advertisement
 	var advertisement bytes.Buffer
 
-	// Service line with proper pkt-line format
+	// Service line
 	serviceLine := "# service=git-receive-pack\n"
-	advertisement.WriteString(fmt.Sprintf("%04x", len(serviceLine)+4))
-	advertisement.WriteString(serviceLine)
-	advertisement.WriteString("0000") // flush packet
+	WritePktLine(&advertisement, serviceLine)
+	WritePktLine(&advertisement, "") // flush
+
+	// Capabilities
+	capabilities := "report-status delete-refs side-band-64k quiet ofs-delta"
 
 	// Refs
-	capabilities := "report-status delete-refs ofs-delta side-band-64k"
 	first := true
 	for _, ref := range refs {
 		if strings.HasPrefix(ref.Ref, "refs/heads/") || strings.HasPrefix(ref.Ref, "refs/tags/") {
-			line := ref.GetSha() + " " + ref.Ref
+			line := fmt.Sprintf("%s %s", ref.GetSha(), ref.Ref)
 			if first {
 				line += "\x00" + capabilities
 				first = false
 			}
 			line += "\n"
-			length := len(line) + 4 // +4 for length prefix
-			advertisement.WriteString(fmt.Sprintf("%04x", length))
-			advertisement.WriteString(line)
+			WritePktLine(&advertisement, line)
 		}
 	}
 
-	// Final flush packet
-	advertisement.WriteString("0000")
+	// Si no hay refs, enviar capacidades de todos modos
+	if first {
+		line := fmt.Sprintf("0000000000000000000000000000000000000000 capabilities^{}\x00%s\n", capabilities)
+		WritePktLine(&advertisement, line)
+	}
+
+	// Flush final
+	WritePktLine(&advertisement, "")
 
 	c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-advertisement")
 	c.Writer.WriteHeader(http.StatusOK)
@@ -66,30 +90,33 @@ func ReceivePackHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
 
-	// Handle 100 Continue for large requests
+	fmt.Printf("DEBUG: ReceivePackHandler called for %s/%s\n", owner, repo)
+
+	// Manejar 100 Continue
 	if c.GetHeader("Expect") == "100-continue" {
 		c.Writer.WriteHeader(http.StatusContinue)
 	}
 
-	// Read body
+	// Leer body completo
 	utils.Log("Content-Type: %s", c.GetHeader("Content-Type"))
 	utils.Log("Content-Length: %s", c.GetHeader("Content-Length"))
-	utils.Log("Transfer-Encoding: %s", c.GetHeader("Transfer-Encoding"))
-	utils.Log("Expect: %s", c.GetHeader("Expect"))
 
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		utils.Log("Error reading body: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read body"})
+		// Responder en formato Git protocol, no JSON
+		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
+		c.Writer.WriteHeader(http.StatusOK)
+		var response bytes.Buffer
+		WritePktLine(&response, "\x02unpack error reading body\n")
+		WritePktLine(&response, "")
+		c.Writer.Write(response.Bytes())
 		return
 	}
 
 	utils.Log("Received push for %s/%s, size: %d bytes", owner, repo, len(body))
-	if len(body) > 0 {
-		utils.Log("Body starts with: %x", body[:min(20, len(body))])
-	}
 
-	// Create temp repo
+	// Crear repo temporal
 	tempDir, err := utils.CreateTempDir()
 	if err != nil {
 		utils.Log("Error creating temp dir: %v", err)
@@ -98,62 +125,88 @@ func ReceivePackHandler(c *gin.Context) {
 	}
 	defer utils.CleanupTempDir(tempDir)
 
-	// Receive pack
-	err = git.ReceivePack(tempDir, body)
+	// Procesar el packfile
+	newSHA, err := git.ReceivePack(tempDir, body, owner, repo)
 	if err != nil {
 		utils.Log("Error receiving pack: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to receive pack"})
+
+		// Responder con error en formato Git protocol
+		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
+		c.Writer.WriteHeader(http.StatusOK)
+
+		var response bytes.Buffer
+		WritePktLine(&response, fmt.Sprintf("\x02unpack %s\n", err.Error()))
+		WritePktLine(&response, "")
+		c.Writer.Write(response.Bytes())
 		return
 	}
 
-	// Squash commits
-	squashedCommit, err := git.SquashCommits(tempDir)
+	// TODO: Reescribir commits para anonimizar (mantener historia)
+	// Por ahora, usamos los commits tal cual para mantener la historia compartida
+	utils.Log("Commits received successfully, HEAD at: %s", newSHA)
+
+	// Crear fork del repositorio
+	forkOwner, err := github.ForkRepo(owner, repo)
 	if err != nil {
-		utils.Log("Error squashing commits: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to squash commits"})
+		utils.Log("Error creating fork: %v", err)
+
+		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
+		c.Writer.WriteHeader(http.StatusOK)
+
+		var response bytes.Buffer
+		WritePktLine(&response, "\x02unpack ok\n")
+		WritePktLine(&response, fmt.Sprintf("\x02ng refs/heads/main %s\n", err.Error()))
+		WritePktLine(&response, "")
+
+		c.Writer.Write(response.Bytes())
 		return
 	}
 
-	utils.Log("Squashed to commit: %s", squashedCommit)
+	utils.Log("Fork ready: %s/%s", forkOwner, repo)
 
-	// Push to GitHub
-	branch, err := git.PushToGitHub(owner, repo, tempDir)
+	// Push al fork
+	branch, err := git.PushToGitHub(owner, repo, tempDir, forkOwner)
 	if err != nil {
-		utils.Log("Error pushing to GitHub: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to push to GitHub"})
+		utils.Log("Error pushing to fork: %v", err)
+
+		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
+		c.Writer.WriteHeader(http.StatusOK)
+
+		var response bytes.Buffer
+		WritePktLine(&response, "\x02unpack ok\n")
+		WritePktLine(&response, fmt.Sprintf("\x02ng refs/heads/main %s\n", err.Error()))
+		WritePktLine(&response, "")
+
+		c.Writer.Write(response.Bytes())
 		return
 	}
 
-	utils.Log("Pushed to branch: %s", branch)
+	utils.Log("Pushed to fork branch: %s", branch)
 
-	// Create PR
-	prURL, err := github.CreatePR(owner, repo, branch)
+	// Crear PR desde el fork al repo original
+	prURL, err := github.CreatePR(owner, repo, branch, forkOwner)
 	if err != nil {
 		utils.Log("Error creating PR: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create PR"})
-		return
+		// Continuar aunque falle el PR
+	} else {
+		utils.Log("Created PR: %s", prURL)
 	}
 
-	utils.Log("Created PR: %s", prURL)
-
-	// Respond with Git protocol success
+	// Respuesta exitosa
 	c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
 	c.Writer.WriteHeader(http.StatusOK)
 
-	// Write pkt-lined response
-	// unpack ok\n
-	unpackLine := "unpack ok\n"
-	c.Writer.WriteString(fmt.Sprintf("%04x%s", len(unpackLine), unpackLine))
+	var response bytes.Buffer
+	WritePktLine(&response, "\x02unpack ok\n")
+	WritePktLine(&response, "\x02ok refs/heads/main\n")
+	if prURL != "" {
+		WritePktLine(&response, fmt.Sprintf("\x02PR created: %s\n", prURL))
+	}
+	WritePktLine(&response, "")
 
-	// ok refs/heads/main\n (assuming push to main)
-	okLine := "ok refs/heads/main\n"
-	c.Writer.WriteString(fmt.Sprintf("%04x%s", len(okLine), okLine))
-
-	// flush
-	c.Writer.WriteString("0000")
+	c.Writer.Write(response.Bytes())
 }
 
-// HealthHandler provides basic health check
 func HealthHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status": "healthy",
@@ -161,7 +214,6 @@ func HealthHandler(c *gin.Context) {
 	})
 }
 
-// MetricsHandler provides basic system metrics
 func MetricsHandler(c *gin.Context) {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
@@ -178,5 +230,4 @@ func MetricsHandler(c *gin.Context) {
 	})
 }
 
-// startTime tracks when the server started
 var startTime = time.Now()

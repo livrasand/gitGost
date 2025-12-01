@@ -55,11 +55,19 @@ func isValidRepoName(name string) bool {
 	return true
 }
 
-// authMiddleware checks for valid API key
-func authMiddleware(apiKey string) gin.HandlerFunc {
+// anonymousAuthMiddleware permite acceso sin autenticación para git-receive-pack
+// pero requiere API key para otros endpoints si está configurada
+func anonymousAuthMiddleware(apiKey string) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Permitir siempre git-receive-pack sin autenticación (anonimato)
+		if strings.Contains(c.Request.URL.Path, "git-receive-pack") ||
+			strings.Contains(c.Request.URL.Path, "info/refs") {
+			c.Next()
+			return
+		}
+
+		// Para otros endpoints, verificar API key si está configurada
 		if apiKey == "" {
-			// If no API key is set, skip authentication
 			c.Next()
 			return
 		}
@@ -80,35 +88,44 @@ func authMiddleware(apiKey string) gin.HandlerFunc {
 }
 
 func SetupRouter(cfg *config.Config) *gin.Engine {
+	// Deshabilitar logs de Gin para proteger privacidad
+	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
+
+	// Solo recovery, sin logger para proteger anonimato
 	r.Use(gin.Recovery())
 
-	// Health and metrics endpoints (no auth required)
+	// Health y metrics (no auth)
 	r.GET("/health", HealthHandler)
 	r.GET("/metrics", MetricsHandler)
 
-	// Static assets (no auth required)
+	// Static assets
 	r.Static("/assets", "./web/assets")
 
-	// API routes with authentication
+	// API routes - ANONIMAS para git operations
 	v1 := r.Group("/v1")
 	v1.Use(sizeLimitMiddleware())
-	v1.Use(authMiddleware(cfg.APIKey))
+	v1.Use(validationMiddleware())
+	v1.Use(anonymousAuthMiddleware(cfg.APIKey))
 	{
 		gh := v1.Group("/gh")
 		{
+			// Git Smart HTTP - info/refs (discovery)
 			gh.GET("/:owner/:repo/info/refs", func(c *gin.Context) {
-				if c.Query("service") == "git-receive-pack" {
+				service := c.Query("service")
+				if service == "git-receive-pack" {
 					ReceivePackDiscoveryHandler(c)
 				} else {
-					c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid service"})
+					c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Only git-receive-pack is supported"})
 				}
 			})
+
+			// Git Smart HTTP - receive-pack (push)
 			gh.POST("/:owner/:repo/git-receive-pack", ReceivePackHandler)
 		}
 	}
 
-	// SPA fallback: serve index.html for unmatched routes (no auth required)
+	// SPA fallback
 	r.NoRoute(func(c *gin.Context) {
 		c.File("./web/index.html")
 	})

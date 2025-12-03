@@ -22,8 +22,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gitgost ./cmd/ser
 # Final stage
 FROM alpine:latest
 
-# Install ca-certificates and wget for HTTPS requests and health check
-RUN apk --no-cache add ca-certificates wget
+# Install runtime dependencies (git required for receive-pack execution)
+RUN apk --no-cache add ca-certificates wget git
 
 # Create a non-root user
 RUN adduser -D -s /bin/sh gitgost

@@ -35,6 +35,28 @@ func WritePktLine(w io.Writer, data string) error {
 	return err
 }
 
+// WriteSidebandLine escribe una línea con prefijo de banda para side-band-64k
+func WriteSidebandLine(w io.Writer, band byte, message string) error {
+	if message == "" {
+		return nil
+	}
+	// Agregar newline si no existe
+	if !strings.HasSuffix(message, "\n") {
+		message += "\n"
+	}
+	
+	// Formato: longitud(4 bytes hex) + banda(1 byte) + mensaje
+	data := append([]byte{band}, []byte(message)...)
+	length := len(data) + 4
+	
+	_, err := fmt.Fprintf(w, "%04x", length)
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(data)
+	return err
+}
+
 func ReceivePackDiscoveryHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
@@ -104,11 +126,10 @@ func ReceivePackHandler(c *gin.Context) {
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		utils.Log("Error reading body: %v", err)
-		// Responder en formato Git protocol, no JSON
 		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
 		c.Writer.WriteHeader(http.StatusOK)
 		var response bytes.Buffer
-		WritePktLine(&response, "unpack error reading body\n")
+		WriteSidebandLine(&response, 3, "error reading body") // banda 3 = error
 		WritePktLine(&response, "")
 		c.Writer.Write(response.Bytes())
 		return
@@ -120,44 +141,41 @@ func ReceivePackHandler(c *gin.Context) {
 	tempDir, err := utils.CreateTempDir()
 	if err != nil {
 		utils.Log("Error creating temp dir: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create temp dir"})
+		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
+		c.Writer.WriteHeader(http.StatusOK)
+		var response bytes.Buffer
+		WriteSidebandLine(&response, 3, fmt.Sprintf("error creating temp dir: %v", err))
+		WritePktLine(&response, "")
+		c.Writer.Write(response.Bytes())
 		return
 	}
 	defer utils.CleanupTempDir(tempDir)
+
+	// Configurar cabeceras antes de escribir cualquier cosa
+	c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
+	c.Writer.WriteHeader(http.StatusOK)
+
+	var response bytes.Buffer
 
 	// Procesar el packfile
 	newSHA, err := git.ReceivePack(tempDir, body, owner, repo)
 	if err != nil {
 		utils.Log("Error receiving pack: %v", err)
-
-		// Responder con error en formato Git protocol
-		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
-		c.Writer.WriteHeader(http.StatusOK)
-
-		var response bytes.Buffer
-		WritePktLine(&response, fmt.Sprintf("unpack %s\n", err.Error()))
+		WriteSidebandLine(&response, 3, fmt.Sprintf("unpack error: %v", err))
 		WritePktLine(&response, "")
 		c.Writer.Write(response.Bytes())
 		return
 	}
 
-	// TODO: Reescribir commits para anonimizar (mantener historia)
-	// Por ahora, usamos los commits tal cual para mantener la historia compartida
 	utils.Log("Commits received successfully, HEAD at: %s", newSHA)
 
 	// Crear fork del repositorio
 	forkOwner, err := github.ForkRepo(owner, repo)
 	if err != nil {
 		utils.Log("Error creating fork: %v", err)
-
-		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
-		c.Writer.WriteHeader(http.StatusOK)
-
-		var response bytes.Buffer
-		WritePktLine(&response, "unpack ok\n")
-		WritePktLine(&response, fmt.Sprintf("ng refs/heads/main %s\n", err.Error()))
+		WriteSidebandLine(&response, 2, "unpack ok")
+		WriteSidebandLine(&response, 3, fmt.Sprintf("error creating fork: %v", err))
 		WritePktLine(&response, "")
-
 		c.Writer.Write(response.Bytes())
 		return
 	}
@@ -168,15 +186,9 @@ func ReceivePackHandler(c *gin.Context) {
 	branch, err := git.PushToGitHub(owner, repo, tempDir, forkOwner)
 	if err != nil {
 		utils.Log("Error pushing to fork: %v", err)
-
-		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
-		c.Writer.WriteHeader(http.StatusOK)
-
-		var response bytes.Buffer
-		WritePktLine(&response, "unpack ok\n")
-		WritePktLine(&response, fmt.Sprintf("ng refs/heads/main %s\n", err.Error()))
+		WriteSidebandLine(&response, 2, "unpack ok")
+		WriteSidebandLine(&response, 3, fmt.Sprintf("error pushing to fork: %v", err))
 		WritePktLine(&response, "")
-
 		c.Writer.Write(response.Bytes())
 		return
 	}
@@ -187,22 +199,16 @@ func ReceivePackHandler(c *gin.Context) {
 	prURL, err := github.CreatePR(owner, repo, branch, forkOwner)
 	if err != nil {
 		utils.Log("Error creating PR: %v", err)
-		// Continuar aunque falle el PR
 	} else {
 		utils.Log("Created PR: %s", prURL)
+		// Mensaje de progreso (banda 2) sobre el PR
+		WriteSidebandLine(&response, 2, fmt.Sprintf("remote: PR created: %s", prURL))
 	}
 
 	// Respuesta exitosa
-	c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
-	c.Writer.WriteHeader(http.StatusOK)
-
-	var response bytes.Buffer
-	if prURL != "" {
-		WritePktLine(&response, fmt.Sprintf("PR created: %s\n", prURL))
-	}
-	WritePktLine(&response, "unpack ok\n")
-	WritePktLine(&response, "ok refs/heads/main\n")
-	WritePktLine(&response, "")
+	WriteSidebandLine(&response, 2, "unpack ok")
+	WriteSidebandLine(&response, 2, "ok refs/heads/main")
+	WritePktLine(&response, "") // flush final
 
 	c.Writer.Write(response.Bytes())
 }

@@ -108,7 +108,7 @@ func ReceivePackHandler(c *gin.Context) {
 		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
 		c.Writer.WriteHeader(http.StatusOK)
 		var response bytes.Buffer
-		WritePktLine(&response, "\x02unpack error reading body\n")
+		WritePktLine(&response, "unpack error reading body\n")
 		WritePktLine(&response, "")
 		c.Writer.Write(response.Bytes())
 		return
@@ -135,7 +135,7 @@ func ReceivePackHandler(c *gin.Context) {
 		c.Writer.WriteHeader(http.StatusOK)
 
 		var response bytes.Buffer
-		WritePktLine(&response, fmt.Sprintf("\x02unpack %s\n", err.Error()))
+		WritePktLine(&response, fmt.Sprintf("unpack %s\n", err.Error()))
 		WritePktLine(&response, "")
 		c.Writer.Write(response.Bytes())
 		return
@@ -154,8 +154,8 @@ func ReceivePackHandler(c *gin.Context) {
 		c.Writer.WriteHeader(http.StatusOK)
 
 		var response bytes.Buffer
-		WritePktLine(&response, "\x02unpack ok\n")
-		WritePktLine(&response, fmt.Sprintf("\x02ng refs/heads/main %s\n", err.Error()))
+		WritePktLine(&response, "unpack ok\n")
+		WritePktLine(&response, fmt.Sprintf("ng refs/heads/main %s\n", err.Error()))
 		WritePktLine(&response, "")
 
 		c.Writer.Write(response.Bytes())
@@ -173,8 +173,8 @@ func ReceivePackHandler(c *gin.Context) {
 		c.Writer.WriteHeader(http.StatusOK)
 
 		var response bytes.Buffer
-		WritePktLine(&response, "\x02unpack ok\n")
-		WritePktLine(&response, fmt.Sprintf("\x02ng refs/heads/main %s\n", err.Error()))
+		WritePktLine(&response, "unpack ok\n")
+		WritePktLine(&response, fmt.Sprintf("ng refs/heads/main %s\n", err.Error()))
 		WritePktLine(&response, "")
 
 		c.Writer.Write(response.Bytes())
@@ -197,11 +197,11 @@ func ReceivePackHandler(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusOK)
 
 	var response bytes.Buffer
-	WritePktLine(&response, "\x02unpack ok\n")
-	WritePktLine(&response, "\x02ok refs/heads/main\n")
 	if prURL != "" {
-		WritePktLine(&response, fmt.Sprintf("\x02PR created: %s\n", prURL))
+		WritePktLine(&response, fmt.Sprintf("PR created: %s\n", prURL))
 	}
+	WritePktLine(&response, "unpack ok\n")
+	WritePktLine(&response, "ok refs/heads/main\n")
 	WritePktLine(&response, "")
 
 	c.Writer.Write(response.Bytes())

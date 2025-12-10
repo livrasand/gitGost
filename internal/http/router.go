@@ -126,6 +126,13 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		}
 	}
 
+	// API routes - Public stats
+	api := r.Group("/api")
+	{
+		api.GET("/stats", StatsHandler)
+		api.GET("/recent-prs", RecentPRsHandler)
+	}
+
 	// SPA fallback
 	r.NoRoute(func(c *gin.Context) {
 		c.File("./web/index.html")

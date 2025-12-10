@@ -96,6 +96,28 @@
             font-weight: 500;
         }
 
+        /* Contador de PRs */
+        .stats-banner {
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            margin: 2rem 0 3rem;
+        }
+        .stats-number {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: clamp(3rem, 10vw, 5rem);
+            font-weight: 700;
+            color: #ff6b6b;
+            margin: 0;
+            line-height: 1;
+        }
+        .stats-label {
+            color: #ff6b6b;
+            font-size: 1.2rem;
+            margin-top: .5rem;
+            font-weight: 500;
+        }
+
         nav {
             display: flex;
             flex-wrap: wrap;
@@ -142,7 +164,6 @@
             transition: all .25s ease;
         }
         .card:hover {
-            transform: translateY(-6px);
             border-color: var(--accent);
             box-shadow: 0 12px 32px rgba(0,0,0,.3);
         }
@@ -151,6 +172,54 @@
             color: var(--accent);
             margin-bottom: .8rem;
             font-size: 1.15rem;
+        }
+
+        /* PRs Recientes */
+        .pr-list {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        .pr-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            transition: background .2s;
+        }
+        .pr-item:last-child { border-bottom: none; }
+        .pr-item:hover { background: var(--bg); }
+        .pr-repo {
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 600;
+            color: var(--accent);
+            flex: 1;
+        }
+        .pr-time {
+            font-size: 0.85rem;
+            opacity: 0.6;
+        }
+        .pr-link {
+            color: var(--fg);
+            text-decoration: none;
+            padding: .4rem .8rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: .85rem;
+            transition: all .2s;
+        }
+        .pr-link:hover {
+            border-color: var(--accent);
+            background: var(--accent);
+            color: white;
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            opacity: 0.6;
         }
 
         .btn {
@@ -193,6 +262,7 @@
         @media (max-width: 480px) {
             body { padding: 1.5rem .8rem; }
             nav { gap: 1.2rem; font-size: .95rem; }
+            .pr-item { flex-direction: column; align-items: flex-start; }
         }
     </style>
 </head>
@@ -211,11 +281,11 @@
 
         <nav>
             <a href="#usage">Usage</a>
+            <a href="#recent">Recent PRs</a>
             <a href="#features">Features</a>
             <a href="#why">Why</a>
             <a href="https://github.com/livrasand/gitGost" target="_blank">GitHub ↗</a>
         </nav>
-
         <section id="usage">
             <div class="terminal">
 <span class="comment"># Add as remote → push → done. Fully anonymous.</span>
@@ -225,10 +295,19 @@
 <span class="prompt">$</span> git push gost fix-typo:main
 <span class="success">→</span> Anonymized commit + PR opened as @ghost-contributor
             </div>
-            <div class="btn-center">
-                <a href="https://github.com/livrasand/gitGost" class="btn" target="_blank">View on GitHub</a>
-            </div>
+
+         <!-- Contador de PRs -->
+        <div class="stats-banner">
+            <div class="stats-number" id="prCounter">...</div>
+            <div class="stats-label">Anonymous PRs Created</div>
+        </div>
         </section>
+
+        <!-- PRs Recientes -->
+        <h2 id="recent">Recent Anonymous Contributions</h2>
+        <div class="pr-list" id="prList">
+            <div class="loading">Loading recent PRs...</div>
+        </div>
 
         <h2>Features</h2>
         <section id="features" class="grid">
@@ -254,7 +333,7 @@
         <section id="why" class="grid">
             <div class="card">
                 <h3>No permanent public record</h3>
-                <p>Your commit history shouldn’t be an HR liability forever.</p>
+                <p>Your commit history shouldn't be an HR liability forever.</p>
             </div>
             <div class="card">
                 <h3>Contribute safely to anything</h3>
@@ -266,7 +345,7 @@
             </div>
             <div class="card">
                 <h3>Sometimes you just want to be a ghost</h3>
-                <p>One-line typo fixes don’t need your name attached for eternity.</p>
+                <p>One-line typo fixes don't need your name attached for eternity.</p>
             </div>
         </section>
 
@@ -274,5 +353,89 @@
             Built for developers who actually care about privacy • <a href="https://github.com/livrasand/gitGost" target="_blank">github.com/livrasand/gitGost</a>
         </div>
     </main>
+
+    <script>
+        // Cargar estadísticas
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                // Actualizar contador con animación
+                const counter = document.getElementById('prCounter');
+                animateCounter(counter, 0, data.total_prs, 1500);
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                document.getElementById('prCounter').textContent = '0';
+            }
+        }
+
+        // Cargar PRs recientes
+        async function loadRecentPRs() {
+            try {
+                const response = await fetch('/api/recent-prs');
+                const data = await response.json();
+                
+                const prList = document.getElementById('prList');
+                
+                if (data.prs && data.prs.length > 0) {
+                    prList.innerHTML = data.prs.map(pr => `
+                        <div class="pr-item">
+                            <div class="pr-repo">${pr.owner}/${pr.repo}</div>
+                            <div class="pr-time">${formatTime(pr.created_at)}</div>
+                            <a href="${pr.url}" target="_blank" class="pr-link">View PR ↗</a>
+                        </div>
+                    `).join('');
+                } else {
+                    prList.innerHTML = '<div class="loading">No PRs yet. Be the first!</div>';
+                }
+            } catch (error) {
+                console.error('Error loading PRs:', error);
+                document.getElementById('prList').innerHTML = '<div class="loading">Failed to load PRs</div>';
+            }
+        }
+
+        // Animar contador
+        function animateCounter(element, start, end, duration) {
+            const startTime = Date.now();
+            const timer = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const current = Math.floor(start + (end - start) * easeOutQuad(progress));
+                element.textContent = current.toLocaleString();
+                
+                if (progress === 1) {
+                    clearInterval(timer);
+                }
+            }, 16);
+        }
+
+        function easeOutQuad(t) {
+            return t * (2 - t);
+        }
+
+        // Formatear tiempo relativo
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000); // segundos
+
+            if (diff < 60) return 'just now';
+            if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+            if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+            return date.toLocaleDateString();
+        }
+
+        // Cargar datos al iniciar
+        loadStats();
+        loadRecentPRs();
+
+        // Actualizar cada 30 segundos
+        setInterval(() => {
+            loadStats();
+            loadRecentPRs();
+        }, 30000);
+    </script>
 </body>
 </html>

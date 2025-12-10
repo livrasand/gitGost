@@ -2,11 +2,16 @@ package http
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/livrasand/gitGost/internal/git"
@@ -207,6 +212,12 @@ func ReceivePackHandler(c *gin.Context) {
 
 	utils.Log("Created PR: %s", prURL)
 
+	// Registrar estadísticas
+	if err := RecordPR(owner, repo, prURL); err != nil {
+		utils.Log("Error recording stats: %v", err)
+		// No fallamos si solo falla las estadísticas
+	}
+
 	// MENSAJES DE ÉXITO CLAROS
 	WriteSidebandLine(&response, 2, "remote: ")
 	WriteSidebandLine(&response, 2, "remote: ========================================")
@@ -265,3 +276,131 @@ func MetricsHandler(c *gin.Context) {
 }
 
 var startTime = time.Now()
+
+// PRRecord representa un PR anonimizado
+type PRRecord struct {
+	ID        string    `json:"id"`
+	Owner     string    `json:"owner"`
+	Repo      string    `json:"repo"`
+	URL       string    `json:"url"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// Stats representa las estadísticas globales
+type Stats struct {
+	TotalPRs    int        `json:"total_prs"`
+	RecentPRs   []PRRecord `json:"recent_prs"`
+	LastUpdated time.Time  `json:"last_updated"`
+}
+
+var (
+	statsFile = filepath.Join(os.TempDir(), "gitgost-stats.json")
+	statsMux  sync.RWMutex
+)
+
+// LoadStats carga las estadísticas desde el archivo
+func LoadStats() (*Stats, error) {
+	statsMux.RLock()
+	defer statsMux.RUnlock()
+
+	data, err := os.ReadFile(statsFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return &Stats{
+				TotalPRs:    0,
+				RecentPRs:   []PRRecord{},
+				LastUpdated: time.Now(),
+			}, nil
+		}
+		return nil, err
+	}
+
+	var stats Stats
+	if err := json.Unmarshal(data, &stats); err != nil {
+		return nil, err
+	}
+
+	return &stats, nil
+}
+
+// SaveStats guarda las estadísticas en el archivo
+func SaveStats(stats *Stats) error {
+	statsMux.Lock()
+	defer statsMux.Unlock()
+
+	stats.LastUpdated = time.Now()
+	data, err := json.MarshalIndent(stats, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(statsFile, data, 0644)
+}
+
+// RecordPR registra un nuevo PR anonimizado
+func RecordPR(owner, repo, prURL string) error {
+	stats, err := LoadStats()
+	if err != nil {
+		return err
+	}
+
+	pr := PRRecord{
+		ID:        generateID(),
+		Owner:     owner,
+		Repo:      repo,
+		URL:       prURL,
+		CreatedAt: time.Now(),
+	}
+
+	stats.TotalPRs++
+	stats.RecentPRs = append([]PRRecord{pr}, stats.RecentPRs...)
+
+	// Mantener solo los últimos 50 PRs
+	if len(stats.RecentPRs) > 50 {
+		stats.RecentPRs = stats.RecentPRs[:50]
+	}
+
+	return SaveStats(stats)
+}
+
+// generateID genera un ID único para el PR
+func generateID() string {
+	return time.Now().Format("20060102150405")
+}
+
+// StatsHandler maneja el endpoint de estadísticas
+func StatsHandler(c *gin.Context) {
+	stats, err := LoadStats()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load stats"})
+		return
+	}
+
+	c.JSON(http.StatusOK, stats)
+}
+
+// RecentPRsHandler devuelve los PRs recientes con paginación
+func RecentPRsHandler(c *gin.Context) {
+	stats, err := LoadStats()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load stats"})
+		return
+	}
+
+	// Limitar a los últimos 10 PRs por defecto
+	limit := 10
+	recent := stats.RecentPRs
+	if len(recent) > limit {
+		recent = recent[:limit]
+	}
+
+	// Ordenar por fecha descendente
+	sort.Slice(recent, func(i, j int) bool {
+		return recent[i].CreatedAt.After(recent[j].CreatedAt)
+	})
+
+	c.JSON(http.StatusOK, gin.H{
+		"prs":   recent,
+		"total": stats.TotalPRs,
+	})
+}

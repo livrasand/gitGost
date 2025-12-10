@@ -44,11 +44,11 @@ func WriteSidebandLine(w io.Writer, band byte, message string) error {
 	if !strings.HasSuffix(message, "\n") {
 		message += "\n"
 	}
-	
+
 	// Formato: longitud(4 bytes hex) + banda(1 byte) + mensaje
 	data := append([]byte{band}, []byte(message)...)
 	length := len(data) + 4
-	
+
 	_, err := fmt.Fprintf(w, "%04x", length)
 	if err != nil {
 		return err
@@ -126,12 +126,7 @@ func ReceivePackHandler(c *gin.Context) {
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		utils.Log("Error reading body: %v", err)
-		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
-		c.Writer.WriteHeader(http.StatusOK)
-		var response bytes.Buffer
-		WriteSidebandLine(&response, 3, "error reading body") // banda 3 = error
-		WritePktLine(&response, "")
-		c.Writer.Write(response.Bytes())
+		sendErrorResponse(c, "error reading body")
 		return
 	}
 
@@ -141,12 +136,7 @@ func ReceivePackHandler(c *gin.Context) {
 	tempDir, err := utils.CreateTempDir()
 	if err != nil {
 		utils.Log("Error creating temp dir: %v", err)
-		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
-		c.Writer.WriteHeader(http.StatusOK)
-		var response bytes.Buffer
-		WriteSidebandLine(&response, 3, fmt.Sprintf("error creating temp dir: %v", err))
-		WritePktLine(&response, "")
-		c.Writer.Write(response.Bytes())
+		sendErrorResponse(c, fmt.Sprintf("error creating temp dir: %v", err))
 		return
 	}
 	defer utils.CleanupTempDir(tempDir)
@@ -156,6 +146,9 @@ func ReceivePackHandler(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusOK)
 
 	var response bytes.Buffer
+
+	// Mensaje de progreso inicial
+	WriteSidebandLine(&response, 2, "remote: gitGost: Processing your anonymous contribution...")
 
 	// Procesar el packfile
 	newSHA, err := git.ReceivePack(tempDir, body, owner, repo)
@@ -168,8 +161,10 @@ func ReceivePackHandler(c *gin.Context) {
 	}
 
 	utils.Log("Commits received successfully, HEAD at: %s", newSHA)
+	WriteSidebandLine(&response, 2, "remote: gitGost: Commits anonymized successfully")
 
 	// Crear fork del repositorio
+	WriteSidebandLine(&response, 2, "remote: gitGost: Creating fork...")
 	forkOwner, err := github.ForkRepo(owner, repo)
 	if err != nil {
 		utils.Log("Error creating fork: %v", err)
@@ -181,8 +176,10 @@ func ReceivePackHandler(c *gin.Context) {
 	}
 
 	utils.Log("Fork ready: %s/%s", forkOwner, repo)
+	WriteSidebandLine(&response, 2, fmt.Sprintf("remote: gitGost: Fork ready at %s/%s", forkOwner, repo))
 
 	// Push al fork
+	WriteSidebandLine(&response, 2, "remote: gitGost: Pushing to fork...")
 	branch, err := git.PushToGitHub(owner, repo, tempDir, forkOwner)
 	if err != nil {
 		utils.Log("Error pushing to fork: %v", err)
@@ -194,22 +191,53 @@ func ReceivePackHandler(c *gin.Context) {
 	}
 
 	utils.Log("Pushed to fork branch: %s", branch)
+	WriteSidebandLine(&response, 2, fmt.Sprintf("remote: gitGost: Branch '%s' created", branch))
 
 	// Crear PR desde el fork al repo original
+	WriteSidebandLine(&response, 2, "remote: gitGost: Creating pull request...")
 	prURL, err := github.CreatePR(owner, repo, branch, forkOwner)
 	if err != nil {
 		utils.Log("Error creating PR: %v", err)
-	} else {
-		utils.Log("Created PR: %s", prURL)
-		// Mensaje de progreso (banda 2) sobre el PR
-		WriteSidebandLine(&response, 2, fmt.Sprintf("remote: PR created: %s", prURL))
+		WriteSidebandLine(&response, 2, "unpack ok")
+		WriteSidebandLine(&response, 3, fmt.Sprintf("error creating PR: %v", err))
+		WritePktLine(&response, "")
+		c.Writer.Write(response.Bytes())
+		return
 	}
 
-	// Respuesta exitosa
+	utils.Log("Created PR: %s", prURL)
+
+	// MENSAJES DE ÉXITO CLAROS
+	WriteSidebandLine(&response, 2, "remote: ")
+	WriteSidebandLine(&response, 2, "remote: ========================================")
+	WriteSidebandLine(&response, 2, "remote: SUCCESS! Pull Request Created")
+	WriteSidebandLine(&response, 2, "remote: ========================================")
+	WriteSidebandLine(&response, 2, "remote: ")
+	WriteSidebandLine(&response, 2, fmt.Sprintf("remote: PR URL: %s", prURL))
+	WriteSidebandLine(&response, 2, "remote: Author: @gitghost-anonymous")
+	WriteSidebandLine(&response, 2, fmt.Sprintf("remote: Branch: %s", branch))
+	WriteSidebandLine(&response, 2, "remote: ")
+	WriteSidebandLine(&response, 2, "remote: Your identity has been anonymized.")
+	WriteSidebandLine(&response, 2, "remote: No trace to you remains in the commit history.")
+	WriteSidebandLine(&response, 2, "remote: ")
+	WriteSidebandLine(&response, 2, "remote: ========================================")
+	WriteSidebandLine(&response, 2, "remote: ")
+
+	// Respuesta exitosa estándar de Git
 	WriteSidebandLine(&response, 2, "unpack ok")
 	WriteSidebandLine(&response, 2, "ok refs/heads/main")
 	WritePktLine(&response, "") // flush final
 
+	c.Writer.Write(response.Bytes())
+}
+
+// sendErrorResponse envía una respuesta de error en formato Git protocol
+func sendErrorResponse(c *gin.Context, errorMsg string) {
+	c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
+	c.Writer.WriteHeader(http.StatusOK)
+	var response bytes.Buffer
+	WriteSidebandLine(&response, 3, errorMsg)
+	WritePktLine(&response, "")
 	c.Writer.Write(response.Bytes())
 }
 

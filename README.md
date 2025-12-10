@@ -18,7 +18,7 @@ git remote add gost https://gitgost.leapcell.app/v1/gh/torvalds/linux
 git checkout -b fix-typo
 git commit -am "fix: obvious typo in README"
 git push gost fix-typo:main
-# → PR opened as @ghost-contributor with zero trace to you
+# → PR opened as @gitghost-anonymous with zero trace to you
 ```
 
 That’s it. No login. No token. No name. No email. No history.
@@ -27,7 +27,7 @@ That’s it. No login. No token. No name. No email. No history.
 
 | Feature                     | Description                                                                 |
 |-----------------------------|-----------------------------------------------------------------------------|
-| **Total Anonymity**         | Strips author name, email, timestamps, and all identifying metadata. PRs created by neutral `@ghost-contributor` bot. |
+| **Total Anonymity**         | Strips author name, email, timestamps, and all identifying metadata. PRs created by neutral `@gitghost-anonymous` bot. |
 | **One-Command Setup**       | Just `git remote add gost <url>` – no accounts, tokens, or browser extensions. |
 | **Battle-tested Security**  | Rate limiting, repository size caps, commit validation. Written in pure Go with minimal dependencies – fully auditable. |
 | **Works Everywhere**        | Terminal, CI/CD, Docker, scripts – any public GitHub repo, anywhere Git runs. |

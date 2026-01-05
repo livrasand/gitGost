@@ -97,3 +97,7 @@ Star this repo if you believe developers deserve the right to contribute anonymo
 **github.com/livrasand/gitGost**
 
 Be a ghost. Fix the internet.
+
+*✨ Thanks for visiting **gitGost**!*
+
+<img src="https://visitor-badge.laobi.icu/badge?page_id=livrasand.gitGost&style=for-the-badge&color=00d4ff" alt="Views">

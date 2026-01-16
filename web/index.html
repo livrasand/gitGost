@@ -291,15 +291,30 @@
 <span class="comment"># Add as remote → push → done. Fully anonymous.</span>
 <span class="prompt">$</span> git remote add gost https://gitgost.leapcell.app/v1/gh/torvalds/linux
 <span class="prompt">$</span> git checkout -b fix-typo
-<span class="prompt">$</span> git commit -am "fix: obvious typo in README"
+<span class="prompt">$</span> git commit -am "fix: typo in documentation
+
+This commit fixes a grammatical error in the README.
+The word 'recieve' should be 'receive'."
 <span class="prompt">$</span> git push gost fix-typo:main
-<span class="success">→</span> Anonymized commit + PR opened as @ghost-contributor
+<span class="success">→</span> Anonymized commit + PR opened as @gitgost-anonymous
+            </div>
+
+            <div class="card" style="margin-top: 2rem; background: linear-gradient(135deg, rgba(255,166,87,0.15), rgba(255,107,107,0.15)); border: 2px solid var(--accent); box-shadow: 0 4px 20px rgba(255,107,107,0.2);">
+                <div style="text-align: center; margin-bottom: 1rem;">
+                    <h3 style="margin: 0.5rem 0; font-size: 1.5rem; color: var(--accent);">NEW: Your Commit Message = PR Description</h3>
+                </div>
+                <p style="text-align: center; font-size: 1.1rem; margin-bottom: 1rem;"><strong>Write detailed commit messages!</strong> They become the PR description automatically.</p>
+                <p style="text-align: center; opacity: 0.85; font-size: 0.95rem;">Provide full context, explain your changes, discuss implementation details — all while staying <strong>completely anonymous</strong>. No more generic "Anonymous contribution" messages.</p>
             </div>
 
          <!-- Contador de PRs -->
         <div class="stats-banner">
             <div class="stats-number" id="prCounter">...</div>
             <div class="stats-label">Anonymous PRs Created</div>
+            <div style="margin-top: 1rem; font-size: 0.85rem; opacity: 0.7; max-width: 600px; margin-left: auto; margin-right: auto;">
+                Database hosted in <strong>Central Europe (Zurich)</strong><br>
+                Only stores: counter + repo name + PR URL. <strong>Zero personal data.</strong>
+            </div>
         </div>
         </section>
 
@@ -313,7 +328,11 @@
         <section id="features" class="grid">
             <div class="card">
                 <h3>Total Anonymity</h3>
-                <p>Strips name, email, timestamps, and all metadata. PR created from a neutral bot.</p>
+                <p>Strips name, email, timestamps, and all metadata. PR created from @gitgost-anonymous bot.</p>
+            </div>
+            <div class="card">
+                <h3>Detailed PR Descriptions</h3>
+                <p>Your commit message becomes the PR description. Provide full context and explanations while staying anonymous.</p>
             </div>
             <div class="card">
                 <h3>One Command Setup</h3>
@@ -322,10 +341,6 @@
             <div class="card">
                 <h3>Battle-tested Security</h3>
                 <p>Rate limiting, size caps, validation. Pure Go, minimal deps, fully auditable.</p>
-            </div>
-            <div class="card">
-                <h3>Works Anywhere</h3>
-                <p>Any public GitHub repo. Terminal, CI, containers, scripts — zero friction.</p>
             </div>
         </section>
 
@@ -355,15 +370,21 @@
     </main>
 
     <script>
+        // Determinar la URL base de la API
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? `http://${window.location.host}` 
+            : 'https://gitgost.leapcell.app';
+
         // Cargar estadísticas
         async function loadStats() {
             try {
-                const response = await fetch('/api/stats');
+                const response = await fetch(`${API_BASE}/api/stats`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 
                 // Actualizar contador con animación
                 const counter = document.getElementById('prCounter');
-                animateCounter(counter, 0, data.total_prs, 1500);
+                animateCounter(counter, 0, data.total_prs || 0, 1500);
             } catch (error) {
                 console.error('Error loading stats:', error);
                 document.getElementById('prCounter').textContent = '0';
@@ -373,7 +394,8 @@
         // Cargar PRs recientes
         async function loadRecentPRs() {
             try {
-                const response = await fetch('/api/recent-prs');
+                const response = await fetch(`${API_BASE}/api/recent-prs`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 
                 const prList = document.getElementById('prList');
@@ -391,7 +413,7 @@
                 }
             } catch (error) {
                 console.error('Error loading PRs:', error);
-                document.getElementById('prList').innerHTML = '<div class="loading">Failed to load PRs</div>';
+                document.getElementById('prList').innerHTML = '<div class="loading">No recent PRs to display</div>';
             }
         }
 

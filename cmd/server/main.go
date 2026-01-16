@@ -22,6 +22,14 @@ func main() {
 	// Initialize logger
 	utils.InitLogger(cfg)
 
+	// Initialize database
+	if cfg.SupabaseURL != "" && cfg.SupabaseKey != "" {
+		handler.InitDatabase(cfg.SupabaseURL, cfg.SupabaseKey)
+		utils.Log("Supabase database initialized (Central Europe - Zurich)")
+	} else {
+		utils.Log("Warning: Supabase not configured, stats will not be persisted")
+	}
+
 	// Setup router
 	router := handler.SetupRouter(cfg)
 

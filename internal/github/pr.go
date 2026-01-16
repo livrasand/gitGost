@@ -95,18 +95,21 @@ func ForkRepo(owner, repo string) (string, error) {
 	return forkOwner, nil
 }
 
-func CreatePR(owner, repo, branch, forkOwner string) (string, error) {
+func CreatePR(owner, repo, branch, forkOwner, commitMessage string) (string, error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
 
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls", owner, repo)
+
+	prBody := fmt.Sprintf("%s\n\n---\n\n*This is an anonymous contribution made via [gitGost](https://github.com/livrasand/gitGost).*\n\n*The original author's identity has been anonymized to protect their privacy.*", commitMessage)
+
 	data := map[string]interface{}{
 		"title": "Anonymous contribution via gitGost",
 		"head":  fmt.Sprintf("%s:%s", forkOwner, branch),
 		"base":  "main",
-		"body":  "This is an anonymous contribution made via [gitGost](https://github.com/livrasand/gitGost).\n\nThe original author's identity has been anonymized to protect their privacy.",
+		"body":  prBody,
 	}
 
 	jsonData, err := json.Marshal(data)

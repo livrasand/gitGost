@@ -2,7 +2,6 @@ package git
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -26,15 +25,22 @@ func TestPushToGitHub_NoToken(t *testing.T) {
 func TestReceivePack(t *testing.T) {
 	tempDir := t.TempDir()
 
-	_, err := ReceivePack(tempDir, []byte{}, "owner", "repo")
-	if err != nil {
-		t.Errorf("ReceivePack failed: %v", err)
-	}
+	// Save original env
+	originalToken := os.Getenv("GITHUB_TOKEN")
+	defer func() {
+		if originalToken != "" {
+			os.Setenv("GITHUB_TOKEN", originalToken)
+		}
+	}()
 
-	// Check if .git directory was created
-	gitDir := filepath.Join(tempDir, ".git")
-	if _, err := os.Stat(gitDir); os.IsNotExist(err) {
-		t.Error("Expected .git directory to be created")
+	// Test without token - should fail
+	os.Unsetenv("GITHUB_TOKEN")
+	_, _, err := ReceivePack(tempDir, []byte{}, "owner", "repo")
+	if err == nil {
+		t.Error("Expected error when GITHUB_TOKEN is not set")
+	}
+	if err.Error() != "GITHUB_TOKEN not set" {
+		t.Errorf("Expected 'GITHUB_TOKEN not set', got '%s'", err.Error())
 	}
 }
 

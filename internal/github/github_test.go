@@ -13,7 +13,7 @@ func TestCreatePR_NoToken(t *testing.T) {
 	// Remove token
 	os.Unsetenv("GITHUB_TOKEN")
 
-	_, err := CreatePR("owner", "repo", "branch", "forkowner")
+	_, err := CreatePR("owner", "repo", "branch", "forkowner", "test commit message")
 	if err == nil {
 		t.Error("Expected error when GITHUB_TOKEN is not set")
 	}

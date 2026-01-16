@@ -93,15 +93,20 @@ For more details, see [SECURITY.md](SECURITY.md).
 # 1. Add the remote (replace with any public repo)
 git remote add gost https://gitgost.leapcell.app/v1/gh/username/repo
 
-# 2. Create your branch and commit as usual
+# 2. Create your branch and commit with a detailed message
 git checkout -b my-cool-fix
-git commit -am "fix: something obvious"
+git commit -am "fix: typo in documentation
+
+This commit fixes a grammatical error in the README.
+The word 'recieve' should be 'receive'."
 
 # 3. Push – PR opens anonymously
 git push gost my-cool-fix:main
 ```
 
-Done. The PR appears instantly from `@ghost-contributor`.
+Done. The PR appears instantly from `@gitgost-anonymous` with your commit message as the PR description.
+
+**Pro tip:** Write detailed commit messages! Your commit message becomes the PR description, allowing you to provide context while staying anonymous.
 
 ## Security & Limits (we’re not reckless)
 

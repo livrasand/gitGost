@@ -225,7 +225,7 @@ func ReceivePackHandler(c *gin.Context) {
 	WriteSidebandLine(&response, 2, "remote: ========================================")
 	WriteSidebandLine(&response, 2, "remote: ")
 	WriteSidebandLine(&response, 2, fmt.Sprintf("remote: PR URL: %s", prURL))
-	WriteSidebandLine(&response, 2, "remote: Author: @gitghost-anonymous")
+	WriteSidebandLine(&response, 2, "remote: Author: @gitgost-anonymous")
 	WriteSidebandLine(&response, 2, fmt.Sprintf("remote: Branch: %s", branch))
 	WriteSidebandLine(&response, 2, "remote: ")
 	WriteSidebandLine(&response, 2, "remote: Your identity has been anonymized.")

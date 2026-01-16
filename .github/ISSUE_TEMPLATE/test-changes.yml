@@ -1,0 +1,44 @@
+name: Test Changes
+description: Propose changes related to testing scenarios
+title: "[TEST] "
+labels: ["test"]
+assignees: []
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the testing changes you are proposing.
+      placeholder: Describe the changes...
+    validations:
+      required: true
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Rationale
+      description: Why are these test changes necessary?
+      placeholder: Explain why...
+    validations:
+      required: true
+  - type: textarea
+    id: test_scenarios
+    attributes:
+      label: Test Scenarios
+      description: List the test scenarios being added, modified, or removed.
+      placeholder: |
+        - Scenario 1: ...
+        - Scenario 2: ...
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Describe the impact on existing tests or codebase.
+      placeholder: Impact on...
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Add any other context or references.
+      placeholder: Any additional information...

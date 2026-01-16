@@ -1,0 +1,56 @@
+name: Experiment Request
+description: Propose an exploratory experiment or prototype
+title: "[EXPERIMENT] "
+labels: ["experiment"]
+assignees: []
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Provide a clear description of the experiment or prototype.
+      placeholder: Describe the experiment...
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What is the objective of this experiment?
+      placeholder: The goal is to...
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Define the scope and boundaries of the experiment.
+      placeholder: What is included/excluded...
+    validations:
+      required: true
+  - type: textarea
+    id: success_criteria
+    attributes:
+      label: Success Criteria
+      description: How will success be measured?
+      placeholder: Success will be measured by...
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks and Considerations
+      description: Identify potential risks, dependencies, or considerations.
+      placeholder: Potential risks...
+  - type: input
+    id: timeline
+    attributes:
+      label: Timeline
+      description: Estimated duration or timeline for the experiment.
+      placeholder: 2 weeks
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Add any other context or references.
+      placeholder: Any additional information...

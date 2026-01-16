@@ -1,0 +1,70 @@
+name: Hotfix Request
+description: Request an urgent fix for a critical production issue
+title: "[HOTFIX] "
+labels: ["bug", "hotfix", "urgent"]
+assignees: []
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Provide a clear and concise description of the critical issue requiring an immediate hotfix.
+      placeholder: Describe the issue...
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Describe the impact of this issue on production, users, or business operations.
+      placeholder: Describe the impact...
+    validations:
+      required: true
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Provide step-by-step instructions to reproduce the issue.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected Behavior
+      description: Describe what should happen instead.
+      placeholder: What should happen...
+    validations:
+      required: true
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: Actual Behavior
+      description: Describe what is currently happening.
+      placeholder: What is happening...
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Provide details about the affected environment (production, staging, etc.).
+      placeholder: "Environment: Production, Version: 1.0.0"
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_fix
+    attributes:
+      label: Proposed Fix
+      description: If known, describe the proposed fix or workaround.
+      placeholder: Describe the fix...
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Add any other context, logs, or references.
+      placeholder: Any additional information...

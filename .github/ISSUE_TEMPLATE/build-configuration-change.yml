@@ -1,0 +1,53 @@
+name: Build Configuration Change
+description: Propose adjustments to the build process or packaging
+title: "[BUILD] "
+labels: ["build"]
+assignees: []
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the build or packaging changes you are proposing.
+      placeholder: Describe the changes...
+    validations:
+      required: true
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Rationale
+      description: Why are these build changes necessary?
+      placeholder: Explain why...
+    validations:
+      required: true
+  - type: textarea
+    id: affected_files
+    attributes:
+      label: Affected Files
+      description: List the build configuration files affected.
+      placeholder: |
+        - Dockerfile
+        - Makefile
+        - build.gradle
+    validations:
+      required: true
+  - type: textarea
+    id: changes
+    attributes:
+      label: Proposed Changes
+      description: Describe the specific changes to be made.
+      placeholder: What changes...
+    validations:
+      required: true
+  - type: textarea
+    id: testing_plan
+    attributes:
+      label: Testing Plan
+      description: How will these changes be tested?
+      placeholder: Testing approach...
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Add any other context or references.
+      placeholder: Any additional information...

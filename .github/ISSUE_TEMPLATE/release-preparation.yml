@@ -1,0 +1,60 @@
+name: Release Preparation
+description: Prepare and manage a new release
+title: "[RELEASE] "
+labels: ["release"]
+assignees: []
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Release Version
+      description: Specify the version number for this release (e.g., 1.2.3).
+      placeholder: 1.2.3
+    validations:
+      required: true
+  - type: dropdown
+    id: release_type
+    attributes:
+      label: Release Type
+      description: Select the type of release.
+      options:
+        - Major
+        - Minor
+        - Patch
+        - Pre-release
+    validations:
+      required: true
+  - type: textarea
+    id: changelog
+    attributes:
+      label: Changelog
+      description: List the changes included in this release.
+      placeholder: |
+        ### Features
+        - Feature 1
+
+        ### Bug Fixes
+        - Bug fix 1
+
+        ### Other
+        - Other changes
+    validations:
+      required: true
+  - type: textarea
+    id: testing_notes
+    attributes:
+      label: Testing Notes
+      description: Describe any testing that has been performed or needs to be done before release.
+      placeholder: Testing performed...
+  - type: input
+    id: target_date
+    attributes:
+      label: Target Release Date
+      description: Proposed release date.
+      placeholder: YYYY-MM-DD
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Add any other context or notes related to this release.
+      placeholder: Any additional information...

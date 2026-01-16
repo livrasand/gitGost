@@ -156,7 +156,7 @@ func ReceivePackHandler(c *gin.Context) {
 	WriteSidebandLine(&response, 2, "remote: gitGost: Processing your anonymous contribution...")
 
 	// Procesar el packfile
-	newSHA, err := git.ReceivePack(tempDir, body, owner, repo)
+	newSHA, commitMessage, err := git.ReceivePack(tempDir, body, owner, repo)
 	if err != nil {
 		utils.Log("Error receiving pack: %v", err)
 		WriteSidebandLine(&response, 3, fmt.Sprintf("unpack error: %v", err))
@@ -200,7 +200,7 @@ func ReceivePackHandler(c *gin.Context) {
 
 	// Crear PR desde el fork al repo original
 	WriteSidebandLine(&response, 2, "remote: gitGost: Creating pull request...")
-	prURL, err := github.CreatePR(owner, repo, branch, forkOwner)
+	prURL, err := github.CreatePR(owner, repo, branch, forkOwner, commitMessage)
 	if err != nil {
 		utils.Log("Error creating PR: %v", err)
 		WriteSidebandLine(&response, 2, "unpack ok")

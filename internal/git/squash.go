@@ -60,12 +60,12 @@ func SquashCommits(tempDir string) (string, error) {
 	// Create new anonymous commit
 	newCommit := &object.Commit{
 		Author: object.Signature{
-			Name:  "gitGost Anonymous",
+			Name:  "@gitgost-anonymous",
 			Email: "anon@gitgost",
 			When:  time.Now(),
 		},
 		Committer: object.Signature{
-			Name:  "gitGost Anonymous",
+			Name:  "@gitgost-anonymous",
 			Email: "anon@gitgost",
 			When:  time.Now(),
 		},

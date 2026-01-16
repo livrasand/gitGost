@@ -320,7 +320,7 @@ func rewriteCommit(r *git.Repository, commit *object.Commit, commitMap map[plumb
 
 	// Crear nuevo commit con información anonimizada
 	anonSignature := object.Signature{
-		Name:  "gitGost Anonymous",
+		Name:  "@gitgost-anonymous",
 		Email: "anonymous@gitgost.local",
 		When:  time.Now(),
 	}

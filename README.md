@@ -2,7 +2,7 @@
 
 **Contribute to any GitHub repo without leaving a trace.**
 
-Zero accounts • Zero tokens • Zero metadata • 100% anonymous
+Zero accounts • Zero tokens • Zero metadata • Designed for strong anonymity
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Powered by Go](https://img.shields.io/badge/Powered%20by-Go-00ADD8.svg?logo=go)](https://go.dev)
@@ -45,6 +45,48 @@ That’s it. No login. No token. No name. No email. No history.
 
 Built for developers who actually care about privacy.
 
+## Threat Model
+
+gitGost is designed to protect against common identification threats in contributions to public repos, but does not offer perfect anonymity. Below details what it protects against, what it does not, who it protects against, and key assumptions.
+
+### gitGost protects against:
+
+* Public exposure of name and email in commits
+* Direct association between personal GitHub account and PR
+* Passive metadata collection in public repos
+* Permanent history of minor contributions
+
+### gitGost does NOT protect against:
+
+* IP identification (using VPN/Tor is recommended)
+* Code style analysis (stylometry)
+* Advanced temporal correlation
+* Targeted deanonymization by adversaries with resources
+
+### Considered adversaries
+
+* Recruiters / HR
+* Hostile maintainers
+* Email scrapers
+* Governments or companies with basic monitoring
+
+### Not considered adversaries
+
+* Nation states with infrastructure access
+* Actors with active user surveillance
+* Deep forensic code style analysis
+
+### Explicit assumptions
+
+gitGost assumes the user:
+
+* Uses a trustworthy network (VPN / Tor)
+* Does not reuse unique phrases or identifiable style
+* Does not mix anonymous and personal contributions to the same repo
+* Understands that perfect anonymity does not exist
+
+For more details, see [SECURITY.md](SECURITY.md).
+
 ## Quick Start
 
 ```bash
@@ -60,15 +102,6 @@ git push gost my-cool-fix:main
 ```
 
 Done. The PR appears instantly from `@ghost-contributor`.
-
-### Want to contribute to this project anonymously?
-
-```bash
-git remote add gost https://gitgost.leapcell.app/v1/gh/livrasand/gitGost
-git push gost my-feature:main
-```
-
-(Yes, even gitGost eats its own dogfood 👻)
 
 ## Security & Limits (we’re not reckless)
 
@@ -86,6 +119,17 @@ Everything is designed to prevent abuse while keeping you anonymous.
 If you run a public instance, you must provide source code.
 
 → [LICENSE](LICENSE)
+
+## Contributing
+
+### Contributing Anonymously
+
+```bash
+git remote add gost https://gitgost.leapcell.app/v1/gh/livrasand/gitGost
+git push gost my-feature:main
+```
+
+(Yes, even gitGost eats its own dogfood 👻)
 
 ## Made with ❤️ for privacy
 

@@ -1,0 +1,46 @@
+name: Documentation Update
+description: Propose updates or creation of documentation
+title: "[DOCS] "
+labels: ["documentation"]
+assignees: []
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the documentation changes you are proposing.
+      placeholder: Describe the changes...
+    validations:
+      required: true
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Rationale
+      description: Why is this documentation update necessary?
+      placeholder: Explain why...
+    validations:
+      required: true
+  - type: textarea
+    id: affected_docs
+    attributes:
+      label: Affected Documentation
+      description: List the documentation files or sections affected.
+      placeholder: |
+        - README.md
+        - docs/installation.md
+    validations:
+      required: true
+  - type: textarea
+    id: changes
+    attributes:
+      label: Proposed Changes
+      description: Describe the specific changes to be made.
+      placeholder: What changes...
+    validations:
+      required: true
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Add any other context or references.
+      placeholder: Any additional information...

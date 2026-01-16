@@ -1,0 +1,52 @@
+name: Refactoring Request
+description: Propose code restructuring without altering behavior
+title: "[REFACTOR] "
+labels: ["refactor"]
+assignees: []
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the refactoring you are proposing.
+      placeholder: Describe the refactoring...
+    validations:
+      required: true
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Rationale
+      description: Why is this refactoring necessary? What benefits does it provide?
+      placeholder: Explain why...
+    validations:
+      required: true
+  - type: textarea
+    id: affected_code
+    attributes:
+      label: Affected Code
+      description: Identify the code sections or files that will be refactored.
+      placeholder: |
+        - File1.go: function X
+        - File2.go: class Y
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_changes
+    attributes:
+      label: Proposed Changes
+      description: Describe the specific changes to be made.
+      placeholder: What changes...
+    validations:
+      required: true
+  - type: textarea
+    id: testing_plan
+    attributes:
+      label: Testing Plan
+      description: How will you ensure the refactoring doesn't break functionality?
+      placeholder: Testing approach...
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Add any other context or references.
+      placeholder: Any additional information...

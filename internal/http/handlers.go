@@ -238,6 +238,10 @@ func ReceivePackHandler(c *gin.Context) {
 	WritePktLine(&response, "") // flush final
 
 	c.Writer.Write(response.Bytes())
+	c.Writer.Flush()
+
+	// Pequeño delay para permitir que Git procese la respuesta y cierre su lado primero
+	time.Sleep(100 * time.Millisecond)
 }
 
 // sendErrorResponse envía una respuesta de error en formato Git protocol

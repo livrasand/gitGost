@@ -14,6 +14,8 @@ type Config struct {
 	APIKey       string
 	GitHubToken  string
 	LogFormat    string // "text" or "json"
+	SupabaseURL  string
+	SupabaseKey  string
 }
 
 // Load reads configuration from environment variables with defaults
@@ -25,6 +27,8 @@ func Load() *Config {
 		APIKey:       getEnv("GITGOST_API_KEY", ""),
 		GitHubToken:  getEnv("GITHUB_TOKEN", ""),
 		LogFormat:    getEnv("LOG_FORMAT", "text"), // "text" or "json"
+		SupabaseURL:  getEnv("SUPABASE_URL", ""),
+		SupabaseKey:  getEnv("SUPABASE_KEY", ""),
 	}
 
 	return cfg

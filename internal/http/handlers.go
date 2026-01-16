@@ -2,18 +2,16 @@ package http
 
 import (
 	"bytes"
-	"encoding/json"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"runtime"
-	"sort"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/livrasand/gitGost/internal/database"
 	"github.com/livrasand/gitGost/internal/git"
 	"github.com/livrasand/gitGost/internal/github"
 	"github.com/livrasand/gitGost/internal/utils"
@@ -213,7 +211,7 @@ func ReceivePackHandler(c *gin.Context) {
 	utils.Log("Created PR: %s", prURL)
 
 	// Registrar estadísticas
-	if err := RecordPR(owner, repo, prURL); err != nil {
+	if err := RecordPR(c.Request.Context(), owner, repo, prURL); err != nil {
 		utils.Log("Error recording stats: %v", err)
 		// No fallamos si solo falla las estadísticas
 	}
@@ -275,132 +273,83 @@ func MetricsHandler(c *gin.Context) {
 	})
 }
 
-var startTime = time.Now()
-
-// PRRecord representa un PR anonimizado
-type PRRecord struct {
-	ID        string    `json:"id"`
-	Owner     string    `json:"owner"`
-	Repo      string    `json:"repo"`
-	URL       string    `json:"url"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
-// Stats representa las estadísticas globales
-type Stats struct {
-	TotalPRs    int        `json:"total_prs"`
-	RecentPRs   []PRRecord `json:"recent_prs"`
-	LastUpdated time.Time  `json:"last_updated"`
-}
-
 var (
-	statsFile = filepath.Join(os.TempDir(), "gitgost-stats.json")
-	statsMux  sync.RWMutex
+	startTime = time.Now()
+	dbClient  *database.SupabaseClient
+	dbOnce    sync.Once
 )
 
-// LoadStats carga las estadísticas desde el archivo
-func LoadStats() (*Stats, error) {
-	statsMux.RLock()
-	defer statsMux.RUnlock()
-
-	data, err := os.ReadFile(statsFile)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return &Stats{
-				TotalPRs:    0,
-				RecentPRs:   []PRRecord{},
-				LastUpdated: time.Now(),
-			}, nil
-		}
-		return nil, err
-	}
-
-	var stats Stats
-	if err := json.Unmarshal(data, &stats); err != nil {
-		return nil, err
-	}
-
-	return &stats, nil
+// InitDatabase inicializa el cliente de Supabase de forma thread-safe
+func InitDatabase(url, key string) {
+	dbOnce.Do(func() {
+		dbClient = database.NewSupabaseClient(url, key)
+	})
 }
 
-// SaveStats guarda las estadísticas en el archivo
-func SaveStats(stats *Stats) error {
-	statsMux.Lock()
-	defer statsMux.Unlock()
-
-	stats.LastUpdated = time.Now()
-	data, err := json.MarshalIndent(stats, "", "  ")
-	if err != nil {
-		return err
+// RecordPR registra un nuevo PR anonimizado en Supabase
+func RecordPR(ctx context.Context, owner, repo, prURL string) error {
+	if dbClient == nil {
+		return fmt.Errorf("database client not initialized")
 	}
-
-	return os.WriteFile(statsFile, data, 0644)
-}
-
-// RecordPR registra un nuevo PR anonimizado
-func RecordPR(owner, repo, prURL string) error {
-	stats, err := LoadStats()
-	if err != nil {
-		return err
-	}
-
-	pr := PRRecord{
-		ID:        generateID(),
-		Owner:     owner,
-		Repo:      repo,
-		URL:       prURL,
-		CreatedAt: time.Now(),
-	}
-
-	stats.TotalPRs++
-	stats.RecentPRs = append([]PRRecord{pr}, stats.RecentPRs...)
-
-	// Mantener solo los últimos 50 PRs
-	if len(stats.RecentPRs) > 50 {
-		stats.RecentPRs = stats.RecentPRs[:50]
-	}
-
-	return SaveStats(stats)
-}
-
-// generateID genera un ID único para el PR
-func generateID() string {
-	return time.Now().Format("20060102150405")
+	return dbClient.InsertPR(ctx, owner, repo, prURL)
 }
 
 // StatsHandler maneja el endpoint de estadísticas
 func StatsHandler(c *gin.Context) {
-	stats, err := LoadStats()
+	if dbClient == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database not configured"})
+		return
+	}
+
+	totalPRs, err := dbClient.GetTotalPRs(c.Request.Context())
 	if err != nil {
+		utils.Log("Error getting total PRs: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load stats"})
 		return
 	}
 
-	c.JSON(http.StatusOK, stats)
+	lastUpdated, err := dbClient.GetLatestPRCreatedAt(c.Request.Context())
+	if err != nil {
+		utils.Log("Error getting latest PR timestamp: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load stats"})
+		return
+	}
+
+	response := gin.H{
+		"total_prs": totalPRs,
+	}
+
+	// Solo incluir last_updated si hay PRs
+	if lastUpdated != nil {
+		response["last_updated"] = lastUpdated
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
-// RecentPRsHandler devuelve los PRs recientes con paginación
+// RecentPRsHandler devuelve los PRs recientes
 func RecentPRsHandler(c *gin.Context) {
-	stats, err := LoadStats()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load stats"})
+	if dbClient == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database not configured"})
 		return
 	}
 
-	// Limitar a los últimos 10 PRs por defecto
-	limit := 10
-	recent := stats.RecentPRs
-	if len(recent) > limit {
-		recent = recent[:limit]
+	prs, err := dbClient.GetRecentPRs(c.Request.Context(), 10)
+	if err != nil {
+		utils.Log("Error getting recent PRs: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load PRs"})
+		return
 	}
 
-	// Ordenar por fecha descendente
-	sort.Slice(recent, func(i, j int) bool {
-		return recent[i].CreatedAt.After(recent[j].CreatedAt)
-	})
+	totalPRs, err := dbClient.GetTotalPRs(c.Request.Context())
+	if err != nil {
+		utils.Log("Error getting total PRs: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load total count"})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"prs":   recent,
-		"total": stats.TotalPRs,
+		"prs":   prs,
+		"total": totalPRs,
 	})
 }

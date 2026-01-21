@@ -37,12 +37,12 @@ That’s it. No login. No token. No name. No email. No history.
 
 To signal that your repository welcomes anonymous contributions via gitGost, add this badge to your README:
 
-![Anonymous Contributor Friendly](https://gitgost.io/badges/anonymous-friendly.svg)
+![Anonymous Contributor Friendly](https://gitgost.leapcell.app/badges/anonymous-friendly.svg)
 
 
 For verified repositories, add a `.gitgost.yml` file to your repository root and use the dynamic version:
 
-![Anonymous Contributor Friendly](https://gitgost.io/badges/anonymous-friendly.svg?repo=livrasand/gitGost)
+![Anonymous Contributor Friendly](https://gitgost.leapcell.app/badges/anonymous-friendly.svg?repo=livrasand%2FgitGost)
 
 This badge helps contributors know that anonymous contributions are accepted and encouraged.
 

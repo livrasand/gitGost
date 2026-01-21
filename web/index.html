@@ -222,6 +222,115 @@
             opacity: 0.6;
         }
 
+        /* Badge section */
+        .badge-wrap {
+            background: linear-gradient(145deg, rgba(255,166,87,0.12), rgba(255,107,107,0.12));
+            border: 1px solid var(--accent);
+            border-radius: 14px;
+            padding: 1px;
+        }
+        .badge-inner {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 1.8rem;
+        }
+        .badge-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.2rem;
+            align-items: start;
+        }
+        .badge-meta {
+            display: grid;
+            gap: .6rem;
+        }
+        .badge-preview {
+            display: inline-flex;
+            align-items: center;
+            gap: .6rem;
+            padding: .5rem .8rem;
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: fit-content;
+        }
+        .badge-code {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            padding: .9rem;
+            border-radius: 8px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: .9rem;
+            overflow-x: auto;
+        }
+        .badge-generator {
+            display: grid;
+            gap: .6rem;
+        }
+        .badge-generator label { font-weight: 600; opacity: .85; }
+        .badge-generator input {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: .75rem .9rem;
+            color: var(--fg);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        .badge-generator button {
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            padding: .85rem 1.1rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            cursor: pointer;
+            transition: all .2s ease;
+            box-shadow: 0 6px 18px rgba(255,166,87,.35);
+        }
+        .badge-generator button:hover {
+            background: var(--accent-dark);
+            box-shadow: 0 10px 24px rgba(255,166,87,.45);
+        }
+        .badge-result {
+            min-height: 24px;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        .badge-copy-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: .6rem;
+            align-items: center;
+        }
+        .badge-copy-row input {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: .75rem .9rem;
+            color: var(--fg);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        .badge-copy-row button {
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            padding: .7rem .95rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            cursor: pointer;
+            transition: all .2s ease;
+            box-shadow: 0 6px 18px rgba(255,166,87,.35);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .35rem;
+        }
+        .badge-copy-row button:hover {
+            background: var(--accent-dark);
+            box-shadow: 0 10px 24px rgba(255,166,87,.45);
+        }
+
         .btn {
             display: inline-block;
             background: var(--accent);
@@ -259,10 +368,37 @@
         }
         .footer a { color: var(--accent); text-decoration: none; }
 
-        @media (max-width: 480px) {
+@media (max-width: 768px) {
             body { padding: 1.5rem .8rem; }
-            nav { gap: 1.2rem; font-size: .95rem; }
-            .pr-item { flex-direction: column; align-items: flex-start; }
+            main { max-width: 100%; }
+            header { margin-bottom: 2rem; }
+            nav { gap: 1.2rem; font-size: .95rem; flex-direction: column; align-items: center; }
+            .badges { gap: .4rem; }
+            .badge { padding: .25rem .7rem; font-size: .75rem; }
+            .stats-banner { padding: 1.5rem; margin: 1.5rem 0 2rem; }
+            .stats-number { font-size: clamp(2.5rem, 8vw, 4rem); }
+            .stats-label { font-size: 1rem; }
+            .terminal { padding: 1rem; font-size: clamp(0.8rem, 2vw, 0.95rem); }
+            .grid { gap: 1rem; }
+            .card { padding: 1.5rem; }
+            .card h3 { font-size: 1.1rem; }
+            .pr-list { padding: 1rem; }
+            .pr-item { padding: 0.8rem; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+            .pr-link { align-self: flex-end; }
+            .btn { padding: .8rem 1.8rem; font-size: 0.95rem; }
+            h2 { margin: 3rem 0 1.5rem; font-size: clamp(1.5rem, 4vw, 2rem); }
+            .footer { margin-top: 4rem; padding-top: 2rem; font-size: .85rem; }
+        }
+        @media (max-width: 480px) {
+            body { padding: 1rem .6rem; }
+            nav { gap: 1rem; font-size: .9rem; }
+            .badges { justify-content: center; }
+            .stats-banner { padding: 1rem; }
+            .terminal { padding: 0.8rem; }
+            .grid { grid-template-columns: 1fr; gap: 1rem; }
+            .card { padding: 1.2rem; }
+            .pr-item { padding: 0.6rem; }
+            .btn { padding: .7rem 1.5rem; font-size: 0.9rem; }
         }
     </style>
 </head>
@@ -284,6 +420,7 @@
             <a href="#recent">Recent PRs</a>
             <a href="#features">Features</a>
             <a href="#why">Why</a>
+            <a href="#badge">Badge</a>
             <a href="https://github.com/livrasand/gitGost" target="_blank">GitHub ↗</a>
         </nav>
         <section id="usage">
@@ -297,14 +434,6 @@ This commit fixes a grammatical error in the README.
 The word 'recieve' should be 'receive'."
 <span class="prompt">$</span> git push gost fix-typo:main
 <span class="success">→</span> Anonymized commit + PR opened as @gitgost-anonymous
-            </div>
-
-            <div class="card" style="margin-top: 2rem; background: linear-gradient(135deg, rgba(255,166,87,0.15), rgba(255,107,107,0.15)); border: 2px solid var(--accent); box-shadow: 0 4px 20px rgba(255,107,107,0.2);">
-                <div style="text-align: center; margin-bottom: 1rem;">
-                    <h3 style="margin: 0.5rem 0; font-size: 1.5rem; color: var(--accent);">NEW: Your Commit Message = PR Description</h3>
-                </div>
-                <p style="text-align: center; font-size: 1.1rem; margin-bottom: 1rem;"><strong>Write detailed commit messages!</strong> They become the PR description automatically.</p>
-                <p style="text-align: center; opacity: 0.85; font-size: 0.95rem;">Provide full context, explain your changes, discuss implementation details — all while staying <strong>completely anonymous</strong>. No more generic "Anonymous contribution" messages.</p>
             </div>
 
          <!-- Contador de PRs -->
@@ -361,6 +490,39 @@ The word 'recieve' should be 'receive'."
             <div class="card">
                 <h3>Sometimes you just want to be a ghost</h3>
                 <p>One-line typo fixes don't need your name attached for eternity.</p>
+            </div>
+        </section>
+
+        <h2 id="badge">Anonymous Contributor Friendly Badge</h2>
+        <section class="badge-wrap">
+            <div class="badge-inner">
+                <div class="badge-layout">
+                    <div class="badge-meta">
+                        <h3 style="margin: 0; color: var(--accent);">Welcome anonymous contributions</h3>
+                        <p>Make it visible that your repository accepts PRs via gitGost. Use the static badge or generate a dynamic one for verified repos (.gitgost.yml).</p>
+                        <div class="badge-preview">
+                            <img src="/badges/anonymous-friendly.svg" alt="Anonymous Contributor Friendly" style="height: 22px;">
+                        </div>
+                        <div class="badge-code">
+                            ![Anonymous Contributor Friendly](https://gitgost.leapcell.app/badges/anonymous-friendly.svg)
+                        </div>
+                    </div>
+                    <div class="badge-generator" id="badge-generator">
+                        <label for="repo-input">Repository (owner/repo)</label>
+                        <input type="text" id="repo-input" placeholder="livrasand/gitGost">
+                        <button onclick="generateBadge()">Generate dynamic badge</button>
+                        <div class="badge-result" id="badge-result"></div>
+                        <div class="badge-copy-row" id="badge-copy-row" style="display:none;">
+                            <input type="text" id="badge-markdown" readonly>
+                            <button id="badge-copy-btn" onclick="copyBadgeMarkdown()" aria-label="Copy markdown" title="Copy">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+                                    <path fill="currentColor" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path>
+                                    <path fill="currentColor" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -447,6 +609,51 @@ The word 'recieve' should be 'receive'."
             if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
             if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
             return date.toLocaleDateString();
+        }
+
+        // Generar badge dinámico
+        async function generateBadge() {
+            const repo = document.getElementById('repo-input').value.trim();
+            const result = document.getElementById('badge-result');
+            const copyRow = document.getElementById('badge-copy-row');
+            const copyInput = document.getElementById('badge-markdown');
+            if (!repo) {
+                result.innerHTML = '<p>Please enter a repository.</p>';
+                if (copyRow) copyRow.style.display = 'none';
+                return;
+            }
+            const url = `${API_BASE}/badges/anonymous-friendly.svg?repo=${encodeURIComponent(repo)}`;
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    const markdown = `![Anonymous Contributor Friendly](${url})`;
+                    result.innerHTML = `<img src="${url}" alt="Anonymous Contributor Friendly" style="height: 20px;"><br><code>${markdown}</code>`;
+                    if (copyInput && copyRow) {
+                        copyInput.value = markdown;
+                        copyRow.style.display = 'grid';
+                    }
+                } else {
+                    result.innerHTML = '<p>Repository not verified. Add a .gitgost.yml file to your repo root to enable the dynamic badge.</p>';
+                    if (copyRow) copyRow.style.display = 'none';
+                }
+            } catch (error) {
+                result.innerHTML = '<p>Error generating badge.</p>';
+                if (copyRow) copyRow.style.display = 'none';
+            }
+        }
+
+        function copyBadgeMarkdown() {
+            const input = document.getElementById('badge-markdown');
+            const btn = document.getElementById('badge-copy-btn');
+            if (!input) return;
+            input.select();
+            input.setSelectionRange(0, input.value.length);
+            navigator.clipboard?.writeText(input.value);
+            if (btn) {
+                const original = btn.innerHTML;
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg>`;
+                setTimeout(() => { btn.innerHTML = original; }, 1200);
+            }
         }
 
         // Cargar datos al iniciar

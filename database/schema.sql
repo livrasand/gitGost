@@ -33,3 +33,41 @@ CREATE POLICY "Allow public read access" ON prs
     USING (true);
 
 -- No UPDATE or DELETE policies - data is immutable once created
+
+-- Tabla de karma por hash
+CREATE TABLE IF NOT EXISTS karma (
+    hash TEXT PRIMARY KEY,
+    karma INTEGER NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE karma ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow anonymous upsert karma" ON karma
+    FOR INSERT
+    WITH CHECK (true);
+CREATE POLICY "Allow anonymous update karma" ON karma
+    FOR UPDATE
+    USING (true)
+    WITH CHECK (true);
+CREATE POLICY "Allow public read karma" ON karma
+    FOR SELECT
+    USING (true);
+
+-- Tabla de reportes por hash
+CREATE TABLE IF NOT EXISTS reports (
+    id BIGSERIAL PRIMARY KEY,
+    hash TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    ip TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_reports_hash ON reports(hash);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_reports_hash_ip ON reports(hash, ip);
+ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow anonymous insert reports" ON reports
+    FOR INSERT
+    WITH CHECK (true);
+CREATE POLICY "Allow public read reports" ON reports
+    FOR SELECT
+    USING (true);

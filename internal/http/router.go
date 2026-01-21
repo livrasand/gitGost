@@ -103,6 +103,11 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	// Badges
 	r.GET("/badges/:badge", BadgeHandler)
 
+	// Static pages
+	r.StaticFile("/approach.html", "./web/approach.html")
+	r.StaticFile("/guidelines.html", "./web/guidelines.html")
+	r.StaticFile("/karma.html", "./web/karma.html")
+
 	// Static assets
 	r.Static("/assets", "./web/assets")
 
@@ -126,8 +131,16 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 
 			// Git Smart HTTP - receive-pack (push)
 			gh.POST("/:owner/:repo/git-receive-pack", ReceivePackHandler)
+
+			// Issues y comentarios anónimos
+			gh.POST("/:owner/:repo/issues/anonymous", CreateAnonymousIssueHandler)
+			gh.POST("/:owner/:repo/issues/:number/comments/anonymous", CreateAnonymousCommentHandler)
 		}
 	}
+
+	// Reportes de hash (sin validación de owner/repo en path)
+	r.GET("/v1/moderation/report", ReportHashHandler)
+	r.POST("/v1/moderation/report", ReportHashHandler)
 
 	// API routes - Public stats
 	api := r.Group("/api")

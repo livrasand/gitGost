@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>gitGost · Karma</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --fg: #e6edf3;
+      --muted: #8b949e;
+      --card: #111720;
+      --border: #1f2a3a;
+      --accent: #d16014;
+      --code-bg: #161b22;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.6;
+      padding: 2rem 1rem 3rem;
+      display: flex;
+      justify-content: center;
+    }
+    .shell { width: min(960px, 100%); }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    h1 { margin: 0; font-size: clamp(1.7rem, 3vw, 2rem); }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .35rem .75rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.4rem;
+      box-shadow: 0 10px 32px rgba(0,0,0,.28);
+      margin-bottom: 1rem;
+    }
+    h3 { margin-top: 0; color: var(--accent); }
+    ul { margin: .4rem 0 1rem 1.2rem; padding: 0; }
+    li { margin-bottom: .45rem; }
+    p { margin: 0 0 .75rem 0; color: var(--fg); }
+    .muted { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div>
+        <h1>gitGost · Karma</h1>
+        <div class="muted">How the anonymous reputation tied to your hash works.</div>
+      </div>
+      <a class="pill" href="/index.html">← Back to home</a>
+    </header>
+
+    <div class="card">
+      <p><strong>What is karma?</strong> It’s the anonymous reputation linked to your hash. It rises when your contributions are useful and drops when abuse is reported. It doesn’t expose your identity; it only signals trustworthiness.</p>
+    </div>
+
+    <div class="card">
+      <h3>How it works</h3>
+      <ul>
+        <li>Every anonymous hash starts with karma 0.</li>
+        <li>If your comments or issues are accepted or helpful, karma goes up.</li>
+        <li>If they’re reported for abuse or spam, karma goes down.</li>
+        <li>Karma travels with you while you use the same hash (or optional user token).</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Why it matters</h3>
+      <p>Good karma makes your anonymous contributions trustworthy to maintainers without revealing who you are. Low karma can block posts until reviewed.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem;">
+      <h3>Privacy first</h3>
+      <p>We don’t store personal data: only the anonymous hash, its karma, and the relationship to the messages sent. We don’t track IPs or link identities.</p>
+    </div>
+  </div>
+</body>
+</html>

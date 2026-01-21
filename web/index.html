@@ -25,6 +25,7 @@
     <meta name="theme-color" content="#d16014">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
             --bg: #0d1117;
@@ -35,6 +36,7 @@
             --card: #161b22;
             --code-bg: #010409;
         }
+
         @media (prefers-color-scheme: light) {
             :root {
                 --bg: #ffffff;
@@ -133,6 +135,63 @@
             transition: all .2s;
         }
         nav a:hover { opacity: 1; color: var(--accent); }
+
+        /* Markdown editor */
+        .md-editor {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card);
+        }
+
+        .md-tab {
+            border-radius: 0;
+        }
+
+        .md-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+        }
+        .md-tab {
+            flex: 1;
+            padding: .65rem;
+            background: transparent;
+            border: none;
+            color: var(--fg);
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .md-tab.active { border-bottom-color: var(--accent); color: var(--accent); }
+        .md-input {
+            width: 100%;
+            min-height: 160px;
+            border: none;
+            background: transparent;
+            color: var(--fg);
+            padding: 1rem;
+            resize: vertical;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        .md-input:focus { outline: none; }
+        .md-preview {
+            padding: 1rem;
+            min-height: 160px;
+        }
+        .md-preview pre { background: var(--code-bg); padding: .8rem; border-radius: 6px; overflow: auto; }
+        .md-preview code { background: var(--code-bg); padding: .2rem .35rem; border-radius: 4px; }
+        .md-preview blockquote { border-left: 4px solid var(--border); margin: 0; padding-left: .75rem; color: #8b949e; }
+        .md-preview ul, .md-preview ol { padding-left: 1.25rem; }
+
+        /* Sin flechas en inputs numéricos */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            appearance: textfield;
+            -moz-appearance: textfield;
+        }
 
         .terminal {
             background: var(--code-bg);
@@ -276,21 +335,21 @@
             color: var(--fg);
             font-family: 'IBM Plex Mono', monospace;
         }
-        .badge-generator button {
-            background: var(--accent);
+        button {
+            margin-top: 14px;
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
             border: none;
-            color: #fff;
-            padding: .85rem 1.1rem;
-            border-radius: 8px;
+            background: linear-gradient(135deg, #ffa657, #ff6b6b);
+            color: #0d1117;
             font-weight: 700;
-            font-family: 'IBM Plex Mono', monospace;
+            font-size: 15px;
             cursor: pointer;
-            transition: all .2s ease;
-            box-shadow: 0 6px 18px rgba(255,166,87,.35);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
         }
-        .badge-generator button:hover {
-            background: var(--accent-dark);
-            box-shadow: 0 10px 24px rgba(255,166,87,.45);
+        .badge-generator button {
+            font-family: 'IBM Plex Mono', monospace;
         }
         .badge-result {
             min-height: 24px;
@@ -311,43 +370,153 @@
             font-family: 'IBM Plex Mono', monospace;
         }
         .badge-copy-row button {
-            background: var(--accent);
-            border: none;
-            color: #fff;
-            padding: .7rem .95rem;
-            border-radius: 8px;
-            font-weight: 700;
             font-family: 'IBM Plex Mono', monospace;
-            cursor: pointer;
-            transition: all .2s ease;
-            box-shadow: 0 6px 18px rgba(255,166,87,.35);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: .35rem;
         }
-        .badge-copy-row button:hover {
-            background: var(--accent-dark);
-            box-shadow: 0 10px 24px rgba(255,166,87,.45);
+
+        /* Forms para issues anónimas */
+        .issue-section {
+            background: linear-gradient(145deg, rgba(255,166,87,0.16), rgba(255,107,107,0.14));
+            border: 1px solid rgba(255,166,87,0.55);
+            border-radius: 16px;
+            padding: 1.5px;
+            margin: 2rem 0;
+            box-shadow: 0 16px 38px rgba(0,0,0,.42);
+        }
+        .issue-shell {
+            background: rgba(21,21,30,0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 14px;
+            padding: 2rem;
+            display: grid;
+            gap: 1.35rem;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+        .issue-header {
+            display: grid;
+            gap: .4rem;
+        }
+        .issue-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            padding: .35rem .75rem;
+            background: rgba(255,166,87,0.12);
+            color: var(--accent);
+            border: 1px solid rgba(255,166,87,0.5);
+            border-radius: 999px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: .85rem;
+            width: fit-content;
+        }
+        .issue-sub {
+            opacity: .8;
+            max-width: 620px;
+        }
+        .issue-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.1rem;
+        }
+        .issue-form {
+            position: relative;
+            overflow: hidden;
+            display: grid;
+            gap: .75rem;
+            background: radial-gradient(circle at 20% 20%, rgba(255,166,87,0.08), transparent 45%), var(--code-bg);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 1.35rem 1.35rem;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 10px 28px rgba(0,0,0,.38);
+        }
+        .issue-form::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: linear-gradient(135deg, rgba(255,166,87,0.12), rgba(255,107,107,0.08));
+            opacity: .35;
+            pointer-events: none;
+        }
+        .issue-form h3 {
+            position: relative;
+            z-index: 1;
+            margin: 0;
+            color: var(--accent);
+            letter-spacing: .01em;
+        }
+        .issue-form label {
+            position: relative;
+            z-index: 1;
+            font-weight: 700;
+            opacity: .9;
+            letter-spacing: .01em;
+        }
+        .issue-form input, .issue-form textarea {
+            position: relative;
+            z-index: 1;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: .85rem 1rem;
+            color: var(--fg);
+            font-family: 'IBM Plex Mono', monospace;
+            transition: border-color .18s ease, box-shadow .18s ease, transform .12s ease;
+        }
+        .issue-form input:focus, .issue-form textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(255,166,87,0.2);
+            transform: translateY(-1px);
+        }
+        .issue-form textarea { min-height: 150px; resize: vertical; }
+        .issue-actions {
+            display: flex;
+            gap: .6rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .issue-status {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: .9rem;
+            opacity: .8;
+        }
+        .issue-note {
+            font-size: .9rem;
+            opacity: .8;
+            margin-top: .4rem;
+        }
+        .snippet {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            font-family: 'IBM Plex Mono', monospace;
+            overflow-x: auto;
+            white-space: pre;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
         }
 
         .btn {
             display: inline-block;
-            background: var(--accent);
-            color: #fff;
-            padding: .9rem 2rem;
-            border-radius: 8px;
+            width: 100%;
+            background: linear-gradient(135deg, #ffa657, #ff6b6b);
+            color: #0d1117;
+            padding: 12px;
+            border-radius: 10px;
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 700;
             font-family: 'IBM Plex Mono', monospace;
-            font-size: 1rem;
-            transition: all .25s;
-            box-shadow: 0 4px 16px rgba(255,166,87,.4);
+            font-size: 15px;
+            transition: all .2s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            border: none;
         }
         .btn:hover {
-            background: var(--accent-dark);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(255,166,87,.5);
+            transform: translateY(-2px);
         }
         .btn-center { text-align: center; margin: 2rem 0; }
 
@@ -471,7 +640,12 @@ The word 'recieve' should be 'receive'."
                 <h3>Battle-tested Security</h3>
                 <p>Rate limiting, size caps, validation. Pure Go, minimal deps, fully auditable.</p>
             </div>
+            <div class="card">
+                <h3>Anonymous issues & comments</h3>
+                <p>Open issues and comment on any repo without revealing identity. Each message carries a stable anonymous hash.</p>
+            </div>
         </section>
+
 
         <h2>Why developers love gitGost</h2>
         <section id="why" class="grid">
@@ -490,6 +664,78 @@ The word 'recieve' should be 'receive'."
             <div class="card">
                 <h3>Sometimes you just want to be a ghost</h3>
                 <p>One-line typo fixes don't need your name attached for eternity.</p>
+            </div>
+        </section>
+
+        <!-- Anonymous Issues section -->
+        <h2 id="issues">Anonymous Issues</h2>
+        <section class="issue-section">
+            <div class="issue-shell">
+                <div class="issue-header">
+                    <div class="issue-eyebrow">Anonymous issues + comments</div>
+                    <div class="issue-sub">Create issues or comment without exposing your identity. We only keep what’s essential: URL, anonymous hash, and <a href="/karma.html" style="color: var(--accent);">karma</a>.</div>
+                </div>
+                <div class="issue-grid">
+                    <div>
+                        <div class="issue-form" aria-labelledby="create-issue-title">
+                            <h3 id="create-issue-title" style="margin:0; color: var(--accent);">Create anonymous issue</h3>
+                            <div class="issue-note" style="margin-bottom: .75rem;">
+                                If you haven't already, would you mind reading our <a href="/approach.html" style="color: var(--accent);">approach to comments</a> and <a href="/guidelines.html" style="color: var(--accent);">guidelines</a>?
+                            </div>
+                            <label for="issue-owner">Owner</label>
+                            <input id="issue-owner" type="text" placeholder="torvalds" autocomplete="off">
+                            <label for="issue-repo">Repo</label>
+                            <input id="issue-repo" type="text" placeholder="linux" autocomplete="off">
+                            <label for="issue-title">Título</label>
+                            <input id="issue-title" type="text" placeholder="Auth bug" autocomplete="off">
+                            <label for="issue-body">Descripción</label>
+                            <div class="md-editor" id="issue-md-editor">
+                                <div class="md-tabs">
+                                    <button type="button" class="md-tab active" data-tab="write" id="issue-tab-write">Write</button>
+                                    <button type="button" class="md-tab" data-tab="preview" id="issue-tab-preview">Preview</button>
+                                </div>
+                                <textarea id="issue-body" class="md-input" placeholder="Steps to reproduce..." aria-label="Issue markdown"></textarea>
+                                <div class="md-preview" id="issue-preview" style="display:none;"></div>
+                            </div>
+                            <label for="issue-labels">Labels (opcional, separadas por coma)</label>
+                            <input id="issue-labels" type="text" placeholder="bug, security" autocomplete="off">
+                            <div class="issue-actions">
+                                <button class="btn" id="issue-submit">Create anonymous issue</button>
+                                <div class="issue-status" id="issue-status"></div>
+                            </div>
+                            <div class="issue-note">Do not include personal data. We only keep URL + anonymous hash.</div>
+                            <div class="issue-note" id="issue-result"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="issue-form" aria-labelledby="comment-issue-title">
+                            <h3 id="comment-issue-title" style="margin:0; color: var(--accent);">Post anonymous comment</h3>
+                            <label for="comment-owner">Owner</label>
+                            <input id="comment-owner" type="text" placeholder="torvalds" autocomplete="off">
+                            <label for="comment-repo">Repo</label>
+                            <input id="comment-repo" type="text" placeholder="linux" autocomplete="off">
+                            <label for="comment-number">Issue #</label>
+                            <input id="comment-number" type="number" min="1" placeholder="123" autocomplete="off">
+                            <label for="comment-token">User token (optional)</label>
+                            <input id="comment-token" type="text" placeholder="LS12-ASAS-1233" autocomplete="off">
+                            <label for="comment-body">Mensaje</label>
+                            <div class="md-editor" id="comment-md-editor">
+                                <div class="md-tabs">
+                                    <button type="button" class="md-tab active" data-tab="write" id="comment-tab-write">Write</button>
+                                    <button type="button" class="md-tab" data-tab="preview" id="comment-tab-preview">Preview</button>
+                                </div>
+                                <textarea id="comment-body" class="md-input" placeholder="Your comment..." aria-label="Comment markdown"></textarea>
+                                <div class="md-preview" id="comment-preview" style="display:none;"></div>
+                            </div>
+                            <div class="issue-actions">
+                                <button class="btn" id="comment-submit">Send comment</button>
+                                <div class="issue-status" id="comment-status"></div>
+                            </div>
+                            <div class="issue-note" id="comment-result"></div>
+                            <div class="issue-note">Comments include a footer: anonymous hash + <a href="/karma.html" style="color: var(--accent);">karma</a> + report link.</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -655,6 +901,220 @@ The word 'recieve' should be 'receive'."
                 setTimeout(() => { btn.innerHTML = original; }, 1200);
             }
         }
+
+        // --- Markdown helpers ---
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const el = document.createElement('script');
+                el.src = src;
+                el.onload = () => resolve();
+                el.onerror = () => reject(new Error(`Failed to load ${src}`));
+                document.head.appendChild(el);
+            });
+        }
+
+        async function ensureMarkedLoaded() {
+            if (window.marked?.parse) return true;
+            const cdns = [
+                'https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js',
+                'https://unpkg.com/marked@12.0.2/marked.min.js'
+            ];
+            for (const src of cdns) {
+                try {
+                    await loadScript(src);
+                    if (window.marked?.parse) return true;
+                } catch (e) {
+                    console.warn(e.message);
+                }
+            }
+            return false;
+        }
+
+        function escapeHtml(str) {
+            return (str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function renderMarkdown(value) {
+            const safe = value || '';
+            if (window.marked?.parse) {
+                return window.marked.parse(safe);
+            }
+            return escapeHtml(safe).replace(/\n/g, '<br>');
+        }
+
+        function setupMarkdownEditor({ textareaId, previewId, tabWriteId, tabPreviewId }) {
+            const textarea = document.getElementById(textareaId);
+            const preview = document.getElementById(previewId);
+            const tabWrite = document.getElementById(tabWriteId);
+            const tabPreview = document.getElementById(tabPreviewId);
+
+            if (!textarea || !preview || !tabWrite || !tabPreview) {
+                return;
+            }
+
+            const showWrite = () => {
+                tabWrite.classList.add('active');
+                tabPreview.classList.remove('active');
+                textarea.style.display = 'block';
+                preview.style.display = 'none';
+            };
+
+            const showPreview = () => {
+                tabPreview.classList.add('active');
+                tabWrite.classList.remove('active');
+                textarea.style.display = 'none';
+                preview.style.display = 'block';
+                const value = textarea.value || '';
+                preview.innerHTML = value.trim() ? renderMarkdown(value) : '<p style="opacity:.6;">Nothing to preview</p>';
+            };
+
+            tabWrite.addEventListener('click', showWrite);
+            tabPreview.addEventListener('click', showPreview);
+
+            // Sync on input for smoother preview if already visible
+            textarea.addEventListener('input', () => {
+                if (preview.style.display !== 'none') {
+                    const value = textarea.value || '';
+                    preview.innerHTML = value.trim() ? renderMarkdown(value) : '<p style="opacity:.6;">Nothing to preview</p>';
+                }
+            });
+
+            showWrite();
+        }
+
+        // --- Anonymous Issues ---
+        const issueSubmitBtn = document.getElementById('issue-submit');
+        const commentSubmitBtn = document.getElementById('comment-submit');
+
+        (async () => {
+            await ensureMarkedLoaded();
+            setupMarkdownEditor({
+                textareaId: 'comment-body',
+                previewId: 'comment-preview',
+                tabWriteId: 'comment-tab-write',
+                tabPreviewId: 'comment-tab-preview'
+            });
+            setupMarkdownEditor({
+                textareaId: 'issue-body',
+                previewId: 'issue-preview',
+                tabWriteId: 'issue-tab-write',
+                tabPreviewId: 'issue-tab-preview'
+            });
+        })();
+
+        issueSubmitBtn?.addEventListener('click', async () => {
+            const owner = document.getElementById('issue-owner')?.value.trim();
+            const repo = document.getElementById('issue-repo')?.value.trim();
+            const title = document.getElementById('issue-title')?.value.trim();
+            const body = document.getElementById('issue-body')?.value.trim();
+            const labelsRaw = document.getElementById('issue-labels')?.value.trim();
+            const statusEl = document.getElementById('issue-status');
+            const resultEl = document.getElementById('issue-result');
+
+            if (!owner || !repo || !title || !body) {
+                if (statusEl) statusEl.textContent = 'Faltan campos obligatorios';
+                return;
+            }
+
+            const labels = labelsRaw ? labelsRaw.split(',').map(l => l.trim()).filter(Boolean) : [];
+
+            if (issueSubmitBtn) issueSubmitBtn.disabled = true;
+            if (statusEl) statusEl.textContent = 'Enviando...';
+            if (resultEl) resultEl.textContent = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/v1/gh/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/anonymous`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Gitgost-Key': 'gitgost-anonymous'
+                    },
+                    body: JSON.stringify({ title, body, labels })
+                });
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${text}`);
+                }
+
+                const data = await response.json();
+                if (statusEl) statusEl.textContent = 'Creada';
+
+                const parts = [];
+                if (data.issue_url) parts.push(`Issue: ${data.issue_url}`);
+                if (data.hash) parts.push(`Hash: ${data.hash}`);
+                if (data.karma !== undefined) parts.push(`Karma: ${data.karma}`);
+                if (data.user_token) parts.push(`User token: ${data.user_token} (guárdalo para comentar con el mismo hash/karma)`);
+                if (data.issue_reply_token) parts.push(`Reply token: ${data.issue_reply_token}`);
+                const reportHint = `${API_BASE}/v1/moderation/report`;
+                if (resultEl) resultEl.textContent = `${parts.join(' · ')}`;
+            } catch (error) {
+                console.error('Error creando issue:', error);
+                if (statusEl) statusEl.textContent = 'Error';
+                if (resultEl) resultEl.textContent = 'No se pudo crear la issue. Verifica owner/repo e issues habilitados.';
+            } finally {
+                if (issueSubmitBtn) issueSubmitBtn.disabled = false;
+            }
+        });
+
+        commentSubmitBtn?.addEventListener('click', async () => {
+            const owner = document.getElementById('comment-owner')?.value.trim();
+            const repo = document.getElementById('comment-repo')?.value.trim();
+            const number = document.getElementById('comment-number')?.value.trim();
+            const token = document.getElementById('comment-token')?.value.trim();
+            const body = document.getElementById('comment-body')?.value.trim();
+            const statusEl = document.getElementById('comment-status');
+            const resultEl = document.getElementById('comment-result');
+
+            if (!owner || !repo || !number || !body) {
+                if (statusEl) statusEl.textContent = 'Faltan campos obligatorios';
+                return;
+            }
+
+            if (commentSubmitBtn) commentSubmitBtn.disabled = true;
+            if (statusEl) statusEl.textContent = 'Enviando...';
+            if (resultEl) resultEl.textContent = '';
+
+            const payload = { body };
+            if (token) payload.user_token = token;
+
+            try {
+                const response = await fetch(`${API_BASE}/v1/gh/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/${encodeURIComponent(number)}/comments/anonymous`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Gitgost-Key': 'gitgost-anonymous'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${text}`);
+                }
+
+                const data = await response.json();
+                if (statusEl) statusEl.textContent = 'Enviado';
+
+                const parts = [];
+                if (data.hash) parts.push(`Hash: ${data.hash}`);
+                if (data.karma !== undefined) parts.push(`Karma: ${data.karma}`);
+                if (data.user_token && !token) parts.push(`Nuevo user token: ${data.user_token}`);
+                const reportHint = `${API_BASE}/v1/moderation/report`;
+                if (resultEl) resultEl.textContent = `${parts.join(' · ')}. Reportes: ${reportHint}`;
+            } catch (error) {
+                console.error('Error enviando comentario:', error);
+                if (statusEl) statusEl.textContent = 'Error';
+                if (resultEl) resultEl.textContent = 'No se pudo enviar. Revisa issue # y permisos.';
+            } finally {
+                if (commentSubmitBtn) commentSubmitBtn.disabled = false;
+            }
+        });
 
         // Cargar datos al iniciar
         loadStats();

@@ -4,15 +4,372 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
+	"regexp"
+	"strings"
+	"time"
 )
+
+// Timeout mayor para evitar expiraciones en búsquedas lentas de GitHub.
+var httpClient = &http.Client{Timeout: 60 * time.Second}
 
 type Ref struct {
 	Ref    string `json:"ref"`
 	Object struct {
 		Sha string `json:"sha"`
 	} `json:"object"`
+}
+
+func isTimeout(err error) bool {
+	if err, ok := err.(net.Error); ok && err.Timeout() {
+		return true
+	}
+	return false
+}
+
+// UpdateCommentsKarmaByHash actualiza el karma en los comentarios que contienen el hash, preservando el cuerpo.
+func UpdateCommentsKarmaByHash(hash string, karma int) error {
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		return fmt.Errorf("GITHUB_TOKEN not set")
+	}
+
+	query := url.QueryEscape(fmt.Sprintf("goster-%s in:comments", hash))
+	searchURL := fmt.Sprintf("https://api.github.com/search/issues?q=%s&per_page=10", query)
+	var resp *http.Response
+	var err error
+	delay := time.Second
+	for attempt := 0; attempt < 3; attempt++ {
+		var req *http.Request
+		req, err = http.NewRequest("GET", searchURL, nil)
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Authorization", "token "+token)
+		req.Header.Set("Accept", "application/vnd.github+json")
+		req.Header.Set("User-Agent", "gitGost")
+
+		resp, err = httpClient.Do(req)
+		if err == nil {
+			break
+		}
+		if !isTimeout(err) || attempt == 2 {
+			return err
+		}
+		time.Sleep(delay)
+		delay *= 2
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("search failed: %s", resp.Status)
+	}
+
+	var result struct {
+		Items []struct {
+			Number        int    `json:"number"`
+			RepositoryURL string `json:"repository_url"`
+		} `json:"items"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return err
+	}
+
+	re := regexp.MustCompile(fmt.Sprintf(`(?m)goster-%s · karma \(\d+\) · \[report\]\(([^)]+)\)`, regexp.QuoteMeta(hash)))
+
+	for _, item := range result.Items {
+		parts := strings.Split(item.RepositoryURL, "/")
+		if len(parts) < 2 {
+			continue
+		}
+		owner := parts[len(parts)-2]
+		repo := parts[len(parts)-1]
+		commentsURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d/comments", owner, repo, item.Number)
+
+		creq, err := http.NewRequest("GET", commentsURL, nil)
+		if err != nil {
+			continue
+		}
+		creq.Header.Set("Authorization", "token "+token)
+		creq.Header.Set("Accept", "application/vnd.github+json")
+		creq.Header.Set("User-Agent", "gitGost")
+
+		var cresp *http.Response
+		delay := time.Second
+		for attempt := 0; attempt < 3; attempt++ {
+			cresp, err = httpClient.Do(creq)
+			if err == nil {
+				break
+			}
+			if !isTimeout(err) || attempt == 2 {
+				break
+			}
+			time.Sleep(delay)
+			delay *= 2
+		}
+		if err != nil || cresp == nil {
+			continue
+		}
+		if cresp.StatusCode != http.StatusOK {
+			cresp.Body.Close()
+			continue
+		}
+
+		var comments []struct {
+			ID   int    `json:"id"`
+			Body string `json:"body"`
+		}
+		if err := json.NewDecoder(cresp.Body).Decode(&comments); err != nil {
+			cresp.Body.Close()
+			continue
+		}
+		cresp.Body.Close()
+
+		for _, cmt := range comments {
+			if !strings.Contains(cmt.Body, hash) {
+				continue
+			}
+			link := "#"
+			if m := re.FindStringSubmatch(cmt.Body); len(m) == 2 {
+				link = m[1]
+			}
+			legend := fmt.Sprintf("goster-%s · karma (%d) · [report](%s)", hash, karma, link)
+			newBody := re.ReplaceAllString(cmt.Body, legend)
+			if newBody == cmt.Body {
+				continue
+			}
+
+			payload := map[string]string{"body": newBody}
+			jsonData, err := json.Marshal(payload)
+			if err != nil {
+				continue
+			}
+
+			patchURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/comments/%d", owner, repo, cmt.ID)
+			preq, err := http.NewRequest("PATCH", patchURL, bytes.NewBuffer(jsonData))
+			if err != nil {
+				continue
+			}
+			preq.Header.Set("Authorization", "token "+token)
+			preq.Header.Set("Content-Type", "application/json")
+
+			presp, err := httpClient.Do(preq)
+			if err != nil {
+				continue
+			}
+			presp.Body.Close()
+		}
+	}
+
+	return nil
+}
+
+// DeleteCommentsByHash busca y elimina comentarios que contengan el hash proporcionado
+func DeleteCommentsByHash(hash string) error {
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		return fmt.Errorf("GITHUB_TOKEN not set")
+	}
+	query := url.QueryEscape(fmt.Sprintf("goster-%s in:comments", hash))
+	searchURL := fmt.Sprintf("https://api.github.com/search/issues?q=%s&per_page=20", query)
+
+	var resp *http.Response
+	var err error
+	delay := time.Second
+	for attempt := 0; attempt < 3; attempt++ {
+		var req *http.Request
+		req, err = http.NewRequest("GET", searchURL, nil)
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Authorization", "token "+token)
+		req.Header.Set("Accept", "application/vnd.github+json")
+		req.Header.Set("User-Agent", "gitGost")
+
+		resp, err = httpClient.Do(req)
+		if err == nil {
+			break
+		}
+		if !isTimeout(err) || attempt == 2 {
+			return err
+		}
+		time.Sleep(delay)
+		delay *= 2
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("search failed: %s", resp.Status)
+	}
+
+	var result struct {
+		Items []struct {
+			Number        int    `json:"number"`
+			RepositoryURL string `json:"repository_url"`
+		} `json:"items"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return err
+	}
+
+	for _, item := range result.Items {
+		parts := strings.Split(item.RepositoryURL, "/")
+		if len(parts) < 2 {
+			continue
+		}
+		owner := parts[len(parts)-2]
+		repo := parts[len(parts)-1]
+		commentsURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d/comments", owner, repo, item.Number)
+		creq, err := http.NewRequest("GET", commentsURL, nil)
+		if err != nil {
+			continue
+		}
+		creq.Header.Set("Authorization", "token "+token)
+		creq.Header.Set("Accept", "application/vnd.github+json")
+		creq.Header.Set("User-Agent", "gitGost")
+		cresp, err := httpClient.Do(creq)
+		if err != nil {
+			continue
+		}
+		if cresp.StatusCode != http.StatusOK {
+			cresp.Body.Close()
+			continue
+		}
+		var comments []struct {
+			ID   int    `json:"id"`
+			Body string `json:"body"`
+		}
+		if err := json.NewDecoder(cresp.Body).Decode(&comments); err != nil {
+			cresp.Body.Close()
+			continue
+		}
+		cresp.Body.Close()
+		for _, cmt := range comments {
+			if !strings.Contains(cmt.Body, hash) {
+				continue
+			}
+			deleteURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/comments/%d", owner, repo, cmt.ID)
+			preq, err := http.NewRequest("DELETE", deleteURL, nil)
+			if err != nil {
+				continue
+			}
+			preq.Header.Set("Authorization", "token "+token)
+			preq.Header.Set("Accept", "application/vnd.github+json")
+			preq.Header.Set("User-Agent", "gitGost")
+
+			presp, err := httpClient.Do(preq)
+			if err != nil {
+				continue
+			}
+			presp.Body.Close()
+			if presp.StatusCode != http.StatusNoContent {
+				continue
+			}
+		}
+	}
+
+	return nil
+}
+
+// CreateAnonymousIssue crea una issue usando el bot autenticado
+func CreateAnonymousIssue(owner, repo, title, body string, labels []string) (string, int, error) {
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		return "", 0, fmt.Errorf("GITHUB_TOKEN not set")
+	}
+
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues", owner, repo)
+
+	issueBody := fmt.Sprintf("%s\n\n---\n\n*This is an anonymous contribution made via [gitGost](https://gitgost.leapcell.app).*\n\n*The original author's identity has been anonymized to protect their privacy.*", body)
+
+	payload := map[string]interface{}{
+		"title":  title,
+		"body":   issueBody,
+		"labels": labels,
+	}
+
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return "", 0, err
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return "", 0, err
+	}
+
+	req.Header.Set("Authorization", "token "+token)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", 0, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		var errResp map[string]interface{}
+		_ = json.NewDecoder(resp.Body).Decode(&errResp)
+		return "", 0, fmt.Errorf("failed to create issue: %s", resp.Status)
+	}
+
+	var result struct {
+		HTMLURL string `json:"html_url"`
+		Number  int    `json:"number"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", 0, err
+	}
+
+	return result.HTMLURL, result.Number, nil
+}
+
+// CreateAnonymousComment publica un comentario en la issue
+func CreateAnonymousComment(owner, repo string, number int, body string) (string, error) {
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		return "", fmt.Errorf("GITHUB_TOKEN not set")
+	}
+
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d/comments", owner, repo, number)
+
+	payload := map[string]string{"body": body}
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Authorization", "token "+token)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		var errResp map[string]interface{}
+		_ = json.NewDecoder(resp.Body).Decode(&errResp)
+		return "", fmt.Errorf("failed to create comment: %s", resp.Status)
+	}
+
+	var result struct {
+		HTMLURL string `json:"html_url"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", err
+	}
+
+	return result.HTMLURL, nil
 }
 
 // GetSha returns the SHA of the ref
@@ -103,7 +460,7 @@ func CreatePR(owner, repo, branch, forkOwner, commitMessage string) (string, err
 
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls", owner, repo)
 
-	prBody := fmt.Sprintf("%s\n\n---\n\n*This is an anonymous contribution made via [gitGost](https://github.com/livrasand/gitGost).*\n\n*The original author's identity has been anonymized to protect their privacy.*", commitMessage)
+	prBody := fmt.Sprintf("%s\n\n---\n\n*This is an anonymous contribution made via [gitGost](https://gitgost.leapcell.app).*\n\n*The original author's identity has been anonymized to protect their privacy.*", commitMessage)
 
 	data := map[string]interface{}{
 		"title": "Anonymous contribution via gitGost",

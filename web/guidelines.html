@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>gitGost · Guidelines</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --fg: #e6edf3;
+      --muted: #8b949e;
+      --card: #111720;
+      --border: #1f2a3a;
+      --accent: #d16014;
+      --code-bg: #161b22;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.6;
+      padding: 2rem 1rem 3rem;
+      display: flex;
+      justify-content: center;
+    }
+    .shell { width: min(980px, 100%); }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    h1 { margin: 0; font-size: clamp(1.7rem, 3vw, 2rem); }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .35rem .75rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+    .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.4rem;
+      box-shadow: 0 10px 32px rgba(0,0,0,.28);
+    }
+    ul { margin: .4rem 0 1rem 1.2rem; padding: 0; }
+    li { margin-bottom: .45rem; }
+    p { margin: 0 0 .75rem 0; color: var(--fg); }
+    .muted { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div>
+        <h1>gitGost · Guidelines</h1>
+        <div class="muted">What to submit and how to keep conversations useful while anonymous.</div>
+      </div>
+      <a class="pill" href="/index.html">← Back to home</a>
+    </header>
+
+    <div class="card" style="margin-bottom:1rem;">
+      <p><strong>Prohibited content:</strong> no links, issues, or comments involving religion, violence, spiritism, sexual immorality, alcohol, drugs, weapons, pornography, or profanity. Detected content will be removed.</p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3 style="margin-top:0; color: var(--accent);">What to submit</h3>
+        <ul>
+          <li>Links or issues that spark technical curiosity. Not just “hacking”: anything that makes people learn.</li>
+          <li>Avoid politics, crime, sports, or celebrity content unless it reveals a relevant phenomenon.</li>
+          <li>Keep titles sober; avoid forced uppercase, hype, or clickbait.</li>
+          <li>Prefer the original source; if it’s a video/pdf, mark it with [video]/[pdf].</li>
+          <li>Don’t use gitGost only for self-promotion. The primary use is curiosity.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0; color: var(--accent);">In comments</h3>
+        <ul>
+          <li>Kindness first. Be curious, not interrogative. Respond to ideas, not people.</li>
+          <li>More divisive topics ⇒ more substance. Add data, context, or experience.</li>
+          <li>Avoid flaming or mockery. Don’t shout in ALL CAPS; use *asterisks* for emphasis.</li>
+          <li>Assume good faith; respond to the strongest interpretation, not the weakest.</li>
+          <li>If something is spam or off-topic, report it; don’t feed the fire.</li>
+          <li>Don’t ask for upvotes/comments. The community votes out of genuine interest.</li>
+          <li>Throwaway accounts are fine for sensitive topics, but don’t abuse them: gitGost is still a community.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

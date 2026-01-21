@@ -3,10 +3,17 @@ package http
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base32"
+	"encoding/hex"
 	"fmt"
+	"html/template"
 	"io"
 	"net/http"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -283,10 +290,41 @@ func MetricsHandler(c *gin.Context) {
 }
 
 var (
-	startTime = time.Now()
-	dbClient  *database.SupabaseClient
-	dbOnce    sync.Once
+	startTime  = time.Now()
+	dbClient   *database.SupabaseClient
+	dbOnce     sync.Once
+	secretKey  []byte
+	identityMu sync.Mutex
+	// karmaStore guarda karma por hash (fallback en memoria)
+	karmaStore = make(map[string]int)
+	// reportCounts guarda reportes por hash (fallback en memoria)
+	reportCounts      = make(map[string]int)
+	reportFirstAt     = make(map[string]time.Time)
+	reportIPs         = make(map[string]map[string]time.Time)
+	flaggedLastAction = make(map[string]time.Time)
+	blockedHashes     = make(map[string]bool)
+	reportFormTmpl    = template.Must(template.New("reportForm").Parse(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><title>Report content · gitGost</title><style>body{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#0d1117;color:#c9d1d9;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:32px;} .shell{background:linear-gradient(145deg, rgba(255,166,87,0.16), rgba(255,107,107,0.14));border:1px solid rgba(255,166,87,0.45);border-radius:16px;padding:1.5px;box-shadow:0 16px 38px rgba(0,0,0,.42);max-width:620px;width:100%;} .card{background:#0d1117;border-radius:14px;padding:26px;border:1px solid rgba(255,255,255,0.05);} h1{margin:0 0 6px;font-size:24px;color:#ffa657;} .eyebrow{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .75rem;background:rgba(255,166,87,0.12);color:#ffa657;border:1px solid rgba(255,166,87,0.4);border-radius:999px;font-family:'IBM Plex Mono', monospace;font-size:.85rem;margin-bottom:5px;} .sub{margin:6px 0 14px;color:#9fb3ff;font-size:14px;} .policy{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:12px;padding:14px;margin:14px 0;font-size:13px;line-height:1.55;} .policy strong{color:#ffa657;} label{display:block;font-weight:700;margin:12px 0 6px;letter-spacing:.01em;} .readonly{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;color:#c9d1d9;font-family:'IBM Plex Mono', monospace;} button{margin-top:14px;width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,0.25);} .note{margin-top:10px;font-size:12px;color:#9fb3ff;} .error{color:#ffb4c4;font-size:13px;margin-top:10px;} .count{display:flex;gap:8px;align-items:center;margin:10px 0;font-family:'IBM Plex Mono', monospace;} .pill{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);} .pill strong{color:#ffa657;} .state{margin-left:auto;font-size:12px;color:#9fb3ff;} .legend{font-size:12px;color:#9fb3ff;margin-top:10px;} input[type=text]{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#c9d1d9;} form{margin-top:12px;} a{color:#9fb3ff;} .locked{opacity:.55;pointer-events:none;} </style></head><body><div class="shell"><div class="card"><div class="eyebrow">Anonymous moderation</div><h1>Report content</h1><div class="sub">Flag abuse from anonymous contributions.</div><div class="policy"><ul style="margin:0 0 6px 18px; padding:0 0 0 4px; line-height:1.6;">` + string(reportPolicyHTML) + `</ul><div class="note">Reports reset after 30 days.</div></div><form method="POST" action="/v1/moderation/report"><label for="hash">Hash</label><input type="text" id="hash" name="hash" value="{{.Hash}}" placeholder="goster-xxxxx" {{if eq .State "bloqueado"}}class="locked" readonly{{end}} /><div class="count"><div class="pill">Reports: <strong>{{.Reports}}</strong></div><div class="state">State: {{.State}}</div></div><button type="submit" {{if eq .State "bloqueado"}}disabled class="locked"{{end}}>Submit report</button></form><div class="legend">Hash identifies the anonymous submitter. No personal data is collected.</div>{{if .Error}}<div class="error">{{.Error}}</div>{{end}}</div></div></body></html>`))
+	reportThanksTmpl  = template.Must(template.New("reportThanks").Parse(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><title>Report received · gitGost</title><style>body{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#0d1117;color:#c9d1d9;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:32px;} .shell{background:linear-gradient(145deg, rgba(255,166,87,0.16), rgba(255,107,107,0.14));border:1px solid rgba(255,166,87,0.45);border-radius:16px;padding:1.5px;box-shadow:0 16px 38px rgba(0,0,0,.42);max-width:620px;width:100%;} .card{background:#0d1117;border-radius:14px;padding:26px;border:1px solid rgba(255,255,255,0.05);} h1{margin:0 0 10px;font-size:24px;color:#ffa657;} p{margin:6px 0 0;color:#9fb3ff;} .pill{display:inline-block;margin-top:12px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,0.04);color:#ffa657;font-weight:700;border:1px solid rgba(255,255,255,0.08);} .cta{margin-top:16px;display:inline-block;padding:12px 16px;border-radius:10px;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;text-decoration:none;box-shadow:0 10px 30px rgba(0,0,0,0.25);} .small{margin-top:12px;font-size:12px;color:#9fb3ff;} .state{margin-top:10px;font-size:14px;} </style></head><body><div class="shell"><div class="card"><h1>Report received</h1><p>Hash: <strong>{{.Hash}}</strong></p><span class="pill">Total reports: {{.Reports}}</span><div class="state">State: {{.State}}</div><p class="small">Thanks for helping moderate. Your identity stays anonymous.</p><a class="cta" href="https://gitgost.leapcell.app/" target="_blank" rel="noreferrer">Explore gitGost</a></div></div></body></html>`))
 )
+
+type anonymousIssueRequest struct {
+	// ...
+	Title  string   `json:"title"`
+	Body   string   `json:"body"`
+	Labels []string `json:"labels"`
+}
+
+type anonymousCommentRequest struct {
+	UserToken string `json:"user_token"`
+	Body      string `json:"body"`
+}
+
+const (
+	reportWindow    = 30 * 24 * time.Hour
+	flaggedCooldown = 6 * time.Hour
+)
+
+var reportPolicyHTML = template.HTML(`<li><strong>0–2 reports:</strong> internal log only.</li><li><strong>3–5 reports:</strong> hash flagged, 6h cooldown, karma reset.</li><li><strong>6+ reports:</strong> hash blocked; we attempt to remove its comments.</li>`)
 
 // InitDatabase inicializa el cliente de Supabase de forma thread-safe
 func InitDatabase(url, key string) {
@@ -306,7 +344,7 @@ func RecordPR(ctx context.Context, owner, repo, prURL string) error {
 // StatsHandler maneja el endpoint de estadísticas
 func StatsHandler(c *gin.Context) {
 	if dbClient == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database not configured"})
+		c.JSON(http.StatusOK, gin.H{"total_prs": 0})
 		return
 	}
 
@@ -339,7 +377,7 @@ func StatsHandler(c *gin.Context) {
 // RecentPRsHandler devuelve los PRs recientes
 func RecentPRsHandler(c *gin.Context) {
 	if dbClient == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database not configured"})
+		c.JSON(http.StatusOK, gin.H{"prs": []database.PRRecord{}, "total": 0})
 		return
 	}
 
@@ -361,6 +399,367 @@ func RecentPRsHandler(c *gin.Context) {
 		"prs":   prs,
 		"total": totalPRs,
 	})
+}
+
+// CreateAnonymousIssueHandler crea una issue anónima con hash/karma/token
+func CreateAnonymousIssueHandler(c *gin.Context) {
+	var req anonymousIssueRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
+		return
+	}
+
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+
+	if strings.TrimSpace(req.Title) == "" || strings.TrimSpace(req.Body) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "title and body are required"})
+		return
+	}
+
+	issueURL, issueNumber, err := github.CreateAnonymousIssue(owner, repo, req.Title, req.Body, req.Labels)
+	if err != nil {
+		utils.Log("Error creating issue: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	userToken := generateUserToken()
+	hash := deriveHash(owner, repo, issueNumber, userToken)
+	karma := getKarma(c.Request.Context(), hash)
+	updateKarma(c.Request.Context(), hash, karma)
+
+	resp := gin.H{
+		"issue_url":         issueURL,
+		"number":            issueNumber,
+		"hash":              hash,
+		"karma":             karma,
+		"user_token":        userToken,
+		"issue_reply_token": userToken,
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// CreateAnonymousCommentHandler publica comentario con hash/karma
+func CreateAnonymousCommentHandler(c *gin.Context) {
+	var req anonymousCommentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
+		return
+	}
+
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+	numberStr := c.Param("number")
+	number, err := strconv.Atoi(numberStr)
+	if err != nil || number <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid issue number"})
+		return
+	}
+
+	if strings.TrimSpace(req.Body) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "body is required"})
+		return
+	}
+
+	userToken := req.UserToken
+	if strings.TrimSpace(userToken) == "" {
+		userToken = generateUserToken()
+	}
+	hash := deriveHash(owner, repo, number, userToken)
+	reports := getReportCountWithWindow(c.Request.Context(), hash)
+	if reports > 5 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "hash bloqueado por reportes"})
+		return
+	}
+	if reports > 2 {
+		if blocked := isFlaggedCooldown(hash); blocked {
+			c.JSON(http.StatusTooManyRequests, gin.H{"error": "cooldown activo por reportes"})
+			return
+		}
+	}
+	currentKarma := getKarma(c.Request.Context(), hash)
+	karma := currentKarma + 1
+	if reports > 2 {
+		karma = 0
+	}
+	updateKarma(c.Request.Context(), hash, karma)
+	if reports > 2 {
+		markFlaggedAction(hash)
+		if err := github.UpdateCommentsKarmaByHash(hash, 0); err != nil {
+			utils.Log("Error updating comment karma for hash %s: %v", hash, err)
+		}
+	}
+	reportURL := fmt.Sprintf("%s://%s/v1/moderation/report?hash=%s", getScheme(c.Request), c.Request.Host, hash)
+
+	legend := fmt.Sprintf("\n\n---\ngoster-%s · karma (%d) · [report](%s)", hash, karma, reportURL)
+	bodyWithLegend := req.Body + legend
+
+	commentURL, err := github.CreateAnonymousComment(owner, repo, number, bodyWithLegend)
+	if err != nil {
+		utils.Log("Error creating comment: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	resp := gin.H{
+		"comment_url": commentURL,
+		"hash":        hash,
+		"karma":       karma,
+		"user_token":  userToken,
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// ReportHashHandler permite reportar un hash
+func ReportHashHandler(c *gin.Context) {
+	if c.Request.Method == http.MethodGet {
+		hash := strings.TrimSpace(c.Query("hash"))
+		if hash == "" {
+			c.Header("Content-Type", "text/html; charset=utf-8")
+			_ = reportFormTmpl.Execute(c.Writer, gin.H{"Hash": "", "Reports": 0, "State": "sin datos", "Error": "El hash es obligatorio", "PolicyHTML": reportPolicyHTML})
+			return
+		}
+		if isBlockedHash(hash) {
+			c.Header("Content-Type", "text/html; charset=utf-8")
+			_ = reportFormTmpl.Execute(c.Writer, gin.H{"Hash": hash, "Reports": 6, "State": "bloqueado", "Error": "Este hash ya fue baneado/eliminado.", "PolicyHTML": reportPolicyHTML})
+			return
+		}
+		reports := getReportCountWithWindow(c.Request.Context(), hash)
+		c.Header("Content-Type", "text/html; charset=utf-8")
+		_ = reportFormTmpl.Execute(c.Writer, gin.H{"Hash": hash, "Reports": reports, "State": reportStateLabel(reports), "PolicyHTML": reportPolicyHTML})
+		return
+	}
+
+	hash := strings.TrimSpace(c.PostForm("hash"))
+	if hash == "" {
+		c.Header("Content-Type", "text/html; charset=utf-8")
+		_ = reportFormTmpl.Execute(c.Writer, gin.H{"Hash": "", "Reports": 0, "State": "sin datos", "Error": "El hash es obligatorio.", "PolicyHTML": reportPolicyHTML})
+		return
+	}
+
+	ip := strings.TrimSpace(c.ClientIP())
+	reports := recordReport(c.Request.Context(), hash, ip)
+	if reports >= 6 {
+		setBlockedHash(hash)
+		go func(h string) {
+			if err := github.DeleteCommentsByHash(h); err != nil {
+				utils.Log("Error deleting comments for hash %s: %v", h, err)
+			}
+		}(hash)
+	}
+
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	_ = reportThanksTmpl.Execute(c.Writer, gin.H{"Hash": hash, "Reports": reports, "State": reportStateLabel(reports)})
+}
+
+func recordReport(ctx context.Context, hash, ip string) int {
+	reports := 0
+	if dbClient != nil {
+		_ = dbClient.DeleteOldReports(ctx, hash, time.Now().Add(-reportWindow))
+		if exists, err := dbClient.HasReportFromIP(ctx, hash, ip); err == nil && exists {
+			if count, err := dbClient.GetReportCount(ctx, hash); err == nil {
+				return count
+			}
+			return 0
+		}
+		if err := dbClient.InsertReport(ctx, hash, ip); err == nil {
+			if count, err := dbClient.GetReportCount(ctx, hash); err == nil {
+				reports = count
+			}
+		}
+	}
+
+	if reports == 0 {
+		identityMu.Lock()
+		first, ok := reportFirstAt[hash]
+		if !ok || time.Since(first) > reportWindow {
+			reportCounts[hash] = 0
+			reportFirstAt[hash] = time.Now()
+			reportIPs[hash] = make(map[string]time.Time)
+		}
+		if ip != "" {
+			if ipTimes, ok := reportIPs[hash]; ok {
+				if t, ok := ipTimes[ip]; ok && time.Since(t) <= reportWindow {
+					reports = reportCounts[hash]
+					identityMu.Unlock()
+					return reports
+				}
+			} else {
+				reportIPs[hash] = make(map[string]time.Time)
+			}
+		}
+		reportCounts[hash]++
+		reports = reportCounts[hash]
+		if ip != "" {
+			reportIPs[hash][ip] = time.Now()
+		}
+		identityMu.Unlock()
+	}
+
+	if reports >= 3 && reports <= 5 {
+		updateKarma(ctx, hash, 0)
+		markFlaggedAction(hash)
+		if err := github.UpdateCommentsKarmaByHash(hash, 0); err != nil {
+			utils.Log("Error updating comment karma for hash %s: %v", hash, err)
+		}
+	}
+
+	return reports
+}
+
+func getReportCountWithWindow(ctx context.Context, hash string) int {
+	if hash == "" {
+		return 0
+	}
+	if dbClient != nil {
+		_ = dbClient.DeleteOldReports(ctx, hash, time.Now().Add(-reportWindow))
+		if count, err := dbClient.GetReportCount(ctx, hash); err == nil {
+			identityMu.Lock()
+			first, ok := reportFirstAt[hash]
+			if !ok || time.Since(first) > reportWindow {
+				reportCounts[hash] = 0
+				reportFirstAt[hash] = time.Now()
+			}
+			memCount := reportCounts[hash]
+			identityMu.Unlock()
+			if memCount > count {
+				return memCount
+			}
+			return count
+		}
+	}
+
+	identityMu.Lock()
+	defer identityMu.Unlock()
+	first, ok := reportFirstAt[hash]
+	if !ok || time.Since(first) > reportWindow {
+		reportCounts[hash] = 0
+		reportFirstAt[hash] = time.Now()
+	}
+	return reportCounts[hash]
+}
+
+func reportStateLabel(count int) string {
+	switch {
+	case count >= 6:
+		return "bloqueado"
+	case count >= 3:
+		return "flagged"
+	default:
+		return "registrado"
+	}
+}
+
+func setBlockedHash(hash string) {
+	if hash == "" {
+		return
+	}
+	identityMu.Lock()
+	blockedHashes[hash] = true
+	identityMu.Unlock()
+}
+
+func isBlockedHash(hash string) bool {
+	if hash == "" {
+		return false
+	}
+	identityMu.Lock()
+	blocked := blockedHashes[hash]
+	identityMu.Unlock()
+	return blocked
+}
+
+func isFlaggedCooldown(hash string) bool {
+	identityMu.Lock()
+	defer identityMu.Unlock()
+	last, ok := flaggedLastAction[hash]
+	if !ok {
+		return false
+	}
+	return time.Since(last) < flaggedCooldown
+}
+
+func markFlaggedAction(hash string) {
+	identityMu.Lock()
+	flaggedLastAction[hash] = time.Now()
+	identityMu.Unlock()
+}
+
+func getSecretKey() []byte {
+	identityMu.Lock()
+	defer identityMu.Unlock()
+	if secretKey != nil {
+		return secretKey
+	}
+	b := make([]byte, 32)
+	_, err := rand.Read(b)
+	if err != nil {
+		// fallback
+		b = []byte(time.Now().String())
+	}
+	secretKey = b
+	return secretKey
+}
+
+func deriveHash(owner, repo string, number int, userToken string) string {
+	input := fmt.Sprintf("%s/%s#%d|%s", owner, repo, number, userToken)
+	h := hmac.New(sha256.New, getSecretKey())
+	h.Write([]byte(input))
+	return hex.EncodeToString(h.Sum(nil))[:8]
+}
+
+func generateUserToken() string {
+	buf := make([]byte, 10)
+	_, err := rand.Read(buf)
+	if err != nil {
+		return fmt.Sprintf("tok-%d", time.Now().UnixNano())
+	}
+	return strings.ToUpper(base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(buf))
+}
+
+func getKarma(ctx context.Context, hash string) int {
+	identityMu.Lock()
+	if karma, ok := karmaStore[hash]; ok {
+		identityMu.Unlock()
+		return karma
+	}
+	identityMu.Unlock()
+
+	if dbClient != nil {
+		if karma, err := dbClient.GetKarma(ctx, hash); err == nil {
+			identityMu.Lock()
+			karmaStore[hash] = karma
+			identityMu.Unlock()
+			return karma
+		}
+	}
+
+	identityMu.Lock()
+	karmaStore[hash] = 0
+	identityMu.Unlock()
+	return 0
+}
+
+func updateKarma(ctx context.Context, hash string, karma int) {
+	identityMu.Lock()
+	karmaStore[hash] = karma
+	identityMu.Unlock()
+	if dbClient != nil {
+		_ = dbClient.UpsertKarma(ctx, hash, karma)
+	}
+}
+
+func getScheme(r *http.Request) string {
+	if r.TLS != nil {
+		return "https"
+	}
+	if scheme := r.Header.Get("X-Forwarded-Proto"); scheme != "" {
+		return scheme
+	}
+	return "http"
 }
 
 // BadgeHandler serves the Anonymous Contributor Friendly badge

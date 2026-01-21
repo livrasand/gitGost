@@ -33,6 +33,19 @@ That’s it. No login. No token. No name. No email. No history.
 | **Works Everywhere**        | Terminal, CI/CD, Docker, scripts – any public GitHub repo, anywhere Git runs. |
 | **Open Source & AGPL**      | 100% transparent. Fork it, audit it, host it yourself.                     |
 
+## Anonymous Contributor Friendly Badge
+
+To signal that your repository welcomes anonymous contributions via gitGost, add this badge to your README:
+
+![Anonymous Contributor Friendly](https://gitgost.io/badges/anonymous-friendly.svg)
+
+
+For verified repositories, add a `.gitgost.yml` file to your repository root and use the dynamic version:
+
+![Anonymous Contributor Friendly](https://gitgost.io/badges/anonymous-friendly.svg?repo=livrasand/gitGost)
+
+This badge helps contributors know that anonymous contributions are accepted and encouraged.
+
 ## Why developers love gitGost
 
 > “Your commit history shouldn’t be an HR liability forever.”
@@ -51,39 +64,39 @@ gitGost is designed to protect against common identification threats in contribu
 
 ### gitGost protects against:
 
-* Public exposure of name and email in commits
-* Direct association between personal GitHub account and PR
-* Passive metadata collection in public repos
-* Permanent history of minor contributions
+- Public exposure of name and email in commits
+- Direct association between personal GitHub account and PR
+- Passive metadata collection in public repos
+- Permanent history of minor contributions
 
 ### gitGost does NOT protect against:
 
-* IP identification (using VPN/Tor is recommended)
-* Code style analysis (stylometry)
-* Advanced temporal correlation
-* Targeted deanonymization by adversaries with resources
+- IP identification (using VPN/Tor is recommended)
+- Code style analysis (stylometry)
+- Advanced temporal correlation
+- Targeted deanonymization by adversaries with resources
 
 ### Considered adversaries
 
-* Recruiters / HR
-* Hostile maintainers
-* Email scrapers
-* Governments or companies with basic monitoring
+- Recruiters / HR
+- Hostile maintainers
+- Email scrapers
+- Governments or companies with basic monitoring
 
 ### Not considered adversaries
 
-* Nation states with infrastructure access
-* Actors with active user surveillance
-* Deep forensic code style analysis
+- Nation states with infrastructure access
+- Actors with active user surveillance
+- Deep forensic code style analysis
 
 ### Explicit assumptions
 
 gitGost assumes the user:
 
-* Uses a trustworthy network (VPN / Tor)
-* Does not reuse unique phrases or identifiable style
-* Does not mix anonymous and personal contributions to the same repo
-* Understands that perfect anonymity does not exist
+- Uses a trustworthy network (VPN / Tor)
+- Does not reuse unique phrases or identifiable style
+- Does not mix anonymous and personal contributions to the same repo
+- Understands that perfect anonymity does not exist
 
 For more details, see [SECURITY.md](SECURITY.md).
 

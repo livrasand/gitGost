@@ -189,3 +189,14 @@ func GetRefs(owner, repo string) ([]Ref, error) {
 
 	return refs, nil
 }
+
+// IsRepoVerified checks if the repository has a .gitgost.yml file indicating support for anonymous contributions
+func IsRepoVerified(owner, repo string) bool {
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/.gitgost.yml", owner, repo)
+	resp, err := http.Get(url)
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode == 200
+}

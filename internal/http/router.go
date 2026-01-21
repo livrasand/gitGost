@@ -100,6 +100,9 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.GET("/health", HealthHandler)
 	r.GET("/metrics", MetricsHandler)
 
+	// Badges
+	r.GET("/badges/:badge", BadgeHandler)
+
 	// Static assets
 	r.Static("/assets", "./web/assets")
 

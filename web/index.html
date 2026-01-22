@@ -35,10 +35,46 @@
             --border: #30363d;
             --card: #161b22;
             --code-bg: #010409;
+            --shadow: rgba(0, 0, 0, 0.5);
+            --shadow-hover: rgba(0, 0, 0, 0.7);
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --radius-pill: 999px;
+            --issue-shell-bg: rgba(21, 21, 30, 0.9);
+            --issue-shell-border: rgba(255, 255, 255, 0.04);
+            --issue-form-bg: var(--code-bg);
+            --issue-form-border: rgba(255, 255, 255, 0.06);
+            --issue-input-bg: rgba(255, 255, 255, 0.02);
+            --issue-input-border: rgba(255, 255, 255, 0.08);
+            --issue-gradient-overlay: rgba(255, 166, 87, 0.08);
+        }
+
+        :root[data-theme="light"] {
+            --bg: #ffffff;
+            --fg: #24292f;
+            --accent: #d16014;
+            --accent-dark: #b84f0f;
+            --border: #d0d7de;
+            --card: #f6f8fa;
+            --code-bg: #f6f8fa;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --shadow-hover: rgba(0, 0, 0, 0.15);
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --radius-pill: 999px;
+            --issue-shell-bg: #ffffff;
+            --issue-shell-border: var(--border);
+            --issue-form-bg: var(--card);
+            --issue-form-border: var(--border);
+            --issue-input-bg: #ffffff;
+            --issue-input-border: var(--border);
+            --issue-gradient-overlay: rgba(209, 96, 20, 0.05);
         }
 
         @media (prefers-color-scheme: light) {
-            :root {
+            :root:not([data-theme]) {
                 --bg: #ffffff;
                 --fg: #24292f;
                 --accent: #d16014;
@@ -46,6 +82,19 @@
                 --border: #d0d7de;
                 --card: #f6f8fa;
                 --code-bg: #f6f8fa;
+                --shadow: rgba(0, 0, 0, 0.1);
+                --shadow-hover: rgba(0, 0, 0, 0.15);
+                --radius-lg: 16px;
+                --radius-md: 12px;
+                --radius-sm: 8px;
+                --radius-pill: 999px;
+                --issue-shell-bg: #ffffff;
+                --issue-shell-border: var(--border);
+                --issue-form-bg: var(--card);
+                --issue-form-border: var(--border);
+                --issue-input-bg: #ffffff;
+                --issue-input-border: var(--border);
+                --issue-gradient-overlay: rgba(209, 96, 20, 0.05);
             }
         }
 
@@ -60,8 +109,51 @@
             display: grid;
             place-items: center;
             padding: 2rem 1rem;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
-        main { width: 100%; max-width: 900px; }
+        main { width: 100%; max-width: 900px; position: relative; }
+
+        .theme-toggle {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 1000;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.5rem;
+            display: flex;
+            gap: 0.25rem;
+            box-shadow: 0 4px 12px var(--shadow);
+            transition: all 0.3s ease;
+        }
+        .theme-toggle:hover {
+            box-shadow: 0 6px 16px var(--shadow-hover);
+        }
+        .theme-btn {
+            background: transparent;
+            border: none;
+            color: var(--fg);
+            cursor: pointer;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
+            opacity: 0.6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+        }
+        .theme-btn:hover {
+            opacity: 1;
+            background: var(--bg);
+        }
+        .theme-btn.active {
+            opacity: 1;
+            background: var(--accent);
+            color: #fff;
+        }
 
         header { text-align: center; margin-bottom: 3rem; }
         h1 {
@@ -98,12 +190,14 @@
             font-weight: 500;
         }
 
-        /* Contador de PRs */
+        /* PR counter */
         .stats-banner {
             padding: 2rem;
-            border-radius: 12px;
+            border-radius: var(--radius-md);
             text-align: center;
             margin: 2rem 0 3rem;
+            border: 1px solid var(--border);
+            background: var(--card);
         }
         .stats-number {
             font-family: 'IBM Plex Mono', monospace;
@@ -139,7 +233,7 @@
         /* Markdown editor */
         .md-editor {
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-sm);
             background: var(--card);
         }
 
@@ -160,6 +254,7 @@
             font-weight: 600;
             cursor: pointer;
             border-bottom: 2px solid transparent;
+            border-radius: var(--radius-sm) var(--radius-sm) 0 0;
         }
         .md-tab.active { border-bottom-color: var(--accent); color: var(--accent); }
         .md-input {
@@ -177,12 +272,12 @@
             padding: 1rem;
             min-height: 160px;
         }
-        .md-preview pre { background: var(--code-bg); padding: .8rem; border-radius: 6px; overflow: auto; }
-        .md-preview code { background: var(--code-bg); padding: .2rem .35rem; border-radius: 4px; }
+        .md-preview pre { background: var(--code-bg); padding: .8rem; border-radius: var(--radius-sm); overflow: auto; }
+        .md-preview code { background: var(--code-bg); padding: .2rem .35rem; border-radius: var(--radius-sm); }
         .md-preview blockquote { border-left: 4px solid var(--border); margin: 0; padding-left: .75rem; color: #8b949e; }
         .md-preview ul, .md-preview ol { padding-left: 1.25rem; }
 
-        /* Sin flechas en inputs numéricos */
+        /* Hide arrows in numeric inputs */
         input[type="number"]::-webkit-outer-spin-button,
         input[type="number"]::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -196,14 +291,15 @@
         .terminal {
             background: var(--code-bg);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: var(--radius-md);
             padding: 1.5rem;
             font-family: 'IBM Plex Mono', monospace;
             font-size: clamp(0.9rem, 2.5vw, 1rem);
             overflow-x: auto;
             margin: 2rem 0;
-            box-shadow: 0 8px 32px rgba(0,0,0,.35);
+            box-shadow: 0 8px 32px var(--shadow);
             white-space: pre;
+            transition: all 0.3s ease;
         }
         .terminal .comment { color: #5c98ff; }
         .terminal .prompt { color: #79c0ff; }
@@ -218,13 +314,14 @@
         .card {
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: var(--radius-md);
             padding: 1.8rem;
-            transition: all .25s ease;
+            transition: all .3s ease;
         }
         .card:hover {
             border-color: var(--accent);
-            box-shadow: 0 12px 32px rgba(0,0,0,.3);
+            box-shadow: 0 12px 32px var(--shadow-hover);
+            transform: translateY(-2px);
         }
         .card h3 {
             font-family: 'IBM Plex Mono', monospace;
@@ -233,11 +330,11 @@
             font-size: 1.15rem;
         }
 
-        /* PRs Recientes */
+        /* Recent PRs */
         .pr-list {
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: var(--radius-md);
             padding: 1.5rem;
             margin: 2rem 0;
         }
@@ -266,7 +363,7 @@
             text-decoration: none;
             padding: .4rem .8rem;
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: var(--radius-sm);
             font-size: .85rem;
             transition: all .2s;
         }
@@ -285,12 +382,12 @@
         .badge-wrap {
             background: linear-gradient(145deg, rgba(255,166,87,0.12), rgba(255,107,107,0.12));
             border: 1px solid var(--accent);
-            border-radius: 14px;
+            border-radius: var(--radius-lg);
             padding: 1px;
         }
         .badge-inner {
             background: var(--card);
-            border-radius: 12px;
+            border-radius: var(--radius-md);
             padding: 1.8rem;
         }
         .badge-layout {
@@ -310,14 +407,14 @@
             padding: .5rem .8rem;
             background: var(--code-bg);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-sm);
             width: fit-content;
         }
         .badge-code {
             background: var(--code-bg);
             border: 1px solid var(--border);
             padding: .9rem;
-            border-radius: 8px;
+            border-radius: var(--radius-sm);
             font-family: 'IBM Plex Mono', monospace;
             font-size: .9rem;
             overflow-x: auto;
@@ -330,7 +427,7 @@
         .badge-generator input {
             background: var(--code-bg);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-sm);
             padding: .75rem .9rem;
             color: var(--fg);
             font-family: 'IBM Plex Mono', monospace;
@@ -339,7 +436,7 @@
             margin-top: 14px;
             width: 100%;
             padding: 12px;
-            border-radius: 10px;
+            border-radius: var(--radius-sm);
             border: none;
             background: linear-gradient(135deg, #ffa657, #ff6b6b);
             color: #0d1117;
@@ -364,7 +461,7 @@
         .badge-copy-row input {
             background: var(--code-bg);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-sm);
             padding: .75rem .9rem;
             color: var(--fg);
             font-family: 'IBM Plex Mono', monospace;
@@ -375,25 +472,29 @@
             align-items: center;
             justify-content: center;
             gap: .35rem;
+            border-radius: var(--radius-sm);
         }
 
-        /* Forms para issues anónimas */
+        /* Forms for anonymous issues */
         .issue-section {
-            background: linear-gradient(145deg, rgba(255,166,87,0.16), rgba(255,107,107,0.14));
-            border: 1px solid rgba(255,166,87,0.55);
-            border-radius: 16px;
-            padding: 1.5px;
-            margin: 2rem 0;
-            box-shadow: 0 16px 38px rgba(0,0,0,.42);
+            position: relative;
+            background: linear-gradient(145deg, rgba(255,166,87,0.14), rgba(255,107,107,0.12));
+            border: 1px solid rgba(255,166,87,0.45);
+            border-radius: var(--radius-lg);
+            padding: 2.5px;
+            margin: 3rem 0;
+            box-shadow: 0 16px 38px var(--shadow);
+            transition: all 0.3s ease;
         }
         .issue-shell {
-            background: rgba(21,21,30,0.9);
-            backdrop-filter: blur(10px);
-            border-radius: 14px;
+            background: var(--issue-shell-bg);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius-lg);
             padding: 2rem;
             display: grid;
             gap: 1.35rem;
-            border: 1px solid rgba(255,255,255,0.04);
+            border: 1px solid var(--issue-shell-border);
+            transition: all 0.3s ease;
         }
         .issue-header {
             display: grid;
@@ -404,13 +505,14 @@
             align-items: center;
             gap: .4rem;
             padding: .35rem .75rem;
-            background: rgba(255,166,87,0.12);
+            background: var(--issue-gradient-overlay);
             color: var(--accent);
-            border: 1px solid rgba(255,166,87,0.5);
-            border-radius: 999px;
+            border: 1px solid var(--accent);
+            border-radius: var(--radius-pill);
             font-family: 'IBM Plex Mono', monospace;
             font-size: .85rem;
             width: fit-content;
+            transition: all 0.3s ease;
         }
         .issue-sub {
             opacity: .8;
@@ -425,26 +527,33 @@
             position: relative;
             overflow: hidden;
             display: grid;
-            gap: .75rem;
-            background: radial-gradient(circle at 20% 20%, rgba(255,166,87,0.08), transparent 45%), var(--code-bg);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 14px;
+            gap: .85rem;
+            background: radial-gradient(circle at 20% 20%, var(--issue-gradient-overlay), transparent 45%), var(--issue-form-bg);
+            border: 1px solid var(--issue-form-border);
+            border-radius: var(--radius-lg);
             padding: 1.35rem 1.35rem;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 10px 28px rgba(0,0,0,.38);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 28px var(--shadow);
+            transition: all 0.3s ease;
         }
         .issue-form::after {
             content: "";
             position: absolute;
             inset: 0;
             border-radius: inherit;
-            background: linear-gradient(135deg, rgba(255,166,87,0.12), rgba(255,107,107,0.08));
-            opacity: .35;
+            background: linear-gradient(135deg, var(--issue-gradient-overlay), transparent);
+            opacity: .4;
             pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .issue-form:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 14px 34px var(--shadow-hover);
         }
         .issue-form h3 {
             position: relative;
             z-index: 1;
-            margin: 0;
+            margin: 0 0 .1rem;
             color: var(--accent);
             letter-spacing: .01em;
         }
@@ -458,18 +567,18 @@
         .issue-form input, .issue-form textarea {
             position: relative;
             z-index: 1;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 10px;
+            background: var(--issue-input-bg);
+            border: 1px solid var(--issue-input-border);
+            border-radius: var(--radius-sm);
             padding: .85rem 1rem;
             color: var(--fg);
             font-family: 'IBM Plex Mono', monospace;
-            transition: border-color .18s ease, box-shadow .18s ease, transform .12s ease;
+            transition: border-color .18s ease, box-shadow .18s ease, transform .12s ease, background-color 0.3s ease;
         }
         .issue-form input:focus, .issue-form textarea:focus {
             outline: none;
             border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(255,166,87,0.2);
+            box-shadow: 0 0 0 3px var(--issue-gradient-overlay);
             transform: translateY(-1px);
         }
         .issue-form textarea { min-height: 150px; resize: vertical; }
@@ -486,13 +595,38 @@
         }
         .issue-note {
             font-size: .9rem;
-            opacity: .8;
+            opacity: .85;
             margin-top: .4rem;
+        }
+        .issue-note a,
+        .issue-sub a {
+            color: var(--accent);
+        }
+
+        /* Light theme tuning for issues */
+        :root[data-theme="light"] .issue-section {
+            background: linear-gradient(145deg, rgba(209,96,20,0.06), rgba(255,107,107,0.06));
+            border: 1px solid var(--border);
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12);
+        }
+        :root[data-theme="light"] .issue-shell {
+            background: var(--card);
+            border: 1px solid var(--border);
+            backdrop-filter: none;
+        }
+        :root[data-theme="light"] .issue-form {
+            background: radial-gradient(circle at 20% 20%, var(--issue-gradient-overlay), transparent 45%), var(--issue-form-bg);
+            border: 1px solid var(--border);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 10px 26px rgba(0, 0, 0, 0.12);
+        }
+        :root[data-theme="light"] .issue-form:hover {
+            border-color: var(--accent);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 12px 30px rgba(0, 0, 0, 0.16);
         }
         .snippet {
             background: var(--code-bg);
             border: 1px solid var(--border);
-            border-radius: 10px;
+            border-radius: var(--radius-sm);
             padding: 1rem;
             font-family: 'IBM Plex Mono', monospace;
             overflow-x: auto;
@@ -506,7 +640,7 @@
             background: linear-gradient(135deg, #ffa657, #ff6b6b);
             color: #0d1117;
             padding: 12px;
-            border-radius: 10px;
+            border-radius: var(--radius-sm);
             text-decoration: none;
             font-weight: 700;
             font-family: 'IBM Plex Mono', monospace;
@@ -540,6 +674,8 @@
 @media (max-width: 768px) {
             body { padding: 1.5rem .8rem; }
             main { max-width: 100%; }
+            .theme-toggle { top: 1rem; right: 1rem; padding: 0.4rem; }
+            .theme-btn { padding: 0.4rem 0.6rem; font-size: 1rem; min-width: 32px; }
             header { margin-bottom: 2rem; }
             nav { gap: 1.2rem; font-size: .95rem; flex-direction: column; align-items: center; }
             .badges { gap: .4rem; }
@@ -560,6 +696,7 @@
         }
         @media (max-width: 480px) {
             body { padding: 1rem .6rem; }
+            .theme-toggle { top: 0.75rem; right: 0.75rem; }
             nav { gap: 1rem; font-size: .9rem; }
             .badges { justify-content: center; }
             .stats-banner { padding: 1rem; }
@@ -572,6 +709,11 @@
     </style>
 </head>
 <body>
+    <div class="theme-toggle" role="radiogroup" aria-label="Theme selector">
+        <button class="theme-btn" data-theme="light" aria-label="Light theme" title="Light">☀️</button>
+        <button class="theme-btn" data-theme="dark" aria-label="Dark theme" title="Dark">🌙</button>
+        <button class="theme-btn active" data-theme="auto" aria-label="Auto theme" title="Auto">💻</button>
+    </div>
     <main>
         <header>
             <h1>gitGost</h1>
@@ -605,7 +747,7 @@ The word 'recieve' should be 'receive'."
 <span class="success">→</span> Anonymized commit + PR opened as @gitgost-anonymous
             </div>
 
-         <!-- Contador de PRs -->
+         <!-- PR counter -->
         <div class="stats-banner">
             <div class="stats-number" id="prCounter">...</div>
             <div class="stats-label">Anonymous PRs Created</div>
@@ -686,9 +828,9 @@ The word 'recieve' should be 'receive'."
                             <input id="issue-owner" type="text" placeholder="torvalds" autocomplete="off">
                             <label for="issue-repo">Repo</label>
                             <input id="issue-repo" type="text" placeholder="linux" autocomplete="off">
-                            <label for="issue-title">Título</label>
+                            <label for="issue-title">Title</label>
                             <input id="issue-title" type="text" placeholder="Auth bug" autocomplete="off">
-                            <label for="issue-body">Descripción</label>
+                            <label for="issue-body">Description</label>
                             <div class="md-editor" id="issue-md-editor">
                                 <div class="md-tabs">
                                     <button type="button" class="md-tab active" data-tab="write" id="issue-tab-write">Write</button>
@@ -697,7 +839,7 @@ The word 'recieve' should be 'receive'."
                                 <textarea id="issue-body" class="md-input" placeholder="Steps to reproduce..." aria-label="Issue markdown"></textarea>
                                 <div class="md-preview" id="issue-preview" style="display:none;"></div>
                             </div>
-                            <label for="issue-labels">Labels (opcional, separadas por coma)</label>
+                            <label for="issue-labels">Labels (optional, comma-separated)</label>
                             <input id="issue-labels" type="text" placeholder="bug, security" autocomplete="off">
                             <div class="issue-actions">
                                 <button class="btn" id="issue-submit">Create anonymous issue</button>
@@ -718,7 +860,7 @@ The word 'recieve' should be 'receive'."
                             <input id="comment-number" type="number" min="1" placeholder="123" autocomplete="off">
                             <label for="comment-token">User token (optional)</label>
                             <input id="comment-token" type="text" placeholder="LS12-ASAS-1233" autocomplete="off">
-                            <label for="comment-body">Mensaje</label>
+                            <label for="comment-body">Message</label>
                             <div class="md-editor" id="comment-md-editor">
                                 <div class="md-tabs">
                                     <button type="button" class="md-tab active" data-tab="write" id="comment-tab-write">Write</button>
@@ -778,19 +920,51 @@ The word 'recieve' should be 'receive'."
     </main>
 
     <script>
-        // Determinar la URL base de la API
+        // Theme system
+        (function() {
+            const THEME_KEY = 'gitgost-theme';
+            const root = document.documentElement;
+            const buttons = document.querySelectorAll('.theme-btn');
+            
+            function setTheme(theme) {
+                buttons.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.theme === theme);
+                });
+                
+                if (theme === 'auto') {
+                    root.removeAttribute('data-theme');
+                    localStorage.removeItem(THEME_KEY);
+                } else {
+                    root.setAttribute('data-theme', theme);
+                    localStorage.setItem(THEME_KEY, theme);
+                }
+            }
+            
+            const saved = localStorage.getItem(THEME_KEY);
+            if (saved) {
+                setTheme(saved);
+            }
+            
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setTheme(btn.dataset.theme);
+                });
+            });
+        })();
+
+        // Determine API base URL
         const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
             ? `http://${window.location.host}` 
             : 'https://gitgost.leapcell.app';
 
-        // Cargar estadísticas
+        // Load stats
         async function loadStats() {
             try {
                 const response = await fetch(`${API_BASE}/api/stats`);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 
-                // Actualizar contador con animación
+                // Update counter with animation
                 const counter = document.getElementById('prCounter');
                 animateCounter(counter, 0, data.total_prs || 0, 1500);
             } catch (error) {
@@ -799,7 +973,7 @@ The word 'recieve' should be 'receive'."
             }
         }
 
-        // Cargar PRs recientes
+        // Load recent PRs
         async function loadRecentPRs() {
             try {
                 const response = await fetch(`${API_BASE}/api/recent-prs`);
@@ -825,7 +999,7 @@ The word 'recieve' should be 'receive'."
             }
         }
 
-        // Animar contador
+        // Animate counter
         function animateCounter(element, start, end, duration) {
             const startTime = Date.now();
             const timer = setInterval(() => {
@@ -844,11 +1018,11 @@ The word 'recieve' should be 'receive'."
             return t * (2 - t);
         }
 
-        // Formatear tiempo relativo
+        // Format relative time
         function formatTime(timestamp) {
             const date = new Date(timestamp);
             const now = new Date();
-            const diff = Math.floor((now - date) / 1000); // segundos
+            const diff = Math.floor((now - date) / 1000); // seconds
 
             if (diff < 60) return 'just now';
             if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
@@ -857,7 +1031,7 @@ The word 'recieve' should be 'receive'."
             return date.toLocaleDateString();
         }
 
-        // Generar badge dinámico
+        // Generate dynamic badge
         async function generateBadge() {
             const repo = document.getElementById('repo-input').value.trim();
             const result = document.getElementById('badge-result');
@@ -1017,14 +1191,14 @@ The word 'recieve' should be 'receive'."
             const resultEl = document.getElementById('issue-result');
 
             if (!owner || !repo || !title || !body) {
-                if (statusEl) statusEl.textContent = 'Faltan campos obligatorios';
+                if (statusEl) statusEl.textContent = 'Missing required fields';
                 return;
             }
 
             const labels = labelsRaw ? labelsRaw.split(',').map(l => l.trim()).filter(Boolean) : [];
 
             if (issueSubmitBtn) issueSubmitBtn.disabled = true;
-            if (statusEl) statusEl.textContent = 'Enviando...';
+            if (statusEl) statusEl.textContent = 'Sending...';
             if (resultEl) resultEl.textContent = '';
 
             try {
@@ -1043,20 +1217,20 @@ The word 'recieve' should be 'receive'."
                 }
 
                 const data = await response.json();
-                if (statusEl) statusEl.textContent = 'Creada';
+                if (statusEl) statusEl.textContent = 'Created';
 
                 const parts = [];
                 if (data.issue_url) parts.push(`Issue: ${data.issue_url}`);
                 if (data.hash) parts.push(`Hash: ${data.hash}`);
                 if (data.karma !== undefined) parts.push(`Karma: ${data.karma}`);
-                if (data.user_token) parts.push(`User token: ${data.user_token} (guárdalo para comentar con el mismo hash/karma)`);
+                if (data.user_token) parts.push(`User token: ${data.user_token} (keep it to comment with the same hash/karma)`);
                 if (data.issue_reply_token) parts.push(`Reply token: ${data.issue_reply_token}`);
                 const reportHint = `${API_BASE}/v1/moderation/report`;
                 if (resultEl) resultEl.textContent = `${parts.join(' · ')}`;
             } catch (error) {
-                console.error('Error creando issue:', error);
+                console.error('Error creating issue:', error);
                 if (statusEl) statusEl.textContent = 'Error';
-                if (resultEl) resultEl.textContent = 'No se pudo crear la issue. Verifica owner/repo e issues habilitados.';
+                if (resultEl) resultEl.textContent = 'Could not create the issue. Verify owner/repo and that issues are enabled.';
             } finally {
                 if (issueSubmitBtn) issueSubmitBtn.disabled = false;
             }
@@ -1072,12 +1246,12 @@ The word 'recieve' should be 'receive'."
             const resultEl = document.getElementById('comment-result');
 
             if (!owner || !repo || !number || !body) {
-                if (statusEl) statusEl.textContent = 'Faltan campos obligatorios';
+                if (statusEl) statusEl.textContent = 'Missing required fields';
                 return;
             }
 
             if (commentSubmitBtn) commentSubmitBtn.disabled = true;
-            if (statusEl) statusEl.textContent = 'Enviando...';
+            if (statusEl) statusEl.textContent = 'Sending...';
             if (resultEl) resultEl.textContent = '';
 
             const payload = { body };
@@ -1099,32 +1273,27 @@ The word 'recieve' should be 'receive'."
                 }
 
                 const data = await response.json();
-                if (statusEl) statusEl.textContent = 'Enviado';
+                if (statusEl) statusEl.textContent = 'Sent';
 
                 const parts = [];
                 if (data.hash) parts.push(`Hash: ${data.hash}`);
                 if (data.karma !== undefined) parts.push(`Karma: ${data.karma}`);
-                if (data.user_token && !token) parts.push(`Nuevo user token: ${data.user_token}`);
+                if (data.user_token && !token) parts.push(`New user token: ${data.user_token}`);
                 const reportHint = `${API_BASE}/v1/moderation/report`;
-                if (resultEl) resultEl.textContent = `${parts.join(' · ')}. Reportes: ${reportHint}`;
+                if (resultEl) resultEl.textContent = `${parts.join(' · ')}. Reports: ${reportHint}`;
             } catch (error) {
-                console.error('Error enviando comentario:', error);
+                console.error('Error sending comment:', error);
                 if (statusEl) statusEl.textContent = 'Error';
-                if (resultEl) resultEl.textContent = 'No se pudo enviar. Revisa issue # y permisos.';
+                if (resultEl) resultEl.textContent = 'Could not send. Check issue # and permissions.';
             } finally {
                 if (commentSubmitBtn) commentSubmitBtn.disabled = false;
             }
         });
 
-        // Cargar datos al iniciar
+        // Load data on init
         loadStats();
         loadRecentPRs();
 
-        // Actualizar cada 30 segundos
-        setInterval(() => {
-            loadStats();
-            loadRecentPRs();
-        }, 30000);
     </script>
 </body>
 </html>

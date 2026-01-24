@@ -168,6 +168,11 @@ Done. The PR appears instantly from `@gitgost-anonymous` with your commit messag
 
 Everything is designed to prevent abuse while keeping you anonymous.
 
+Stats
+-----
+
+![Alt](https://repobeats.axiom.co/api/embed/1117c7e8a1ec122dd758a070c8d4d1cb2707141b.svg "Repobeats analytics image")
+
 ## License
 
 **AGPL-3.0** – Free forever, open source, and copyleft.  

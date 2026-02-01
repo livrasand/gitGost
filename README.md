@@ -62,6 +62,8 @@ Built for developers who actually care about privacy.
 
 gitGost is designed to protect against common identification threats in contributions to public repos, but does not offer perfect anonymity. Below details what it protects against, what it does not, who it protects against, and key assumptions.
 
+For a terse, user-facing view of guarantees and data retention, see [Privacy Guarantees](Privacy%20Guarantees.md).
+
 ### gitGost protects against:
 
 - Public exposure of name and email in commits
@@ -98,7 +100,7 @@ gitGost assumes the user:
 - Does not mix anonymous and personal contributions to the same repo
 - Understands that perfect anonymity does not exist
 
-For more details, see [SECURITY.md](SECURITY.md).
+For the full model, see [THREAT_MODEL.md](THREAT_MODEL.md). For more operational details, see [SECURITY.md](SECURITY.md).
 
 ## Hosted Configuration
 

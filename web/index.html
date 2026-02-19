@@ -30,6 +30,9 @@
         :root {
             --bg: #0d1117;
             --fg: #c9d1d9;
+            --fg-secondary: #8b949e;
+            --bg-secondary: #161b22;
+            --bg-hover: #1f2937;
             --accent: #ffa657;
             --accent-dark: #f0883e;
             --border: #30363d;
@@ -51,15 +54,18 @@
         }
 
         :root[data-theme="light"] {
-            --bg: #ffffff;
-            --fg: #24292f;
-            --accent: #d16014;
-            --accent-dark: #b84f0f;
-            --border: #d0d7de;
-            --card: #f6f8fa;
-            --code-bg: #f6f8fa;
-            --shadow: rgba(0, 0, 0, 0.1);
-            --shadow-hover: rgba(0, 0, 0, 0.15);
+            --bg: #f4f5f7;
+            --fg: #1a1f2e;
+            --fg-secondary: #5c6370;
+            --bg-secondary: #eef0f3;
+            --bg-hover: #e8eaed;
+            --accent: #c05c10;
+            --accent-dark: #a34d0d;
+            --border: #dde1e7;
+            --card: #ffffff;
+            --code-bg: #f0f2f5;
+            --shadow: rgba(0, 0, 0, 0.07);
+            --shadow-hover: rgba(0, 0, 0, 0.12);
             --radius-lg: 16px;
             --radius-md: 12px;
             --radius-sm: 8px;
@@ -68,22 +74,25 @@
             --issue-shell-border: var(--border);
             --issue-form-bg: var(--card);
             --issue-form-border: var(--border);
-            --issue-input-bg: #ffffff;
-            --issue-input-border: var(--border);
-            --issue-gradient-overlay: rgba(209, 96, 20, 0.05);
+            --issue-input-bg: #f8f9fb;
+            --issue-input-border: #cdd1d9;
+            --issue-gradient-overlay: rgba(192, 92, 16, 0.04);
         }
 
         @media (prefers-color-scheme: light) {
             :root:not([data-theme]) {
-                --bg: #ffffff;
-                --fg: #24292f;
-                --accent: #d16014;
-                --accent-dark: #b84f0f;
-                --border: #d0d7de;
-                --card: #f6f8fa;
-                --code-bg: #f6f8fa;
-                --shadow: rgba(0, 0, 0, 0.1);
-                --shadow-hover: rgba(0, 0, 0, 0.15);
+                --bg: #f4f5f7;
+                --fg: #1a1f2e;
+                --fg-secondary: #5c6370;
+                --bg-secondary: #eef0f3;
+                --bg-hover: #e8eaed;
+                --accent: #c05c10;
+                --accent-dark: #a34d0d;
+                --border: #dde1e7;
+                --card: #ffffff;
+                --code-bg: #f0f2f5;
+                --shadow: rgba(0, 0, 0, 0.07);
+                --shadow-hover: rgba(0, 0, 0, 0.12);
                 --radius-lg: 16px;
                 --radius-md: 12px;
                 --radius-sm: 8px;
@@ -92,9 +101,9 @@
                 --issue-shell-border: var(--border);
                 --issue-form-bg: var(--card);
                 --issue-form-border: var(--border);
-                --issue-input-bg: #ffffff;
-                --issue-input-border: var(--border);
-                --issue-gradient-overlay: rgba(209, 96, 20, 0.05);
+                --issue-input-bg: #f8f9fb;
+                --issue-input-border: #cdd1d9;
+                --issue-gradient-overlay: rgba(192, 92, 16, 0.04);
             }
         }
 
@@ -118,41 +127,32 @@
             top: 1.5rem;
             right: 1.5rem;
             z-index: 1000;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 0.5rem;
             display: flex;
-            gap: 0.25rem;
-            box-shadow: 0 4px 12px var(--shadow);
-            transition: all 0.3s ease;
-        }
-        .theme-toggle:hover {
-            box-shadow: 0 6px 16px var(--shadow-hover);
+            gap: 0.5rem;
+            align-items: center;
         }
         .theme-btn {
-            background: transparent;
-            border: none;
-            color: var(--fg);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
             cursor: pointer;
-            padding: 0.5rem 0.75rem;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            transition: all 0.2s ease;
-            opacity: 0.6;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-width: 36px;
+            box-shadow: 0 2px 8px var(--shadow);
+            transition: box-shadow 0.2s ease, transform 0.15s ease;
+            padding: 0;
+            font-size: 1rem;
+            color: var(--fg);
         }
         .theme-btn:hover {
-            opacity: 1;
-            background: var(--bg);
+            box-shadow: 0 4px 14px var(--shadow-hover);
+            transform: scale(1.08);
         }
-        .theme-btn.active {
-            opacity: 1;
-            background: var(--accent);
-            color: #fff;
+        .theme-btn:active {
+            transform: scale(0.95);
         }
 
         header { text-align: center; margin-bottom: 3rem; }
@@ -289,21 +289,71 @@
         }
 
         .terminal {
-            background: var(--code-bg);
-            border: 1px solid var(--border);
+            background: #1a1b26;
+            border: 1px solid #2d2f3f;
             border-radius: var(--radius-md);
-            padding: 1.5rem;
             font-family: 'IBM Plex Mono', monospace;
-            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            font-size: clamp(0.85rem, 2.5vw, 0.95rem);
             overflow-x: auto;
             margin: 2rem 0;
-            box-shadow: 0 8px 32px var(--shadow);
-            white-space: pre;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
             transition: all 0.3s ease;
         }
-        .terminal .comment { color: #5c98ff; }
-        .terminal .prompt { color: #79c0ff; }
-        .terminal .success { color: #7ee787; }
+        .terminal-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .terminal-tab {
+            padding: 0.4rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-pill);
+            background: transparent;
+            color: var(--fg-secondary);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .terminal-tab:hover {
+            color: var(--fg);
+            border-color: var(--fg-secondary);
+        }
+        .terminal-tab.active {
+            background: #1a1b26;
+            color: #a9b1d6;
+            border-color: #2d2f3f;
+        }
+
+        .terminal-titlebar {
+            height: 40px;
+            background: #252636;
+            border-bottom: 1px solid #2d2f3f;
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .terminal-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .terminal-btn.close  { background: #ff5f57; }
+        .terminal-btn.min    { background: #febc2e; }
+        .terminal-btn.max    { background: #28c840; }
+        .terminal-body {
+            padding: 1.25rem 1.5rem;
+            white-space: pre;
+            color: #a9b1d6;
+            line-height: 1.7;
+        }
+        .terminal .comment { color: #565f89; }
+        .terminal .prompt { color: #7aa2f7; font-weight: 600; }
+        .terminal .success { color: #9ece6a; }
 
         .grid {
             display: grid;
@@ -443,7 +493,6 @@
             font-weight: 700;
             font-size: 15px;
             cursor: pointer;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
         }
         .badge-generator button {
             font-family: 'IBM Plex Mono', monospace;
@@ -475,154 +524,70 @@
             border-radius: var(--radius-sm);
         }
 
-        /* Forms for anonymous issues */
-        .issue-section {
-            position: relative;
-            background: linear-gradient(145deg, rgba(255,166,87,0.14), rgba(255,107,107,0.12));
-            border: 1px solid rgba(255,166,87,0.45);
-            border-radius: var(--radius-lg);
-            padding: 2.5px;
-            margin: 3rem 0;
-            box-shadow: 0 16px 38px var(--shadow);
-            transition: all 0.3s ease;
+        /* Light mode overrides for issue section */
+        :root[data-theme="light"] .issue-container {
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06), 0 0 0 1px var(--border);
         }
-        .issue-shell {
-            background: var(--issue-shell-bg);
-            backdrop-filter: blur(12px);
-            border-radius: var(--radius-lg);
-            padding: 2rem;
-            display: grid;
-            gap: 1.35rem;
-            border: 1px solid var(--issue-shell-border);
-            transition: all 0.3s ease;
+        :root[data-theme="light"] .form-group input,
+        :root[data-theme="light"] .form-group textarea {
+            background: #ffffff;
+            border-color: #c8cdd6;
+            color: #1a1f2e;
         }
-        .issue-header {
-            display: grid;
-            gap: .4rem;
-        }
-        .issue-eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: .4rem;
-            padding: .35rem .75rem;
-            background: var(--issue-gradient-overlay);
-            color: var(--accent);
-            border: 1px solid var(--accent);
-            border-radius: var(--radius-pill);
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: .85rem;
-            width: fit-content;
-            transition: all 0.3s ease;
-        }
-        .issue-sub {
-            opacity: .8;
-            max-width: 620px;
-        }
-        .issue-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.1rem;
-        }
-        .issue-form {
-            position: relative;
-            overflow: hidden;
-            display: grid;
-            gap: .85rem;
-            background: radial-gradient(circle at 20% 20%, var(--issue-gradient-overlay), transparent 45%), var(--issue-form-bg);
-            border: 1px solid var(--issue-form-border);
-            border-radius: var(--radius-lg);
-            padding: 1.35rem 1.35rem;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 28px var(--shadow);
-            transition: all 0.3s ease;
-        }
-        .issue-form::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            background: linear-gradient(135deg, var(--issue-gradient-overlay), transparent);
-            opacity: .4;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        .issue-form:hover {
-            transform: translateY(-2px);
+        :root[data-theme="light"] .form-group input:focus,
+        :root[data-theme="light"] .form-group textarea:focus {
             border-color: var(--accent);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 14px 34px var(--shadow-hover);
+            box-shadow: 0 0 0 3px rgba(192, 92, 16, 0.1);
         }
-        .issue-form h3 {
-            position: relative;
-            z-index: 1;
-            margin: 0 0 .1rem;
-            color: var(--accent);
-            letter-spacing: .01em;
+        :root[data-theme="light"] .form-note {
+            background: #f0f2f5;
+            border-color: #dde1e7;
         }
-        .issue-form label {
-            position: relative;
-            z-index: 1;
-            font-weight: 700;
-            opacity: .9;
-            letter-spacing: .01em;
+        :root[data-theme="light"] .issue-tabs {
+            border-bottom-color: #dde1e7;
         }
-        .issue-form input, .issue-form textarea {
-            position: relative;
-            z-index: 1;
-            background: var(--issue-input-bg);
-            border: 1px solid var(--issue-input-border);
-            border-radius: var(--radius-sm);
-            padding: .85rem 1rem;
-            color: var(--fg);
-            font-family: 'IBM Plex Mono', monospace;
-            transition: border-color .18s ease, box-shadow .18s ease, transform .12s ease, background-color 0.3s ease;
+        :root[data-theme="light"] .issue-tab.active {
+            font-weight: 600;
         }
-        .issue-form input:focus, .issue-form textarea:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px var(--issue-gradient-overlay);
-            transform: translateY(-1px);
+        :root[data-theme="light"] .md-editor {
+            background: #ffffff;
+            border-color: #c8cdd6;
         }
-        .issue-form textarea { min-height: 150px; resize: vertical; }
-        .issue-actions {
-            display: flex;
-            gap: .6rem;
-            flex-wrap: wrap;
-            align-items: center;
+        :root[data-theme="light"] .md-tabs {
+            border-bottom-color: #dde1e7;
+            background: #f4f5f7;
         }
-        .issue-status {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: .9rem;
-            opacity: .8;
-        }
-        .issue-note {
-            font-size: .9rem;
-            opacity: .85;
-            margin-top: .4rem;
-        }
-        .issue-note a,
-        .issue-sub a {
-            color: var(--accent);
+        @media (prefers-color-scheme: light) {
+            :root:not([data-theme]) .form-group input,
+            :root:not([data-theme]) .form-group textarea {
+                background: #ffffff;
+                border-color: #c8cdd6;
+                color: #1a1f2e;
+            }
+            :root:not([data-theme]) .form-group input:focus,
+            :root:not([data-theme]) .form-group textarea:focus {
+                border-color: var(--accent);
+                box-shadow: 0 0 0 3px rgba(192, 92, 16, 0.1);
+            }
+            :root:not([data-theme]) .form-note {
+                background: #f0f2f5;
+                border-color: #dde1e7;
+            }
+            :root:not([data-theme]) .md-editor {
+                background: #ffffff;
+                border-color: #c8cdd6;
+            }
+            :root:not([data-theme]) .md-tabs {
+                border-bottom-color: #dde1e7;
+                background: #f4f5f7;
+            }
         }
 
-        /* Light theme tuning for issues */
-        :root[data-theme="light"] .issue-section {
-            background: linear-gradient(145deg, rgba(209,96,20,0.06), rgba(255,107,107,0.06));
-            border: 1px solid var(--border);
-            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12);
-        }
-        :root[data-theme="light"] .issue-shell {
-            background: var(--card);
-            border: 1px solid var(--border);
-            backdrop-filter: none;
-        }
-        :root[data-theme="light"] .issue-form {
-            background: radial-gradient(circle at 20% 20%, var(--issue-gradient-overlay), transparent 45%), var(--issue-form-bg);
-            border: 1px solid var(--border);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 10px 26px rgba(0, 0, 0, 0.12);
-        }
-        :root[data-theme="light"] .issue-form:hover {
-            border-color: var(--accent);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 12px 30px rgba(0, 0, 0, 0.16);
-        }
+        /* Forms for anonymous issues - legacy classes kept for compatibility */
+        .issue-shell { display: none; }
+        .issue-grid { display: none; }
+        .issue-note { font-size: .9rem; opacity: .85; margin-top: .4rem; }
+        .issue-note a { color: var(--accent); }
         .snippet {
             background: var(--code-bg);
             border: 1px solid var(--border);
@@ -671,11 +636,281 @@
         }
         .footer a { color: var(--accent); text-decoration: none; }
 
+        /* Redesigned Anonymous Issues Section */
+        .issue-section {
+            margin: 4rem 0;
+        }
+        .issue-container {
+            width: 100%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2rem 2.5rem;
+            box-shadow: 0 4px 20px var(--shadow);
+        }
+        .issue-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .issue-eyebrow {
+            color: var(--accent);
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        .issue-header h2 {
+            margin: 0 0 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .issue-header p {
+            color: var(--fg-secondary);
+            margin: 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .issue-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+        .issue-tab {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            background: transparent;
+            color: var(--fg-secondary);
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .issue-tab:hover {
+            color: var(--fg);
+            background: var(--bg-hover);
+        }
+        .issue-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+        .issue-form-container {
+            position: relative;
+        }
+        .issue-form {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .issue-form.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .repo-input-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .repo-separator {
+            color: var(--fg-secondary);
+            font-weight: 500;
+        }
+        .repo-input-group input {
+            flex: 1;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--fg);
+            font-size: 0.9rem;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            color: var(--fg);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        .form-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .form-status {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--fg-secondary);
+        }
+        .form-note {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .form-note p {
+            margin: 0 0 0.5rem;
+            font-size: 0.875rem;
+            color: var(--fg-secondary);
+        }
+        .form-note p:last-child {
+            margin-bottom: 0;
+        }
+        .form-result {
+            font-size: 0.875rem;
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        /* Redesigned Badge Section */
+        .badge-section {
+            margin: 4rem 0;
+        }
+        .badge-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .badge-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .badge-eyebrow {
+            color: var(--accent);
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        .badge-header h3 {
+            margin: 0 0 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .badge-header p {
+            color: var(--fg-secondary);
+            margin: 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .badge-showcase {
+            margin-bottom: 2rem;
+        }
+        .badge-preview-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 12px var(--shadow);
+        }
+        .badge-static {
+            margin-bottom: 1rem;
+        }
+        .badge-code {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--fg-secondary);
+            background: var(--code-bg);
+            padding: 0.5rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+        .badge-generator {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: 0 2px 12px var(--shadow);
+        }
+        .badge-generator h4 {
+            margin: 0 0 0.5rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .badge-generator p {
+            color: var(--fg-secondary);
+            margin: 0 0 1.5rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .badge-form {
+            margin-bottom: 1.5rem;
+        }
+        .badge-result {
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        .badge-result p {
+            margin: 0;
+            color: var(--fg-secondary);
+        }
+        .badge-copy-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+        }
+        .badge-generated {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .badge-copy-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .badge-copy-row input {
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            color: var(--fg);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8rem;
+        }
+        .badge-copy-row button {
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--card);
+            color: var(--fg);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .badge-copy-row button:hover {
+            background: var(--accent);
+            color: white;
+        }
+
 @media (max-width: 768px) {
             body { padding: 1.5rem .8rem; }
             main { max-width: 100%; }
-            .theme-toggle { top: 1rem; right: 1rem; padding: 0.4rem; }
-            .theme-btn { padding: 0.4rem 0.6rem; font-size: 1rem; min-width: 32px; }
+            .theme-toggle { top: 1rem; right: 1rem; }
+            .theme-btn { width: 36px; height: 36px; font-size: 0.95rem; }
             header { margin-bottom: 2rem; }
             nav { gap: 1.2rem; font-size: .95rem; flex-direction: column; align-items: center; }
             .badges { gap: .4rem; }
@@ -683,7 +918,8 @@
             .stats-banner { padding: 1.5rem; margin: 1.5rem 0 2rem; }
             .stats-number { font-size: clamp(2.5rem, 8vw, 4rem); }
             .stats-label { font-size: 1rem; }
-            .terminal { padding: 1rem; font-size: clamp(0.8rem, 2vw, 0.95rem); }
+            .terminal { font-size: clamp(0.8rem, 2vw, 0.95rem); }
+            .terminal-body { padding: 1rem; }
             .grid { gap: 1rem; }
             .card { padding: 1.5rem; }
             .card h3 { font-size: 1.1rem; }
@@ -697,10 +933,12 @@
         @media (max-width: 480px) {
             body { padding: 1rem .6rem; }
             .theme-toggle { top: 0.75rem; right: 0.75rem; }
+            .theme-btn { width: 34px; height: 34px; }
             nav { gap: 1rem; font-size: .9rem; }
             .badges { justify-content: center; }
             .stats-banner { padding: 1rem; }
-            .terminal { padding: 0.8rem; }
+            .terminal { font-size: 0.82rem; }
+            .terminal-body { padding: 0.75rem; }
             .grid { grid-template-columns: 1fr; gap: 1rem; }
             .card { padding: 1.2rem; }
             .pr-item { padding: 0.6rem; }
@@ -709,10 +947,11 @@
     </style>
 </head>
 <body>
-    <div class="theme-toggle" role="radiogroup" aria-label="Theme selector">
-        <button class="theme-btn" data-theme="light" aria-label="Light theme" title="Light">☀️</button>
-        <button class="theme-btn" data-theme="dark" aria-label="Dark theme" title="Dark">🌙</button>
-        <button class="theme-btn active" data-theme="auto" aria-label="Auto theme" title="Auto">💻</button>
+    <div class="theme-toggle">
+        <a href="https://github.com/livrasand/gitGost" target="_blank" class="theme-btn" aria-label="GitHub repository" title="GitHub">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        </a>
+        <button class="theme-btn" id="theme-btn" aria-label="Toggle theme" title="Toggle theme"></button>
     </div>
     <main>
         <header>
@@ -726,17 +965,12 @@
             </div>
         </header>
 
-        <nav>
-            <a href="#usage">Usage</a>
-            <a href="#recent">Recent PRs</a>
-            <a href="#features">Features</a>
-            <a href="#why">Why</a>
-            <a href="#badge">Badge</a>
-            <a href="https://github.com/livrasand/gitGost" target="_blank">GitHub ↗</a>
-        </nav>
         <section id="usage">
-            <div class="terminal">
-<span class="comment"># Add as remote → push → done. Fully anonymous.</span>
+            <div class="terminal-tabs">
+                <button class="terminal-tab active" data-terminal="push">Push / PR</button>
+                <button class="terminal-tab" data-terminal="fetch">Fetch / Pull (optional)</button>
+            </div>
+            <div class="terminal" id="terminal-push"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Add as remote → push → done. Fully anonymous.</span>
 <span class="prompt">$</span> git remote add gost https://gitgost.leapcell.app/v1/gh/torvalds/linux
 <span class="prompt">$</span> git checkout -b fix-typo
 <span class="prompt">$</span> git commit -am "fix: typo in documentation
@@ -744,7 +978,15 @@
 This commit fixes a grammatical error in the README.
 The word 'recieve' should be 'receive'."
 <span class="prompt">$</span> git push gost fix-typo:main
-<span class="success">→</span> Anonymized commit + PR opened as @gitgost-anonymous
+<span class="success">→</span> Anonymized commit + PR opened as @gitgost-anonymous</div>
+            </div>
+            <div class="terminal" id="terminal-fetch" style="display:none;"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Clone or fetch anonymously — no GitHub account needed.</span>
+<span class="prompt">$</span> git clone https://gitgost.leapcell.app/v1/gh/torvalds/linux
+<span class="comment"># Or add as remote and fetch/pull later</span>
+<span class="prompt">$</span> git remote add gost https://gitgost.leapcell.app/v1/gh/torvalds/linux
+<span class="prompt">$</span> git fetch gost
+<span class="prompt">$</span> git pull gost main
+<span class="success">→</span> Repository cloned with zero identity exposure</div>
             </div>
 
          <!-- PR counter -->
@@ -786,6 +1028,10 @@ The word 'recieve' should be 'receive'."
                 <h3>Anonymous issues & comments</h3>
                 <p>Open issues and comment on any repo without revealing identity. Each message carries a stable anonymous hash.</p>
             </div>
+            <div class="card">
+                <h3>Fetch & Pull Support</h3>
+                <p>Clone, fetch, and pull from any GitHub repo through gitGost. Read code anonymously — no account, no trace.</p>
+            </div>
         </section>
 
 
@@ -812,95 +1058,147 @@ The word 'recieve' should be 'receive'."
         <!-- Anonymous Issues section -->
         <h2 id="issues">Anonymous Issues</h2>
         <section class="issue-section">
-            <div class="issue-shell">
+            <div class="issue-container">
                 <div class="issue-header">
                     <div class="issue-eyebrow">Anonymous issues + comments</div>
-                    <div class="issue-sub">Create issues or comment without exposing your identity. We only keep what’s essential: URL, anonymous hash, and <a href="/karma.html" style="color: var(--accent);">karma</a>.</div>
+                    <p>Create issues or comment without exposing your identity. We only keep what’s essential: URL, anonymous hash, and <a href="/karma.html" style="color: var(--accent);">karma</a>.</p>
                 </div>
-                <div class="issue-grid">
-                    <div>
-                        <div class="issue-form" aria-labelledby="create-issue-title">
-                            <h3 id="create-issue-title" style="margin:0; color: var(--accent);">Create anonymous issue</h3>
-                            <div class="issue-note" style="margin-bottom: .75rem;">
-                                If you haven't already, would you mind reading our <a href="/approach.html" style="color: var(--accent);">approach to comments</a> and <a href="/guidelines.html" style="color: var(--accent);">guidelines</a>?
+
+                <div class="issue-tabs">
+                    <button class="issue-tab active" data-tab="create">Create Issue</button>
+                    <button class="issue-tab" data-tab="comment">Post Comment</button>
+                </div>
+
+                <div class="issue-form-container">
+                    <form class="issue-form active" id="create-issue-form">
+                        <div class="form-group">
+                            <label for="issue-owner">Repository</label>
+                            <div class="repo-input-group">
+                                <input id="issue-owner" type="text" placeholder="owner" autocomplete="off">
+                                <span class="repo-separator">/</span>
+                                <input id="issue-repo" type="text" placeholder="repo" autocomplete="off">
                             </div>
-                            <label for="issue-owner">Owner</label>
-                            <input id="issue-owner" type="text" placeholder="torvalds" autocomplete="off">
-                            <label for="issue-repo">Repo</label>
-                            <input id="issue-repo" type="text" placeholder="linux" autocomplete="off">
+                        </div>
+
+                        <div class="form-group">
                             <label for="issue-title">Title</label>
-                            <input id="issue-title" type="text" placeholder="Auth bug" autocomplete="off">
+                            <input id="issue-title" type="text" placeholder="Brief description of the issue" autocomplete="off">
+                        </div>
+
+                        <div class="form-group">
                             <label for="issue-body">Description</label>
                             <div class="md-editor" id="issue-md-editor">
                                 <div class="md-tabs">
                                     <button type="button" class="md-tab active" data-tab="write" id="issue-tab-write">Write</button>
                                     <button type="button" class="md-tab" data-tab="preview" id="issue-tab-preview">Preview</button>
                                 </div>
-                                <textarea id="issue-body" class="md-input" placeholder="Steps to reproduce..." aria-label="Issue markdown"></textarea>
+                                <textarea id="issue-body" class="md-input" placeholder="Detailed description, steps to reproduce, etc." aria-label="Issue markdown"></textarea>
                                 <div class="md-preview" id="issue-preview" style="display:none;"></div>
                             </div>
-                            <label for="issue-labels">Labels (optional, comma-separated)</label>
-                            <input id="issue-labels" type="text" placeholder="bug, security" autocomplete="off">
-                            <div class="issue-actions">
-                                <button class="btn" id="issue-submit">Create anonymous issue</button>
-                                <div class="issue-status" id="issue-status"></div>
-                            </div>
-                            <div class="issue-note">Do not include personal data. We only keep URL + anonymous hash.</div>
-                            <div class="issue-note" id="issue-result"></div>
                         </div>
-                    </div>
-                    <div>
-                        <div class="issue-form" aria-labelledby="comment-issue-title">
-                            <h3 id="comment-issue-title" style="margin:0; color: var(--accent);">Post anonymous comment</h3>
-                            <label for="comment-owner">Owner</label>
-                            <input id="comment-owner" type="text" placeholder="torvalds" autocomplete="off">
-                            <label for="comment-repo">Repo</label>
-                            <input id="comment-repo" type="text" placeholder="linux" autocomplete="off">
-                            <label for="comment-number">Issue #</label>
+
+                        <div class="form-group">
+                            <label for="issue-labels">Labels (optional, comma-separated)</label>
+                            <input id="issue-labels" type="text" placeholder="bug, enhancement, help wanted" autocomplete="off">
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn primary" id="issue-submit" type="submit">Create Anonymous Issue</button>
+                            <div class="form-status" id="issue-status"></div>
+                        </div>
+
+                        <div class="form-note">
+                            <p>Before creating, please read our <a href="/approach.html" style="color: var(--accent);">approach to comments</a> and <a href="/guidelines.html" style="color: var(--accent);">guidelines</a>.</p>
+                            <p>Do not include personal data. We only keep URL + anonymous hash.</p>
+                        </div>
+                        <div class="form-result" id="issue-result"></div>
+                    </form>
+
+                    <form class="issue-form" id="comment-issue-form">
+                        <div class="form-group">
+                            <label for="comment-owner">Repository</label>
+                            <div class="repo-input-group">
+                                <input id="comment-owner" type="text" placeholder="owner" autocomplete="off">
+                                <span class="repo-separator">/</span>
+                                <input id="comment-repo" type="text" placeholder="repo" autocomplete="off">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="comment-number">Issue Number</label>
                             <input id="comment-number" type="number" min="1" placeholder="123" autocomplete="off">
-                            <label for="comment-token">User token (optional)</label>
-                            <input id="comment-token" type="text" placeholder="LS12-ASAS-1233" autocomplete="off">
-                            <label for="comment-body">Message</label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="comment-token">User Token (optional)</label>
+                            <input id="comment-token" type="text" placeholder="Keep your token to maintain karma" autocomplete="off">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="comment-body">Comment</label>
                             <div class="md-editor" id="comment-md-editor">
                                 <div class="md-tabs">
                                     <button type="button" class="md-tab active" data-tab="write" id="comment-tab-write">Write</button>
                                     <button type="button" class="md-tab" data-tab="preview" id="comment-tab-preview">Preview</button>
                                 </div>
-                                <textarea id="comment-body" class="md-input" placeholder="Your comment..." aria-label="Comment markdown"></textarea>
+                                <textarea id="comment-body" class="md-input" placeholder="Your thoughts on this issue..." aria-label="Comment markdown"></textarea>
                                 <div class="md-preview" id="comment-preview" style="display:none;"></div>
                             </div>
-                            <div class="issue-actions">
-                                <button class="btn" id="comment-submit">Send comment</button>
-                                <div class="issue-status" id="comment-status"></div>
-                            </div>
-                            <div class="issue-note" id="comment-result"></div>
-                            <div class="issue-note">Comments include a footer: anonymous hash + <a href="/karma.html" style="color: var(--accent);">karma</a> + report link.</div>
                         </div>
-                    </div>
+
+                        <div class="form-actions">
+                            <button class="btn primary" id="comment-submit" type="submit">Post Anonymous Comment</button>
+                            <div class="form-status" id="comment-status"></div>
+                        </div>
+
+                        <div class="form-note">
+                            <p>Comments include a footer with your anonymous hash and karma.</p>
+                        </div>
+                        <div class="form-result" id="comment-result"></div>
+                    </form>
                 </div>
             </div>
         </section>
 
         <h2 id="badge">Anonymous Contributor Friendly Badge</h2>
-        <section class="badge-wrap">
-            <div class="badge-inner">
-                <div class="badge-layout">
-                    <div class="badge-meta">
-                        <h3 style="margin: 0; color: var(--accent);">Welcome anonymous contributions</h3>
-                        <p>Make it visible that your repository accepts PRs via gitGost. Use the static badge or generate a dynamic one for verified repos (.gitgost.yml).</p>
-                        <div class="badge-preview">
-                            <img src="/badges/anonymous-friendly.svg" alt="Anonymous Contributor Friendly" style="height: 22px;">
+        <section class="badge-section">
+            <div class="badge-container">
+                <div class="badge-header">
+                    <div class="badge-eyebrow">Show your support</div>
+                    <h3>Welcome anonymous contributions</h3>
+                    <p>Make it visible that your repository accepts PRs via gitGost. Add our badge to your README.</p>
+                </div>
+
+                <div class="badge-showcase">
+                    <div class="badge-preview-card">
+                        <div class="badge-static">
+                            <img src="/badges/anonymous-friendly.svg" alt="Anonymous Contributor Friendly" style="height: 24px;">
                         </div>
                         <div class="badge-code">
-                            ![Anonymous Contributor Friendly](https://gitgost.leapcell.app/badges/anonymous-friendly.svg)
+                            <code>![Anonymous Contributor Friendly](https://gitgost.leapcell.app/badges/anonymous-friendly.svg)</code>
                         </div>
                     </div>
-                    <div class="badge-generator" id="badge-generator">
-                        <label for="repo-input">Repository (owner/repo)</label>
-                        <input type="text" id="repo-input" placeholder="livrasand/gitGost">
-                        <button onclick="generateBadge()">Generate dynamic badge</button>
-                        <div class="badge-result" id="badge-result"></div>
-                        <div class="badge-copy-row" id="badge-copy-row" style="display:none;">
+                </div>
+
+                <div class="badge-generator">
+                    <h4>Get a dynamic badge</h4>
+                    <p>Add a <code>.gitgost.yml</code> file to your repo root to enable verification and get a dynamic badge that shows your acceptance of anonymous contributions.</p>
+
+                    <div class="badge-form">
+                        <div class="form-group">
+                            <label for="repo-input">Repository (owner/repo)</label>
+                            <input type="text" id="repo-input" placeholder="your-username/your-repo" autocomplete="off">
+                        </div>
+                        <button onclick="generateBadge()" class="btn primary" id="generate-btn">Generate Badge</button>
+                    </div>
+
+                    <div class="badge-result" id="badge-result"></div>
+
+                    <div class="badge-copy-section" id="badge-copy-section" style="display:none;">
+                        <div class="badge-generated">
+                            <img id="generated-badge" alt="Generated badge" style="height: 20px;">
+                        </div>
+                        <div class="badge-copy-row">
                             <input type="text" id="badge-markdown" readonly>
                             <button id="badge-copy-btn" onclick="copyBadgeMarkdown()" aria-label="Copy markdown" title="Copy">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
@@ -915,7 +1213,9 @@ The word 'recieve' should be 'receive'."
         </section>
 
         <div class="footer">
-            Built for developers who actually care about privacy • <a href="https://github.com/livrasand/gitGost" target="_blank">github.com/livrasand/gitGost</a>
+            Built for developers who actually care about privacy • <a href="https://github.com/livrasand/gitGost" target="_blank">github.com/livrasand/gitGost</a><br>
+            Icons from <a href="https://iconoir.com/" target="_blank">Iconoir</a> by Luca Burgio with License: MIT<br>
+            The gitGost logo is <a href="https://thenounproject.com/browse/icons/term/anonymous/" target="_blank" title="anonymous Icons">anonymous</a> by Ian Banyuke from <a href="https://thenounproject.com" target="_blank">Noun Project</a> (CC BY 3.0)
         </div>
     </main>
 
@@ -924,13 +1224,17 @@ The word 'recieve' should be 'receive'."
         (function() {
             const THEME_KEY = 'gitgost-theme';
             const root = document.documentElement;
-            const buttons = document.querySelectorAll('.theme-btn');
-            
+            const btn = document.getElementById('theme-btn');
+            const cycle = ['auto', 'light', 'dark'];
+            const icons = { 
+                light: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 11.507a9.493 9.493 0 0 0 18 4.219c-8.507 0-12.726-4.22-12.726-12.726A9.49 9.49 0 0 0 3 11.507"/></svg>', 
+                dark: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18a6 6 0 1 0 0-12a6 6 0 0 0 0 12m10-6h1M12 2V1m0 22v-1m8-2l-1-1m1-15l-1 1M4 20l1-1M4 4l1 1m-4 7h1"/></svg>', 
+                auto: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.2 14.222V4a2 2 0 0 1 2-2h13.6a2 2 0 0 1 2 2v10.222m-17.6 0h17.6m-17.6 0l-1.48 5.234A2 2 0 0 0 3.644 22h16.712a2 2 0 0 0 1.924-2.544l-1.48-5.234"/><path stroke-linecap="round" stroke-linejoin="round" d="M11 19h2"/></g></svg>' 
+            };
+
             function setTheme(theme) {
-                buttons.forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.theme === theme);
-                });
-                
+                btn.innerHTML = icons[theme];
+                btn.title = { light: 'Light', dark: 'Dark', auto: 'Auto' }[theme];
                 if (theme === 'auto') {
                     root.removeAttribute('data-theme');
                     localStorage.removeItem(THEME_KEY);
@@ -939,17 +1243,17 @@ The word 'recieve' should be 'receive'."
                     localStorage.setItem(THEME_KEY, theme);
                 }
             }
-            
-            const saved = localStorage.getItem(THEME_KEY);
-            if (saved) {
-                setTheme(saved);
+
+            function currentTheme() {
+                return localStorage.getItem(THEME_KEY) || 'auto';
             }
-            
-            buttons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    setTheme(btn.dataset.theme);
-                });
+
+            btn.addEventListener('click', () => {
+                const next = cycle[(cycle.indexOf(currentTheme()) + 1) % cycle.length];
+                setTheme(next);
             });
+
+            setTheme(currentTheme());
         })();
 
         // Determine API base URL
@@ -1162,6 +1466,28 @@ The word 'recieve' should be 'receive'."
         }
 
         // --- Anonymous Issues ---
+        // Tab switching functionality
+        const issueTabs = document.querySelectorAll('.issue-tab');
+        const issueForms = document.querySelectorAll('.issue-form');
+
+        issueTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetTab = tab.dataset.tab;
+                
+                // Update tab states
+                issueTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Update form states
+                issueForms.forEach(form => {
+                    form.classList.remove('active');
+                    if (form.id === `${targetTab}-issue-form`) {
+                        form.classList.add('active');
+                    }
+                });
+            });
+        });
+
         const issueSubmitBtn = document.getElementById('issue-submit');
         const commentSubmitBtn = document.getElementById('comment-submit');
 
@@ -1288,6 +1614,17 @@ The word 'recieve' should be 'receive'."
             } finally {
                 if (commentSubmitBtn) commentSubmitBtn.disabled = false;
             }
+        });
+
+        // Terminal tab switching
+        document.querySelectorAll('.terminal-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.terminal-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const target = tab.dataset.terminal;
+                document.getElementById('terminal-push').style.display = target === 'push' ? '' : 'none';
+                document.getElementById('terminal-fetch').style.display = target === 'fetch' ? '' : 'none';
+            });
         });
 
         // Load data on init

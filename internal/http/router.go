@@ -124,13 +124,18 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 				service := c.Query("service")
 				if service == "git-receive-pack" {
 					ReceivePackDiscoveryHandler(c)
+				} else if service == "git-upload-pack" {
+					UploadPackDiscoveryHandler(c)
 				} else {
-					c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Only git-receive-pack is supported"})
+					c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Unsupported service"})
 				}
 			})
 
 			// Git Smart HTTP - receive-pack (push)
 			gh.POST("/:owner/:repo/git-receive-pack", ReceivePackHandler)
+
+			// Git Smart HTTP - upload-pack (fetch/pull)
+			gh.POST("/:owner/:repo/git-upload-pack", UploadPackHandler)
 
 			// Issues y comentarios anónimos
 			gh.POST("/:owner/:repo/issues/anonymous", CreateAnonymousIssueHandler)

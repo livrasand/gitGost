@@ -7,11 +7,13 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base32"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"html/template"
 	"io"
 	"net/http"
+	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -25,6 +27,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+var uploadPackClient = &http.Client{Timeout: 30 * time.Second}
 
 const anonymousFriendlyBadgeSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="180" height="20" viewBox="0 0 180 20">
   <rect width="180" height="20" fill="#4CAF50" rx="3"/>
@@ -183,7 +187,7 @@ func ReceivePackHandler(c *gin.Context) {
 	forkOwner, err := github.ForkRepo(owner, repo)
 	if err != nil {
 		utils.Log("Error creating fork: %v", err)
-		WriteSidebandLine(&response, 2, "unpack ok")
+		WriteSidebandLine(&response, 1, "unpack ok\n")
 		WriteSidebandLine(&response, 3, fmt.Sprintf("error creating fork: %v", err))
 		WritePktLine(&response, "")
 		c.Writer.Write(response.Bytes())
@@ -198,7 +202,7 @@ func ReceivePackHandler(c *gin.Context) {
 	branch, err := git.PushToGitHub(owner, repo, tempDir, forkOwner)
 	if err != nil {
 		utils.Log("Error pushing to fork: %v", err)
-		WriteSidebandLine(&response, 2, "unpack ok")
+		WriteSidebandLine(&response, 1, "unpack ok\n")
 		WriteSidebandLine(&response, 3, fmt.Sprintf("error pushing to fork: %v", err))
 		WritePktLine(&response, "")
 		c.Writer.Write(response.Bytes())
@@ -213,7 +217,7 @@ func ReceivePackHandler(c *gin.Context) {
 	prURL, err := github.CreatePR(owner, repo, branch, forkOwner, commitMessage)
 	if err != nil {
 		utils.Log("Error creating PR: %v", err)
-		WriteSidebandLine(&response, 2, "unpack ok")
+		WriteSidebandLine(&response, 1, "unpack ok\n")
 		WriteSidebandLine(&response, 3, fmt.Sprintf("error creating PR: %v", err))
 		WritePktLine(&response, "")
 		c.Writer.Write(response.Bytes())
@@ -244,9 +248,9 @@ func ReceivePackHandler(c *gin.Context) {
 	WriteSidebandLine(&response, 2, "remote: ========================================")
 	WriteSidebandLine(&response, 2, "remote: ")
 
-	// Respuesta exitosa estándar de Git
-	WriteSidebandLine(&response, 2, "unpack ok")
-	WriteSidebandLine(&response, 2, "ok refs/heads/main")
+	// Respuesta exitosa estándar de Git (sideband 1 = datos del protocolo)
+	WriteSidebandLine(&response, 1, "unpack ok\n")
+	WriteSidebandLine(&response, 1, "ok refs/heads/main\n")
 	WritePktLine(&response, "") // flush final
 
 	c.Writer.Write(response.Bytes())
@@ -254,6 +258,92 @@ func ReceivePackHandler(c *gin.Context) {
 
 	// Pequeño delay para permitir que Git procese la respuesta y cierre su lado primero
 	time.Sleep(100 * time.Millisecond)
+}
+
+func UploadPackDiscoveryHandler(c *gin.Context) {
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "GITHUB_TOKEN not set"})
+		return
+	}
+
+	githubURL := fmt.Sprintf("https://github.com/%s/%s.git/info/refs?service=git-upload-pack", owner, repo)
+	req, err := http.NewRequest("GET", githubURL, nil)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to build request"})
+		return
+	}
+	req.Header.Set("Authorization", "Basic "+basicAuth("x-access-token", token))
+	req.Header.Set("User-Agent", "git/2.0")
+
+	resp, err := uploadPackClient.Do(req)
+	if err != nil {
+		utils.Log("UploadPackDiscovery error: %v", err)
+		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "failed to reach GitHub"})
+		return
+	}
+	defer resp.Body.Close()
+
+	c.Writer.Header().Set("Content-Type", "application/x-git-upload-pack-advertisement")
+	c.Writer.WriteHeader(resp.StatusCode)
+	if _, err := io.Copy(c.Writer, resp.Body); err != nil {
+		utils.Log("UploadPackDiscovery copy error (status %d): %v", resp.StatusCode, err)
+	}
+}
+
+func UploadPackHandler(c *gin.Context) {
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "GITHUB_TOKEN not set"})
+		return
+	}
+
+	const maxUploadBytes = 50 * 1024 * 1024 // 50 MB
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxUploadBytes)
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		if err.Error() == "http: request body too large" {
+			c.AbortWithStatusJSON(http.StatusRequestEntityTooLarge, gin.H{"error": "request body too large"})
+			return
+		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "failed to read body"})
+		return
+	}
+
+	githubURL := fmt.Sprintf("https://github.com/%s/%s.git/git-upload-pack", owner, repo)
+	req, err := http.NewRequest("POST", githubURL, bytes.NewReader(body))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to build request"})
+		return
+	}
+	req.Header.Set("Authorization", "Basic "+basicAuth("x-access-token", token))
+	req.Header.Set("Content-Type", "application/x-git-upload-pack-request")
+	req.Header.Set("User-Agent", "git/2.0")
+
+	resp, err := uploadPackClient.Do(req)
+	if err != nil {
+		utils.Log("UploadPack error: %v", err)
+		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "failed to reach GitHub"})
+		return
+	}
+	defer resp.Body.Close()
+
+	c.Writer.Header().Set("Content-Type", "application/x-git-upload-pack-result")
+	c.Writer.WriteHeader(resp.StatusCode)
+	if _, err := io.Copy(c.Writer, resp.Body); err != nil {
+		utils.Log("UploadPack copy error: %v", err)
+	}
+}
+
+func basicAuth(username, password string) string {
+	credentials := username + ":" + password
+	return base64.StdEncoding.EncodeToString([]byte(credentials))
 }
 
 // sendErrorResponse envía una respuesta de error en formato Git protocol

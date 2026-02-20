@@ -1666,7 +1666,8 @@ The word 'recieve' should be 'receive'."
 
         // PR comment form
         const prCommentSubmitBtn = document.getElementById('pr-comment-submit');
-        prCommentSubmitBtn?.addEventListener('click', async () => {
+        document.getElementById('pr-comment-issue-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
             const owner = document.getElementById('pr-owner')?.value.trim();
             const repo = document.getElementById('pr-repo')?.value.trim();
             const number = document.getElementById('pr-number')?.value.trim();

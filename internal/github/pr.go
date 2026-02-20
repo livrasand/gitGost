@@ -372,6 +372,54 @@ func CreateAnonymousComment(owner, repo string, number int, body string) (string
 	return result.HTMLURL, nil
 }
 
+// CreateAnonymousPRComment publica un comentario general en un Pull Request
+func CreateAnonymousPRComment(owner, repo string, number int, body string) (string, error) {
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		return "", fmt.Errorf("GITHUB_TOKEN not set")
+	}
+
+	// PR comments use the same issues comments endpoint
+	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d/comments", owner, repo, number)
+
+	payload := map[string]string{"body": body}
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Authorization", "token "+token)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", "gitGost")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		var errResp map[string]interface{}
+		_ = json.NewDecoder(resp.Body).Decode(&errResp)
+		return "", fmt.Errorf("failed to create PR comment: %s", resp.Status)
+	}
+
+	var result struct {
+		HTMLURL string `json:"html_url"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", err
+	}
+
+	return result.HTMLURL, nil
+}
+
 // GetSha returns the SHA of the ref
 func (r *Ref) GetSha() string {
 	return r.Object.Sha

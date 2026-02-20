@@ -102,43 +102,6 @@ gitGost assumes the user:
 
 For the full model, see [THREAT_MODEL.md](THREAT_MODEL.md). For more operational details, see [SECURITY.md](SECURITY.md).
 
-## Hosted Configuration
-
-gitGost requires a GitHub personal access token to create PRs. You can optionally configure Supabase for persistent statistics.
-
-### 1. GitHub Token (Required)
-
-Create a personal access token with `repo` permissions:
-1. Go to [GitHub Settings > Developer settings > Personal access tokens](https://github.com/settings/tokens)
-2. Click "Generate new token (classic)"
-3. Select scopes: `repo` (full control of private repositories)
-4. Copy the token
-
-### 2. Environment Variables
-
-Copy `.env.example` to `.env` and configure:
-
-```bash
-cp .env.example .env
-# Edit .env with your actual values
-```
-
-**Required:**
-- `GITHUB_TOKEN=your_github_token_here`
-
-**Optional (for persistent stats):**
-- `SUPABASE_URL=https://your-project.supabase.co`
-- `SUPABASE_KEY=your_supabase_key_here`
-
-### 3. Database Setup (Optional)
-
-If you want persistent statistics instead of in-memory only:
-
-1. Create a [Supabase](https://supabase.com) account
-2. Create a new project in Central Europe (Zurich)
-3. Go to SQL Editor and run the schema from `database/schema.sql`
-4. Copy URL and anon key to your `.env`
-
 ## Quick Start
 
 ```bash
@@ -169,11 +132,6 @@ Done. The PR appears instantly from `@gitgost-anonymous` with your commit messag
 - No persistence of your data
 
 Everything is designed to prevent abuse while keeping you anonymous.
-
-Stats
------
-
-![Alt](https://repobeats.axiom.co/api/embed/1117c7e8a1ec122dd758a070c8d4d1cb2707141b.svg "Repobeats analytics image")
 
 ## License
 

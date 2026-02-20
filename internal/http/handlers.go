@@ -13,7 +13,6 @@ import (
 	"html/template"
 	"io"
 	"net/http"
-	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -264,27 +263,13 @@ func UploadPackDiscoveryHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
 
-	token := os.Getenv("GITHUB_TOKEN")
-	if token == "" {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "GITHUB_TOKEN not set"})
-		return
-	}
-
 	githubURL := fmt.Sprintf("https://github.com/%s/%s.git/info/refs?service=git-upload-pack", owner, repo)
 	req, err := http.NewRequest("GET", githubURL, nil)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to build request"})
 		return
 	}
-	req.Header.Set("Authorization", "Basic "+basicAuth("x-access-token", token))
 	req.Header.Set("User-Agent", "git/2.0")
-
-	// Si Git llega sin Authorization, responder 401 para que negocie credenciales.
-	if c.GetHeader("Authorization") == "" {
-		c.Writer.Header().Set("WWW-Authenticate", `Basic realm="gitgost"`)
-		c.Writer.WriteHeader(http.StatusUnauthorized)
-		return
-	}
 
 	resp, err := uploadPackClient.Do(req)
 	if err != nil {
@@ -306,12 +291,6 @@ func UploadPackHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
 
-	token := os.Getenv("GITHUB_TOKEN")
-	if token == "" {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "GITHUB_TOKEN not set"})
-		return
-	}
-
 	const maxUploadBytes = 50 * 1024 * 1024 // 50 MB
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxUploadBytes)
 	body, err := io.ReadAll(c.Request.Body)
@@ -330,7 +309,6 @@ func UploadPackHandler(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to build request"})
 		return
 	}
-	req.Header.Set("Authorization", "Basic "+basicAuth("x-access-token", token))
 	req.Header.Set("Content-Type", "application/x-git-upload-pack-request")
 	req.Header.Set("User-Agent", "git/2.0")
 
@@ -341,13 +319,6 @@ func UploadPackHandler(c *gin.Context) {
 		return
 	}
 	defer resp.Body.Close()
-
-	// Si Git llega sin Authorization, responder 401 para que negocie credenciales.
-	if c.GetHeader("Authorization") == "" {
-		c.Writer.Header().Set("WWW-Authenticate", `Basic realm="gitgost"`)
-		c.Writer.WriteHeader(http.StatusUnauthorized)
-		return
-	}
 
 	c.Writer.Header().Set("Content-Type", "application/x-git-upload-pack-result")
 	c.Writer.WriteHeader(resp.StatusCode)

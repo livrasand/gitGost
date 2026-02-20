@@ -310,6 +310,7 @@ func UploadPackHandler(c *gin.Context) {
 		return
 	}
 	req.Header.Set("Content-Type", "application/x-git-upload-pack-request")
+	req.Header.Set("Accept", "application/x-git-upload-pack-result")
 	req.Header.Set("User-Agent", "git/2.0")
 
 	resp, err := uploadPackClient.Do(req)

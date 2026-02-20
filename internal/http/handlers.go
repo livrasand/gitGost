@@ -288,6 +288,7 @@ func UploadPackDiscoveryHandler(c *gin.Context) {
 	defer resp.Body.Close()
 
 	c.Writer.Header().Set("Content-Type", "application/x-git-upload-pack-advertisement")
+	c.Writer.Header().Set("WWW-Authenticate", "None")
 	c.Writer.WriteHeader(resp.StatusCode)
 	if _, err := io.Copy(c.Writer, resp.Body); err != nil {
 		utils.Log("UploadPackDiscovery copy error (status %d): %v", resp.StatusCode, err)

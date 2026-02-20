@@ -62,6 +62,7 @@ func anonymousAuthMiddleware(apiKey string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Permitir siempre git-receive-pack sin autenticación (anonimato)
 		if strings.Contains(c.Request.URL.Path, "git-receive-pack") ||
+			strings.Contains(c.Request.URL.Path, "git-upload-pack") ||
 			strings.Contains(c.Request.URL.Path, "info/refs") {
 			c.Next()
 			return

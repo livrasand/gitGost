@@ -590,6 +590,76 @@ func CreateAnonymousCommentHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// CreateAnonymousPRCommentHandler publica un comentario anónimo en un Pull Request
+func CreateAnonymousPRCommentHandler(c *gin.Context) {
+	var req anonymousCommentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
+		return
+	}
+
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+	numberStr := c.Param("number")
+	number, err := strconv.Atoi(numberStr)
+	if err != nil || number <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid PR number"})
+		return
+	}
+
+	if strings.TrimSpace(req.Body) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "body is required"})
+		return
+	}
+
+	userToken := req.UserToken
+	if strings.TrimSpace(userToken) == "" {
+		userToken = generateUserToken()
+	}
+	hash := deriveHash(owner, repo, number, userToken)
+	reports := getReportCountWithWindow(c.Request.Context(), hash)
+	if reports > 5 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "hash bloqueado por reportes"})
+		return
+	}
+	if reports > 2 {
+		if blocked := isFlaggedCooldown(hash); blocked {
+			c.JSON(http.StatusTooManyRequests, gin.H{"error": "cooldown activo por reportes"})
+			return
+		}
+	}
+	currentKarma := getKarma(c.Request.Context(), hash)
+	karma := currentKarma + 1
+	if reports > 2 {
+		karma = 0
+	}
+	updateKarma(c.Request.Context(), hash, karma)
+	if reports > 2 {
+		markFlaggedAction(hash)
+		if err := github.UpdateCommentsKarmaByHash(hash, 0); err != nil {
+			utils.Log("Error updating PR comment karma for hash %s: %v", hash, err)
+		}
+	}
+	reportURL := fmt.Sprintf("%s://%s/v1/moderation/report?hash=%s", getScheme(c.Request), c.Request.Host, hash)
+
+	legend := fmt.Sprintf("\n\n---\ngoster-%s · karma (%d) · [report](%s)", hash, karma, reportURL)
+	bodyWithLegend := req.Body + legend
+
+	commentURL, err := github.CreateAnonymousPRComment(owner, repo, number, bodyWithLegend)
+	if err != nil {
+		utils.Log("Error creating PR comment: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"comment_url": commentURL,
+		"hash":        hash,
+		"karma":       karma,
+		"user_token":  userToken,
+	})
+}
+
 // ReportHashHandler permite reportar un hash
 func ReportHashHandler(c *gin.Context) {
 	if c.Request.Method == http.MethodGet {

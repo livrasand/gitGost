@@ -141,6 +141,9 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 			// Issues y comentarios anónimos
 			gh.POST("/:owner/:repo/issues/anonymous", CreateAnonymousIssueHandler)
 			gh.POST("/:owner/:repo/issues/:number/comments/anonymous", CreateAnonymousCommentHandler)
+
+			// Comentarios anónimos en Pull Requests
+			gh.POST("/:owner/:repo/pulls/:number/comments/anonymous", CreateAnonymousPRCommentHandler)
 		}
 	}
 

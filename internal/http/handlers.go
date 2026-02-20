@@ -279,6 +279,13 @@ func UploadPackDiscoveryHandler(c *gin.Context) {
 	req.Header.Set("Authorization", "Basic "+basicAuth("x-access-token", token))
 	req.Header.Set("User-Agent", "git/2.0")
 
+	// Si Git llega sin Authorization, responder 401 para que negocie credenciales.
+	if c.GetHeader("Authorization") == "" {
+		c.Writer.Header().Set("WWW-Authenticate", `Basic realm="gitgost"`)
+		c.Writer.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
 	resp, err := uploadPackClient.Do(req)
 	if err != nil {
 		utils.Log("UploadPackDiscovery error: %v", err)
@@ -334,6 +341,13 @@ func UploadPackHandler(c *gin.Context) {
 		return
 	}
 	defer resp.Body.Close()
+
+	// Si Git llega sin Authorization, responder 401 para que negocie credenciales.
+	if c.GetHeader("Authorization") == "" {
+		c.Writer.Header().Set("WWW-Authenticate", `Basic realm="gitgost"`)
+		c.Writer.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 
 	c.Writer.Header().Set("Content-Type", "application/x-git-upload-pack-result")
 	c.Writer.WriteHeader(resp.StatusCode)

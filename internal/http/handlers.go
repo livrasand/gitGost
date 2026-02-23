@@ -290,6 +290,22 @@ func ReceivePackHandler(c *gin.Context) {
 	// Generar pr-hash para esta rama (determinístico: owner/repo/branch)
 	outPRHash := github.GeneratePRHash(owner, repo, branch)
 
+	// Publicar evento ntfy en background (no bloquea la respuesta Git)
+	go func() {
+		ntfyTopic := github.NtfyTopicForPR(outPRHash)
+		var ntfyTitle, ntfyMsg string
+		if isUpdate {
+			ntfyTitle = "PR Updated · gitGost"
+			ntfyMsg = fmt.Sprintf("Your anonymous PR was updated.\nPR: %s\nTopic: %s/%s", prURL, github.NtfyBaseURL(), ntfyTopic)
+		} else {
+			ntfyTitle = "PR Created · gitGost"
+			ntfyMsg = fmt.Sprintf("Your anonymous PR was created.\nPR: %s\nTopic: %s/%s", prURL, github.NtfyBaseURL(), ntfyTopic)
+		}
+		if err := github.PublishNtfyEvent(outPRHash, ntfyTitle, ntfyMsg); err != nil {
+			utils.Log("ntfy publish error for hash %s: %v", outPRHash, err)
+		}
+	}()
+
 	// MENSAJES DE ÉXITO CLAROS
 	WriteSidebandLine(&response, 2, "remote: ")
 	WriteSidebandLine(&response, 2, "remote: ========================================")
@@ -304,6 +320,9 @@ func ReceivePackHandler(c *gin.Context) {
 	WriteSidebandLine(&response, 2, "remote: Author: @gitgost-anonymous")
 	WriteSidebandLine(&response, 2, fmt.Sprintf("remote: Branch: %s", branch))
 	WriteSidebandLine(&response, 2, fmt.Sprintf("remote: PR Hash: %s", outPRHash))
+	WriteSidebandLine(&response, 2, "remote: ")
+	WriteSidebandLine(&response, 2, "remote: Subscribe to PR notifications (no account needed):")
+	WriteSidebandLine(&response, 2, fmt.Sprintf("remote:   %s/%s", github.NtfyBaseURL(), github.NtfyTopicForPR(outPRHash)))
 	WriteSidebandLine(&response, 2, "remote: ")
 	WriteSidebandLine(&response, 2, "remote: To update this PR on future pushes, use:")
 	WriteSidebandLine(&response, 2, fmt.Sprintf("remote:   git push gost <branch>:main -o pr-hash=%s", outPRHash))
@@ -1003,4 +1022,23 @@ func BadgeHandler(c *gin.Context) {
 
 	c.Header("Content-Type", "image/svg+xml")
 	c.String(http.StatusOK, svg)
+}
+
+// PRStatusHandler devuelve el topic ntfy y la URL de suscripción para un PR hash dado.
+// No almacena ni expone datos personales.
+func PRStatusHandler(c *gin.Context) {
+	hash := strings.TrimSpace(c.Param("hash"))
+	if hash == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "hash is required"})
+		return
+	}
+
+	topic := github.NtfyTopicForPR(hash)
+	subscribeURL := fmt.Sprintf("%s/%s", github.NtfyBaseURL(), topic)
+
+	c.JSON(http.StatusOK, gin.H{
+		"hash":          hash,
+		"ntfy_topic":    topic,
+		"subscribe_url": subscribeURL,
+	})
 }

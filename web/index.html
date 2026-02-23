@@ -924,6 +924,7 @@
             .stats-label { font-size: 1rem; }
             .terminal { font-size: clamp(0.8rem, 2vw, 0.95rem); }
             .terminal-body { padding: 1rem; }
+            .terminal-tabs { flex-wrap: wrap; gap: .4rem; }
             .grid { gap: 1rem; }
             .card { padding: 1.5rem; }
             .card h3 { font-size: 1.1rem; }
@@ -933,6 +934,23 @@
             .btn { padding: .8rem 1.8rem; font-size: 0.95rem; }
             h2 { margin: 3rem 0 1.5rem; font-size: clamp(1.5rem, 4vw, 2rem); }
             .footer { margin-top: 4rem; padding-top: 2rem; font-size: .85rem; }
+            /* Issue / forms */
+            .issue-container { padding: 1.5rem 1.2rem; }
+            .issue-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .issue-tab { font-size: .85rem; padding: .6rem .75rem; white-space: nowrap; }
+            .repo-input-group { flex-wrap: wrap; }
+            .repo-input-group input { min-width: 0; }
+            .form-actions { flex-direction: column; align-items: stretch; }
+            .form-actions .btn { width: 100%; }
+            /* Badge */
+            .badge-generator { padding: 1.5rem 1.2rem; }
+            .badge-copy-row { grid-template-columns: 1fr auto; }
+            /* Notifications section */
+            .ntfy-lookup-row { flex-direction: column !important; align-items: stretch !important; }
+            .ntfy-lookup-row button { width: 100% !important; }
+            .ntfy-result-row { flex-direction: column !important; align-items: stretch !important; }
+            .ntfy-result-row code { white-space: normal !important; word-break: break-all !important; }
+            .ntfy-result-row a, .ntfy-result-row button { width: 100% !important; text-align: center !important; box-sizing: border-box; }
         }
         @media (max-width: 480px) {
             body { padding: 1rem .6rem; }
@@ -947,6 +965,10 @@
             .card { padding: 1.2rem; }
             .pr-item { padding: 0.6rem; }
             .btn { padding: .7rem 1.5rem; font-size: 0.9rem; }
+            .issue-container { padding: 1.2rem .9rem; }
+            .issue-header p { font-size: .875rem; }
+            .badge-generator { padding: 1.2rem .9rem; }
+            .badge-copy-row input { font-size: .75rem; }
         }
     </style>
 </head>
@@ -984,7 +1006,9 @@ This commit fixes a grammatical error in the README.
 The word 'recieve' should be 'receive'."
 <span class="prompt">$</span> git push gost fix-typo:main
 <span class="success">→</span> Anonymized commit + PR opened as @gitgost-anonymous
-<span class="success">→</span> PR Hash: <span class="hl">a3f8c1d2</span>  ← save this to update the PR later</div>
+<span class="success">→</span> PR Hash: <span class="hl">a3f8c1d2</span>  ← save this to update the PR later
+<span class="success">→</span> Subscribe to notifications (no account needed):
+<span class="success">→</span>   <span class="hl">https://ntfy.sh/gitgost-a3f8c1d2</span></div>
             </div>
             <div class="terminal" id="terminal-update" style="display:none;"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Got review feedback? Push a follow-up commit to the same PR.</span>
 <span class="comment"># Use the pr-hash returned on the first push.</span>
@@ -1049,6 +1073,10 @@ The word 'recieve' should be 'receive'."
             <div class="card">
                 <h3>Persistent PR Updates</h3>
                 <p>Got review feedback? Push follow-up commits to the same anonymous PR using a <code>pr-hash</code>. No accounts, no state stored — the hash is derived deterministically from your branch.</p>
+            </div>
+            <div class="card">
+                <h3>Anonymous PR Notifications</h3>
+                <p>Subscribe to PR activity via <a href="https://ntfy.sh" target="_blank" rel="noreferrer" style="color:var(--accent);">ntfy.sh</a> — no account, no email. Get push alerts for comments, reviews, merges and closes. Topic: <code>gitgost-{hash}</code>.</p>
             </div>
         </section>
 
@@ -1219,49 +1247,61 @@ The word 'recieve' should be 'receive'."
                         <div class="form-result" id="pr-comment-result"></div>
                     </form>
 
-                    <form class="issue-form" id="pr-comment-issue-form">
-                        <div class="form-group">
-                            <label for="pr-owner">Repository</label>
-                            <div class="repo-input-group">
-                                <input id="pr-owner" type="text" placeholder="owner" autocomplete="off">
-                                <span class="repo-separator">/</span>
-                                <input id="pr-repo" type="text" placeholder="repo" autocomplete="off">
-                            </div>
-                        </div>
+                </div>
+            </div>
+        </section>
 
-                        <div class="form-group">
-                            <label for="pr-number">Pull Request Number</label>
-                            <input id="pr-number" type="number" min="1" placeholder="42" autocomplete="off">
-                        </div>
+        <!-- PR Notifications section -->
+        <section id="notifications" style="margin: 4rem 0; min-width: 0;">
+            <div class="issue-container">
+                <div class="issue-header">
+                    <div class="issue-eyebrow">Anonymous push notifications</div>
+                    <h2 style="margin:0 0 .5rem; font-size:1.5rem; font-weight:700;">PR Notifications via ntfy.sh</h2>
+                    <p>After pushing, subscribe to your PR topic on <a href="https://ntfy.sh" target="_blank" rel="noreferrer" style="color:var(--accent);">ntfy.sh</a> to get anonymous push notifications — no account, no email required. Works with the ntfy mobile &amp; desktop apps.</p>
+                </div>
 
-                        <div class="form-group">
-                            <label for="pr-token">User Token (optional)</label>
-                            <input id="pr-token" type="text" placeholder="Keep your token to maintain karma" autocomplete="off">
-                        </div>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(min(220px,100%), 1fr)); gap:1rem; margin-bottom:2rem;">
+                    <div style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); padding:1.4rem;">
+                        <div style="font-family:'IBM Plex Mono',monospace; color:var(--accent); font-size:.85rem; font-weight:600; margin-bottom:.5rem;">STEP 1 — Push your PR</div>
+                        <p style="margin:0; font-size:.9rem; color:var(--fg-secondary);">After <code>git push gost</code>, the server returns your <strong>PR Hash</strong> (e.g. <code>a3f8c1d2</code>).</p>
+                    </div>
+                    <div style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); padding:1.4rem;">
+                        <div style="font-family:'IBM Plex Mono',monospace; color:var(--accent); font-size:.85rem; font-weight:600; margin-bottom:.5rem;">STEP 2 — Subscribe</div>
+                        <p style="margin:0; font-size:.9rem; color:var(--fg-secondary);">Open <a href="https://ntfy.sh" target="_blank" rel="noreferrer" style="color:var(--accent);">ntfy.sh</a> or the app and subscribe to <code>gitgost-{your-hash}</code>. No sign-up needed.</p>
+                    </div>
+                    <div style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); padding:1.4rem;">
+                        <div style="font-family:'IBM Plex Mono',monospace; color:var(--accent); font-size:.85rem; font-weight:600; margin-bottom:.5rem;">STEP 3 — Get notified</div>
+                        <p style="margin:0; font-size:.9rem; color:var(--fg-secondary);">Receive push alerts when your PR gets a comment, review, status change, merge, or close.</p>
+                    </div>
+                </div>
 
-                        <div class="form-group">
-                            <label for="pr-comment-body">Comment</label>
-                            <div class="md-editor" id="pr-md-editor">
-                                <div class="md-tabs">
-                                    <button type="button" class="md-tab active" data-tab="write" id="pr-tab-write">Write</button>
-                                    <button type="button" class="md-tab" data-tab="preview" id="pr-tab-preview">Preview</button>
-                                </div>
-                                <textarea id="pr-comment-body" class="md-input" placeholder="Your feedback on this pull request..." aria-label="PR comment markdown"></textarea>
-                                <div class="md-preview" id="pr-preview" style="display:none;"></div>
-                            </div>
+                <div style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); padding:1.25rem; margin-bottom:1.5rem; min-width:0; overflow:hidden;">
+                    <div style="font-weight:600; margin-bottom:1rem;">Look up your notification topic</div>
+                    <div class="ntfy-lookup-row" style="display:flex; gap:.75rem; align-items:flex-end; flex-wrap:wrap;">
+                        <div style="flex:1; min-width:180px;">
+                            <label for="ntfy-hash-input" style="display:block; font-size:.85rem; color:var(--fg-secondary); margin-bottom:.4rem;">PR Hash</label>
+                            <input id="ntfy-hash-input" type="text" placeholder="a3f8c1d2" autocomplete="off"
+                                style="width:100%; padding:.7rem .9rem; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg); color:var(--fg); font-family:'IBM Plex Mono',monospace; font-size:.95rem;">
                         </div>
+                        <button onclick="lookupNtfyTopic()" style="margin-top:0; width:auto; padding:.7rem 1.4rem; font-family:'IBM Plex Mono',monospace; font-size:.9rem;">Get Topic</button>
+                    </div>
+                    <div id="ntfy-result" style="margin-top:1rem; display:none;">
+                        <div style="font-size:.85rem; color:var(--fg-secondary); margin-bottom:.5rem;">Your ntfy topic:</div>
+                        <div class="ntfy-result-row" style="display:flex; gap:.6rem; align-items:center; flex-wrap:wrap;">
+                            <code id="ntfy-topic-display" style="background:var(--code-bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.5rem .8rem; font-size:.9rem; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; word-break:break-all;"></code>
+                            <a id="ntfy-subscribe-link" href="#" target="_blank" rel="noreferrer"
+                                style="padding:.5rem 1rem; border-radius:var(--radius-sm); background:linear-gradient(135deg,#ffa657,#ff6b6b); color:#0d1117; font-weight:700; font-size:.85rem; text-decoration:none; white-space:nowrap;">Open in ntfy ↗</a>
+                            <button id="ntfy-copy-btn" onclick="copyNtfyTopic()" style="margin-top:0; width:auto; padding:.5rem .8rem; background:var(--card); border:1px solid var(--border); color:var(--fg); font-size:.85rem;" title="Copy topic URL">Copy</button>
+                        </div>
+                    </div>
+                    <div id="ntfy-error" style="margin-top:.75rem; font-size:.85rem; color:#ff6b6b; display:none;"></div>
+                </div>
 
-                        <div class="form-actions">
-                            <button class="btn primary" id="pr-comment-submit" type="submit">Post Anonymous PR Comment</button>
-                            <div class="form-status" id="pr-comment-status"></div>
-                        </div>
-
-                        <div class="form-note">
-                            <p>Comments include a footer with your anonymous hash and karma.</p>
-                            <p>Do not include personal data. We only keep URL + anonymous hash.</p>
-                        </div>
-                        <div class="form-result" id="pr-comment-result"></div>
-                    </form>
+                <div style="font-size:.85rem; color:var(--fg-secondary); line-height:1.6;">
+                    <strong>Privacy note:</strong> The topic name is derived from your PR hash. No personal data is stored or transmitted. The ntfy topic is public by design — keep your PR hash private if you want to limit who can subscribe.
+                    Install the ntfy app: <a href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noreferrer" style="color:var(--accent);">Android</a> ·
+                    <a href="https://apps.apple.com/us/app/ntfy/id1625396347" target="_blank" rel="noreferrer" style="color:var(--accent);">iOS</a> ·
+                    <a href="https://ntfy.sh/docs/subscribe/desktop/" target="_blank" rel="noreferrer" style="color:var(--accent);">Desktop</a>
                 </div>
             </div>
         </section>
@@ -1779,63 +1819,46 @@ The word 'recieve' should be 'receive'."
             }
         });
 
-        // PR comment form
-        const prCommentSubmitBtn = document.getElementById('pr-comment-submit');
-        document.getElementById('pr-comment-issue-form')?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const owner = document.getElementById('pr-owner')?.value.trim();
-            const repo = document.getElementById('pr-repo')?.value.trim();
-            const number = document.getElementById('pr-number')?.value.trim();
-            const token = document.getElementById('pr-token')?.value.trim();
-            const body = document.getElementById('pr-comment-body')?.value.trim();
-            const statusEl = document.getElementById('pr-comment-status');
-            const resultEl = document.getElementById('pr-comment-result');
+        // ntfy topic lookup
+        async function lookupNtfyTopic() {
+            const hash = document.getElementById('ntfy-hash-input')?.value.trim();
+            const resultEl = document.getElementById('ntfy-result');
+            const errorEl = document.getElementById('ntfy-error');
+            const topicDisplay = document.getElementById('ntfy-topic-display');
+            const subscribeLink = document.getElementById('ntfy-subscribe-link');
 
-            if (!owner || !repo || !number || !body) {
-                if (statusEl) statusEl.textContent = 'Missing required fields';
+            if (resultEl) resultEl.style.display = 'none';
+            if (errorEl) { errorEl.style.display = 'none'; errorEl.textContent = ''; }
+
+            if (!hash) {
+                if (errorEl) { errorEl.textContent = 'Please enter a PR hash.'; errorEl.style.display = 'block'; }
                 return;
             }
 
-            if (prCommentSubmitBtn) prCommentSubmitBtn.disabled = true;
-            if (statusEl) statusEl.textContent = 'Sending...';
-            if (resultEl) resultEl.textContent = '';
-
-            const payload = { body };
-            if (token) payload.user_token = token;
-
             try {
-                const response = await fetch(`${API_BASE}/v1/gh/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls/${encodeURIComponent(number)}/comments/anonymous`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Gitgost-Key': 'gitgost-anonymous'
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    const text = await response.text();
-                    throw new Error(`HTTP ${response.status}: ${text}`);
-                }
-
+                const response = await fetch(`${API_BASE}/api/pr-status/${encodeURIComponent(hash)}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
-                if (statusEl) statusEl.textContent = 'Sent';
 
-                const parts = [];
-                if (data.comment_url) parts.push(`Comment: ${data.comment_url}`);
-                if (data.hash) parts.push(`Hash: ${data.hash}`);
-                if (data.karma !== undefined) parts.push(`Karma: ${data.karma}`);
-                if (data.user_token && !token) parts.push(`New user token: ${data.user_token}`);
-                const reportHint = `${API_BASE}/v1/moderation/report`;
-                if (resultEl) resultEl.textContent = `${parts.join(' · ')}. Reports: ${reportHint}`;
-            } catch (error) {
-                console.error('Error sending PR comment:', error);
-                if (statusEl) statusEl.textContent = 'Error';
-                if (resultEl) resultEl.textContent = 'Could not send. Check PR # and that the repository exists.';
-            } finally {
-                if (prCommentSubmitBtn) prCommentSubmitBtn.disabled = false;
+                if (topicDisplay) topicDisplay.textContent = data.subscribe_url;
+                if (subscribeLink) subscribeLink.href = data.subscribe_url;
+                if (resultEl) resultEl.style.display = 'block';
+            } catch (err) {
+                if (errorEl) { errorEl.textContent = 'Could not fetch topic. Check the hash and try again.'; errorEl.style.display = 'block'; }
             }
-        });
+        }
+
+        function copyNtfyTopic() {
+            const topicDisplay = document.getElementById('ntfy-topic-display');
+            const btn = document.getElementById('ntfy-copy-btn');
+            if (!topicDisplay) return;
+            navigator.clipboard?.writeText(topicDisplay.textContent);
+            if (btn) {
+                const orig = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => { btn.textContent = orig; }, 1200);
+            }
+        }
 
         // Terminal tab switching
         document.querySelectorAll('.terminal-tab').forEach(tab => {

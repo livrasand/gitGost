@@ -96,7 +96,7 @@ func ReceivePackDiscoveryHandler(c *gin.Context) {
 	WritePktLine(&advertisement, "") // flush
 
 	// Capabilities
-	capabilities := "report-status delete-refs side-band-64k quiet ofs-delta"
+	capabilities := "report-status delete-refs side-band-64k quiet ofs-delta push-options"
 
 	// Refs
 	first := true
@@ -1021,6 +1021,98 @@ func BadgeHandler(c *gin.Context) {
 	svg := fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="230" height="20.909" role="img" aria-label="Anonymous Contributor Friendly" viewBox="0 0 230 20.909"><title>Anonymous Contributor Friendly</title><path id="s" x2="0" y2="100%%" d=""><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></path><clipPath id="r"><path width="220" height="20" rx="3" fill="#fff" d="M3.136 0H226.864A3.136 3.136 0 0 1 230 3.136V17.773A3.136 3.136 0 0 1 226.864 20.909H3.136A3.136 3.136 0 0 1 0 17.773V3.136A3.136 3.136 0 0 1 3.136 0z"/></clipPath><a href="https://gitgost.leapcell.app/" target="_blank" rel="noreferrer"><g clip-path="url(#r)"><path width="28" height="20" fill="black" d="M0 0H29.273V20.909H0V0z"/><path x="28" width="192" height="20" fill="%s" d="M29.273 0H230V20.909H29.273V0z"/><path width="220" height="20" fill="url(#s)" d="M0 0H230V20.909H0V0z"/></g><g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110"><g transform="matrix(.13 0 0 .13 8 3)"><path fill="#fff" d="M52.273 8.711c-19.219 0 -34.847 15.628 -34.847 34.851v43.558c0 4.786 3.925 8.715 8.711 8.715 3.582 0 6.534 -2.952 6.534 -6.534V84.943c0 -1.229 0.947 -2.177 2.177 -2.177s2.181 0.947 2.181 2.177v4.357c0 3.582 2.948 6.534 6.534 6.534 3.582 0 6.534 -2.952 6.534 -6.534V84.943c0 -1.229 0.947 -2.177 2.177 -2.177s2.177 0.947 2.177 2.177v4.357c0 3.582 2.952 6.534 6.534 6.534 3.586 0 6.534 -2.952 6.534 -6.534V84.943c0 -1.229 0.951 -2.177 2.181 -2.177s2.177 0.947 2.177 2.177v4.357c0 3.582 2.952 6.534 6.534 6.534 4.786 0 8.711 -3.929 8.711 -8.715V43.562c0 -19.223 -15.63 -34.851 -34.847 -34.851zM30.322 37.036c0.27 -0.024 0.539 0.008 0.801 0.086L52.273 43.468l21.142 -6.346a2.175 2.175 0 0 1 2.222 0.592c0.568 0.605 0.742 1.479 0.45 2.255l-6.534 17.426a2.175 2.175 0 0 1 -2.63 1.328L52.273 54.534l-14.649 4.186a2.175 2.175 0 0 1 -2.639 -1.328l-6.534 -17.425a2.17 2.17 0 0 1 1.871 -2.933z"/></g><text aria-hidden="true" x="1290" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="1900">Anonymous Contributor Friendly</text><text x="1290" y="140" transform="scale(.1)" fill="#fff" textLength="1900">Anonymous Contributor Friendly</text></g></a></svg>`, fillColor)
 
 	c.Header("Content-Type", "image/svg+xml")
+	c.String(http.StatusOK, svg)
+}
+
+// badgeCache almacena el conteo de PRs por "owner/repo" con TTL de 5 minutos
+var (
+	badgeCache    = make(map[string]int)
+	badgeCacheAt  = make(map[string]time.Time)
+	badgeCacheMu  sync.Mutex
+	badgeCacheTTL = 5 * time.Minute
+)
+
+// BadgePRCountHandler sirve un badge SVG dinámico con el conteo de PRs anónimos para owner/repo.
+// GET /badge/:owner/:repo
+func BadgePRCountHandler(c *gin.Context) {
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+
+	if !isValidRepoName(owner) || !isValidRepoName(repo) {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid owner or repo"})
+		return
+	}
+
+	cacheKey := owner + "/" + repo
+	badgeCacheMu.Lock()
+	count, ok := badgeCache[cacheKey]
+	cachedAt := badgeCacheAt[cacheKey]
+	badgeCacheMu.Unlock()
+
+	if !ok || time.Since(cachedAt) > badgeCacheTTL {
+		dbOk := false
+		if dbClient != nil {
+			if n, err := dbClient.GetPRCountByRepo(c.Request.Context(), owner, repo); err == nil {
+				count = n
+				dbOk = true
+			}
+		}
+		// Solo actualizar el cache si la DB respondió correctamente,
+		// o si ya había un valor previo (refresco de TTL con valor conocido).
+		if dbOk || ok {
+			badgeCacheMu.Lock()
+			badgeCache[cacheKey] = count
+			badgeCacheAt[cacheKey] = time.Now()
+			badgeCacheMu.Unlock()
+		}
+	}
+
+	label := "Anonymous PRs"
+	value := fmt.Sprintf("%d", count)
+
+	// Ancho dinámico: label ~100px + value ~(len*7+16)px
+	valueWidth := len(value)*7 + 16
+	if valueWidth < 30 {
+		valueWidth = 30
+	}
+	totalWidth := 100 + valueWidth
+	labelMid := 50
+	valueMid := 100 + valueWidth/2
+
+	svg := fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="20" role="img" aria-label="%s: %s" viewBox="0 0 %d 20">
+  <title>%s: %s</title>
+  <linearGradient id="s" x2="0" y2="100%%">
+    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+    <stop offset="1" stop-opacity=".1"/>
+  </linearGradient>
+  <clipPath id="r">
+    <rect width="%d" height="20" rx="3" fill="#fff"/>
+  </clipPath>
+  <g clip-path="url(#r)">
+    <rect width="100" height="20" fill="#555"/>
+    <rect x="100" width="%d" height="20" fill="#4CAF50"/>
+    <rect width="%d" height="20" fill="url(#s)"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110">
+    <text x="%d0" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="860" lengthAdjust="spacing">%s</text>
+    <text x="%d0" y="140" transform="scale(.1)" textLength="860" lengthAdjust="spacing">%s</text>
+    <text x="%d0" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="%d0" lengthAdjust="spacing">%s</text>
+    <text x="%d0" y="140" transform="scale(.1)" textLength="%d0" lengthAdjust="spacing">%s</text>
+  </g>
+</svg>`,
+		totalWidth, label, value, totalWidth,
+		label, value,
+		totalWidth,
+		valueWidth,
+		totalWidth,
+		labelMid, label,
+		labelMid, label,
+		valueMid, (valueWidth - 16), value,
+		valueMid, (valueWidth - 16), value,
+	)
+
+	c.Header("Content-Type", "image/svg+xml")
+	c.Header("Cache-Control", "public, max-age=300")
 	c.String(http.StatusOK, svg)
 }
 

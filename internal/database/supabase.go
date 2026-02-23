@@ -400,6 +400,50 @@ func (c *SupabaseClient) InsertReport(ctx context.Context, hash, ip string) erro
 	return nil
 }
 
+func (c *SupabaseClient) GetPRCountByRepo(ctx context.Context, owner, repo string) (int, error) {
+	url := fmt.Sprintf("%s/rest/v1/prs?owner=eq.%s&repo=eq.%s&select=id", c.URL, owner, repo)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	req = req.WithContext(ctx)
+	req.Header.Set("apikey", c.key)
+	req.Header.Set("Authorization", "Bearer "+c.key)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Prefer", "count=exact")
+	req.Header.Set("Range-Unit", "items")
+	req.Header.Set("Range", "0-0")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
+		return 0, fmt.Errorf("failed to get count: status %d", resp.StatusCode)
+	}
+
+	contentRange := resp.Header.Get("Content-Range")
+	if contentRange == "" {
+		return 0, fmt.Errorf("missing Content-Range header in response")
+	}
+
+	slashIdx := strings.LastIndex(contentRange, "/")
+	if slashIdx == -1 {
+		return 0, fmt.Errorf("invalid Content-Range format: %s", contentRange)
+	}
+
+	totalStr := contentRange[slashIdx+1:]
+	count, err := strconv.Atoi(totalStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse total count from Content-Range '%s': %v", contentRange, err)
+	}
+
+	return count, nil
+}
+
 func (c *SupabaseClient) GetReportCount(ctx context.Context, hash string) (int, error) {
 	url := fmt.Sprintf("%s/rest/v1/reports?hash=eq.%s&select=id", c.URL, hash)
 	req, err := http.NewRequest("GET", url, nil)

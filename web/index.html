@@ -1218,6 +1218,50 @@ The word 'recieve' should be 'receive'."
                         </div>
                         <div class="form-result" id="pr-comment-result"></div>
                     </form>
+
+                    <form class="issue-form" id="pr-comment-issue-form">
+                        <div class="form-group">
+                            <label for="pr-owner">Repository</label>
+                            <div class="repo-input-group">
+                                <input id="pr-owner" type="text" placeholder="owner" autocomplete="off">
+                                <span class="repo-separator">/</span>
+                                <input id="pr-repo" type="text" placeholder="repo" autocomplete="off">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pr-number">Pull Request Number</label>
+                            <input id="pr-number" type="number" min="1" placeholder="42" autocomplete="off">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pr-token">User Token (optional)</label>
+                            <input id="pr-token" type="text" placeholder="Keep your token to maintain karma" autocomplete="off">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pr-comment-body">Comment</label>
+                            <div class="md-editor" id="pr-md-editor">
+                                <div class="md-tabs">
+                                    <button type="button" class="md-tab active" data-tab="write" id="pr-tab-write">Write</button>
+                                    <button type="button" class="md-tab" data-tab="preview" id="pr-tab-preview">Preview</button>
+                                </div>
+                                <textarea id="pr-comment-body" class="md-input" placeholder="Your feedback on this pull request..." aria-label="PR comment markdown"></textarea>
+                                <div class="md-preview" id="pr-preview" style="display:none;"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn primary" id="pr-comment-submit" type="submit">Post Anonymous PR Comment</button>
+                            <div class="form-status" id="pr-comment-status"></div>
+                        </div>
+
+                        <div class="form-note">
+                            <p>Comments include a footer with your anonymous hash and karma.</p>
+                            <p>Do not include personal data. We only keep URL + anonymous hash.</p>
+                        </div>
+                        <div class="form-result" id="pr-comment-result"></div>
+                    </form>
                 </div>
             </div>
         </section>
@@ -1674,6 +1718,64 @@ The word 'recieve' should be 'receive'."
                 if (resultEl) resultEl.textContent = 'Could not send. Check issue # and permissions.';
             } finally {
                 if (commentSubmitBtn) commentSubmitBtn.disabled = false;
+            }
+        });
+
+        // PR comment form
+        const prCommentSubmitBtn = document.getElementById('pr-comment-submit');
+        document.getElementById('pr-comment-issue-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const owner = document.getElementById('pr-owner')?.value.trim();
+            const repo = document.getElementById('pr-repo')?.value.trim();
+            const number = document.getElementById('pr-number')?.value.trim();
+            const token = document.getElementById('pr-token')?.value.trim();
+            const body = document.getElementById('pr-comment-body')?.value.trim();
+            const statusEl = document.getElementById('pr-comment-status');
+            const resultEl = document.getElementById('pr-comment-result');
+
+            if (!owner || !repo || !number || !body) {
+                if (statusEl) statusEl.textContent = 'Missing required fields';
+                return;
+            }
+
+            if (prCommentSubmitBtn) prCommentSubmitBtn.disabled = true;
+            if (statusEl) statusEl.textContent = 'Sending...';
+            if (resultEl) resultEl.textContent = '';
+
+            const payload = { body };
+            if (token) payload.user_token = token;
+
+            try {
+                const response = await fetch(`${API_BASE}/v1/gh/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls/${encodeURIComponent(number)}/comments/anonymous`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Gitgost-Key': 'gitgost-anonymous'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${text}`);
+                }
+
+                const data = await response.json();
+                if (statusEl) statusEl.textContent = 'Sent';
+
+                const parts = [];
+                if (data.comment_url) parts.push(`Comment: ${data.comment_url}`);
+                if (data.hash) parts.push(`Hash: ${data.hash}`);
+                if (data.karma !== undefined) parts.push(`Karma: ${data.karma}`);
+                if (data.user_token && !token) parts.push(`New user token: ${data.user_token}`);
+                const reportHint = `${API_BASE}/v1/moderation/report`;
+                if (resultEl) resultEl.textContent = `${parts.join(' · ')}. Reports: ${reportHint}`;
+            } catch (error) {
+                console.error('Error sending PR comment:', error);
+                if (statusEl) statusEl.textContent = 'Error';
+                if (resultEl) resultEl.textContent = 'Could not send. Check PR # and that the repository exists.';
+            } finally {
+                if (prCommentSubmitBtn) prCommentSubmitBtn.disabled = false;
             }
         });
 

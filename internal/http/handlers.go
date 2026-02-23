@@ -96,7 +96,7 @@ func ReceivePackDiscoveryHandler(c *gin.Context) {
 	WritePktLine(&advertisement, "") // flush
 
 	// Capabilities
-	capabilities := "report-status delete-refs side-band-64k quiet ofs-delta"
+	capabilities := "report-status delete-refs side-band-64k quiet ofs-delta push-options"
 
 	// Refs
 	first := true

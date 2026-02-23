@@ -357,6 +357,7 @@
         .terminal .comment { color: #565f89; }
         .terminal .prompt { color: #7aa2f7; font-weight: 600; }
         .terminal .success { color: #9ece6a; }
+        .terminal .hl { color: #ffa657; font-weight: 600; }
 
         .grid {
             display: grid;
@@ -971,6 +972,7 @@
         <section id="usage">
             <div class="terminal-tabs">
                 <button class="terminal-tab active" data-terminal="push">Push / PR</button>
+                <button class="terminal-tab" data-terminal="update">Update PR</button>
                 <button class="terminal-tab" data-terminal="fetch">Fetch / Pull (optional)</button>
             </div>
             <div class="terminal" id="terminal-push"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Add as remote → push → done. Fully anonymous.</span>
@@ -981,7 +983,16 @@
 This commit fixes a grammatical error in the README.
 The word 'recieve' should be 'receive'."
 <span class="prompt">$</span> git push gost fix-typo:main
-<span class="success">→</span> Anonymized commit + PR opened as @gitgost-anonymous</div>
+<span class="success">→</span> Anonymized commit + PR opened as @gitgost-anonymous
+<span class="success">→</span> PR Hash: <span class="hl">a3f8c1d2</span>  ← save this to update the PR later</div>
+            </div>
+            <div class="terminal" id="terminal-update" style="display:none;"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Got review feedback? Push a follow-up commit to the same PR.</span>
+<span class="comment"># Use the pr-hash returned on the first push.</span>
+<span class="prompt">$</span> git commit -am "fix: address review comments"
+<span class="prompt">$</span> git push gost fix-typo:main -o pr-hash=<span class="hl">a3f8c1d2</span>
+<span class="success">→</span> Existing branch force-updated, PR refreshed — still @gitgost-anonymous
+<span class="comment">
+# If the hash is unknown or the PR was closed, a new PR is created automatically.</span></div>
             </div>
             <div class="terminal" id="terminal-fetch" style="display:none;"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Clone or fetch anonymously — no GitHub account needed.</span>
 <span class="prompt">$</span> git clone https://anon:@gitgost.leapcell.app/v1/gh/torvalds/linux
@@ -1035,6 +1046,10 @@ The word 'recieve' should be 'receive'."
                 <h3>Fetch & Pull Support</h3>
                 <p>Clone, fetch, and pull from any GitHub repo through gitGost. Read code anonymously — no account, no trace.</p>
             </div>
+            <div class="card">
+                <h3>Persistent PR Updates</h3>
+                <p>Got review feedback? Push follow-up commits to the same anonymous PR using a <code>pr-hash</code>. No accounts, no state stored — the hash is derived deterministically from your branch.</p>
+            </div>
         </section>
 
 
@@ -1059,7 +1074,6 @@ The word 'recieve' should be 'receive'."
         </section>
 
         <!-- Anonymous Issues & PR Comments section -->
-        <h2 id="issues">Anonymous Issues &amp; PR Comments</h2>
         <section class="issue-section">
             <div class="issue-container">
                 <div class="issue-header">
@@ -1208,7 +1222,6 @@ The word 'recieve' should be 'receive'."
             </div>
         </section>
 
-        <h2 id="badge">Anonymous Contributor Friendly Badge</h2>
         <section class="badge-section">
             <div class="badge-container">
                 <div class="badge-header">
@@ -1729,6 +1742,7 @@ The word 'recieve' should be 'receive'."
                 tab.classList.add('active');
                 const target = tab.dataset.terminal;
                 document.getElementById('terminal-push').style.display = target === 'push' ? '' : 'none';
+                document.getElementById('terminal-update').style.display = target === 'update' ? '' : 'none';
                 document.getElementById('terminal-fetch').style.display = target === 'fetch' ? '' : 'none';
             });
         });

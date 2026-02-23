@@ -17,7 +17,9 @@ func min(a, b int) int {
 	return b
 }
 
-func PushToGitHub(owner, repo, tempDir, forkOwner string) (string, error) {
+// PushToGitHub empuja los commits al fork. Si targetBranch está vacío, genera
+// un nombre único con timestamp. Si targetBranch está dado, hace force-push a esa rama.
+func PushToGitHub(owner, repo, tempDir, forkOwner, targetBranch string) (string, error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
@@ -26,9 +28,12 @@ func PushToGitHub(owner, repo, tempDir, forkOwner string) (string, error) {
 	// Debug: log token (first 10 chars)
 	fmt.Printf("DEBUG: Using GitHub token: %s...\n", token[:min(10, len(token))])
 
-	// Generate unique branch name (valid Git ref name)
-	timestamp := time.Now().Unix()
-	branch := fmt.Sprintf("gitgost-%d", timestamp)
+	// Usar el branch dado o generar uno único con timestamp
+	branch := targetBranch
+	if branch == "" {
+		timestamp := time.Now().Unix()
+		branch = fmt.Sprintf("gitgost-%d", timestamp)
+	}
 
 	r, err := git.PlainOpen(tempDir)
 	if err != nil {
@@ -53,8 +58,12 @@ func PushToGitHub(owner, repo, tempDir, forkOwner string) (string, error) {
 	}
 	fmt.Printf("DEBUG: Remote 'fork' is ready\n")
 
-	// Push to new branch with authentication
-	refSpec := config.RefSpec(fmt.Sprintf("HEAD:refs/heads/%s", branch))
+	// Usar force-push (+) cuando se actualiza una rama existente
+	refSpecStr := fmt.Sprintf("HEAD:refs/heads/%s", branch)
+	if targetBranch != "" {
+		refSpecStr = "+" + refSpecStr
+	}
+	refSpec := config.RefSpec(refSpecStr)
 	fmt.Printf("DEBUG: RefSpec: %s\n", refSpec)
 	err = r.Push(&git.PushOptions{
 		RemoteName: "fork",
@@ -63,6 +72,7 @@ func PushToGitHub(owner, repo, tempDir, forkOwner string) (string, error) {
 			Username: "x-access-token", // GitHub requires this for token auth
 			Password: token,            // Token goes in password field
 		},
+		Force: targetBranch != "",
 	})
 	if err != nil {
 		fmt.Printf("DEBUG: Push error: %v\n", err)

@@ -13,7 +13,7 @@ func TestPushToGitHub_NoToken(t *testing.T) {
 	// Remove token
 	os.Unsetenv("GITHUB_TOKEN")
 
-	_, err := PushToGitHub("owner", "repo", "/tmp/nonexistent", "forkowner")
+	_, err := PushToGitHub("owner", "repo", "/tmp/nonexistent", "forkowner", "")
 	if err == nil {
 		t.Error("Expected error when GITHUB_TOKEN is not set")
 	}
@@ -35,7 +35,7 @@ func TestReceivePack(t *testing.T) {
 
 	// Test without token - should fail
 	os.Unsetenv("GITHUB_TOKEN")
-	_, _, err := ReceivePack(tempDir, []byte{}, "owner", "repo")
+	_, _, _, err := ReceivePack(tempDir, []byte{}, "owner", "repo")
 	if err == nil {
 		t.Error("Expected error when GITHUB_TOKEN is not set")
 	}

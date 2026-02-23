@@ -55,10 +55,12 @@ type RefUpdate struct {
 	Ref    string
 }
 
-// ExtractPackfile extrae el packfile y la información de actualización de refs
-func ExtractPackfile(body []byte) ([]byte, *RefUpdate, error) {
+// ExtractPackfile extrae el packfile y la información de actualización de refs.
+// También parsea push-options (e.g. pr-hash=a3f8c1d2) enviadas por el cliente.
+func ExtractPackfile(body []byte) ([]byte, *RefUpdate, string, error) {
 	reader := bytes.NewReader(body)
 	var refUpdate *RefUpdate
+	var prHash string
 
 	// Leer las líneas de comandos (actualizaciones de refs)
 	for {
@@ -67,7 +69,7 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, error) {
 			if err == io.EOF {
 				break
 			}
-			return nil, nil, fmt.Errorf("error parsing pkt-line: %v", err)
+			return nil, nil, "", fmt.Errorf("error parsing pkt-line: %v", err)
 		}
 
 		// flush packet indica fin de comandos
@@ -78,6 +80,14 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, error) {
 		// Las líneas de comando terminan con \n o \x00
 		lineStr := string(line)
 		fmt.Printf("DEBUG: Command line: %q\n", lineStr)
+
+		// Parsear push-option: pr-hash=<value>
+		if strings.HasPrefix(lineStr, "push-option=pr-hash=") {
+			prHash = strings.TrimPrefix(lineStr, "push-option=pr-hash=")
+			prHash = strings.TrimRight(prHash, "\n")
+			fmt.Printf("DEBUG: Found pr-hash push-option: %s\n", prHash)
+			continue
+		}
 
 		// Parsear comando: old-sha new-sha ref\x00capabilities
 		parts := strings.Fields(lineStr)
@@ -95,12 +105,12 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, error) {
 			// Retroceder al inicio del PACK
 			currentPos, err := reader.Seek(0, io.SeekCurrent)
 			if err != nil {
-				return nil, nil, fmt.Errorf("failed to determine pack start: %v", err)
+				return nil, nil, "", fmt.Errorf("failed to determine pack start: %v", err)
 			}
 			packStart := currentPos - int64(len(line))
 			_, err = reader.Seek(packStart, io.SeekStart)
 			if err != nil {
-				return nil, nil, fmt.Errorf("failed to seek pack start: %v", err)
+				return nil, nil, "", fmt.Errorf("failed to seek pack start: %v", err)
 			}
 			break
 		}
@@ -109,7 +119,7 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, error) {
 	// Ahora leer el resto como packfile
 	packfile, err := io.ReadAll(reader)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 
 	// Verificar que comience con "PACK"
@@ -117,7 +127,7 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, error) {
 		// Buscar PACK en todo el body como fallback
 		packStart := bytes.Index(body, []byte("PACK"))
 		if packStart == -1 {
-			return nil, nil, fmt.Errorf("no packfile found in body")
+			return nil, nil, "", fmt.Errorf("no packfile found in body")
 		}
 		packfile = body[packStart:]
 	}
@@ -125,15 +135,15 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, error) {
 	fmt.Printf("DEBUG: Extracted packfile: %d bytes, starts with: %x\n",
 		len(packfile), packfile[:min(20, len(packfile))])
 
-	return packfile, refUpdate, nil
+	return packfile, refUpdate, prHash, nil
 }
 
-// ReceivePack clona el repo de GitHub y aplica el packfile recibido, retorna el SHA del nuevo commit y el mensaje del commit
-func ReceivePack(tempDir string, body []byte, owner string, repo string) (string, string, error) {
+// ReceivePack clona el repo de GitHub y aplica el packfile recibido, retorna el SHA del nuevo commit, el mensaje del commit y el pr-hash push-option (si fue enviado).
+func ReceivePack(tempDir string, body []byte, owner string, repo string) (string, string, string, error) {
 	// Clonar el repo de GitHub para tener los objetos base
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
-		return "", "", fmt.Errorf("GITHUB_TOKEN not set")
+		return "", "", "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
 
 	repoURL := fmt.Sprintf("https://%s@github.com/%s/%s.git", token, owner, repo)
@@ -147,32 +157,32 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string) (string
 		fmt.Printf("DEBUG: Clone failed, initializing empty repo: %v\n", err)
 		_, err = git.PlainInit(tempDir, false)
 		if err != nil {
-			return "", "", fmt.Errorf("failed to init repo: %v", err)
+			return "", "", "", fmt.Errorf("failed to init repo: %v", err)
 		}
 	}
 
 	// Crear directorio pack (necesario para git index-pack)
 	packDir := tempDir + "/.git/objects/pack"
 	if err := os.MkdirAll(packDir, 0755); err != nil {
-		return "", "", fmt.Errorf("failed to create pack dir: %v", err)
+		return "", "", "", fmt.Errorf("failed to create pack dir: %v", err)
 	}
 
 	// Si body está vacío, salir
 	if len(body) == 0 {
-		return "", "", nil
+		return "", "", "", nil
 	}
 
 	fmt.Printf("DEBUG: Body length: %d bytes\n", len(body))
 	fmt.Printf("DEBUG: First 100 bytes: %x\n", body[:min(100, len(body))])
 
 	// Extraer packfile del protocolo Git Smart HTTP
-	packfile, refUpdate, err := ExtractPackfile(body)
+	packfile, refUpdate, prHash, err := ExtractPackfile(body)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to extract packfile: %v", err)
+		return "", "", "", fmt.Errorf("failed to extract packfile: %v", err)
 	}
 
 	if refUpdate == nil {
-		return "", "", fmt.Errorf("no ref update found in request")
+		return "", "", "", fmt.Errorf("no ref update found in request")
 	}
 
 	fmt.Printf("DEBUG: Target SHA: %s\n", refUpdate.NewSHA)
@@ -183,7 +193,7 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string) (string
 	packfilePath := tempDir + "/pack.tmp"
 	err = os.WriteFile(packfilePath, packfile, 0644)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to write packfile: %v", err)
+		return "", "", "", fmt.Errorf("failed to write packfile: %v", err)
 	}
 
 	// Usar git index-pack en lugar de unpack-objects (más robusto)
@@ -205,14 +215,14 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string) (string
 		fmt.Printf("DEBUG: git unpack-objects output: %s\n", string(output))
 
 		if err != nil {
-			return "", "", fmt.Errorf("failed to unpack objects: %v\nOutput: %s", err, string(output))
+			return "", "", "", fmt.Errorf("failed to unpack objects: %v\nOutput: %s", err, string(output))
 		}
 	}
 
 	// Abrir repositorio
 	r, err := git.PlainOpen(tempDir)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to open repo: %v", err)
+		return "", "", "", fmt.Errorf("failed to open repo: %v", err)
 	}
 
 	// Actualizar HEAD al nuevo commit
@@ -220,7 +230,7 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string) (string
 	ref := plumbing.NewHashReference(plumbing.HEAD, newHash)
 	err = r.Storer.SetReference(ref)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to update HEAD: %v", err)
+		return "", "", "", fmt.Errorf("failed to update HEAD: %v", err)
 	}
 
 	fmt.Printf("DEBUG: Updated HEAD to %s\n", refUpdate.NewSHA)
@@ -228,7 +238,7 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string) (string
 	// Extraer el mensaje del commit original antes de anonimizar
 	originalCommit, err := r.CommitObject(newHash)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to get original commit: %v", err)
+		return "", "", "", fmt.Errorf("failed to get original commit: %v", err)
 	}
 	commitMessage := originalCommit.Message
 	fmt.Printf("DEBUG: Original commit message: %s\n", commitMessage)
@@ -236,11 +246,11 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string) (string
 	// Reescribir commits para anonimizar
 	anonymizedSHA, err := AnonymizeCommits(r, refUpdate.NewSHA)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to anonymize commits: %v", err)
+		return "", "", "", fmt.Errorf("failed to anonymize commits: %v", err)
 	}
 
 	fmt.Printf("DEBUG: Anonymized commit: %s\n", anonymizedSHA)
-	return anonymizedSHA, commitMessage, nil
+	return anonymizedSHA, commitMessage, prHash, nil
 }
 
 // AnonymizeCommits reescribe solo los commits nuevos para anonimizar autor y committer

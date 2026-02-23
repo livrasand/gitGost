@@ -1024,6 +1024,92 @@ func BadgeHandler(c *gin.Context) {
 	c.String(http.StatusOK, svg)
 }
 
+// badgeCache almacena el conteo de PRs por "owner/repo" con TTL de 5 minutos
+var (
+	badgeCache    = make(map[string]int)
+	badgeCacheAt  = make(map[string]time.Time)
+	badgeCacheMu  sync.Mutex
+	badgeCacheTTL = 5 * time.Minute
+)
+
+// BadgePRCountHandler sirve un badge SVG dinámico con el conteo de PRs anónimos para owner/repo.
+// GET /badge/:owner/:repo
+func BadgePRCountHandler(c *gin.Context) {
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+
+	if !isValidRepoName(owner) || !isValidRepoName(repo) {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid owner or repo"})
+		return
+	}
+
+	cacheKey := owner + "/" + repo
+	badgeCacheMu.Lock()
+	count, ok := badgeCache[cacheKey]
+	cachedAt := badgeCacheAt[cacheKey]
+	badgeCacheMu.Unlock()
+
+	if !ok || time.Since(cachedAt) > badgeCacheTTL {
+		if dbClient != nil {
+			if n, err := dbClient.GetPRCountByRepo(c.Request.Context(), owner, repo); err == nil {
+				count = n
+			}
+		}
+		badgeCacheMu.Lock()
+		badgeCache[cacheKey] = count
+		badgeCacheAt[cacheKey] = time.Now()
+		badgeCacheMu.Unlock()
+	}
+
+	label := "Anonymous PRs"
+	value := fmt.Sprintf("%d", count)
+
+	// Ancho dinámico: label ~100px + value ~(len*7+16)px
+	valueWidth := len(value)*7 + 16
+	if valueWidth < 30 {
+		valueWidth = 30
+	}
+	totalWidth := 100 + valueWidth
+	labelMid := 50
+	valueMid := 100 + valueWidth/2
+
+	svg := fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="20" role="img" aria-label="%s: %s" viewBox="0 0 %d 20">
+  <title>%s: %s</title>
+  <linearGradient id="s" x2="0" y2="100%%">
+    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+    <stop offset="1" stop-opacity=".1"/>
+  </linearGradient>
+  <clipPath id="r">
+    <rect width="%d" height="20" rx="3" fill="#fff"/>
+  </clipPath>
+  <g clip-path="url(#r)">
+    <rect width="100" height="20" fill="#555"/>
+    <rect x="100" width="%d" height="20" fill="#4CAF50"/>
+    <rect width="%d" height="20" fill="url(#s)"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110">
+    <text x="%d0" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="860" lengthAdjust="spacing">%s</text>
+    <text x="%d0" y="140" transform="scale(.1)" textLength="860" lengthAdjust="spacing">%s</text>
+    <text x="%d0" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="%d0" lengthAdjust="spacing">%s</text>
+    <text x="%d0" y="140" transform="scale(.1)" textLength="%d0" lengthAdjust="spacing">%s</text>
+  </g>
+</svg>`,
+		totalWidth, label, value, totalWidth,
+		label, value,
+		totalWidth,
+		valueWidth,
+		totalWidth,
+		labelMid, label,
+		labelMid, label,
+		valueMid, (valueWidth - 16), value,
+		valueMid, (valueWidth - 16), value,
+	)
+
+	c.Header("Content-Type", "image/svg+xml")
+	c.Header("Cache-Control", "no-cache, max-age=300")
+	c.String(http.StatusOK, svg)
+}
+
 // PRStatusHandler devuelve el topic ntfy y la URL de suscripción para un PR hash dado.
 // No almacena ni expone datos personales.
 func PRStatusHandler(c *gin.Context) {

@@ -103,6 +103,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 
 	// Badges
 	r.GET("/badges/:badge", BadgeHandler)
+	r.GET("/badge/:owner/:repo", BadgePRCountHandler)
 
 	// Static pages
 	r.StaticFile("/approach.html", "./web/approach.html")

@@ -1106,7 +1106,7 @@ func BadgePRCountHandler(c *gin.Context) {
 	)
 
 	c.Header("Content-Type", "image/svg+xml")
-	c.Header("Cache-Control", "no-cache, max-age=300")
+	c.Header("Cache-Control", "public, max-age=300")
 	c.String(http.StatusOK, svg)
 }
 

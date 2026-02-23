@@ -1050,15 +1050,21 @@ func BadgePRCountHandler(c *gin.Context) {
 	badgeCacheMu.Unlock()
 
 	if !ok || time.Since(cachedAt) > badgeCacheTTL {
+		dbOk := false
 		if dbClient != nil {
 			if n, err := dbClient.GetPRCountByRepo(c.Request.Context(), owner, repo); err == nil {
 				count = n
+				dbOk = true
 			}
 		}
-		badgeCacheMu.Lock()
-		badgeCache[cacheKey] = count
-		badgeCacheAt[cacheKey] = time.Now()
-		badgeCacheMu.Unlock()
+		// Solo actualizar el cache si la DB respondió correctamente,
+		// o si ya había un valor previo (refresco de TTL con valor conocido).
+		if dbOk || ok {
+			badgeCacheMu.Lock()
+			badgeCache[cacheKey] = count
+			badgeCacheAt[cacheKey] = time.Now()
+			badgeCacheMu.Unlock()
+		}
 	}
 
 	label := "Anonymous PRs"

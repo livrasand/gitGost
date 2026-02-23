@@ -2,6 +2,8 @@ package github
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -604,4 +606,79 @@ func IsRepoVerified(owner, repo string) bool {
 	}
 	defer resp.Body.Close()
 	return resp.StatusCode == 200
+}
+
+// GeneratePRHash genera un hash determinístico de 8 caracteres basado en owner/repo/branch.
+// Esto permite que el mismo branch siempre produzca el mismo pr-hash, sin almacenar estado.
+func GeneratePRHash(owner, repo, branch string) string {
+	input := fmt.Sprintf("%s/%s/%s", owner, repo, branch)
+	sum := sha256.Sum256([]byte(input))
+	return hex.EncodeToString(sum[:])[:8]
+}
+
+// GetExistingPR busca si existe un PR abierto desde forkOwner:branchName hacia owner/repo.
+// Retorna la URL del PR, si la rama existe en el fork, y cualquier error.
+func GetExistingPR(owner, repo, forkOwner, branchName string) (string, bool, error) {
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		return "", false, fmt.Errorf("GITHUB_TOKEN not set")
+	}
+
+	// Verificar si la rama existe en el fork
+	branchURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/branches/%s", forkOwner, repo, branchName)
+	req, err := http.NewRequest("GET", branchURL, nil)
+	if err != nil {
+		return "", false, err
+	}
+	req.Header.Set("Authorization", "token "+token)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", "gitGost")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", false, err
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		// La rama no existe en el fork
+		return "", false, nil
+	}
+
+	// La rama existe; buscar el PR abierto asociado
+	head := fmt.Sprintf("%s:%s", forkOwner, branchName)
+	prListURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls?state=open&head=%s&per_page=1",
+		owner, repo, url.QueryEscape(head))
+
+	req, err = http.NewRequest("GET", prListURL, nil)
+	if err != nil {
+		return "", true, err
+	}
+	req.Header.Set("Authorization", "token "+token)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", "gitGost")
+
+	resp, err = httpClient.Do(req)
+	if err != nil {
+		return "", true, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", true, fmt.Errorf("failed to list PRs: %s", resp.Status)
+	}
+
+	var prs []struct {
+		HTMLURL string `json:"html_url"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&prs); err != nil {
+		return "", true, err
+	}
+
+	if len(prs) == 0 {
+		// Rama existe pero el PR fue cerrado/mergeado; retornar rama existente sin URL de PR
+		return "", true, nil
+	}
+
+	return prs[0].HTMLURL, true, nil
 }

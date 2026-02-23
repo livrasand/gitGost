@@ -169,7 +169,7 @@ func ReceivePackHandler(c *gin.Context) {
 	WriteSidebandLine(&response, 2, "remote: gitGost: Processing your anonymous contribution...")
 
 	// Procesar el packfile
-	newSHA, commitMessage, err := git.ReceivePack(tempDir, body, owner, repo)
+	newSHA, commitMessage, receivedPRHash, err := git.ReceivePack(tempDir, body, owner, repo)
 	if err != nil {
 		utils.Log("Error receiving pack: %v", err)
 		WriteSidebandLine(&response, 3, fmt.Sprintf("unpack error: %v", err))
@@ -196,50 +196,117 @@ func ReceivePackHandler(c *gin.Context) {
 	utils.Log("Fork ready: %s/%s", forkOwner, repo)
 	WriteSidebandLine(&response, 2, fmt.Sprintf("remote: gitGost: Fork ready at %s/%s", forkOwner, repo))
 
-	// Push al fork
-	WriteSidebandLine(&response, 2, "remote: gitGost: Pushing to fork...")
-	branch, err := git.PushToGitHub(owner, repo, tempDir, forkOwner)
-	if err != nil {
-		utils.Log("Error pushing to fork: %v", err)
-		WriteSidebandLine(&response, 1, "unpack ok\n")
-		WriteSidebandLine(&response, 3, fmt.Sprintf("error pushing to fork: %v", err))
-		WritePktLine(&response, "")
-		c.Writer.Write(response.Bytes())
-		return
+	var branch, prURL string
+	isUpdate := false
+
+	if receivedPRHash != "" {
+		// Modo actualización: el cliente envió un pr-hash existente
+		branchFromHash := fmt.Sprintf("gitgost-%s", receivedPRHash)
+		WriteSidebandLine(&response, 2, fmt.Sprintf("remote: gitGost: Updating existing PR (hash: %s)...", receivedPRHash))
+
+		existingPRURL, branchExists, err := github.GetExistingPR(owner, repo, forkOwner, branchFromHash)
+		if err != nil {
+			utils.Log("Error checking existing PR: %v", err)
+		}
+
+		if branchExists {
+			// Push al fork en la rama existente (force)
+			WriteSidebandLine(&response, 2, "remote: gitGost: Pushing update to existing branch...")
+			branch, err = git.PushToGitHub(owner, repo, tempDir, forkOwner, branchFromHash)
+			if err != nil {
+				utils.Log("Error pushing update to fork: %v", err)
+				WriteSidebandLine(&response, 1, "unpack ok\n")
+				WriteSidebandLine(&response, 3, fmt.Sprintf("error pushing update: %v", err))
+				WritePktLine(&response, "")
+				c.Writer.Write(response.Bytes())
+				return
+			}
+			if existingPRURL != "" {
+				// PR abierto encontrado: actualización exitosa
+				prURL = existingPRURL
+				isUpdate = true
+				utils.Log("Updated existing branch: %s, PR: %s", branch, prURL)
+			} else {
+				// Rama existe pero PR fue cerrado/mergeado: crear nuevo PR
+				WriteSidebandLine(&response, 2, "remote: gitGost: PR was closed, creating new PR on existing branch...")
+				prURL, err = github.CreatePR(owner, repo, branch, forkOwner, commitMessage)
+				if err != nil {
+					utils.Log("Error creating PR on existing branch: %v", err)
+					WriteSidebandLine(&response, 1, "unpack ok\n")
+					WriteSidebandLine(&response, 3, fmt.Sprintf("error creating PR: %v", err))
+					WritePktLine(&response, "")
+					c.Writer.Write(response.Bytes())
+					return
+				}
+				isUpdate = true
+				utils.Log("Created new PR on existing branch: %s, PR: %s", branch, prURL)
+				if err := RecordPR(c.Request.Context(), owner, repo, prURL); err != nil {
+					utils.Log("Error recording stats: %v", err)
+				}
+			}
+		} else {
+			// El hash no corresponde a una rama existente: crear nuevo PR
+			utils.Log("PR hash not found, creating new PR")
+			WriteSidebandLine(&response, 2, "remote: gitGost: Hash not found, creating new PR...")
+		}
 	}
 
-	utils.Log("Pushed to fork branch: %s", branch)
-	WriteSidebandLine(&response, 2, fmt.Sprintf("remote: gitGost: Branch '%s' created", branch))
+	if !isUpdate {
+		// Flujo normal: push a nueva rama y crear PR
+		WriteSidebandLine(&response, 2, "remote: gitGost: Pushing to fork...")
+		branch, err = git.PushToGitHub(owner, repo, tempDir, forkOwner, "")
+		if err != nil {
+			utils.Log("Error pushing to fork: %v", err)
+			WriteSidebandLine(&response, 1, "unpack ok\n")
+			WriteSidebandLine(&response, 3, fmt.Sprintf("error pushing to fork: %v", err))
+			WritePktLine(&response, "")
+			c.Writer.Write(response.Bytes())
+			return
+		}
 
-	// Crear PR desde el fork al repo original
-	WriteSidebandLine(&response, 2, "remote: gitGost: Creating pull request...")
-	prURL, err := github.CreatePR(owner, repo, branch, forkOwner, commitMessage)
-	if err != nil {
-		utils.Log("Error creating PR: %v", err)
-		WriteSidebandLine(&response, 1, "unpack ok\n")
-		WriteSidebandLine(&response, 3, fmt.Sprintf("error creating PR: %v", err))
-		WritePktLine(&response, "")
-		c.Writer.Write(response.Bytes())
-		return
+		utils.Log("Pushed to fork branch: %s", branch)
+		WriteSidebandLine(&response, 2, fmt.Sprintf("remote: gitGost: Branch '%s' created", branch))
+
+		// Crear PR desde el fork al repo original
+		WriteSidebandLine(&response, 2, "remote: gitGost: Creating pull request...")
+		prURL, err = github.CreatePR(owner, repo, branch, forkOwner, commitMessage)
+		if err != nil {
+			utils.Log("Error creating PR: %v", err)
+			WriteSidebandLine(&response, 1, "unpack ok\n")
+			WriteSidebandLine(&response, 3, fmt.Sprintf("error creating PR: %v", err))
+			WritePktLine(&response, "")
+			c.Writer.Write(response.Bytes())
+			return
+		}
+
+		utils.Log("Created PR: %s", prURL)
+
+		// Registrar estadísticas
+		if err := RecordPR(c.Request.Context(), owner, repo, prURL); err != nil {
+			utils.Log("Error recording stats: %v", err)
+		}
 	}
 
-	utils.Log("Created PR: %s", prURL)
-
-	// Registrar estadísticas
-	if err := RecordPR(c.Request.Context(), owner, repo, prURL); err != nil {
-		utils.Log("Error recording stats: %v", err)
-		// No fallamos si solo falla las estadísticas
-	}
+	// Generar pr-hash para esta rama (determinístico: owner/repo/branch)
+	outPRHash := github.GeneratePRHash(owner, repo, branch)
 
 	// MENSAJES DE ÉXITO CLAROS
 	WriteSidebandLine(&response, 2, "remote: ")
 	WriteSidebandLine(&response, 2, "remote: ========================================")
-	WriteSidebandLine(&response, 2, "remote: SUCCESS! Pull Request Created")
+	if isUpdate {
+		WriteSidebandLine(&response, 2, "remote: SUCCESS! Pull Request Updated")
+	} else {
+		WriteSidebandLine(&response, 2, "remote: SUCCESS! Pull Request Created")
+	}
 	WriteSidebandLine(&response, 2, "remote: ========================================")
 	WriteSidebandLine(&response, 2, "remote: ")
 	WriteSidebandLine(&response, 2, fmt.Sprintf("remote: PR URL: %s", prURL))
 	WriteSidebandLine(&response, 2, "remote: Author: @gitgost-anonymous")
 	WriteSidebandLine(&response, 2, fmt.Sprintf("remote: Branch: %s", branch))
+	WriteSidebandLine(&response, 2, fmt.Sprintf("remote: PR Hash: %s", outPRHash))
+	WriteSidebandLine(&response, 2, "remote: ")
+	WriteSidebandLine(&response, 2, "remote: To update this PR on future pushes, use:")
+	WriteSidebandLine(&response, 2, fmt.Sprintf("remote:   git push gost <branch>:main -o pr-hash=%s", outPRHash))
 	WriteSidebandLine(&response, 2, "remote: ")
 	WriteSidebandLine(&response, 2, "remote: Your identity has been anonymized.")
 	WriteSidebandLine(&response, 2, "remote: No trace to you remains in the commit history.")

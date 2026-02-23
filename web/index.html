@@ -1334,6 +1334,13 @@ The word 'recieve' should be 'receive'."
                             <label for="repo-input">Repository (owner/repo)</label>
                             <input type="text" id="repo-input" placeholder="your-username/your-repo" autocomplete="off">
                         </div>
+                        <div class="form-group">
+                            <label for="badge-type">Badge type</label>
+                            <select id="badge-type">
+                                <option value="friendly">Anonymous Contributor Friendly</option>
+                                <option value="pr-count">Anonymous PRs counter</option>
+                            </select>
+                        </div>
                         <button onclick="generateBadge()" class="btn primary" id="generate-btn">Generate Badge</button>
                     </div>
 
@@ -1483,6 +1490,7 @@ The word 'recieve' should be 'receive'."
         // Generate dynamic badge
         async function generateBadge() {
             const repo = document.getElementById('repo-input').value.trim();
+            const badgeType = document.getElementById('badge-type')?.value || 'friendly';
             const result = document.getElementById('badge-result');
             const copyRow = document.getElementById('badge-copy-row');
             const copyInput = document.getElementById('badge-markdown');
@@ -1491,12 +1499,28 @@ The word 'recieve' should be 'receive'."
                 if (copyRow) copyRow.style.display = 'none';
                 return;
             }
-            const url = `${API_BASE}/badges/anonymous-friendly.svg?repo=${encodeURIComponent(repo)}`;
+
+            let url, altText, markdown;
+            if (badgeType === 'pr-count') {
+                const parts = repo.split('/');
+                if (parts.length !== 2 || !parts[0] || !parts[1]) {
+                    result.innerHTML = '<p>Please enter a valid repository in owner/repo format.</p>';
+                    if (copyRow) copyRow.style.display = 'none';
+                    return;
+                }
+                url = `${API_BASE}/badge/${encodeURIComponent(parts[0])}/${encodeURIComponent(parts[1])}`;
+                altText = 'Anonymous PRs';
+                markdown = `![Anonymous PRs](${url})`;
+            } else {
+                url = `${API_BASE}/badges/anonymous-friendly.svg?repo=${encodeURIComponent(repo)}`;
+                altText = 'Anonymous Contributor Friendly';
+                markdown = `![Anonymous Contributor Friendly](${url})`;
+            }
+
             try {
                 const response = await fetch(url);
                 if (response.ok) {
-                    const markdown = `![Anonymous Contributor Friendly](${url})`;
-                    result.innerHTML = `<img src="${url}" alt="Anonymous Contributor Friendly" style="height: 20px;"><br><code>${markdown}</code>`;
+                    result.innerHTML = `<img src="${url}" alt="${altText}" style="height: 20px;"><br><code>${markdown}</code>`;
                     if (copyInput && copyRow) {
                         copyInput.value = markdown;
                         copyRow.style.display = 'grid';

@@ -4,7 +4,10 @@
 
 Zero accounts • Zero tokens • Zero metadata • Designed for strong anonymity
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/livrasand/gitGost)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Security Responsible Disclosure](https://img.shields.io/badge/Security-Responsible%20Disclosure-yellow)](SECURITY.md)
+[![Legal Notice](https://img.shields.io/badge/Legal-Notice%20%26%20CLA-red)](LEGAL.md)
 [![Powered by Go](https://img.shields.io/badge/Powered%20by-Go-00ADD8.svg?logo=go)](https://go.dev)
 [![Privacy First](https://img.shields.io/badge/Privacy-First-59316b)](https://github.com/livrasand/gitGost)
   <img
@@ -142,6 +145,8 @@ Done. The PR appears instantly from `@gitgost-anonymous` with your commit messag
 - Commit size ≤ 10 MB
 - Full validation of refs and objects
 - No persistence of your data
+
+> **GitHub only:** Due to GitHub's platform limits, fork repositories created by gitGost are manually deleted to stay under the 40,000-repository cap. This is a GitHub-specific constraint and does not affect functionality.
 
 Everything is designed to prevent abuse while keeping you anonymous.
 

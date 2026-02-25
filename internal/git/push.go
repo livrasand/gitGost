@@ -25,9 +25,6 @@ func PushToGitHub(owner, repo, tempDir, forkOwner, targetBranch string) (string,
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
 
-	// Debug: log token (first 10 chars)
-	fmt.Printf("DEBUG: Using GitHub token: %s...\n", token[:min(10, len(token))])
-
 	// Usar el branch dado o generar uno único con timestamp
 	branch := targetBranch
 	if branch == "" {

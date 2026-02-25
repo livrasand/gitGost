@@ -13,6 +13,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
 // ParsePktLine lee líneas en formato pkt-line del protocolo Git
@@ -146,11 +147,15 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string) (string
 		return "", "", "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
 
-	repoURL := fmt.Sprintf("https://%s@github.com/%s/%s.git", token, owner, repo)
+	repoURL := fmt.Sprintf("https://github.com/%s/%s.git", owner, repo)
 	fmt.Printf("DEBUG: Cloning %s/%s...\n", owner, repo)
 
 	_, err := git.PlainClone(tempDir, false, &git.CloneOptions{
 		URL: repoURL,
+		Auth: &http.BasicAuth{
+			Username: "x-access-token",
+			Password: token,
+		},
 	})
 	if err != nil {
 		// Si falla el clone (repo no existe o privado), inicializar vacío

@@ -23,9 +23,40 @@
     <meta name="msapplication-TileColor" content="#d16014">
     <meta name="msapplication-TileImage" content="assets/logos/ms-icon-144x144.png">
     <meta name="theme-color" content="#d16014">
+    <meta name="description" content="Contribute to any GitHub repo without leaving a trace. Anonymous Git contributions with gitGost - privacy first, zero accounts, open source.">
+    <meta name="keywords" content="anonymous git contributions, git privacy, github anonymous pr, open source git, gitgost, anonymous coding, privacy git, zero trace git, git contributions anonymous, gitgost app">
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://gitgost.leapcell.app">
+    <meta property="og:title" content="gitGost — Anonymous Git Contributions">
+    <meta property="og:description" content="Contribute to any GitHub repo without leaving a trace. Anonymous Git contributions with gitGost - privacy first, zero accounts, open source.">
+    <meta property="og:image" content="https://gitgost.leapcell.app/assets/logos/favicon.ico">
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://gitgost.leapcell.app">
+    <meta property="twitter:title" content="gitGost — Anonymous Git Contributions">
+    <meta property="twitter:description" content="Contribute to any GitHub repo without leaving a trace.">
+    <meta property="twitter:image" content="https://gitgost.leapcell.app/assets/logos/favicon.ico">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "gitGost",
+      "alternateName": "Anonymous Git Contributions",
+      "description": "Contribute to any GitHub repo without leaving a trace. Anonymous Git contributions with gitGost - privacy first, zero accounts, open source.",
+      "url": "https://gitgost.leapcell.app",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
     <style>
         :root {
             --bg: #0d1117;
@@ -1015,8 +1046,7 @@ The word 'recieve' should be 'receive'."
 <span class="prompt">$</span> git commit -am "fix: address review comments"
 <span class="prompt">$</span> git push gost fix-typo:main -o pr-hash=<span class="hl">a3f8c1d2</span>
 <span class="success">→</span> Existing branch force-updated, PR refreshed — still @gitgost-anonymous
-<span class="comment">
-# If the hash is unknown or the PR was closed, a new PR is created automatically.</span></div>
+<span class="comment"># If the hash is unknown or the PR was closed, a new PR is created automatically.</span></div>
             </div>
             <div class="terminal" id="terminal-fetch" style="display:none;"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Clone or fetch anonymously — no GitHub account needed.</span>
 <span class="prompt">$</span> git clone https://anon:@gitgost.leapcell.app/v1/gh/torvalds/linux

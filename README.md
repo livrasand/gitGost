@@ -6,7 +6,19 @@ Zero accounts • Zero tokens • Zero metadata • Designed for strong anonymit
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Powered by Go](https://img.shields.io/badge/Powered%20by-Go-00ADD8.svg?logo=go)](https://go.dev)
-[![Privacy First](https://img.shields.io/badge/Privacy-First-success)](https://github.com/livrasand/gitGost)
+[![Privacy First](https://img.shields.io/badge/Privacy-First-59316b)](https://github.com/livrasand/gitGost)
+  <img
+  src="https://img.shields.io/badge/GitHub-Available-brightgreen?logo=github"
+  alt="GitHub – Coming Soon"/>
+<img
+  src="https://img.shields.io/badge/GitLab-Coming%20Soon-lightgrey?logo=gitlab&logoColor=white"
+  alt="GitLab – Coming Soon"/>
+<img
+  src="https://img.shields.io/badge/Bitbucket-Coming%20Soon-lightgrey?logo=bitbucket"
+  alt="Bitbucket – Coming Soon"/>
+<img
+  src="https://img.shields.io/badge/Codeberg-Coming%20Soon-lightgrey?logo=codeberg&logoColor=white"
+  alt="Codeberg – Coming Soon"/>
 
 https://gitgost.leapcell.app
 

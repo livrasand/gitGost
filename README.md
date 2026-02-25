@@ -1,4 +1,6 @@
-# gitGost 👻
+![gitGost Logo Light](web/assets/logos/light-logo.png#gh-light-mode-only)
+![gitGost Logo Dark](web/assets/logos/dark-logo.png#gh-dark-mode-only)
+
 
 **Contribute to any GitHub repo without leaving a trace.**
 

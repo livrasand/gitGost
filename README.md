@@ -203,6 +203,111 @@ git push gost my-feature:main
 
 (Yes, even gitGost eats its own dogfood 👻)
 
+### Going further: hide your IP with torsocks
+
+gitGost strips your name, email, and metadata — but your IP is still visible to the server. If you need a stronger anonymity guarantee, wrap your push with **torsocks**, which routes the connection through the Tor network so the server only sees a Tor exit node IP.
+
+#### Install
+
+```bash
+# Debian/Ubuntu
+sudo apt install tor torsocks
+
+# Arch
+sudo pacman -S tor torsocks
+
+# macOS
+brew install tor torsocks
+```
+
+#### Start Tor
+
+```bash
+sudo systemctl start tor   # Linux
+brew services start tor    # macOS
+```
+
+#### Push through Tor
+
+```bash
+torsocks git \
+  -c http.extraHeader="X-Gost-Authorship-Confirmed: 1" \
+  push gost my-feature:main
+```
+
+#### Optional: persistent alias so you never forget
+
+```bash
+# Inside your repo
+git config http.extraHeader "X-Gost-Authorship-Confirmed: 1"
+
+# In ~/.gitconfig
+[alias]
+    ghost = "!torsocks git"
+```
+
+Then simply:
+
+```bash
+git ghost push gost my-feature:main
+```
+
+#### Verify your IP is masked before pushing
+
+```bash
+torsocks curl https://check.torproject.org/api/ip
+# → {"IsTor": true, "IP": "185.220.101.x"}
+```
+
+> **Heads-up:** Tor is slow. A push that normally takes seconds may take a few minutes. This is expected — Tor routes traffic through three encrypted nodes worldwide. gitGost's 10 MB commit limit is partly sized with this in mind.
+
+### Windows alternatives
+
+`torsocks` is not available on Windows natively. Use one of the following options instead.
+
+#### Option 1: Tor Browser + SOCKS5 proxy (easiest)
+
+```bash
+# 1. Download and install Tor Browser
+#    https://www.torproject.org/download/
+
+# 2. Open it and leave it running (exposes SOCKS5 on 127.0.0.1:9150)
+
+# 3. Configure Git to use it
+git config --global http.proxy socks5h://127.0.0.1:9150
+
+# 4. Push normally
+git -c http.extraHeader="X-Gost-Authorship-Confirmed: 1" push gost my-branch:main
+```
+
+When done, remove the global proxy:
+
+```bash
+git config --global --unset http.proxy
+```
+
+Or configure it per-repo only (recommended):
+
+```bash
+# Inside the repo, not global
+git config http.proxy socks5h://127.0.0.1:9150
+git config http.extraHeader "X-Gost-Authorship-Confirmed: 1"
+```
+
+#### Option 2: WSL2 (Windows Subsystem for Linux)
+
+If you already have WSL2, it works exactly like Linux inside it:
+
+```bash
+# Inside WSL2 (Ubuntu/Debian)
+sudo apt install tor torsocks
+sudo service tor start
+
+torsocks git push gost my-branch:main
+```
+
+WSL2 has its own network stack separate from Windows, so anonymity is preserved correctly.
+
 ## Made with ❤️ for privacy
 
 Star this repo if you believe developers deserve the right to contribute anonymously.

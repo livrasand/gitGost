@@ -13,6 +13,7 @@ import (
 	"html/template"
 	"io"
 	"net/http"
+	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -431,8 +432,16 @@ func sendErrorResponse(c *gin.Context, errorMsg string) {
 
 func HealthHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"status": "healthy",
-		"time":   time.Now().UTC().Format(time.RFC3339),
+		"status":         "healthy",
+		"deployedCommit": commitHash,
+		"deployedAt":     buildTime,
+		"sourceRepo":     sourceRepo,
+		"leapcell":       true,
+		"goVersion":      runtime.Version(),
+		"verify": gin.H{
+			"github": fmt.Sprintf("https://github.com/livrasand/gitGost/commit/%s", commitHash),
+			"source": "100% open source - auditable",
+		},
 	})
 }
 
@@ -450,6 +459,19 @@ func MetricsHandler(c *gin.Context) {
 		"goroutines": runtime.NumGoroutine(),
 		"uptime":     time.Since(startTime).String(),
 	})
+}
+
+var (
+	commitHash = "dev"
+	buildTime  = "unknown"
+	sourceRepo = "https://github.com/livrasand/gitGost"
+)
+
+// SetBuildInfo permite que main inyecte los valores compilados con -ldflags
+func SetBuildInfo(hash, built, repo string) {
+	commitHash = hash
+	buildTime = built
+	sourceRepo = repo
 }
 
 var (
@@ -995,14 +1017,20 @@ func getScheme(r *http.Request) string {
 	return "http"
 }
 
-// BadgeHandler serves the Anonymous Contributor Friendly badge
+// BadgeHandler serves various badges
 func BadgeHandler(c *gin.Context) {
 	badge := c.Param("badge")
-	if badge != "anonymous-friendly.svg" {
+	switch badge {
+	case "anonymous-friendly.svg":
+		serveAnonymousFriendlyBadge(c)
+	case "deployed.svg":
+		serveDeployedBadge(c)
+	default:
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Badge not found"})
-		return
 	}
+}
 
+func serveAnonymousFriendlyBadge(c *gin.Context) {
 	repo := c.Query("repo")
 	verified := false
 	if repo != "" {
@@ -1021,6 +1049,65 @@ func BadgeHandler(c *gin.Context) {
 	svg := fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="230" height="20.909" role="img" aria-label="Anonymous Contributor Friendly" viewBox="0 0 230 20.909"><title>Anonymous Contributor Friendly</title><path id="s" x2="0" y2="100%%" d=""><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></path><clipPath id="r"><path width="220" height="20" rx="3" fill="#fff" d="M3.136 0H226.864A3.136 3.136 0 0 1 230 3.136V17.773A3.136 3.136 0 0 1 226.864 20.909H3.136A3.136 3.136 0 0 1 0 17.773V3.136A3.136 3.136 0 0 1 3.136 0z"/></clipPath><a href="https://gitgost.leapcell.app/" target="_blank" rel="noreferrer"><g clip-path="url(#r)"><path width="28" height="20" fill="black" d="M0 0H29.273V20.909H0V0z"/><path x="28" width="192" height="20" fill="%s" d="M29.273 0H230V20.909H29.273V0z"/><path width="220" height="20" fill="url(#s)" d="M0 0H230V20.909H0V0z"/></g><g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110"><g transform="matrix(.13 0 0 .13 8 3)"><path fill="#fff" d="M52.273 8.711c-19.219 0 -34.847 15.628 -34.847 34.851v43.558c0 4.786 3.925 8.715 8.711 8.715 3.582 0 6.534 -2.952 6.534 -6.534V84.943c0 -1.229 0.947 -2.177 2.177 -2.177s2.181 0.947 2.181 2.177v4.357c0 3.582 2.948 6.534 6.534 6.534 3.582 0 6.534 -2.952 6.534 -6.534V84.943c0 -1.229 0.947 -2.177 2.177 -2.177s2.177 0.947 2.177 2.177v4.357c0 3.582 2.952 6.534 6.534 6.534 3.586 0 6.534 -2.952 6.534 -6.534V84.943c0 -1.229 0.951 -2.177 2.181 -2.177s2.177 0.947 2.177 2.177v4.357c0 3.582 2.952 6.534 6.534 6.534 4.786 0 8.711 -3.929 8.711 -8.715V43.562c0 -19.223 -15.63 -34.851 -34.847 -34.851zM30.322 37.036c0.27 -0.024 0.539 0.008 0.801 0.086L52.273 43.468l21.142 -6.346a2.175 2.175 0 0 1 2.222 0.592c0.568 0.605 0.742 1.479 0.45 2.255l-6.534 17.426a2.175 2.175 0 0 1 -2.63 1.328L52.273 54.534l-14.649 4.186a2.175 2.175 0 0 1 -2.639 -1.328l-6.534 -17.425a2.17 2.17 0 0 1 1.871 -2.933z"/></g><text aria-hidden="true" x="1290" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="1900">Anonymous Contributor Friendly</text><text x="1290" y="140" transform="scale(.1)" fill="#fff" textLength="1900">Anonymous Contributor Friendly</text></g></a></svg>`, fillColor)
 
 	c.Header("Content-Type", "image/svg+xml")
+	c.String(http.StatusOK, svg)
+}
+
+func serveDeployedBadge(c *gin.Context) {
+	commit := c.Query("commit")
+	if commit == "" {
+		commit = commitHash
+	}
+	if len(commit) > 7 {
+		commit = commit[:7]
+	}
+
+	c.Header("Content-Type", "image/svg+xml")
+	c.Header("Cache-Control", "public, max-age=3600")
+
+	// Shields.io-compatible badge: label width ~72px, value width ~(len*7+10)px
+	label := "deployed"
+	labelW := 64
+	valueW := len(commit)*7 + 10
+	if valueW < 30 {
+		valueW = 30
+	}
+	totalW := labelW + valueW
+	labelMidX := labelW / 2
+	valueMidX := labelW + valueW/2
+
+	svg := fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="20" role="img" aria-label="%s: %s" viewBox="0 0 %d 20">
+  <title>%s: %s</title>
+  <linearGradient id="s" x2="0" y2="100%%">
+    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+    <stop offset="1" stop-opacity=".1"/>
+  </linearGradient>
+  <clipPath id="r">
+    <rect width="%d" height="20" rx="3" fill="#fff"/>
+  </clipPath>
+  <g clip-path="url(#r)">
+    <rect width="%d" height="20" fill="#555"/>
+    <rect x="%d" width="%d" height="20" fill="#0ea5e9"/>
+    <rect width="%d" height="20" fill="url(#s)"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110">
+    <text x="%d" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="%d" lengthAdjust="spacing">%s</text>
+    <text x="%d" y="140" transform="scale(.1)" textLength="%d" lengthAdjust="spacing">%s</text>
+    <text x="%d" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="%d" lengthAdjust="spacing">%s</text>
+    <text x="%d" y="140" transform="scale(.1)" textLength="%d" lengthAdjust="spacing">%s</text>
+  </g>
+</svg>`,
+		totalW, label, commit, totalW,
+		label, commit,
+		totalW,
+		labelW,
+		labelW, valueW,
+		totalW,
+		labelMidX*10, (labelW-10)*10, label,
+		labelMidX*10, (labelW-10)*10, label,
+		valueMidX*10, (valueW-6)*10, commit,
+		valueMidX*10, (valueW-6)*10, commit,
+	)
+
 	c.String(http.StatusOK, svg)
 }
 
@@ -1133,4 +1220,118 @@ func PRStatusHandler(c *gin.Context) {
 		"ntfy_topic":    topic,
 		"subscribe_url": subscribeURL,
 	})
+}
+
+// VerifyHandler sirve instrucciones de verificación matemática del binario desplegado.
+// Solo expone commitHash y sourceRepo (datos públicos, sin variables de entorno ni secretos).
+func VerifyHandler(c *gin.Context) {
+	shortHash := commitHash
+	if len(shortHash) > 7 {
+		shortHash = shortHash[:7]
+	}
+
+	baseURL := fmt.Sprintf("%s://%s", getScheme(c.Request), c.Request.Host)
+
+	body := fmt.Sprintf(`# Verificación de gitGost
+
+## Commit desplegado actualmente
+
+%s
+
+Fuente completa: %s/health
+
+## ¿Qué puedes verificar?
+
+### Verificación de código fuente (siempre disponible)
+
+Confirma que el commit en producción existe y es público en GitHub:
+
+`+"```bash"+`
+# 1. Obtén el commit desplegado
+curl %s/health
+# → {"deployedCommit": "%s", ...}
+
+# 2. Verifica que ese commit existe en el repositorio público
+# Visita: %s/commit/%s
+`+"```"+`
+
+Si el commit existe en GitHub → el código que corre es 100%% auditable.
+No hay código oculto: todo está en el repositorio.
+
+### Verificación de binario con entorno idéntico
+
+Para comparar SHA-256 exactos necesitas compilar con el mismo entorno que Leapcell
+(Linux amd64, golang:alpine, CGO deshabilitado):
+
+`+"```bash"+`
+# Requiere Docker
+git clone %s
+cd gitGost
+git checkout %s
+
+docker run --rm \
+  -v "$(pwd)":/src \
+  -w /src \
+  -e CGO_ENABLED=0 \
+  golang:alpine \
+  go build -ldflags="-X 'github.com/livrasand/gitGost/internal/http.commitHash=%s'" \
+  -o gitgost-local ./cmd/server
+
+curl -o gitgost-server %s/gitgost-bin
+sha256sum gitgost-local gitgost-server
+# ¡Deben ser idénticos! 
+`+"```"+`
+
+### Nota sobre reproducibilidad
+
+Este proyecto usa reproducible builds: solo se inyecta el commit hash (determinístico).
+Dos builds del mismo commit con el mismo entorno (Linux amd64, golang:alpine, CGO_ENABLED=0)
+producen binarios idénticos → SHA-256 verificable.
+Compilar en macOS producirá un binario distinto por diferencia de arquitectura/OS.
+
+## Código fuente completo
+
+%s
+
+## Seguridad
+
+Este endpoint expone únicamente datos públicos: commit hash y URL del repositorio.
+No expone variables de entorno, tokens, claves ni configuración interna.
+`, commitHash, baseURL, baseURL, commitHash, sourceRepo, commitHash, sourceRepo, shortHash, commitHash, baseURL, sourceRepo)
+
+	c.Header("Content-Type", "text/plain; charset=utf-8")
+	c.String(http.StatusOK, body)
+}
+
+// BinaryHandler sirve el binario compilado del servidor para verificación.
+// Usa /proc/self/exe para leer el ejecutable actual del proceso, sin depender
+// de rutas hardcodeadas ni almacenamiento externo (compatible con Leapcell).
+func BinaryHandler(c *gin.Context) {
+	// /proc/self/exe apunta al ejecutable en curso en cualquier Linux
+	exePath, err := os.Readlink("/proc/self/exe")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "binary not accessible on this platform"})
+		return
+	}
+
+	f, err := os.Open(exePath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not open binary"})
+		return
+	}
+	defer f.Close()
+
+	info, err := f.Stat()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not stat binary"})
+		return
+	}
+
+	c.Header("Content-Disposition", "attachment; filename=\"gitgost\"")
+	c.Header("Content-Type", "application/octet-stream")
+	c.Header("Content-Length", fmt.Sprintf("%d", info.Size()))
+	c.Header("X-Deployed-Commit", commitHash)
+	c.Header("X-Source-Repo", sourceRepo)
+	c.Status(http.StatusOK)
+	io.Copy(c.Writer, f)
 }

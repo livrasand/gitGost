@@ -7,6 +7,7 @@
 Zero accounts • Zero tokens • Zero metadata • Designed for strong anonymity
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/livrasand/gitGost)
+[![Desplegado](http://localhost:8080/badges/deployed.svg)](https://gitgost.leapcell.app/health)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Security Responsible Disclosure](https://img.shields.io/badge/Security-Responsible%20Disclosure-yellow)](SECURITY.md)
 [![Legal Notice](https://img.shields.io/badge/Legal-Notice%20%26%20CLA-red)](LEGAL.md)
@@ -74,6 +75,38 @@ This badge helps contributors know that anonymous contributions are accepted and
 - Be a ghost when you want to be
 
 Built for developers who actually care about privacy.
+
+## Legitimate Use Cases
+
+gitGost is intended for responsible, good-faith contributions where identity exposure is unnecessary or undesirable.
+
+Examples include:
+
+Fixing typos or documentation errors without creating a permanent contribution record
+Contributing to projects that may conflict with employer policies
+Participating in politically sensitive or controversial repositories
+Reducing exposure to email harvesting and scraping
+Experimenting or testing changes without attaching personal metadata
+Contributing from jurisdictions where visibility may create risk
+
+gitGost is designed to enable privacy — not remove accountability from the review process.
+
+All pull requests are public and subject to maintainer approval.
+
+## When NOT to use gitGost
+
+Do not use gitGost for:
+
+Harassment or abuse
+Spam or automated PR flooding
+Evading bans or moderation
+Submitting malicious code
+Avoiding legal responsibility
+Circumventing repository contribution policies
+
+gitGost enforces rate limits, validation checks, and repository constraints. Abuse attempts will be mitigated.
+
+If your goal is to harm, disrupt, or deceive — this project is not for you.
 
 ## Threat Model
 

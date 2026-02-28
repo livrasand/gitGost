@@ -101,6 +101,10 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.GET("/health", HealthHandler)
 	r.GET("/metrics", MetricsHandler)
 
+	// Transparencia y verificación matemática (no auth, solo datos públicos)
+	r.GET("/VERIFY", VerifyHandler)
+	r.GET("/gitgost-bin", BinaryHandler)
+
 	// Badges
 	r.GET("/badges/:badge", BadgeHandler)
 	r.GET("/badge/:owner/:repo", BadgePRCountHandler)

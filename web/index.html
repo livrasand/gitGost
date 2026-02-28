@@ -1930,6 +1930,42 @@ The word 'recieve' should be 'receive'."
         loadStats();
         loadRecentPRs();
 
+        // Load build info from /health
+        async function loadBuildInfo() {
+            try {
+                const res = await fetch('/health');
+                if (!res.ok) return;
+                const data = await res.json();
+                const hash = data.deployedCommit || 'main';
+                const short = hash.length > 7 ? hash.slice(0, 7) : hash;
+                const date = data.deployedAt ? data.deployedAt.slice(0, 10) : '';
+                const commitEl = document.getElementById('footer-commit');
+                const dateEl = document.getElementById('footer-date');
+                if (commitEl) {
+                    commitEl.textContent = short;
+                    commitEl.href = `https://github.com/livrasand/gitGost/commit/${hash}`;
+                }
+                if (dateEl && date) dateEl.textContent = ` (${date})`;
+            } catch (_) {}
+        }
+        loadBuildInfo();
+
     </script>
+
+    <footer style="font-size:0.75rem;color:var(--fg-secondary);margin-top:2rem;padding:1.5rem 1rem;border-top:1px solid var(--border);text-align:center;">
+        <div style="max-width:56rem;margin:0 auto;display:flex;flex-direction:column;gap:0.5rem;align-items:center;">
+            <p style="margin:0;font-family:'IBM Plex Mono',monospace;">
+                deployed from&nbsp;<a id="footer-commit" href="https://github.com/livrasand/gitGost" target="_blank"
+                   style="color:var(--accent);text-decoration:none;font-weight:600;">main</a><span id="footer-date" style="color:var(--fg-secondary);"></span>
+            </p>
+            <p style="margin:0;display:flex;gap:1rem;align-items:center;">
+                <a href="/VERIFY" style="font-family:'IBM Plex Mono',monospace;color:var(--fg-secondary);text-decoration:none;transition:color 0.15s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-secondary)'">verify build</a>
+                <span style="color:var(--border);">·</span>
+                <a href="https://github.com/livrasand/gitGost" target="_blank" style="font-family:'IBM Plex Mono',monospace;color:var(--fg-secondary);text-decoration:none;transition:color 0.15s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-secondary)'">source</a>
+                <span style="color:var(--border);">·</span>
+                <a href="/health" style="font-family:'IBM Plex Mono',monospace;color:var(--fg-secondary);text-decoration:none;transition:color 0.15s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-secondary)'">health</a>
+            </p>
+        </div>
+    </footer>
 </body>
 </html>

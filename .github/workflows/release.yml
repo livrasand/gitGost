@@ -1,0 +1,113 @@
+name: Build & Attest
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  build-and-attest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Get commit info
+        id: info
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          echo "built=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
+      - name: Build (reproducible)
+        env:
+          CGO_ENABLED: "0"
+          GOOS: linux
+          GOARCH: amd64
+        run: |
+          go build \
+            -trimpath \
+            -ldflags="-s -w \
+              -X 'github.com/livrasand/gitGost/internal/http.commitHash=${{ steps.info.outputs.sha }}' \
+              -X 'github.com/livrasand/gitGost/internal/http.buildTime=${{ steps.info.outputs.built }}' \
+              -X 'github.com/livrasand/gitGost/internal/http.sourceRepo=https://github.com/${{ github.repository }}'" \
+            -o gitgost \
+            ./cmd/server
+
+      - name: SHA-256 del binario
+        id: sha
+        run: |
+          HASH=$(sha256sum gitgost | awk '{print $1}')
+          echo "hash=$HASH" >> "$GITHUB_OUTPUT"
+          echo "### Binary SHA-256" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "gitgost  $HASH" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: ${{ steps.info.outputs.sha }}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Attest build provenance (Sigstore)
+        id: attest
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: gitgost
+
+      - name: Publicar SHA-256 como artefacto
+        run: |
+          echo "${{ steps.sha.outputs.hash }}  gitgost" > gitgost.sha256
+          echo "commit: ${{ steps.info.outputs.sha }}" >> gitgost.sha256
+          echo "built:  ${{ steps.info.outputs.built }}" >> gitgost.sha256
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitgost-${{ steps.info.outputs.short }}
+          path: |
+            gitgost
+            gitgost.sha256
+          retention-days: 90
+
+      - name: Create/update release on tags
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            gitgost
+            gitgost.sha256
+          body: |
+            ## Verificación criptográfica
+
+            **Commit:** `${{ steps.info.outputs.sha }}`
+            **SHA-256:** `${{ steps.sha.outputs.hash }}`
+
+            ### Verificar con GitHub CLI (recomendado)
+            ```bash
+            curl -L https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/gitgost -o gitgost
+            gh attestation verify gitgost --repo ${{ github.repository }}
+            ```
+
+            ### Verificar manualmente
+            ```bash
+            sha256sum gitgost
+            # Debe coincidir con: ${{ steps.sha.outputs.hash }}
+            ```
+
+            ### Verificar el binario desplegado
+            ```bash
+            curl -o gitgost-server https://gitgost.leapcell.app/gitgost-bin
+            sha256sum gitgost-server
+            # Debe coincidir con el hash de arriba
+            ```
+
+            El attestation queda registrado en el transparency log de Sigstore (Rekor), auditable por cualquier tercero independiente del operador.

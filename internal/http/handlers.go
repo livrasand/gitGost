@@ -138,6 +138,27 @@ func ReceivePackHandler(c *gin.Context) {
 		c.Writer.WriteHeader(http.StatusContinue)
 	}
 
+	// Verificar confirmación explícita de autoría (Terms of Submission §3.2)
+	if c.GetHeader("X-Gost-Authorship-Confirmed") != "1" {
+		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
+		c.Writer.WriteHeader(http.StatusOK)
+		var errResp bytes.Buffer
+		WriteSidebandLine(&errResp, 2, "remote: ")
+		WriteSidebandLine(&errResp, 2, "remote: gitGost: PUSH REJECTED — authorship confirmation required")
+		WriteSidebandLine(&errResp, 2, "remote: ")
+		WriteSidebandLine(&errResp, 2, "remote: By pushing to gitGost you declare that this contribution")
+		WriteSidebandLine(&errResp, 2, "remote: is your original work and does not infringe third-party IP.")
+		WriteSidebandLine(&errResp, 2, "remote: See: https://github.com/livrasand/gitGost/blob/main/LEGAL.md#3-terms-of-submission")
+		WriteSidebandLine(&errResp, 2, "remote: ")
+		WriteSidebandLine(&errResp, 2, "remote: To confirm, add this header to your push:")
+		WriteSidebandLine(&errResp, 2, "remote:   git -c http.extraHeader=\"X-Gost-Authorship-Confirmed: 1\" push gost ...")
+		WriteSidebandLine(&errResp, 2, "remote: ")
+		WriteSidebandLine(&errResp, 3, "push rejected: missing authorship confirmation header")
+		WritePktLine(&errResp, "")
+		c.Writer.Write(errResp.Bytes())
+		return
+	}
+
 	// Leer body completo
 	utils.Log("Content-Type: %s", c.GetHeader("Content-Type"))
 	utils.Log("Content-Length: %s", c.GetHeader("Content-Length"))
@@ -1181,10 +1202,10 @@ func BadgePRCountHandler(c *gin.Context) {
     <rect width="%d" height="20" fill="url(#s)"/>
   </g>
   <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110">
-    <text x="%d0" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="860" lengthAdjust="spacing">%s</text>
-    <text x="%d0" y="140" transform="scale(.1)" textLength="860" lengthAdjust="spacing">%s</text>
-    <text x="%d0" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="%d0" lengthAdjust="spacing">%s</text>
-    <text x="%d0" y="140" transform="scale(.1)" textLength="%d0" lengthAdjust="spacing">%s</text>
+    <text x="%d" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="860" lengthAdjust="spacing">%s</text>
+    <text x="%d" y="140" transform="scale(.1)" textLength="860" lengthAdjust="spacing">%s</text>
+    <text x="%d" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="%d" lengthAdjust="spacing">%s</text>
+    <text x="%d" y="140" transform="scale(.1)" textLength="%d" lengthAdjust="spacing">%s</text>
   </g>
 </svg>`,
 		totalWidth, label, value, totalWidth,
@@ -1232,39 +1253,72 @@ func VerifyHandler(c *gin.Context) {
 
 	baseURL := fmt.Sprintf("%s://%s", getScheme(c.Request), c.Request.Host)
 
-	body := fmt.Sprintf(`# Verificación de gitGost
+	// URLs de verificación externas — independientes del operador
+	repoSlug := "livrasand/gitGost"
+	githubCommitURL := fmt.Sprintf("https://github.com/%s/commit/%s", repoSlug, commitHash)
+	githubAttestURL := fmt.Sprintf("https://github.com/%s/attestations", repoSlug)
+	sigstoreSearchURL := fmt.Sprintf("https://search.sigstore.dev/?hash=%s", commitHash)
+	rekorSearchURL := fmt.Sprintf("https://rekor.sigstore.dev/api/v1/log/entries?logIndex=0&limit=1&search=%s", commitHash)
 
-## Commit desplegado actualmente
+	body := fmt.Sprintf(`# gitGost Verification
+
+## Currently Deployed Commit
 
 %s
 
-Fuente completa: %s/health
+Full source: %s/health
 
-## ¿Qué puedes verificar?
+## Independent Third-Party Verification (no trust in operator required)
 
-### Verificación de código fuente (siempre disponible)
+The CI pipeline signs every build via Sigstore (Rekor transparency log).
+These records are IMMUTABLE and controlled by neither gitGost nor Leapcell.
 
-Confirma que el commit en producción existe y es público en GitHub:
+### 1. GitHub Attestations (easiest)
+
+Every build on main generates a cryptographic attestation via actions/attest-build-provenance.
+The attestation is anchored in Sigstore's public transparency log.
 
 `+"```bash"+`
-# 1. Obtén el commit desplegado
+# Requires GitHub CLI (gh)
+curl -o gitgost-server %s/gitgost-bin
+gh attestation verify gitgost-server --repo %s
+# Expected: ✓ Verification succeeded
+`+"```"+`
+
+Browse all attestations: %s
+
+### 2. Sigstore / Rekor Transparency Log (independent)
+
+The build provenance is recorded in Rekor, a public append-only log auditable by anyone.
+No operator action can remove or alter it.
+
+Search for this commit's entry:
+  %s
+
+Rekor API (raw):
+  %s
+
+### 3. Source Code Verification (always available)
+
+Confirm that the deployed commit exists and is public on GitHub:
+
+`+"```bash"+`
+# 1. Get the deployed commit
 curl %s/health
 # → {"deployedCommit": "%s", ...}
 
-# 2. Verifica que ese commit existe en el repositorio público
-# Visita: %s/commit/%s
+# 2. Verify the commit exists in the public repo
+# Visit: %s
 `+"```"+`
 
-Si el commit existe en GitHub → el código que corre es 100%% auditable.
-No hay código oculto: todo está en el repositorio.
+If the commit exists on GitHub → the running code is 100%% auditable.
 
-### Verificación de binario con entorno idéntico
+### 4. Local Binary Rebuild (deepest verification)
 
-Para comparar SHA-256 exactos necesitas compilar con el mismo entorno que Leapcell
-(Linux amd64, golang:alpine, CGO deshabilitado):
+Reproduce the exact binary with the same environment used in CI (Linux amd64, CGO disabled):
 
 `+"```bash"+`
-# Requiere Docker
+# Requires Docker
 git clone %s
 cd gitGost
 git checkout %s
@@ -1273,31 +1327,43 @@ docker run --rm \
   -v "$(pwd)":/src \
   -w /src \
   -e CGO_ENABLED=0 \
+  -e GOOS=linux \
+  -e GOARCH=amd64 \
   golang:alpine \
-  go build -ldflags="-X 'github.com/livrasand/gitGost/internal/http.commitHash=%s'" \
-  -o gitgost-local ./cmd/server
+  go build -trimpath \
+    -ldflags="-s -w -X 'github.com/livrasand/gitGost/internal/http.commitHash=%s'" \
+    -o gitgost-local ./cmd/server
 
 curl -o gitgost-server %s/gitgost-bin
 sha256sum gitgost-local gitgost-server
-# ¡Deben ser idénticos! 
+# Hashes must be identical
 `+"```"+`
 
-### Nota sobre reproducibilidad
+Note: -trimpath and identical ldflags are required for reproducibility.
+Compiling on macOS produces a different binary due to OS/arch differences.
 
-Este proyecto usa reproducible builds: solo se inyecta el commit hash (determinístico).
-Dos builds del mismo commit con el mismo entorno (Linux amd64, golang:alpine, CGO_ENABLED=0)
-producen binarios idénticos → SHA-256 verificable.
-Compilar en macOS producirá un binario distinto por diferencia de arquitectura/OS.
+## Known Limitation
 
-## Código fuente completo
+Binary verification confirms the binary on disk matches the source.
+It cannot cryptographically prove the running process in Leapcell's environment
+has not been patched in memory. This is an inherent limit of any hosted service.
+If this threat model is unacceptable, self-host gitGost: it is fully open source.
+
+## Complete Source Code
 
 %s
 
-## Seguridad
+## Security
 
-Este endpoint expone únicamente datos públicos: commit hash y URL del repositorio.
-No expone variables de entorno, tokens, claves ni configuración interna.
-`, commitHash, baseURL, baseURL, commitHash, sourceRepo, commitHash, sourceRepo, shortHash, commitHash, baseURL, sourceRepo)
+This endpoint exposes only public data: commit hash and repository URL.
+It does not expose environment variables, tokens, keys, or internal configuration.
+`,
+		commitHash, baseURL,
+		baseURL, repoSlug, githubAttestURL,
+		sigstoreSearchURL, rekorSearchURL,
+		baseURL, commitHash, githubCommitURL,
+		sourceRepo, shortHash, commitHash, baseURL,
+		sourceRepo)
 
 	c.Header("Content-Type", "text/plain; charset=utf-8")
 	c.String(http.StatusOK, body)

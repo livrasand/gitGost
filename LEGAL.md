@@ -25,25 +25,50 @@ The full license text is available in the [LICENSE](LICENSE) file.
 
 ---
 
-## 3. Contributor License Agreement (CLA)
+## 3. Terms of Submission
 
-By submitting a contribution to this project — including but not limited to pull requests, patches, issues, documentation, or any other material — **you agree to the following terms**:
+By submitting a contribution through gitGost — including but not limited to pull requests, patches, issues, documentation, or any other material — **you agree to the following terms**:
 
 1. **Grant of License:** You grant the project author (livrasand) a perpetual, worldwide, non-exclusive, royalty-free, irrevocable license to use, reproduce, modify, sublicense, and distribute your contribution as part of this project, under the project's current or future licenses.
 
-2. **Original Work:** You represent that your contribution is your original work and does not infringe any third-party intellectual property rights, patents, or trade secrets.
+2. **Original Work:** You declare, as a condition of use of this service, that your contribution is your original work and does not infringe any third-party intellectual property rights, patents, trade secrets, or confidentiality agreements. **You bear sole legal responsibility for this declaration.**
 
-3. **Right to Submit:** You represent that you have the legal right to grant the above license. If your contribution is made in the course of employment, you confirm that your employer has authorized the contribution or waived any applicable rights.
+3. **Right to Submit:** You represent that you have the legal right to submit the contribution. If your contribution is made in the course of employment, you confirm that your employer has authorized the contribution or waived any applicable rights.
 
 4. **No Warranty:** Contributions are provided "as is," without warranty of any kind, express or implied.
 
-5. **Anonymous Contributions:** Contributions made anonymously via gitGost's own infrastructure (the `@gitgost-anonymous` account) are accepted under these same terms. By using gitGost to submit a contribution, you acknowledge and agree to this CLA.
+5. **Anonymous Submissions:** Contributions made anonymously via gitGost's infrastructure are accepted under these same terms. By using gitGost to submit a contribution, you acknowledge and agree to these Terms of Submission. **Note:** Because contributions are anonymous by design, these terms constitute a declaration of intent and good faith, not a legally enforceable contract between identified parties. They do not substitute for a formal Contributor License Agreement (CLA) as required by organizations such as the Linux Foundation, Apache Software Foundation, or Google. gitGost is not suitable for contributions to projects that require identity-verified CLAs.
 
-This CLA does not transfer copyright ownership of your contribution. You retain copyright to your original work while granting the license described above.
+These Terms of Submission do not transfer copyright ownership of your contribution. You retain copyright to your original work.
 
 ---
 
-## 4. Disclaimer of Liability
+## 4. Safe Harbor and Intellectual Property Infringement
+
+gitGost operates as a neutral technical intermediary that transmits contributions provided by users. It does not review, pre-screen, or curate content before transmission.
+
+**Reporting infringing content:**
+
+If you believe that content submitted through gitGost infringes your copyright or other intellectual property rights, you may submit a notice to:
+
+- **Email:** `gitGos@proton.me` (subject: `[DMCA]` or `[IP-CLAIM]`)
+- **Response SLA:** We will acknowledge valid notices within **5 business days** and take appropriate action (including requesting removal from the target repository or blocking the associated contribution hash) within **10 business days**.
+
+A valid notice must include:
+
+1. Identification of the copyrighted work claimed to be infringed.
+2. Identification of the infringing material (PR URL, commit hash, or repository).
+3. Your contact information.
+4. A statement that you have a good-faith belief the use is not authorized.
+5. A statement, under penalty of perjury, that the information is accurate and you are authorized to act.
+
+**Hash blocking:** Upon receipt of a valid infringement notice, gitGost will block the contribution hash associated with the reported content from making future submissions through the service.
+
+**Limitation of safe harbor:** This safe harbor applies only if gitGost acts expeditiously upon receiving a valid notice. gitGost does not guarantee the ability to retroactively remove content already merged or accepted by third-party repositories, as those repositories are outside gitGost's control.
+
+---
+
+## 5. Disclaimer of Liability
 
 THE SOFTWARE IS PROVIDED "AS IS," WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
 
@@ -59,7 +84,7 @@ The author does not review, endorse, or take responsibility for the content of a
 
 ---
 
-## 5. Prohibited Uses
+## 6. Prohibited Uses
 
 Use of gitGost — including but not limited to code contributions, 
 anonymous issues, and anonymous comments — for any of the following 
@@ -103,7 +128,7 @@ applicable national and international law.
 
 ---
 
-## 6. Privacy
+## 7. Privacy
 
 gitGost is designed to not collect, store, or transmit personally identifiable information. No logs of contributor identity, IP addresses, or session data are retained beyond the minimum required to process a request.
 
@@ -111,7 +136,7 @@ For details, see [SECURITY.md](SECURITY.md).
 
 ---
 
-## 7. Governing Law and Jurisdiction
+## 8. Governing Law and Jurisdiction
 
 This legal notice and any disputes arising from the use of this software shall be governed by the laws of **México**, specifically the **Ley Federal del Derecho de Autor** and the **Código Civil Federal**, without regard to conflict of law provisions.
 
@@ -119,7 +144,7 @@ For users located outside Mexico, nothing in this notice limits the rights grant
 
 ---
 
-## 8. Contact
+## 9. Contact
 
 For legal inquiries, intellectual property concerns, or DMCA takedown notices, contact:
 

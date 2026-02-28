@@ -1938,14 +1938,11 @@ The word 'recieve' should be 'receive'."
                 const data = await res.json();
                 const hash = data.deployedCommit || 'main';
                 const short = hash.length > 7 ? hash.slice(0, 7) : hash;
-                const date = data.deployedAt ? data.deployedAt.slice(0, 10) : '';
                 const commitEl = document.getElementById('footer-commit');
-                const dateEl = document.getElementById('footer-date');
                 if (commitEl) {
                     commitEl.textContent = short;
                     commitEl.href = `https://github.com/livrasand/gitGost/commit/${hash}`;
                 }
-                if (dateEl && date) dateEl.textContent = ` (${date})`;
             } catch (_) {}
         }
         loadBuildInfo();
@@ -1956,7 +1953,7 @@ The word 'recieve' should be 'receive'."
         <div style="max-width:56rem;margin:0 auto;display:flex;flex-direction:column;gap:0.5rem;align-items:center;">
             <p style="margin:0;font-family:'IBM Plex Mono',monospace;">
                 deployed from&nbsp;<a id="footer-commit" href="https://github.com/livrasand/gitGost" target="_blank"
-                   style="color:var(--accent);text-decoration:none;font-weight:600;">main</a><span id="footer-date" style="color:var(--fg-secondary);"></span>
+                   style="color:var(--accent);text-decoration:none;font-weight:600;">main</a>
             </p>
             <p style="margin:0;display:flex;gap:1rem;align-items:center;">
                 <a href="/VERIFY" style="font-family:'IBM Plex Mono',monospace;color:var(--fg-secondary);text-decoration:none;transition:color 0.15s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-secondary)'">verify build</a>

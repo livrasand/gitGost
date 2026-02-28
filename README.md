@@ -7,7 +7,7 @@
 Zero accounts • Zero tokens • Zero metadata • Designed for strong anonymity
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/livrasand/gitGost)
-[![Desplegado](http://localhost:8080/badges/deployed.svg)](https://gitgost.leapcell.app/health)
+[![Desplegado](https://gitgost.leapcell.app/badges/deployed.svg)](https://gitgost.leapcell.app/health)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Security Responsible Disclosure](https://img.shields.io/badge/Security-Responsible%20Disclosure-yellow)](SECURITY.md)
 [![Legal Notice](https://img.shields.io/badge/Legal-Notice%20%26%20CLA-red)](LEGAL.md)

@@ -51,6 +51,29 @@ Level: serious / production. Aimed at operators and contributors seeking anonymi
 - Consider batching pushes or adding delays if the time-correlation risk is high.
 - Avoid personal or internal references in the diff.
 
+## Legal risk surface
+
+This section addresses legal risks for the two parties most exposed by gitGost's design.
+
+### Operator risks
+
+The gitGost operator (the entity running a gitGost instance) acts as a technical intermediary. Relevant exposures:
+
+- **Intermediary liability (EU DSA / MX LFDA):** Operators benefit from safe harbor only if they maintain an accessible infringement reporting channel and respond to valid notices within a reasonable timeframe. Running a gitGost instance without a functioning DMCA/IP complaint process may void this protection.
+- **No content review:** Because gitGost does not review submissions before forwarding, operators cannot assert editorial knowledge of infringing content. This supports safe harbor claims but does not eliminate them entirely.
+- **Recommended:** Expose a contact address for IP/copyright complaints, document a response SLA, and implement hash-blocking upon receipt of valid notices. The default gitGost instance does this; self-hosted instances must configure it independently.
+
+### Maintainer (target repository) risks
+
+Maintainers who accept PRs submitted via gitGost assume standard open-source contribution risk, with one additional consideration:
+
+- **No identity chain:** There is no verified identity behind a gitGost PR. The submitter's declaration of original authorship (Terms of Submission) is a good-faith declaration, not a verified CLA. Maintainers accept this contribution under the same terms as any unverified unsigned patch.
+- **Not suitable for CLA-required projects:** Projects that require identity-verified CLAs (Linux Foundation, Apache, Google, Mozilla, etc.) should not accept gitGost PRs without an out-of-band identity verification process. gitGost is designed for projects that accept unsigned contributions.
+- **Supply chain audits:** Anonymous PRs have no chain of custody. Projects subject to supply chain security requirements (e.g., SLSA, SBOM mandates, corporate security policies) should reject anonymous contributions through any channel, including gitGost.
+- **Recommended:** Projects that wish to signal acceptance of anonymous contributions can use the `anonymous-friendly` badge. Projects with strict CLA requirements should add a note in `CONTRIBUTING.md` that anonymous PRs are not accepted.
+
 ## Maturity statement
 
 This model makes clear what is protected and what is not, positioning gitGost as a serious tool: it provides practical anonymity in public PRs but does not offer perfect anonymity against observers capable of correlation or advanced analysis.
+
+gitGost is explicitly **not suitable** for contributions to projects requiring identity-verified CLAs or formal supply chain provenance. Its intended use case is personal and small open-source projects that accept informal contributions.

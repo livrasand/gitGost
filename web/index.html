@@ -1131,6 +1131,70 @@ The word 'recieve' should be 'receive'."
             </div>
         </section>
 
+        <!-- Tor / IP anonymity section -->
+        <h2>Push anonymously over Tor</h2>
+        <p style="color:var(--fg-secondary);margin-bottom:1.25rem;max-width:56rem;">
+            gitGost strips your name, email, and metadata — but your IP is still visible to the server.
+            Wrap your push with <strong>torsocks</strong> (Linux/macOS) or configure a SOCKS5 proxy (Windows)
+            so the server only sees a Tor exit node IP, not yours.
+        </p>
+
+        <div class="terminal-tabs">
+            <button class="terminal-tab active" data-tor="linux">Linux / macOS</button>
+            <button class="terminal-tab" data-tor="windows-browser">Windows – Tor Browser</button>
+            <button class="terminal-tab" data-tor="windows-wsl">Windows – WSL2</button>
+        </div>
+
+        <div class="terminal" id="tor-linux"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Install tor + torsocks</span>
+<span class="prompt">$</span> sudo apt install tor torsocks    <span class="comment"># Debian / Ubuntu</span>
+<span class="prompt">$</span> sudo pacman -S tor torsocks      <span class="comment"># Arch</span>
+<span class="prompt">$</span> brew install tor torsocks        <span class="comment"># macOS</span>
+
+<span class="comment"># Start the Tor daemon</span>
+<span class="prompt">$</span> sudo systemctl start tor         <span class="comment"># Linux</span>
+<span class="prompt">$</span> brew services start tor          <span class="comment"># macOS</span>
+
+<span class="comment"># Verify your IP is masked</span>
+<span class="prompt">$</span> torsocks curl https://check.torproject.org/api/ip
+<span class="success">→</span> {"IsTor": <span class="hl">true</span>, "IP": "185.220.101.x"}
+
+<span class="comment"># Push through Tor</span>
+<span class="prompt">$</span> torsocks git \
+    -c http.extraHeader="X-Gost-Authorship-Confirmed: 1" \
+    push gost my-branch:main
+<span class="success">→</span> PR opened as @gitgost-anonymous — server sees Tor exit node, not you</div>
+        </div>
+
+        <div class="terminal" id="tor-windows-browser" style="display:none;"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># 1. Download and install Tor Browser</span>
+<span class="comment">#    https://www.torproject.org/download/</span>
+
+<span class="comment"># 2. Open it and leave it running</span>
+<span class="comment">#    It exposes a SOCKS5 proxy at 127.0.0.1:9150</span>
+
+<span class="comment"># 3. Tell Git to route through that proxy (per-repo recommended)</span>
+<span class="prompt">$</span> git config http.proxy socks5h://127.0.0.1:9150
+<span class="prompt">$</span> git config http.extraHeader "X-Gost-Authorship-Confirmed: 1"
+
+<span class="comment"># 4. Push normally</span>
+<span class="prompt">$</span> git push gost my-branch:main
+<span class="success">→</span> PR opened as @gitgost-anonymous — server sees Tor exit node, not you
+
+<span class="comment"># When done, remove the proxy (if set globally)</span>
+<span class="prompt">$</span> git config --global --unset http.proxy</div>
+        </div>
+
+        <div class="terminal" id="tor-windows-wsl" style="display:none;"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Inside WSL2 (Ubuntu / Debian) — works exactly like Linux</span>
+<span class="prompt">$</span> sudo apt install tor torsocks
+<span class="prompt">$</span> sudo service tor start
+
+<span class="prompt">$</span> torsocks git \
+    -c http.extraHeader="X-Gost-Authorship-Confirmed: 1" \
+    push gost my-branch:main
+<span class="success">→</span> PR opened as @gitgost-anonymous
+
+<span class="comment"># WSL2 has its own network stack — anonymity is preserved correctly.</span></div>
+        </div>
+
         <!-- Anonymous Issues & PR Comments section -->
         <section class="issue-section">
             <div class="issue-container">
@@ -1914,15 +1978,27 @@ The word 'recieve' should be 'receive'."
             }
         }
 
-        // Terminal tab switching
-        document.querySelectorAll('.terminal-tab').forEach(tab => {
+        // Terminal tab switching (usage section)
+        document.querySelectorAll('[data-terminal]').forEach(tab => {
             tab.addEventListener('click', () => {
-                document.querySelectorAll('.terminal-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('[data-terminal]').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 const target = tab.dataset.terminal;
                 document.getElementById('terminal-push').style.display = target === 'push' ? '' : 'none';
                 document.getElementById('terminal-update').style.display = target === 'update' ? '' : 'none';
                 document.getElementById('terminal-fetch').style.display = target === 'fetch' ? '' : 'none';
+            });
+        });
+
+        // Tor section tab switching
+        document.querySelectorAll('[data-tor]').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('[data-tor]').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const target = tab.dataset.tor;
+                document.getElementById('tor-linux').style.display = target === 'linux' ? '' : 'none';
+                document.getElementById('tor-windows-browser').style.display = target === 'windows-browser' ? '' : 'none';
+                document.getElementById('tor-windows-wsl').style.display = target === 'windows-wsl' ? '' : 'none';
             });
         });
 

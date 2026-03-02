@@ -8,11 +8,13 @@ Zero accounts • Zero tokens • Zero metadata • Designed for strong anonymit
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/livrasand/gitGost)
 [![Desplegado](https://gitgost.leapcell.app/badges/deployed.svg)](https://gitgost.leapcell.app/health)
+[![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/livrasand)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Security Responsible Disclosure](https://img.shields.io/badge/Security-Responsible%20Disclosure-yellow)](SECURITY.md)
 [![Legal Notice](https://img.shields.io/badge/Legal-Notice%20%26%20CLA-red)](LEGAL.md)
 [![Powered by Go](https://img.shields.io/badge/Powered%20by-Go-00ADD8.svg?logo=go)](https://go.dev)
 [![Privacy First](https://img.shields.io/badge/Privacy-First-59316b)](https://github.com/livrasand/gitGost)
+[![GitHub repo size](https://img.shields.io/github/repo-size/livrasand/gitGost)](https://github.com/EduardaSRBastos/my-essential-toolbox)
   <img
   src="https://img.shields.io/badge/GitHub-Available-brightgreen?logo=github"
   alt="GitHub – Coming Soon"/>
@@ -26,7 +28,21 @@ Zero accounts • Zero tokens • Zero metadata • Designed for strong anonymit
   src="https://img.shields.io/badge/Codeberg-Coming%20Soon-lightgrey?logo=codeberg&logoColor=white"
   alt="Codeberg – Coming Soon"/>
 
-https://gitgost.leapcell.app
+<br />
+<a href="https://leapcell.io?utm_source=github_readme_stats_team&utm_campaign=gitGost">
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="./web/assets/logos/powered-by-leapcell.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./web/assets/logos/powered-by-leapcell-dark.svg">
+  <img src="./web/assets/logos/powered-by-leapcell.svg" alt="Powered by Leapcell">
+</picture>
+</a>
+<a href="https://www.producthunt.com/products/gitgost-anonymous-git-contributions?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-gitgost-anonymous-git-contributions" target="_blank" rel="noopener noreferrer">
+<picture>
+<source media="(prefers-color-scheme: light)" srcset="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1088722&amp;theme=light&amp;t=1772487442890">
+<source media="(prefers-color-scheme: dark)" srcset="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1088722&amp;theme=dark&amp;t=1772487608313">
+<img alt="gitGost — Anonymous Git Contributions - Contribute to any GitHub repo without leaving a trace. | Product Hunt" width="200" height="44" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1088722&amp;theme=light&amp;t=1772487442890">
+</picture>
+</a>
 
 ## One-liner demo
 
@@ -312,10 +328,11 @@ WSL2 has its own network stack separate from Windows, so anonymity is preserved 
 
 Star this repo if you believe developers deserve the right to contribute anonymously.
 
-[![GitHub stars](https://img.shields.io/github/stars/livrasand/gitGost?style=social)](https://github.com/livrasand/gitGost/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/livrasand/gitGost?style=social)](https://github.com/livrasand/gitGost/network/members)
-
-**github.com/livrasand/gitGost**
+[![Share](https://img.shields.io/badge/share-000000?logo=x&logoColor=white)](https://x.com/intent/tweet?text=Check%20out%20this%20project%20on%20GitHub:%20https://github.com/livrasand/gitGost%20%23gitGost%20%23anonymous%20%23privacy)
+[![Share](https://img.shields.io/badge/share-1877F2?logo=facebook&logoColor=white)](https://www.facebook.com/sharer/sharer.php?u=https://github.com/livrasand/gitGost)
+[![Share](https://img.shields.io/badge/share-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/sharing/share-offsite/?url=https://github.com/livrasand/gitGost)
+[![Share](https://img.shields.io/badge/share-FF4500?logo=reddit&logoColor=white)](https://www.reddit.com/submit?title=Check%20out%20this%20project%20on%20GitHub:%20https://github.com/livrasand/gitGost)
+[![Share](https://img.shields.io/badge/share-0088CC?logo=telegram&logoColor=white)](https://t.me/share/url?url=https://github.com/livrasand/gitGost&text=Check%20out%20this%20project%20on%20GitHub)
 
 Be a ghost. Fix the internet.
 

@@ -133,13 +133,51 @@ func ReceivePackHandler(c *gin.Context) {
 
 	fmt.Printf("DEBUG: ReceivePackHandler called for %s/%s\n", owner, repo)
 
-	// Manejar 100 Continue
+	// Handle 100 Continue
 	if c.GetHeader("Expect") == "100-continue" {
 		c.Writer.WriteHeader(http.StatusContinue)
 	}
 
+	// Check panic mode
+	if isPanicMode() {
+		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
+		c.Writer.WriteHeader(http.StatusOK)
+		var errResp bytes.Buffer
+		WriteSidebandLine(&errResp, 2, "remote: ")
+		WriteSidebandLine(&errResp, 2, "remote: SERVICE TEMPORARILY SUSPENDED")
+		WriteSidebandLine(&errResp, 2, "remote: ")
+		WriteSidebandLine(&errResp, 2, "remote: The panic button has been activated. The service has been")
+		WriteSidebandLine(&errResp, 2, "remote: temporarily suspended due to detected bot activity")
+		WriteSidebandLine(&errResp, 2, "remote: sending mass PRs. Please try again in 15 minutes.")
+		WriteSidebandLine(&errResp, 2, "remote: ")
+		WriteSidebandLine(&errResp, 3, "push rejected: service temporarily suspended")
+		WritePktLine(&errResp, "")
+		c.Writer.Write(errResp.Bytes())
+		return
+	}
 
-	// Leer body completo
+	// Check rate limit per IP (5 PRs/IP/hour)
+	ip := c.ClientIP()
+	if checkRateLimit(ip) {
+		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
+		c.Writer.WriteHeader(http.StatusOK)
+		var errResp bytes.Buffer
+		WriteSidebandLine(&errResp, 2, "remote: ")
+		WriteSidebandLine(&errResp, 2, fmt.Sprintf("remote: Rate limit exceeded: max %d PRs per hour per IP.", rateLimitMaxPRs))
+		WriteSidebandLine(&errResp, 2, "remote: Please try again later.")
+		WriteSidebandLine(&errResp, 2, "remote: ")
+		WriteSidebandLine(&errResp, 3, "push rejected: rate limit exceeded")
+		WritePktLine(&errResp, "")
+		c.Writer.Write(errResp.Bytes())
+		return
+	}
+
+	// Record push globally to detect botnet/script patterns across IPs
+	go recordGlobalBurst(ip)
+
+	// Track PR URL for potential rollback (registered after PR is created below)
+
+	// Read full body
 	utils.Log("Content-Type: %s", c.GetHeader("Content-Type"))
 	utils.Log("Content-Length: %s", c.GetHeader("Content-Length"))
 
@@ -152,7 +190,7 @@ func ReceivePackHandler(c *gin.Context) {
 
 	utils.Log("Received push for %s/%s, size: %d bytes", owner, repo, len(body))
 
-	// Crear repo temporal
+	// Create temporary repository
 	tempDir, err := utils.CreateTempDir()
 	if err != nil {
 		utils.Log("Error creating temp dir: %v", err)
@@ -161,16 +199,16 @@ func ReceivePackHandler(c *gin.Context) {
 	}
 	defer utils.CleanupTempDir(tempDir)
 
-	// Configurar cabeceras antes de escribir cualquier cosa
+	// Set headers before writing anything
 	c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
 	c.Writer.WriteHeader(http.StatusOK)
 
 	var response bytes.Buffer
 
-	// Mensaje de progreso inicial
+	// Initial progress message
 	WriteSidebandLine(&response, 2, "remote: gitGost: Processing your anonymous contribution...")
 
-	// Procesar el packfile
+	// Process the packfile
 	newSHA, commitMessage, receivedPRHash, err := git.ReceivePack(tempDir, body, owner, repo)
 	if err != nil {
 		utils.Log("Error receiving pack: %v", err)
@@ -183,7 +221,7 @@ func ReceivePackHandler(c *gin.Context) {
 	utils.Log("Commits received successfully, HEAD at: %s", newSHA)
 	WriteSidebandLine(&response, 2, "remote: gitGost: Commits anonymized successfully")
 
-	// Crear fork del repositorio
+	// Create a fork of the repository
 	WriteSidebandLine(&response, 2, "remote: gitGost: Creating fork...")
 	forkOwner, err := github.ForkRepo(owner, repo)
 	if err != nil {
@@ -202,7 +240,7 @@ func ReceivePackHandler(c *gin.Context) {
 	isUpdate := false
 
 	if receivedPRHash != "" {
-		// Modo actualización: el cliente envió un pr-hash existente
+		// Update mode: the client sent an existing pr-hash
 		branchFromHash := fmt.Sprintf("gitgost-%s", receivedPRHash)
 		WriteSidebandLine(&response, 2, fmt.Sprintf("remote: gitGost: Updating existing PR (hash: %s)...", receivedPRHash))
 
@@ -212,7 +250,7 @@ func ReceivePackHandler(c *gin.Context) {
 		}
 
 		if branchExists {
-			// Push al fork en la rama existente (force)
+			// Push to the fork in the existing branch (force)
 			WriteSidebandLine(&response, 2, "remote: gitGost: Pushing update to existing branch...")
 			branch, err = git.PushToGitHub(owner, repo, tempDir, forkOwner, branchFromHash)
 			if err != nil {
@@ -224,12 +262,12 @@ func ReceivePackHandler(c *gin.Context) {
 				return
 			}
 			if existingPRURL != "" {
-				// PR abierto encontrado: actualización exitosa
+				// PR found: update successful
 				prURL = existingPRURL
 				isUpdate = true
 				utils.Log("Updated existing branch: %s, PR: %s", branch, prURL)
 			} else {
-				// Rama existe pero PR fue cerrado/mergeado: crear nuevo PR
+				// Branch exists but PR was closed/merged: create new PR
 				WriteSidebandLine(&response, 2, "remote: gitGost: PR was closed, creating new PR on existing branch...")
 				prURL, err = github.CreatePR(owner, repo, branch, forkOwner, commitMessage)
 				if err != nil {
@@ -247,14 +285,14 @@ func ReceivePackHandler(c *gin.Context) {
 				}
 			}
 		} else {
-			// El hash no corresponde a una rama existente: crear nuevo PR
+			// The hash does not correspond to an existing branch: create new PR
 			utils.Log("PR hash not found, creating new PR")
 			WriteSidebandLine(&response, 2, "remote: gitGost: Hash not found, creating new PR...")
 		}
 	}
 
 	if !isUpdate {
-		// Flujo normal: push a nueva rama y crear PR
+		// Normal flow: push to new branch and create PR
 		WriteSidebandLine(&response, 2, "remote: gitGost: Pushing to fork...")
 		branch, err = git.PushToGitHub(owner, repo, tempDir, forkOwner, "")
 		if err != nil {
@@ -269,7 +307,7 @@ func ReceivePackHandler(c *gin.Context) {
 		utils.Log("Pushed to fork branch: %s", branch)
 		WriteSidebandLine(&response, 2, fmt.Sprintf("remote: gitGost: Branch '%s' created", branch))
 
-		// Crear PR desde el fork al repo original
+		// Create PR from the fork to the original repository
 		WriteSidebandLine(&response, 2, "remote: gitGost: Creating pull request...")
 		prURL, err = github.CreatePR(owner, repo, branch, forkOwner, commitMessage)
 		if err != nil {
@@ -283,16 +321,34 @@ func ReceivePackHandler(c *gin.Context) {
 
 		utils.Log("Created PR: %s", prURL)
 
-		// Registrar estadísticas
+		// Record statistics
 		if err := RecordPR(c.Request.Context(), owner, repo, prURL); err != nil {
 			utils.Log("Error recording stats: %v", err)
 		}
 	}
 
-	// Generar pr-hash para esta rama (determinístico: owner/repo/branch)
+	// Register PR URL for potential burst rollback; prune entries older than TTL
+	nowPR := time.Now()
+	recentBurstPRsMu.Lock()
+	cutoffPR := nowPR.Add(-recentBurstPRsTTL)
+	newURLs := recentBurstPRs[:0]
+	newAts := recentBurstPRsAt[:0]
+	for i, at := range recentBurstPRsAt {
+		if at.After(cutoffPR) {
+			newURLs = append(newURLs, recentBurstPRs[i])
+			newAts = append(newAts, at)
+		}
+	}
+	newURLs = append(newURLs, prURL)
+	newAts = append(newAts, nowPR)
+	recentBurstPRs = newURLs
+	recentBurstPRsAt = newAts
+	recentBurstPRsMu.Unlock()
+
+	// Generate pr-hash for this branch (deterministic: owner/repo/branch)
 	outPRHash := github.GeneratePRHash(owner, repo, branch)
 
-	// Publicar evento ntfy en background (no bloquea la respuesta Git)
+	// Publish ntfy event in background (does not block the Git response)
 	go func() {
 		ntfyTopic := github.NtfyTopicForPR(outPRHash)
 		var ntfyTitle, ntfyMsg string
@@ -308,7 +364,7 @@ func ReceivePackHandler(c *gin.Context) {
 		}
 	}()
 
-	// MENSAJES DE ÉXITO CLAROS
+	// CLEAR SUCCESS MESSAGES
 	WriteSidebandLine(&response, 2, "remote: ")
 	WriteSidebandLine(&response, 2, "remote: ========================================")
 	if isUpdate {
@@ -335,15 +391,15 @@ func ReceivePackHandler(c *gin.Context) {
 	WriteSidebandLine(&response, 2, "remote: ========================================")
 	WriteSidebandLine(&response, 2, "remote: ")
 
-	// Respuesta exitosa estándar de Git (sideband 1 = datos del protocolo)
+	// Standard Git response (sideband 1 = protocol data)
 	WriteSidebandLine(&response, 1, "unpack ok\n")
 	WriteSidebandLine(&response, 1, "ok refs/heads/main\n")
-	WritePktLine(&response, "") // flush final
+	WritePktLine(&response, "") // final flush
 
 	c.Writer.Write(response.Bytes())
 	c.Writer.Flush()
 
-	// Pequeño delay para permitir que Git procese la respuesta y cierre su lado primero
+	// Small delay to allow Git to process the response and close its side first
 	time.Sleep(100 * time.Millisecond)
 }
 
@@ -421,7 +477,7 @@ func basicAuth(username, password string) string {
 	return base64.StdEncoding.EncodeToString([]byte(credentials))
 }
 
-// sendErrorResponse envía una respuesta de error en formato Git protocol
+// sendErrorResponse sends an error response in Git protocol format
 func sendErrorResponse(c *gin.Context, errorMsg string) {
 	c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
 	c.Writer.WriteHeader(http.StatusOK)
@@ -468,7 +524,7 @@ var (
 	sourceRepo = "https://github.com/livrasand/gitGost"
 )
 
-// SetBuildInfo permite que main inyecte los valores compilados con -ldflags
+// SetBuildInfo allows main to inject compiled values with -ldflags
 func SetBuildInfo(hash, built, repo string) {
 	commitHash = hash
 	buildTime = built
@@ -481,16 +537,58 @@ var (
 	dbOnce     sync.Once
 	secretKey  []byte
 	identityMu sync.Mutex
-	// karmaStore guarda karma por hash (fallback en memoria)
+	// karmaStore stores karma per hash (in-memory fallback)
 	karmaStore = make(map[string]int)
-	// reportCounts guarda reportes por hash (fallback en memoria)
+	// reportCounts stores report counts per hash (in-memory fallback)
 	reportCounts      = make(map[string]int)
 	reportFirstAt     = make(map[string]time.Time)
 	reportIPs         = make(map[string]map[string]time.Time)
 	flaggedLastAction = make(map[string]time.Time)
 	blockedHashes     = make(map[string]bool)
-	reportFormTmpl    = template.Must(template.New("reportForm").Parse(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><title>Report content · gitGost</title><style>body{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#0d1117;color:#c9d1d9;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:32px;} .shell{background:linear-gradient(145deg, rgba(255,166,87,0.16), rgba(255,107,107,0.14));border:1px solid rgba(255,166,87,0.45);border-radius:16px;padding:1.5px;box-shadow:0 16px 38px rgba(0,0,0,.42);max-width:620px;width:100%;} .card{background:#0d1117;border-radius:14px;padding:26px;border:1px solid rgba(255,255,255,0.05);} h1{margin:0 0 6px;font-size:24px;color:#ffa657;} .eyebrow{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .75rem;background:rgba(255,166,87,0.12);color:#ffa657;border:1px solid rgba(255,166,87,0.4);border-radius:999px;font-family:'IBM Plex Mono', monospace;font-size:.85rem;margin-bottom:5px;} .sub{margin:6px 0 14px;color:#9fb3ff;font-size:14px;} .policy{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:12px;padding:14px;margin:14px 0;font-size:13px;line-height:1.55;} .policy strong{color:#ffa657;} label{display:block;font-weight:700;margin:12px 0 6px;letter-spacing:.01em;} .readonly{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;color:#c9d1d9;font-family:'IBM Plex Mono', monospace;} button{margin-top:14px;width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,0.25);} .note{margin-top:10px;font-size:12px;color:#9fb3ff;} .error{color:#ffb4c4;font-size:13px;margin-top:10px;} .count{display:flex;gap:8px;align-items:center;margin:10px 0;font-family:'IBM Plex Mono', monospace;} .pill{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);} .pill strong{color:#ffa657;} .state{margin-left:auto;font-size:12px;color:#9fb3ff;} .legend{font-size:12px;color:#9fb3ff;margin-top:10px;} input[type=text]{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#c9d1d9;} form{margin-top:12px;} a{color:#9fb3ff;} .locked{opacity:.55;pointer-events:none;} </style></head><body><div class="shell"><div class="card"><div class="eyebrow">Anonymous moderation</div><h1>Report content</h1><div class="sub">Flag abuse from anonymous contributions.</div><div class="policy"><ul style="margin:0 0 6px 18px; padding:0 0 0 4px; line-height:1.6;">` + string(reportPolicyHTML) + `</ul><div class="note">Reports reset after 30 days.</div></div><form method="POST" action="/v1/moderation/report"><label for="hash">Hash</label><input type="text" id="hash" name="hash" value="{{.Hash}}" placeholder="goster-xxxxx" {{if eq .State "bloqueado"}}class="locked" readonly{{end}} /><div class="count"><div class="pill">Reports: <strong>{{.Reports}}</strong></div><div class="state">State: {{.State}}</div></div><button type="submit" {{if eq .State "bloqueado"}}disabled class="locked"{{end}}>Submit report</button></form><div class="legend">Hash identifies the anonymous submitter. No personal data is collected.</div>{{if .Error}}<div class="error">{{.Error}}</div>{{end}}</div></div></body></html>`))
-	reportThanksTmpl  = template.Must(template.New("reportThanks").Parse(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><title>Report received · gitGost</title><style>body{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#0d1117;color:#c9d1d9;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:32px;} .shell{background:linear-gradient(145deg, rgba(255,166,87,0.16), rgba(255,107,107,0.14));border:1px solid rgba(255,166,87,0.45);border-radius:16px;padding:1.5px;box-shadow:0 16px 38px rgba(0,0,0,.42);max-width:620px;width:100%;} .card{background:#0d1117;border-radius:14px;padding:26px;border:1px solid rgba(255,255,255,0.05);} h1{margin:0 0 10px;font-size:24px;color:#ffa657;} p{margin:6px 0 0;color:#9fb3ff;} .pill{display:inline-block;margin-top:12px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,0.04);color:#ffa657;font-weight:700;border:1px solid rgba(255,255,255,0.08);} .cta{margin-top:16px;display:inline-block;padding:12px 16px;border-radius:10px;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;text-decoration:none;box-shadow:0 10px 30px rgba(0,0,0,0.25);} .small{margin-top:12px;font-size:12px;color:#9fb3ff;} .state{margin-top:10px;font-size:14px;} </style></head><body><div class="shell"><div class="card"><h1>Report received</h1><p>Hash: <strong>{{.Hash}}</strong></p><span class="pill">Total reports: {{.Reports}}</span><div class="state">State: {{.State}}</div><p class="small">Thanks for helping moderate. Your identity stays anonymous.</p><a class="cta" href="https://gitgost.leapcell.app/" target="_blank" rel="noreferrer">Explore gitGost</a></div></div></body></html>`))
+
+	// panicMode: service temporarily suspended
+	panicMode      bool
+	panicMu        sync.Mutex
+	panicPassword  string
+	ntfyAdminTopic string
+
+	// rateLimitStore: PR counter per IP within a 1-hour window
+	rateLimitStore  = make(map[string][]time.Time)
+	rateLimitMu     sync.Mutex
+	rateLimitWindow = time.Hour
+	rateLimitMaxPRs = 5
+
+	// globalBurst: tracks all push attempts globally to detect botnet/script activity
+	// across multiple IPs in a short time window
+	globalBurstMu       sync.Mutex
+	globalBurstTimes    []time.Time        // timestamps of all pushes
+	globalBurstIPs      []string           // IPs corresponding to each push
+	globalBurstWindow   = 60 * time.Second // sliding window
+	globalBurstMaxTotal = 20               // max pushes globally in the window
+	globalBurstMaxIPs   = 10               // max distinct IPs in the window
+	globalBurstAlerted  bool               // avoid repeated alerts
+
+	// recentBurstPRs: PR URLs created during the current burst window, for rollback.
+	// Entries older than recentBurstPRsTTL are pruned on each registration.
+	recentBurstPRsMu  sync.Mutex
+	recentBurstPRs    []string
+	recentBurstPRsAt  []time.Time     // creation time per PR URL
+	recentBurstPRsTTL = 2 * time.Hour // keep burst PRs for 2 hours max
+
+	// actionTokens: short-lived tokens used in ntfy action buttons instead of panicPassword.
+	// Each token is single-use and expires after actionTokenTTL.
+	actionTokensMu sync.Mutex
+	actionTokens   = make(map[string]time.Time) // token → expiry
+	actionTokenTTL = 10 * time.Minute
+
+	// adminRollbackLimit: simple rate limit for /admin/rollback (max 5 calls/min)
+	rollbackLimitMu    sync.Mutex
+	rollbackLimitTimes []time.Time
+	rollbackLimitMax   = 5
+	rollbackLimitWin   = time.Minute
+
+	reportFormTmpl   = template.Must(template.New("reportForm").Parse(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><title>Report content · gitGost</title><style>body{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#0d1117;color:#c9d1d9;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:32px;} .shell{background:linear-gradient(145deg, rgba(255,166,87,0.16), rgba(255,107,107,0.14));border:1px solid rgba(255,166,87,0.45);border-radius:16px;padding:1.5px;box-shadow:0 16px 38px rgba(0,0,0,.42);max-width:620px;width:100%;} .card{background:#0d1117;border-radius:14px;padding:26px;border:1px solid rgba(255,255,255,0.05);} h1{margin:0 0 6px;font-size:24px;color:#ffa657;} .eyebrow{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .75rem;background:rgba(255,166,87,0.12);color:#ffa657;border:1px solid rgba(255,166,87,0.4);border-radius:999px;font-family:'IBM Plex Mono', monospace;font-size:.85rem;margin-bottom:5px;} .sub{margin:6px 0 14px;color:#9fb3ff;font-size:14px;} .policy{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:12px;padding:14px;margin:14px 0;font-size:13px;line-height:1.55;} .policy strong{color:#ffa657;} label{display:block;font-weight:700;margin:12px 0 6px;letter-spacing:.01em;} .readonly{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;color:#c9d1d9;font-family:'IBM Plex Mono', monospace;} button{margin-top:14px;width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,0.25);} .note{margin-top:10px;font-size:12px;color:#9fb3ff;} .error{color:#ffb4c4;font-size:13px;margin-top:10px;} .count{display:flex;gap:8px;align-items:center;margin:10px 0;font-family:'IBM Plex Mono', monospace;} .pill{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);} .pill strong{color:#ffa657;} .state{margin-left:auto;font-size:12px;color:#9fb3ff;} .legend{font-size:12px;color:#9fb3ff;margin-top:10px;} input[type=text]{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#c9d1d9;} form{margin-top:12px;} a{color:#9fb3ff;} .locked{opacity:.55;pointer-events:none;} </style></head><body><div class="shell"><div class="card"><div class="eyebrow">Anonymous moderation</div><h1>Report content</h1><div class="sub">Flag abuse from anonymous contributions.</div><div class="policy"><ul style="margin:0 0 6px 18px; padding:0 0 0 4px; line-height:1.6;">` + string(reportPolicyHTML) + `</ul><div class="note">Reports reset after 30 days.</div></div><form method="POST" action="/v1/moderation/report"><label for="hash">Hash</label><input type="text" id="hash" name="hash" value="{{.Hash}}" placeholder="goster-xxxxx" {{if eq .State "blocked"}}class="locked" readonly{{end}} /><div class="count"><div class="pill">Reports: <strong>{{.Reports}}</strong></div><div class="state">State: {{.State}}</div></div><button type="submit" {{if eq .State "blocked"}}disabled class="locked"{{end}}>Submit report</button></form><div class="legend">Hash identifies the anonymous submitter. No personal data is collected.</div>{{if .Error}}<div class="error">{{.Error}}</div>{{end}}</div></div></body></html>`))
+	reportThanksTmpl = template.Must(template.New("reportThanks").Parse(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><title>Report received · gitGost</title><style>body{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#0d1117;color:#c9d1d9;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:32px;} .shell{background:linear-gradient(145deg, rgba(255,166,87,0.16), rgba(255,107,107,0.14));border:1px solid rgba(255,166,87,0.45);border-radius:16px;padding:1.5px;box-shadow:0 16px 38px rgba(0,0,0,.42);max-width:620px;width:100%;} .card{background:#0d1117;border-radius:14px;padding:26px;border:1px solid rgba(255,255,255,0.05);} h1{margin:0 0 10px;font-size:24px;color:#ffa657;} p{margin:6px 0 0;color:#9fb3ff;} .pill{display:inline-block;margin-top:12px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,0.04);color:#ffa657;font-weight:700;border:1px solid rgba(255,255,255,0.08);} .cta{margin-top:16px;display:inline-block;padding:12px 16px;border-radius:10px;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;text-decoration:none;box-shadow:0 10px 30px rgba(0,0,0,0.25);} .small{margin-top:12px;font-size:12px;color:#9fb3ff;} .state{margin-top:10px;font-size:14px;} </style></head><body><div class="shell"><div class="card"><h1>Report received</h1><p>Hash: <strong>{{.Hash}}</strong></p><span class="pill">Total reports: {{.Reports}}</span><div class="state">State: {{.State}}</div><p class="small">Thanks for helping moderate. Your identity stays anonymous.</p><a class="cta" href="https://gitgost.leapcell.app/" target="_blank" rel="noreferrer">Explore gitGost</a></div></div></body></html>`))
 )
 
 type anonymousIssueRequest struct {
@@ -511,6 +609,289 @@ const (
 )
 
 var reportPolicyHTML = template.HTML(`<li><strong>0–2 reports:</strong> internal log only.</li><li><strong>3–5 reports:</strong> hash flagged, 6h cooldown, karma reset.</li><li><strong>6+ reports:</strong> hash blocked; we attempt to remove its comments.</li>`)
+
+// newActionToken generates a single-use token valid for actionTokenTTL and stores it.
+func newActionToken() string {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return ""
+	}
+	token := hex.EncodeToString(b)
+	expiry := time.Now().Add(actionTokenTTL)
+	actionTokensMu.Lock()
+	actionTokens[token] = expiry
+	actionTokensMu.Unlock()
+	return token
+}
+
+// consumeActionToken validates and removes a single-use action token.
+// Returns true if the token was valid and not expired.
+func consumeActionToken(token string) bool {
+	actionTokensMu.Lock()
+	defer actionTokensMu.Unlock()
+	expiry, ok := actionTokens[token]
+	if !ok {
+		return false
+	}
+	delete(actionTokens, token)
+	return time.Now().Before(expiry)
+}
+
+// InitPanicConfig initializes the panic button password and ntfy admin topic
+func InitPanicConfig(password, adminTopic string) {
+	panicPassword = password
+	ntfyAdminTopic = adminTopic
+}
+
+// isPanicMode returns whether the service is suspended
+func isPanicMode() bool {
+	panicMu.Lock()
+	defer panicMu.Unlock()
+	return panicMode
+}
+
+// recordGlobalBurst records a push attempt globally and notifies the admin if suspicious
+// activity is detected (too many pushes in a short window, possibly from multiple IPs).
+func recordGlobalBurst(ip string) {
+	now := time.Now()
+	globalBurstMu.Lock()
+	defer globalBurstMu.Unlock()
+
+	// Slide the window: discard entries older than globalBurstWindow
+	cutoff := now.Add(-globalBurstWindow)
+	newTimes := globalBurstTimes[:0]
+	newIPs := globalBurstIPs[:0]
+	for i, t := range globalBurstTimes {
+		if t.After(cutoff) {
+			newTimes = append(newTimes, t)
+			newIPs = append(newIPs, globalBurstIPs[i])
+		}
+	}
+	newTimes = append(newTimes, now)
+	newIPs = append(newIPs, ip)
+	globalBurstTimes = newTimes
+	globalBurstIPs = newIPs
+
+	total := len(globalBurstTimes)
+
+	// Count distinct IPs in window
+	seen := make(map[string]struct{}, total)
+	for _, bip := range globalBurstIPs {
+		seen[bip] = struct{}{}
+	}
+	distinctIPs := len(seen)
+
+	// Trigger alert if thresholds exceeded and not already alerted in this window
+	if !globalBurstAlerted && (total >= globalBurstMaxTotal || distinctIPs >= globalBurstMaxIPs) {
+		globalBurstAlerted = true
+		go notifyAdminGlobalBurst(total, distinctIPs)
+	}
+
+	// Reset alert flag once activity drops below half the threshold
+	if globalBurstAlerted && total < globalBurstMaxTotal/2 && distinctIPs < globalBurstMaxIPs/2 {
+		globalBurstAlerted = false
+	}
+}
+
+// notifyAdminGlobalBurst sends an ntfy alert about suspected botnet/script activity
+func notifyAdminGlobalBurst(total, distinctIPs int) {
+	if ntfyAdminTopic == "" {
+		return
+	}
+	serviceURL := github.NtfyServiceURL()
+	title := "🚨 Suspicious activity detected · gitGost"
+	msg := fmt.Sprintf(
+		"%d push attempts from %d distinct IPs in the last %s. This may indicate bot, script, or coordinated abuse.",
+		total, distinctIPs, globalBurstWindow,
+	)
+	// Generate single-use tokens per action (expire in 10 min, never expose panicPassword)
+	tokActivate := newActionToken()
+	tokRollback := newActionToken()
+	tokDeactivate := newActionToken()
+	// ntfy action buttons: panic control + close burst PRs
+	actions := fmt.Sprintf(
+		`http, Activate Panic, %s/admin/panic, method=POST, body={"token":"%s","active":true}, clear=true; http, Close Burst PRs, %s/admin/rollback, method=POST, body={"token":"%s"}, clear=true; http, Deactivate Panic, %s/admin/panic, method=POST, body={"token":"%s","active":false}`,
+		serviceURL, tokActivate,
+		serviceURL, tokRollback,
+		serviceURL, tokDeactivate,
+	)
+	if err := github.PublishNtfyAdmin(ntfyAdminTopic, title, msg, actions); err != nil {
+		utils.Log("ntfy global burst alert error: %v", err)
+	}
+}
+
+// checkRateLimit checks if the IP has exceeded the PR rate limit per hour.
+// Returns true if the request should be blocked. Notifies admin via ntfy on first excess.
+func checkRateLimit(ip string) bool {
+	now := time.Now()
+	rateLimitMu.Lock()
+	times := rateLimitStore[ip]
+	// Keep only timestamps within the window
+	valid := times[:0]
+	for _, t := range times {
+		if now.Sub(t) < rateLimitWindow {
+			valid = append(valid, t)
+		}
+	}
+	valid = append(valid, now)
+	rateLimitStore[ip] = valid
+	count := len(valid)
+	rateLimitMu.Unlock()
+
+	if count > rateLimitMaxPRs {
+		// Notify admin only once when the limit is first exceeded (at rateLimitMaxPRs+1)
+		if count == rateLimitMaxPRs+1 {
+			go notifyAdminRateLimit(ip, count)
+		}
+		return true
+	}
+	return false
+}
+
+// notifyAdminRateLimit sends an ntfy alert to the admin when an IP exceeds the rate limit
+func notifyAdminRateLimit(ip string, count int) {
+	if ntfyAdminTopic == "" {
+		return
+	}
+	serviceURL := github.NtfyServiceURL()
+	title := "⚠️ Rate limit exceeded · gitGost"
+	msg := fmt.Sprintf("IP %s exceeded the limit of %d PRs/hour (attempts: %d).", ip, rateLimitMaxPRs, count)
+	// Generate single-use tokens per action (expire in 10 min, never expose panicPassword)
+	tokActivate := newActionToken()
+	tokRollback := newActionToken()
+	tokDeactivate := newActionToken()
+	// ntfy action buttons: panic control + close burst PRs
+	actions := fmt.Sprintf(
+		`http, Activate Panic, %s/admin/panic, method=POST, body={"token":"%s","active":true}, clear=true; http, Close Burst PRs, %s/admin/rollback, method=POST, body={"token":"%s"}, clear=true; http, Deactivate Panic, %s/admin/panic, method=POST, body={"token":"%s","active":false}`,
+		serviceURL, tokActivate,
+		serviceURL, tokRollback,
+		serviceURL, tokDeactivate,
+	)
+	if err := github.PublishNtfyAdmin(ntfyAdminTopic, title, msg, actions); err != nil {
+		utils.Log("ntfy admin alert error: %v", err)
+	}
+}
+
+// PanicHandler activates or deactivates panic mode
+// POST /admin/panic  body: {"password": "...", "active": true|false}
+//
+//	or body: {"token": "<action-token>", "active": true|false}
+func PanicHandler(c *gin.Context) {
+	var req struct {
+		Password string `json:"password"`
+		Token    string `json:"token"`
+		Active   bool   `json:"active"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
+		return
+	}
+	authorized := (panicPassword != "" && req.Password == panicPassword) ||
+		(req.Token != "" && consumeActionToken(req.Token))
+	if !authorized {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+		return
+	}
+	panicMu.Lock()
+	panicMode = req.Active
+	panicMu.Unlock()
+
+	state := "deactivated"
+	if req.Active {
+		state = "activated"
+	}
+	utils.Log("panic mode %s", state)
+	c.JSON(http.StatusOK, gin.H{"panic_mode": req.Active, "state": state})
+}
+
+// ServiceStatusHandler returns the current service status (used by the frontend)
+func ServiceStatusHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"panic_mode": isPanicMode(),
+	})
+}
+
+// RollbackBurstHandler closes all PRs registered during the current burst window.
+// POST /admin/rollback  body: {"password": "..."} or {"token": "<action-token>"}
+func RollbackBurstHandler(c *gin.Context) {
+	var req struct {
+		Password string `json:"password"`
+		Token    string `json:"token"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
+		return
+	}
+
+	// Accept either the static password or a valid single-use action token
+	authorized := (panicPassword != "" && req.Password == panicPassword) ||
+		(req.Token != "" && consumeActionToken(req.Token))
+	if !authorized {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+		return
+	}
+
+	// Rate limit: max rollbackLimitMax calls per rollbackLimitWin
+	now := time.Now()
+	rollbackLimitMu.Lock()
+	valid := rollbackLimitTimes[:0]
+	for _, t := range rollbackLimitTimes {
+		if now.Sub(t) < rollbackLimitWin {
+			valid = append(valid, t)
+		}
+	}
+	valid = append(valid, now)
+	rollbackLimitTimes = valid
+	exceeded := len(valid) > rollbackLimitMax
+	rollbackLimitMu.Unlock()
+	if exceeded {
+		c.JSON(http.StatusTooManyRequests, gin.H{"error": "rollback rate limit exceeded"})
+		return
+	}
+
+	recentBurstPRsMu.Lock()
+	toClose := make([]string, len(recentBurstPRs))
+	copy(toClose, recentBurstPRs)
+	recentBurstPRs = recentBurstPRs[:0]
+	recentBurstPRsMu.Unlock()
+
+	if len(toClose) == 0 {
+		c.JSON(http.StatusOK, gin.H{"closed": 0, "message": "no burst PRs to close"})
+		return
+	}
+
+	var (
+		wg     sync.WaitGroup
+		mu     sync.Mutex
+		closed []string
+		failed []string
+	)
+	for _, prURL := range toClose {
+		wg.Add(1)
+		go func(u string) {
+			defer wg.Done()
+			if err := github.ClosePRByURL(u); err != nil {
+				utils.Log("rollback: failed to close %s: %v", u, err)
+				mu.Lock()
+				failed = append(failed, u)
+				mu.Unlock()
+			} else {
+				mu.Lock()
+				closed = append(closed, u)
+				mu.Unlock()
+			}
+		}(prURL)
+	}
+	wg.Wait()
+
+	utils.Log("rollback: closed %d PRs, failed %d", len(closed), len(failed))
+	c.JSON(http.StatusOK, gin.H{
+		"closed":      len(closed),
+		"failed":      len(failed),
+		"closed_urls": closed,
+		"failed_urls": failed,
+	})
+}
 
 // InitDatabase inicializa el cliente de Supabase de forma thread-safe
 func InitDatabase(url, key string) {
@@ -1025,10 +1406,62 @@ func BadgeHandler(c *gin.Context) {
 	case "anonymous-friendly.svg":
 		serveAnonymousFriendlyBadge(c)
 	case "deployed.svg":
+		// Si el servicio está suspendido, mostrar badge rojo
+		if isPanicMode() {
+			serveSuspendedBadge(c)
+			return
+		}
 		serveDeployedBadge(c)
 	default:
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Badge not found"})
 	}
+}
+
+func serveSuspendedBadge(c *gin.Context) {
+	label := "gitGost"
+	value := "suspended"
+	labelW := 56
+	valueW := 76
+	totalW := labelW + valueW
+	labelMid := labelW / 2
+	valueMid := labelW + valueW/2
+
+	svg := fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="20" role="img" aria-label="%s: %s" viewBox="0 0 %d 20">
+  <title>%s: %s</title>
+  <linearGradient id="s" x2="0" y2="100%%">
+    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+    <stop offset="1" stop-opacity=".1"/>
+  </linearGradient>
+  <clipPath id="r">
+    <rect width="%d" height="20" rx="3" fill="#fff"/>
+  </clipPath>
+  <g clip-path="url(#r)">
+    <rect width="%d" height="20" fill="#555"/>
+    <rect x="%d" width="%d" height="20" fill="#e05d44"/>
+    <rect width="%d" height="20" fill="url(#s)"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110">
+    <text x="%d" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="%d" lengthAdjust="spacing">%s</text>
+    <text x="%d" y="140" transform="scale(.1)" textLength="%d" lengthAdjust="spacing">%s</text>
+    <text x="%d" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="%d" lengthAdjust="spacing">%s</text>
+    <text x="%d" y="140" transform="scale(.1)" textLength="%d" lengthAdjust="spacing">%s</text>
+  </g>
+</svg>`,
+		totalW, label, value, totalW,
+		label, value,
+		totalW,
+		labelW,
+		labelW, valueW,
+		totalW,
+		labelMid*10, (labelW-10)*10, label,
+		labelMid*10, (labelW-10)*10, label,
+		valueMid*10, (valueW-6)*10, value,
+		valueMid*10, (valueW-6)*10, value,
+	)
+
+	c.Header("Content-Type", "image/svg+xml")
+	c.Header("Cache-Control", "no-cache, no-store")
+	c.String(http.StatusOK, svg)
 }
 
 func serveAnonymousFriendlyBadge(c *gin.Context) {

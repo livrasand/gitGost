@@ -164,6 +164,13 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/pr-status/:hash", PRStatusHandler)
 	}
 
+	// Admin endpoints
+	r.POST("/admin/panic", PanicHandler)
+	r.POST("/admin/rollback", RollbackBurstHandler)
+
+	// Service status (para el frontend)
+	r.GET("/api/status", ServiceStatusHandler)
+
 	// SPA fallback
 	r.NoRoute(func(c *gin.Context) {
 		c.File("./web/index.html")

@@ -327,23 +327,26 @@ func ReceivePackHandler(c *gin.Context) {
 		}
 	}
 
-	// Register PR URL for potential burst rollback; prune entries older than TTL
-	nowPR := time.Now()
-	recentBurstPRsMu.Lock()
-	cutoffPR := nowPR.Add(-recentBurstPRsTTL)
-	newURLs := recentBurstPRs[:0]
-	newAts := recentBurstPRsAt[:0]
-	for i, at := range recentBurstPRsAt {
-		if at.After(cutoffPR) {
-			newURLs = append(newURLs, recentBurstPRs[i])
-			newAts = append(newAts, at)
+	// Register PR URL for potential burst rollback only while a burst alert is active;
+	// prune entries older than TTL regardless.
+	if isGlobalBurstAlertActive() {
+		nowPR := time.Now()
+		recentBurstPRsMu.Lock()
+		cutoffPR := nowPR.Add(-recentBurstPRsTTL)
+		newURLs := recentBurstPRs[:0]
+		newAts := recentBurstPRsAt[:0]
+		for i, at := range recentBurstPRsAt {
+			if at.After(cutoffPR) {
+				newURLs = append(newURLs, recentBurstPRs[i])
+				newAts = append(newAts, at)
+			}
 		}
+		newURLs = append(newURLs, prURL)
+		newAts = append(newAts, nowPR)
+		recentBurstPRs = newURLs
+		recentBurstPRsAt = newAts
+		recentBurstPRsMu.Unlock()
 	}
-	newURLs = append(newURLs, prURL)
-	newAts = append(newAts, nowPR)
-	recentBurstPRs = newURLs
-	recentBurstPRsAt = newAts
-	recentBurstPRsMu.Unlock()
 
 	// Generate pr-hash for this branch (deterministic: owner/repo/branch)
 	outPRHash := github.GeneratePRHash(owner, repo, branch)
@@ -650,6 +653,13 @@ func isPanicMode() bool {
 	return panicMode
 }
 
+// isGlobalBurstAlertActive returns true when a global burst alert is currently active.
+func isGlobalBurstAlertActive() bool {
+	globalBurstMu.Lock()
+	defer globalBurstMu.Unlock()
+	return globalBurstAlerted
+}
+
 // recordGlobalBurst records a push attempt globally and notifies the admin if suspicious
 // activity is detected (too many pushes in a short window, possibly from multiple IPs).
 func recordGlobalBurst(ip string) {
@@ -853,6 +863,7 @@ func RollbackBurstHandler(c *gin.Context) {
 	toClose := make([]string, len(recentBurstPRs))
 	copy(toClose, recentBurstPRs)
 	recentBurstPRs = recentBurstPRs[:0]
+	recentBurstPRsAt = recentBurstPRsAt[:0]
 	recentBurstPRsMu.Unlock()
 
 	if len(toClose) == 0 {
@@ -860,6 +871,8 @@ func RollbackBurstHandler(c *gin.Context) {
 		return
 	}
 
+	const maxCloseWorkers = 5
+	closeConcurrency := make(chan struct{}, maxCloseWorkers)
 	var (
 		wg     sync.WaitGroup
 		mu     sync.Mutex
@@ -870,6 +883,8 @@ func RollbackBurstHandler(c *gin.Context) {
 		wg.Add(1)
 		go func(u string) {
 			defer wg.Done()
+			closeConcurrency <- struct{}{}
+			defer func() { <-closeConcurrency }()
 			if err := github.ClosePRByURL(u); err != nil {
 				utils.Log("rollback: failed to close %s: %v", u, err)
 				mu.Lock()

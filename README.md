@@ -14,10 +14,10 @@ git remote add gost https://gitgost.leapcell.app/v1/gh/torvalds/linux
 git checkout -b fix-typo
 git commit -am "fix: obvious typo in README"
 git push gost fix-typo:main
-# → PR opened as @gitgost-anonymous with no direct trace to you (see Threat Model)
+# → PR opened as @gitgost-anonymous with no direct trace to you; note that gitGost provides strong anonymity features, but not perfect anonymity — see the Threat Model
 ```
 
-That’s it. No login. No token. No name. No email. gitGost provides strong anonymity features, but not perfect anonymity — see the [Threat Model](#threat-model).
+That’s it. No login, token, name, or email required — gitGost provides strong anonymity features, but not perfect anonymity — see the [Threat Model](#threat-model).
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/livrasand/gitGost)
 [![Desplegado](https://gitgost.leapcell.app/badges/deployed.svg)](https://gitgost.leapcell.app/health)

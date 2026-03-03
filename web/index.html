@@ -1010,9 +1010,13 @@
     <script>
         (function() {
             fetch('/api/status').then(function(r){ return r.json(); }).then(function(d){
+                var banner = document.getElementById('panic-banner');
                 if (d.panic_mode) {
-                    document.getElementById('panic-banner').style.display = 'block';
-                    document.body.style.paddingTop = '44px';
+                    banner.style.display = 'block';
+                    document.body.style.paddingTop = banner.offsetHeight + 'px';
+                } else {
+                    banner.style.display = 'none';
+                    document.body.style.paddingTop = '';
                 }
             }).catch(function(){});
         })();

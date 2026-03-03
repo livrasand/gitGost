@@ -9,15 +9,15 @@ Zero accounts • Zero tokens • Zero metadata • Designed for strong anonymit
 ## One-liner demo
 
 ```bash
-# Add as remote → fix → push → done. Fully anonymous.
+# Add as remote → fix → push → done. Designed to minimize identifiable traces.
 git remote add gost https://gitgost.leapcell.app/v1/gh/torvalds/linux
 git checkout -b fix-typo
 git commit -am "fix: obvious typo in README"
 git push gost fix-typo:main
-# → PR opened as @gitgost-anonymous with zero trace to you
+# → PR opened as @gitgost-anonymous with no direct trace to you; note that gitGost provides strong anonymity features, but not perfect anonymity — see the Threat Model
 ```
 
-That’s it. No login. No token. No name. No email. No history.
+That’s it. No login, token, name, or email required — gitGost provides strong anonymity features, but not perfect anonymity — see the [Threat Model](#threat-model).
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/livrasand/gitGost)
 [![Desplegado](https://gitgost.leapcell.app/badges/deployed.svg)](https://gitgost.leapcell.app/health)
@@ -342,6 +342,61 @@ torsocks git push gost my-branch:main
 WSL2 has its own network stack separate from Windows, so anonymity is preserved correctly.
 
 ## Made with ❤️ for privacy
+
+## Service Administration
+
+### Panic button — suspend and restore the service
+
+If abusive activity is detected (bot submissions, coordinated spam), you can suspend the service immediately. While suspended, all pushes are rejected with an explanatory message and the site shows a banner.
+
+**Suspend the service:**
+
+```bash
+curl -X POST https://gitgost.leapcell.app/admin/panic \
+  -H "Content-Type: application/json" \
+  -d '{"password":"<PANIC_PASSWORD>","active":true}'
+```
+
+**Restore the service:**
+
+```bash
+curl -X POST https://gitgost.leapcell.app/admin/panic \
+  -H "Content-Type: application/json" \
+  -d '{"password":"<PANIC_PASSWORD>","active":false}'
+```
+
+> **Note:** If you receive a ntfy alert with action buttons (Activate Panic / Deactivate Panic), those buttons use single-use tokens valid for **10 minutes**. If the tokens expire before you tap them, use the `curl` commands above with your `PANIC_PASSWORD` — those always work.
+
+**Handy shell aliases** (add to your `~/.zshrc` or `~/.bashrc`):
+
+```bash
+export PANIC_PASSWORD="your-password-here"
+
+alias gitgost-suspend='curl -s -X POST https://gitgost.leapcell.app/admin/panic \
+  -H "Content-Type: application/json" \
+  -d "{\"password\":\"$PANIC_PASSWORD\",\"active\":true}"'
+
+alias gitgost-restore='curl -s -X POST https://gitgost.leapcell.app/admin/panic \
+  -H "Content-Type: application/json" \
+  -d "{\"password\":\"$PANIC_PASSWORD\",\"active\":false}"'
+```
+
+Then simply run `gitgost-restore` to bring the service back online.
+
+### Close abusive PRs (rollback burst)
+
+After a burst attack, close all PRs created during the attack window:
+
+```bash
+curl -X POST https://gitgost.leapcell.app/admin/rollback \
+  -H "Content-Type: application/json" \
+  -d '{"password":"<PANIC_PASSWORD>"}'
+# → {"closed": 12, "failed": 0, "closed_urls": [...]}
+```
+
+This closes up to 2 hours of recorded PRs in parallel via the GitHub API. PRs older than 2 hours are not affected.
+
+---
 
 Star this repo if you believe developers deserve the right to contribute anonymously.
 

@@ -8,27 +8,31 @@ import (
 
 // Config holds all configuration for the application
 type Config struct {
-	Port         string
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-	APIKey       string
-	GitHubToken  string
-	LogFormat    string // "text" or "json"
-	SupabaseURL  string
-	SupabaseKey  string
+	Port           string
+	ReadTimeout    time.Duration
+	WriteTimeout   time.Duration
+	APIKey         string
+	GitHubToken    string
+	LogFormat      string // "text" or "json"
+	SupabaseURL    string
+	SupabaseKey    string
+	PanicPassword  string
+	NtfyAdminTopic string
 }
 
 // Load reads configuration from environment variables with defaults
 func Load() *Config {
 	cfg := &Config{
-		Port:         getEnv("PORT", "8080"),
-		ReadTimeout:  getDurationEnv("READ_TIMEOUT", 30*time.Second),
-		WriteTimeout: getDurationEnv("WRITE_TIMEOUT", 30*time.Second),
-		APIKey:       getEnv("GITGOST_API_KEY", ""),
-		GitHubToken:  getEnv("GITHUB_TOKEN", ""),
-		LogFormat:    getEnv("LOG_FORMAT", "text"), // "text" or "json"
-		SupabaseURL:  getEnv("SUPABASE_URL", ""),
-		SupabaseKey:  getEnv("SUPABASE_KEY", ""),
+		Port:           getEnv("PORT", "8080"),
+		ReadTimeout:    getDurationEnv("READ_TIMEOUT", 30*time.Second),
+		WriteTimeout:   getDurationEnv("WRITE_TIMEOUT", 30*time.Second),
+		APIKey:         getEnv("GITGOST_API_KEY", ""),
+		GitHubToken:    getEnv("GITHUB_TOKEN", ""),
+		LogFormat:      getEnv("LOG_FORMAT", "text"), // "text" or "json"
+		SupabaseURL:    getEnv("SUPABASE_URL", ""),
+		SupabaseKey:    getEnv("SUPABASE_KEY", ""),
+		PanicPassword:  getEnv("PANIC_PASSWORD", ""),
+		NtfyAdminTopic: getEnv("NTFY_ADMIN_TOPIC", ""),
 	}
 
 	return cfg

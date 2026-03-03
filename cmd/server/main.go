@@ -47,6 +47,9 @@ func main() {
 		utils.Log("Warning: Supabase not configured, stats will not be persisted")
 	}
 
+	// Initialize panic button
+	handler.InitPanicConfig(cfg.PanicPassword, cfg.NtfyAdminTopic)
+
 	// Setup router
 	router := handler.SetupRouter(cfg)
 

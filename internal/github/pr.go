@@ -502,6 +502,51 @@ func ForkRepo(owner, repo string) (string, error) {
 	return forkOwner, nil
 }
 
+// ClosePRByURL closes an open PR given its GitHub html_url.
+// The URL format is: https://github.com/{owner}/{repo}/pull/{number}
+func ClosePRByURL(prURL string) error {
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		return fmt.Errorf("GITHUB_TOKEN not set")
+	}
+
+	// Parse owner, repo, number from the PR URL
+	// Expected: https://github.com/<owner>/<repo>/pull/<number>
+	parts := strings.Split(strings.TrimPrefix(prURL, "https://github.com/"), "/")
+	if len(parts) < 4 || parts[2] != "pull" {
+		return fmt.Errorf("invalid PR URL: %s", prURL)
+	}
+	owner := parts[0]
+	repo := parts[1]
+	number := parts[3]
+
+	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls/%s", owner, repo, number)
+	payload, err := json.Marshal(map[string]string{"state": "closed"})
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("PATCH", apiURL, bytes.NewBuffer(payload))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "token "+token)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", "gitGost")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to close PR %s: status %s", prURL, resp.Status)
+	}
+	return nil
+}
+
 func CreatePR(owner, repo, branch, forkOwner, commitMessage string) (string, error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {

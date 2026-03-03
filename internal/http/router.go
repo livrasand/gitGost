@@ -3,11 +3,47 @@ package http
 import (
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/livrasand/gitGost/internal/config"
 
 	"github.com/gin-gonic/gin"
 )
+
+// adminLimiterState holds per-IP sliding-window counters for admin endpoints.
+var (
+	adminLimiterMu    sync.Mutex
+	adminLimiterStore = make(map[string][]time.Time)
+	adminLimiterMax   = 10
+	adminLimiterWin   = time.Minute
+)
+
+// adminLimiter enforces a strict per-IP rate limit on admin endpoints.
+func adminLimiter() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ip := c.ClientIP()
+		now := time.Now()
+		cutoff := now.Add(-adminLimiterWin)
+		adminLimiterMu.Lock()
+		times := adminLimiterStore[ip]
+		valid := times[:0]
+		for _, t := range times {
+			if t.After(cutoff) {
+				valid = append(valid, t)
+			}
+		}
+		valid = append(valid, now)
+		adminLimiterStore[ip] = valid
+		exceeded := len(valid) > adminLimiterMax
+		adminLimiterMu.Unlock()
+		if exceeded {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "admin rate limit exceeded"})
+			return
+		}
+		c.Next()
+	}
+}
 
 // maxPushSize is the maximum allowed push size
 const maxPushSize = 100 * 1024 * 1024 // 100MB
@@ -93,6 +129,9 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	// Deshabilitar logs de Gin para proteger privacidad
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
+	// Disable proxy header trust so c.ClientIP() uses the real TCP connection IP.
+	// If this service runs behind a known reverse proxy, replace with its CIDR(s).
+	r.SetTrustedProxies([]string{})
 
 	// Solo recovery, sin logger para proteger anonimato
 	r.Use(gin.Recovery())
@@ -163,6 +202,17 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/recent-prs", RecentPRsHandler)
 		api.GET("/pr-status/:hash", PRStatusHandler)
 	}
+
+	// Admin endpoints — protected by strict per-IP rate limiting
+	admin := r.Group("/admin")
+	admin.Use(adminLimiter())
+	{
+		admin.POST("/panic", PanicHandler)
+		admin.POST("/rollback", RollbackBurstHandler)
+	}
+
+	// Service status (para el frontend)
+	r.GET("/api/status", ServiceStatusHandler)
 
 	// SPA fallback
 	r.NoRoute(func(c *gin.Context) {

@@ -358,3 +358,4 @@ Be a ghost. Fix the internet.
 <img src="https://visitor-badge.laobi.icu/badge?page_id=livrasand.gitGost&style=for-the-badge&color=00d4ff" alt="Views">
 <!-- Demo change for asciinema recording -->
 <!-- Demo change for asciinema recording -->
+<!-- Demo change for asciinema recording -->

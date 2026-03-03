@@ -138,26 +138,6 @@ func ReceivePackHandler(c *gin.Context) {
 		c.Writer.WriteHeader(http.StatusContinue)
 	}
 
-	// Verificar confirmación explícita de autoría (Terms of Submission §3.2)
-	if c.GetHeader("X-Gost-Authorship-Confirmed") != "1" {
-		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
-		c.Writer.WriteHeader(http.StatusOK)
-		var errResp bytes.Buffer
-		WriteSidebandLine(&errResp, 2, "remote: ")
-		WriteSidebandLine(&errResp, 2, "remote: gitGost: PUSH REJECTED — authorship confirmation required")
-		WriteSidebandLine(&errResp, 2, "remote: ")
-		WriteSidebandLine(&errResp, 2, "remote: By pushing to gitGost you declare that this contribution")
-		WriteSidebandLine(&errResp, 2, "remote: is your original work and does not infringe third-party IP.")
-		WriteSidebandLine(&errResp, 2, "remote: See: https://github.com/livrasand/gitGost/blob/main/LEGAL.md#3-terms-of-submission")
-		WriteSidebandLine(&errResp, 2, "remote: ")
-		WriteSidebandLine(&errResp, 2, "remote: To confirm, add this header to your push:")
-		WriteSidebandLine(&errResp, 2, "remote:   git -c http.extraHeader=\"X-Gost-Authorship-Confirmed: 1\" push gost ...")
-		WriteSidebandLine(&errResp, 2, "remote: ")
-		WriteSidebandLine(&errResp, 3, "push rejected: missing authorship confirmation header")
-		WritePktLine(&errResp, "")
-		c.Writer.Write(errResp.Bytes())
-		return
-	}
 
 	// Leer body completo
 	utils.Log("Content-Type: %s", c.GetHeader("Content-Type"))

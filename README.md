@@ -6,6 +6,19 @@
 
 Zero accounts • Zero tokens • Zero metadata • Designed for strong anonymity
 
+## One-liner demo
+
+```bash
+# Add as remote → fix → push → done. Fully anonymous.
+git remote add gost https://gitgost.leapcell.app/v1/gh/torvalds/linux
+git checkout -b fix-typo
+git commit -am "fix: obvious typo in README"
+git push gost fix-typo:main
+# → PR opened as @gitgost-anonymous with zero trace to you
+```
+
+That’s it. No login. No token. No name. No email. No history.
+
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/livrasand/gitGost)
 [![Desplegado](https://gitgost.leapcell.app/badges/deployed.svg)](https://gitgost.leapcell.app/health)
 [![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/livrasand)
@@ -29,6 +42,12 @@ Zero accounts • Zero tokens • Zero metadata • Designed for strong anonymit
   alt="Codeberg – Coming Soon"/>
 
 <br />
+
+> "Fixed GPIO mapping bug in 10s without doxxing risk – @gitgost-anonymous"  
+> [View PR ↗](https://github.com/mehdi7129/inky-photo-frame/pull/3) *(Example from mehdi7129/inky-photo-frame)*
+
+<br />
+
 <a href="https://leapcell.io?utm_source=github_readme_stats_team&utm_campaign=gitGost">
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="./web/assets/logos/powered-by-leapcell.svg">
@@ -44,19 +63,6 @@ Zero accounts • Zero tokens • Zero metadata • Designed for strong anonymit
 </picture>
 </a>
 
-## One-liner demo
-
-```bash
-# Add as remote → fix → push → done. Fully anonymous.
-git remote add gost https://gitgost.leapcell.app/v1/gh/torvalds/linux
-git checkout -b fix-typo
-git commit -am "fix: obvious typo in README"
-git push gost fix-typo:main
-# → PR opened as @gitgost-anonymous with zero trace to you
-```
-
-That’s it. No login. No token. No name. No email. No history.
-
 ## Features
 
 | Feature                     | Description                                                                 |
@@ -66,6 +72,17 @@ That’s it. No login. No token. No name. No email. No history.
 | **Battle-tested Security**  | Rate limiting, repository size caps, commit validation. Written in pure Go with minimal dependencies – fully auditable. |
 | **Works Everywhere**        | Terminal, CI/CD, Docker, scripts – any public GitHub repo, anywhere Git runs. |
 | **Open Source & AGPL**      | 100% transparent. Fork it, audit it, host it yourself.                     |
+
+## Comparison with Alternatives
+
+| Feature       | gitGost                          | GitHub CLI                       | Forgejo                           |
+|---------------|----------------------------------|----------------------------------|----------------------------------|
+| **Anonymity** | ✅ **Full** - Strips all metadata, uses neutral bot | ❌ **None** - Requires account, full traceability | ⚠️ **Partial** - Depends on instance, typically requires account |
+| **Setup**     | ✅ **One command** - `git remote add gost <url>` | ❌ **Complex** - Install CLI, authenticate | ❌ **Self-hosting** - Set up instance, manage accounts |
+| **Providers** | ✅ **Multi** - GitHub + planned GitLab/Bitbucket | ⚠️ **Single** - GitHub only | ✅ **Any** - Self-hosted, unlimited instances |
+| **Limits**    | ⚠️ **Reasonable** - 5 PRs/IP/hr, 500MB repo, 10MB commit | ⚠️ **API limits** - GitHub rate limits | ⚠️ **Instance-dependent** - Varies by host |
+
+*Legend: ✅ Superior • ⚠️ Acceptable • ❌ Inferior*
 
 ## Anonymous Contributor Friendly Badge
 
@@ -339,3 +356,4 @@ Be a ghost. Fix the internet.
 *✨ Thanks for visiting **gitGost**!*
 
 <img src="https://visitor-badge.laobi.icu/badge?page_id=livrasand.gitGost&style=for-the-badge&color=00d4ff" alt="Views">
+<!-- Demo change for asciinema recording -->

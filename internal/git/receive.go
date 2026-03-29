@@ -16,7 +16,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
-// ParsePktLine lee líneas en formato pkt-line del protocolo Git
 func ParsePktLine(r io.Reader) ([]byte, error) {
 	lenBuf := make([]byte, 4)
 	_, err := io.ReadFull(r, lenBuf)
@@ -26,7 +25,7 @@ func ParsePktLine(r io.Reader) ([]byte, error) {
 
 	lenStr := string(lenBuf)
 	if lenStr == "0000" {
-		return nil, nil // flush packet
+		return nil, nil 
 	}
 
 	length, err := strconv.ParseInt(lenStr, 16, 32)
@@ -34,7 +33,6 @@ func ParsePktLine(r io.Reader) ([]byte, error) {
 		return nil, fmt.Errorf("invalid pkt-line length: %s", lenStr)
 	}
 
-	// Restar 4 porque la longitud incluye los 4 bytes del prefijo
 	dataLen := int(length) - 4
 	if dataLen < 0 {
 		return nil, fmt.Errorf("invalid pkt-line length: %d", length)
@@ -49,7 +47,6 @@ func ParsePktLine(r io.Reader) ([]byte, error) {
 	return data, nil
 }
 
-// RefUpdate representa una actualización de referencia
 type RefUpdate struct {
 	OldSHA string
 	NewSHA string

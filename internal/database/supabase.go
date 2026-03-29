@@ -136,7 +136,6 @@ func (c *SupabaseClient) InsertPR(ctx context.Context, owner, repo, prURL string
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusConflict {
-		// 409 Conflict - URL already exists (UNIQUE constraint violation)
 		return fmt.Errorf("PR already recorded: duplicate URL %s", prURL)
 	}
 
@@ -177,7 +176,6 @@ func (c *SupabaseClient) GetTotalPRs(ctx context.Context) (int, error) {
 		return 0, fmt.Errorf("missing Content-Range header in response")
 	}
 
-	// Parse Content-Range header format: "0-0/{total}" or "*/{total}"
 	slashIdx := strings.LastIndex(contentRange, "/")
 	if slashIdx == -1 {
 		return 0, fmt.Errorf("invalid Content-Range format: %s", contentRange)
@@ -218,12 +216,11 @@ func (c *SupabaseClient) DeleteOldReports(ctx context.Context, hash string, befo
 }
 
 func (c *SupabaseClient) GetRecentPRs(ctx context.Context, limit int) ([]PRRecord, error) {
-	// Validar y sanitizar el límite
 	if limit <= 0 {
-		limit = 10 // Default sensible
+		limit = 10 
 	}
 	if limit > 100 {
-		limit = 100 // Máximo razonable
+		limit = 100 
 	}
 
 	url := fmt.Sprintf("%s/rest/v1/prs?select=owner,repo,url,created_at&order=created_at.desc&limit=%d", c.URL, limit)
@@ -255,7 +252,6 @@ func (c *SupabaseClient) GetRecentPRs(ctx context.Context, limit int) ([]PRRecor
 	return prs, nil
 }
 
-// GetLatestPRCreatedAt obtiene el timestamp del PR más reciente
 func (c *SupabaseClient) GetLatestPRCreatedAt(ctx context.Context) (*time.Time, error) {
 	url := fmt.Sprintf("%s/rest/v1/prs?select=created_at&order=created_at.desc&limit=1", c.URL)
 	req, err := http.NewRequest("GET", url, nil)
@@ -283,7 +279,6 @@ func (c *SupabaseClient) GetLatestPRCreatedAt(ctx context.Context) (*time.Time, 
 		return nil, err
 	}
 
-	// Si no hay PRs, retornar nil
 	if len(prs) == 0 {
 		return nil, nil
 	}

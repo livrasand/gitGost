@@ -1682,7 +1682,7 @@ func VerifyHandler(c *gin.Context) {
 	baseURL := fmt.Sprintf("%s://%s", getScheme(c.Request), c.Request.Host)
 
 	// URLs de verificación externas — independientes del operador
-	repoSlug := "livrasand/gitGost"
+	repoSlug := strings.TrimPrefix(sourceRepo, "https://github.com/")
 	githubCommitURL := fmt.Sprintf("https://github.com/%s/commit/%s", repoSlug, commitHash)
 	githubAttestURL := fmt.Sprintf("https://github.com/%s/attestations", repoSlug)
 	sigstoreSearchURL := fmt.Sprintf("https://search.sigstore.dev/?hash=%s", commitHash)

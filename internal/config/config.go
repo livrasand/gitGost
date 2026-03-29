@@ -6,21 +6,19 @@ import (
 	"time"
 )
 
-// Config holds all configuration for the application
 type Config struct {
 	Port           string
 	ReadTimeout    time.Duration
 	WriteTimeout   time.Duration
 	APIKey         string
 	GitHubToken    string
-	LogFormat      string // "text" or "json"
+	LogFormat      string
 	SupabaseURL    string
 	SupabaseKey    string
 	PanicPassword  string
 	NtfyAdminTopic string
 }
 
-// Load reads configuration from environment variables with defaults
 func Load() *Config {
 	cfg := &Config{
 		Port:           getEnv("PORT", "8080"),
@@ -28,7 +26,7 @@ func Load() *Config {
 		WriteTimeout:   getDurationEnv("WRITE_TIMEOUT", 30*time.Second),
 		APIKey:         getEnv("GITGOST_API_KEY", ""),
 		GitHubToken:    getEnv("GITHUB_TOKEN", ""),
-		LogFormat:      getEnv("LOG_FORMAT", "text"), // "text" or "json"
+		LogFormat:      getEnv("LOG_FORMAT", "text"), 
 		SupabaseURL:    getEnv("SUPABASE_URL", ""),
 		SupabaseKey:    getEnv("SUPABASE_KEY", ""),
 		PanicPassword:  getEnv("PANIC_PASSWORD", ""),
@@ -38,7 +36,6 @@ func Load() *Config {
 	return cfg
 }
 
-// getEnv gets an environment variable or returns a default value
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
@@ -46,7 +43,6 @@ func getEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
-// getDurationEnv gets a duration environment variable or returns a default value
 func getDurationEnv(key string, defaultValue time.Duration) time.Duration {
 	if value := os.Getenv(key); value != "" {
 		if parsed, err := time.ParseDuration(value); err == nil {
@@ -56,7 +52,6 @@ func getDurationEnv(key string, defaultValue time.Duration) time.Duration {
 	return defaultValue
 }
 
-// getIntEnv gets an integer environment variable or returns a default value
 func getIntEnv(key string, defaultValue int) int {
 	if value := os.Getenv(key); value != "" {
 		if parsed, err := strconv.Atoi(value); err == nil {

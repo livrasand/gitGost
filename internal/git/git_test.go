@@ -6,11 +6,9 @@ import (
 )
 
 func TestPushToGitHub_NoToken(t *testing.T) {
-	// Save original env
 	originalToken := os.Getenv("GITHUB_TOKEN")
 	defer os.Setenv("GITHUB_TOKEN", originalToken)
 
-	// Remove token
 	os.Unsetenv("GITHUB_TOKEN")
 
 	_, err := PushToGitHub("owner", "repo", "/tmp/nonexistent", "forkowner", "")
@@ -25,7 +23,6 @@ func TestPushToGitHub_NoToken(t *testing.T) {
 func TestReceivePack(t *testing.T) {
 	tempDir := t.TempDir()
 
-	// Save original env
 	originalToken := os.Getenv("GITHUB_TOKEN")
 	defer func() {
 		if originalToken != "" {
@@ -33,7 +30,6 @@ func TestReceivePack(t *testing.T) {
 		}
 	}()
 
-	// Test without token - should fail
 	os.Unsetenv("GITHUB_TOKEN")
 	_, _, _, err := ReceivePack(tempDir, []byte{}, "owner", "repo")
 	if err == nil {
@@ -52,7 +48,6 @@ func TestSquashCommits_NoRepo(t *testing.T) {
 }
 
 func TestRewriteCommits(t *testing.T) {
-	// This is currently a stub, so it should not error
 	err := RewriteCommits("/tmp/nonexistent")
 	if err != nil {
 		t.Errorf("RewriteCommits should not error (it's a stub): %v", err)

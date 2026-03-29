@@ -2034,13 +2034,44 @@ The word 'recieve' should be 'receive'."
                 const commitEl = document.getElementById('footer-commit');
                 if (commitEl) {
                     commitEl.textContent = short;
-                    commitEl.href = `https://github.com/livrasand/gitGost/commit/${hash}`;
+                    const repoBase = data.sourceRepo || 'https://github.com/livrasand/gitGost';
+                    commitEl.href = `${repoBase.replace(/\/$/, '')}/commit/${hash}`;
                 }
             } catch (_) {}
         }
         loadBuildInfo();
 
     </script>
+
+    <!-- Audit & Verification section -->
+    <section id="audit" style="margin: 4rem 0; min-width: 0;">
+        <div class="issue-container">
+            <div class="issue-header">
+                <div class="issue-eyebrow">Audit &amp; transparency</div>
+                <h2 style="margin:0 0 .5rem; font-size:1.5rem; font-weight:700;">GitHub Build Attestations</h2>
+                <p>Every build on <code>main</code> generates a cryptographic attestation via <code>actions/attest-build-provenance</code>. This anchors the build in Sigstore's public transparency log, allowing you to verify that the binary you download matches the source code on GitHub.</p>
+            </div>
+
+            <div class="terminal">
+                <div class="terminal-titlebar">
+                    <span class="terminal-btn close"></span>
+                    <span class="terminal-btn min"></span>
+                    <span class="terminal-btn max"></span>
+                </div>
+                <div class="terminal-body">
+<span class="comment"># Requires GitHub CLI (gh)</span>
+<span class="prompt">$</span> curl -o gitgost-server https://gitgost.leapcell.app/gitgost-bin
+<span class="prompt">$</span> gh attestation verify gitgost-server --repo livrasand/gitGost
+
+<span class="success">✓ Verification succeeded</span>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <a href="/VERIFY" target="_blank" class="btn" style="display:inline-block; width:auto; padding:.8rem 2rem;">Full Verification Instructions</a>
+            </div>
+        </div>
+    </section>
 
     <footer style="font-size:0.75rem;color:var(--fg-secondary);margin-top:2rem;padding:1.5rem 1rem;border-top:1px solid var(--border);text-align:center;">
         <div style="max-width:56rem;margin:0 auto;display:flex;flex-direction:column;gap:0.5rem;align-items:center;">

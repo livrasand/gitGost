@@ -1798,34 +1798,24 @@ It does not expose environment variables, tokens, keys, or internal configuratio
 }
 
 // BinaryHandler sirve el binario compilado del servidor para verificación.
-// Usa /proc/self/exe para leer el ejecutable actual del proceso, sin depender
-// de rutas hardcodeadas ni almacenamiento externo (compatible con Leapcell).
+// Utiliza os.Executable() con fallback a /proc/self/exe para máxima compatibilidad.
 func BinaryHandler(c *gin.Context) {
-	// /proc/self/exe apunta al ejecutable en curso en cualquier Linux
-	exePath, err := os.Readlink("/proc/self/exe")
+	exePath, err := os.Executable()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "binary not accessible on this platform"})
-		return
+		// Fallback para Linux en caso de que os.Executable() falle
+		exePath = "/proc/self/exe"
 	}
 
-	f, err := os.Open(exePath)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not open binary"})
-		return
-	}
-	defer f.Close()
-
-	info, err := f.Stat()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not stat binary"})
+	// Verificar accesibilidad antes de servir
+	if _, err := os.Stat(exePath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "binary not accessible", "details": err.Error()})
 		return
 	}
 
 	c.Header("Content-Disposition", "attachment; filename=\"gitgost\"")
-	c.Header("Content-Type", "application/octet-stream")
-	c.Header("Content-Length", fmt.Sprintf("%d", info.Size()))
 	c.Header("X-Deployed-Commit", commitHash)
 	c.Header("X-Source-Repo", sourceRepo)
-	c.Status(http.StatusOK)
-	io.Copy(c.Writer, f)
+	
+	// c.File de Gin es más eficiente y maneja streaming/ranges automáticamente
+	c.File(exePath)
 }

@@ -17,15 +17,12 @@ func min(a, b int) int {
 	return b
 }
 
-// PushToGitHub empuja los commits al fork. Si targetBranch está vacío, genera
-// un nombre único con timestamp. Si targetBranch está dado, hace force-push a esa rama.
 func PushToGitHub(owner, repo, tempDir, forkOwner, targetBranch string) (string, error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
 
-	// Usar el branch dado o generar uno único con timestamp
 	branch := targetBranch
 	if branch == "" {
 		timestamp := time.Now().Unix()
@@ -37,12 +34,10 @@ func PushToGitHub(owner, repo, tempDir, forkOwner, targetBranch string) (string,
 		return "", err
 	}
 
-	// Push to fork, not original repo
 	forkURL := fmt.Sprintf("https://github.com/%s/%s.git", forkOwner, repo)
 	fmt.Printf("DEBUG: Pushing to fork: %s\n", forkURL)
 	fmt.Printf("DEBUG: Branch name: %s\n", branch)
 
-	// Eliminar remote origin si existe y crear uno nuevo apuntando al fork
 	_ = r.DeleteRemote("origin")
 
 	_, err = r.CreateRemote(&config.RemoteConfig{
@@ -55,7 +50,6 @@ func PushToGitHub(owner, repo, tempDir, forkOwner, targetBranch string) (string,
 	}
 	fmt.Printf("DEBUG: Remote 'fork' is ready\n")
 
-	// Usar force-push (+) cuando se actualiza una rama existente
 	refSpecStr := fmt.Sprintf("HEAD:refs/heads/%s", branch)
 	if targetBranch != "" {
 		refSpecStr = "+" + refSpecStr
@@ -66,8 +60,8 @@ func PushToGitHub(owner, repo, tempDir, forkOwner, targetBranch string) (string,
 		RemoteName: "fork",
 		RefSpecs:   []config.RefSpec{refSpec},
 		Auth: &http.BasicAuth{
-			Username: "x-access-token", // GitHub requires this for token auth
-			Password: token,            // Token goes in password field
+			Username: "x-access-token", 
+			Password: token,            
 		},
 		Force: targetBranch != "",
 	})

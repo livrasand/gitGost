@@ -15,7 +15,6 @@ func CleanupTempDir(dir string) {
 	os.RemoveAll(dir)
 }
 
-// CleanupOldTempDirs removes temp dirs older than 1 hour
 func CleanupOldTempDirs() {
 	tempDir := os.TempDir()
 	entries, err := os.ReadDir(tempDir)

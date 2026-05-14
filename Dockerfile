@@ -1,14 +1,20 @@
-ARG GO_VERSION=1
-FROM golang:${GO_VERSION}-bookworm as builder
+FROM golang:1.22-alpine AS builder
 
-WORKDIR /usr/src/app
-COPY go.mod go.sum ./
-RUN go mod download && go mod verify
+WORKDIR /app
+
 COPY . .
-RUN go build -v -o /run-app .
+
+ARG COMMIT=unknown
+ARG BUILD_TIME=unknown
+
+RUN go build -ldflags="-X 'main.commitHash=${COMMIT}' -X 'main.buildTime=${BUILD_TIME}'" \
+    -o app ./cmd/server
 
 
-FROM debian:bookworm
+FROM alpine:latest
 
-COPY --from=builder /run-app /usr/local/bin/
-CMD ["run-app"]
+WORKDIR /app
+
+COPY --from=builder /app/app .
+
+CMD ["./app"]

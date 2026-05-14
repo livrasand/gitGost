@@ -16,5 +16,6 @@ FROM alpine:latest
 WORKDIR /app
 
 COPY --from=builder /app/app .
+COPY web/ ./web/
 
 CMD ["./app"]

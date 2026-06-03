@@ -287,6 +287,52 @@ torsocks curl https://check.torproject.org/api/ip
 
 > **Heads-up:** Tor is slow. A push that normally takes seconds may take a few minutes. This is expected — Tor routes traffic through three encrypted nodes worldwide. gitGost's 10 MB commit limit is partly sized with this in mind.
 
+### Strip metadata from binary files before committing
+
+gitGost anonymizes commit metadata, but **binary files (images, PDFs, Office documents) can contain embedded metadata** — EXIF data, GPS coordinates, author names, device info — that reveal your identity regardless of commit anonymization. Strip it before committing with **exiftool**.
+
+#### Install
+
+```bash
+# Debian / Ubuntu
+sudo apt install libimage-exiftool-perl
+
+# Arch
+sudo pacman -S perl-image-exiftool
+
+# macOS
+brew install exiftool
+
+# Windows: download the executable from https://exiftool.org
+# Extract exiftool(-k).exe, rename to exiftool.exe, place in PATH
+```
+
+#### Verify and strip
+
+```bash
+# Check what metadata a file exposes
+exiftool photo.jpg
+# → GPS Latitude  : 48.8566   ← your location
+# → Author        : John Doe  ← your name
+
+# Strip all metadata from a single file
+exiftool -all= photo.jpg
+
+# Strip recursively from a directory
+exiftool -all= -r ./assets/
+```
+
+#### Then commit and push safely
+
+```bash
+git add assets/
+git commit -am "add: project screenshots"
+git push gost my-branch:main
+# → PR opened as @gitgost-anonymous — no metadata, no trace
+```
+
+> **Note:** exiftool creates backup files (`*_original`) by default. Add `-overwrite_original` to skip them: `exiftool -all= -overwrite_original photo.jpg`.
+
 ### Windows alternatives
 
 `torsocks` is not available on Windows natively. Use one of the following options instead.

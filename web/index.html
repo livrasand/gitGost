@@ -991,8 +991,9 @@
             <div class="terminal-tabs">
                 <button class="terminal-tab active" data-terminal="push">Push / PR</button>
                 <button class="terminal-tab" data-terminal="update">Update PR</button>
-                <button class="terminal-tab" data-terminal="fetch">Fetch / Pull (optional)</button>
+                <button class="terminal-tab" data-terminal="fetch">Fetch / Pull</button>
                 <button class="terminal-tab" data-terminal="tor">Push via Tor</button>
+                <button class="terminal-tab" data-terminal="exif">Strip Metadata</button>
             </div>
             <div class="terminal" id="terminal-push"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Add as remote → push → done. Fully anonymous.</span>
 <span class="prompt">$</span> git remote add gost https://gitgost.fly.dev/v1/gh/torvalds/linux
@@ -1021,6 +1022,63 @@ The word 'recieve' should be 'receive'."
 <span class="prompt">$</span> git fetch gost
 <span class="prompt">$</span> git pull gost main
 <span class="success">→</span> Repository cloned with zero identity exposure</div>
+            </div>
+
+            <div id="terminal-exif" style="display:none;">
+                <p style="color:var(--fg-secondary);margin:0 0 1rem;max-width:56rem;">gitGost anonymizes commit metadata, but <strong>binary files (images, PDFs, Office documents) can contain embedded metadata</strong> — EXIF data, GPS coordinates, author names — that reveal your identity regardless of commit anonymization. Strip it before committing with <strong>exiftool</strong>.</p>
+                <div class="terminal-tabs">
+                    <button class="terminal-tab active" data-exif="linux">Linux / macOS</button>
+                    <button class="terminal-tab" data-exif="windows">Windows</button>
+                </div>
+                <div class="terminal" id="exif-linux"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Install exiftool</span>
+<span class="prompt">$</span> sudo apt install libimage-exiftool-perl  <span class="comment"># Debian / Ubuntu</span>
+<span class="prompt">$</span> sudo pacman -S perl-image-exiftool      <span class="comment"># Arch</span>
+<span class="prompt">$</span> brew install exiftool                  <span class="comment"># macOS</span>
+
+<span class="comment"># Verify a file has metadata before stripping</span>
+<span class="prompt">$</span> exiftool photo.jpg
+<span class="success">→</span> GPS Latitude  : <span class="hl">48.8566</span>  ← your location
+<span class="success">→</span> Author        : <span class="hl">John Doe</span>  ← your name
+
+<span class="comment"># Strip all metadata from a single file</span>
+<span class="prompt">$</span> exiftool -all= photo.jpg
+<span class="success">→</span> 1 image files updated
+
+<span class="comment"># Strip recursively from a directory</span>
+<span class="prompt">$</span> exiftool -all= -r ./assets/
+<span class="success">→</span> 12 image files updated
+
+<span class="comment"># Now commit and push safely</span>
+<span class="prompt">$</span> git add assets/
+<span class="prompt">$</span> git commit -am "add: project screenshots"
+<span class="prompt">$</span> git push gost my-branch:main
+<span class="success">→</span> PR opened as @gitgost-anonymous — no metadata, no trace</div>
+                </div>
+                <div class="terminal" id="exif-windows" style="display:none;"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># 1. Download exiftool from https://exiftool.org</span>
+<span class="comment">#    Get the Windows Executable (.zip), extract exiftool(-k).exe</span>
+<span class="comment">#    Rename it to exiftool.exe and place it in C:\Windows or your PATH</span>
+
+<span class="comment"># 2. Open Command Prompt or PowerShell</span>
+
+<span class="comment"># Verify metadata exists</span>
+<span class="prompt">&gt;</span> exiftool photo.jpg
+<span class="success">→</span> GPS Latitude  : <span class="hl">48.8566</span>
+<span class="success">→</span> Author        : <span class="hl">John Doe</span>
+
+<span class="comment"># Strip all metadata from a file</span>
+<span class="prompt">&gt;</span> exiftool -all= photo.jpg
+<span class="success">→</span> 1 image files updated
+
+<span class="comment"># Strip recursively from a folder</span>
+<span class="prompt">&gt;</span> exiftool -all= -r .\assets\
+<span class="success">→</span> 12 image files updated
+
+<span class="comment"># Now commit and push safely</span>
+<span class="prompt">&gt;</span> git add assets/
+<span class="prompt">&gt;</span> git commit -am "add: project screenshots"
+<span class="prompt">&gt;</span> git push gost my-branch:main
+<span class="success">→</span> PR opened as @gitgost-anonymous — no metadata, no trace</div>
+                </div>
             </div>
 
             <div id="terminal-tor" style="display:none;">
@@ -1868,6 +1926,18 @@ The word 'recieve' should be 'receive'."
                 document.getElementById('terminal-update').style.display = target === 'update' ? '' : 'none';
                 document.getElementById('terminal-fetch').style.display = target === 'fetch' ? '' : 'none';
                 document.getElementById('terminal-tor').style.display = target === 'tor' ? '' : 'none';
+                document.getElementById('terminal-exif').style.display = target === 'exif' ? '' : 'none';
+            });
+        });
+
+        // Exif sub-tab switching
+        document.querySelectorAll('[data-exif]').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('[data-exif]').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const target = tab.dataset.exif;
+                document.getElementById('exif-linux').style.display = target === 'linux' ? '' : 'none';
+                document.getElementById('exif-windows').style.display = target === 'windows' ? '' : 'none';
             });
         });
 

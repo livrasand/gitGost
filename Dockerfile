@@ -15,6 +15,8 @@ FROM alpine:latest
 
 WORKDIR /app
 
+RUN apk add --no-cache git
+
 COPY --from=builder /app/app .
 COPY web/ ./web/
 

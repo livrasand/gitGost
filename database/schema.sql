@@ -71,3 +71,21 @@ CREATE POLICY "Allow anonymous insert reports" ON reports
 CREATE POLICY "Allow public read reports" ON reports
     FOR SELECT
     USING (true);
+
+-- Tabla de comentarios anónimos
+CREATE TABLE IF NOT EXISTS comments (
+    id BIGSERIAL PRIMARY KEY,
+    owner TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    url TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_comments_created_at ON comments(created_at DESC);
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow anonymous insert comments" ON comments
+    FOR INSERT
+    WITH CHECK (true);
+CREATE POLICY "Allow public read comments" ON comments
+    FOR SELECT
+    USING (true);

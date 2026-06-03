@@ -285,7 +285,7 @@ func CreateAnonymousIssue(owner, repo, title, body string, labels []string) (str
 
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues", owner, repo)
 
-	issueBody := fmt.Sprintf("%s\n\n---\n\n*This is an anonymous contribution made via [gitGost](https://gitgost.leapcell.app).*\n\n*The original author's identity has been anonymized to protect their privacy.*", body)
+	issueBody := fmt.Sprintf("%s\n\n---\n\n*This is an anonymous contribution made via [gitGost](https://gitgost.fly.dev).*\n\n*The original author's identity has been anonymized to protect their privacy.*", body)
 
 	payload := map[string]interface{}{
 		"title":  title,
@@ -555,7 +555,7 @@ func CreatePR(owner, repo, branch, forkOwner, commitMessage string) (string, err
 
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls", owner, repo)
 
-	prBody := fmt.Sprintf("%s\n\n---\n\n*This is an anonymous contribution made via [gitGost](https://gitgost.leapcell.app).*\n\n*The original author's identity has been anonymized to protect their privacy.*", commitMessage)
+	prBody := fmt.Sprintf("%s\n\n---\n\n*This is an anonymous contribution made via [gitGost](https://gitgost.fly.dev).*\n\n*The original author's identity has been anonymized to protect their privacy.*", commitMessage)
 
 	data := map[string]interface{}{
 		"title": "Anonymous contribution via gitGost",

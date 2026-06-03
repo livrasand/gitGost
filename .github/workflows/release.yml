@@ -105,7 +105,7 @@ jobs:
 
             ### Verificar el binario desplegado
             ```bash
-            curl -o gitgost-server https://gitgost.leapcell.app/gitgost-bin
+            curl -o gitgost-server https://gitgost.fly.dev/gitgost-bin
             sha256sum gitgost-server
             # Debe coincidir con el hash de arriba
             ```

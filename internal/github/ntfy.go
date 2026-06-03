@@ -29,7 +29,7 @@ func NtfyServiceURL() string {
 	if u := os.Getenv("SERVICE_URL"); u != "" {
 		return u
 	}
-	return "https://gitgost.leapcell.app"
+	return "https://gitgost.fly.dev"
 }
 
 // PublishNtfyEvent publishes an event to the ntfy topic corresponding to a PR hash.

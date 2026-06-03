@@ -46,23 +46,6 @@ That’s it. No login, token, name, or email required — gitGost provides stron
 > "Fixed GPIO mapping bug in 10s without doxxing risk – @gitgost-anonymous"  
 > [View PR ↗](https://github.com/mehdi7129/inky-photo-frame/pull/3) *(Example from mehdi7129/inky-photo-frame)*
 
-<br />
-
-<a href="https://leapcell.io?utm_source=github_readme_stats_team&utm_campaign=gitGost">
-<picture>
-  <source media="(prefers-color-scheme: light)" srcset="./web/assets/logos/powered-by-leapcell.svg">
-  <source media="(prefers-color-scheme: dark)" srcset="./web/assets/logos/powered-by-leapcell-dark.svg">
-  <img src="./web/assets/logos/powered-by-leapcell.svg" alt="Powered by Leapcell">
-</picture>
-</a>
-<a href="https://www.producthunt.com/products/gitgost-anonymous-git-contributions?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-gitgost-anonymous-git-contributions" target="_blank" rel="noopener noreferrer">
-<picture>
-<source media="(prefers-color-scheme: light)" srcset="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1088722&amp;theme=light&amp;t=1772487442890">
-<source media="(prefers-color-scheme: dark)" srcset="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1088722&amp;theme=dark&amp;t=1772487608313">
-<img alt="gitGost — Anonymous Git Contributions - Contribute to any GitHub repo without leaving a trace. | Product Hunt" width="200" height="44" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1088722&amp;theme=light&amp;t=1772487442890">
-</picture>
-</a>
-
 ## Features
 
 | Feature                     | Description                                                                 |
@@ -72,17 +55,6 @@ That’s it. No login, token, name, or email required — gitGost provides stron
 | **Battle-tested Security**  | Rate limiting, repository size caps, commit validation. Written in pure Go with minimal dependencies – fully auditable. |
 | **Works Everywhere**        | Terminal, CI/CD, Docker, scripts – any public GitHub repo, anywhere Git runs. |
 | **Open Source & AGPL**      | 100% transparent. Fork it, audit it, host it yourself.                     |
-
-## Comparison with Alternatives
-
-| Feature       | gitGost                          | GitHub CLI                       | Forgejo                           |
-|---------------|----------------------------------|----------------------------------|----------------------------------|
-| **Anonymity** | ✅ **Full** - Strips all metadata, uses neutral bot | ❌ **None** - Requires account, full traceability | ⚠️ **Partial** - Depends on instance, typically requires account |
-| **Setup**     | ✅ **One command** - `git remote add gost <url>` | ❌ **Complex** - Install CLI, authenticate | ❌ **Self-hosting** - Set up instance, manage accounts |
-| **Providers** | ✅ **Multi** - GitHub + planned GitLab/Bitbucket | ⚠️ **Single** - GitHub only | ✅ **Any** - Self-hosted, unlimited instances |
-| **Limits**    | ⚠️ **Reasonable** - 5 PRs/IP/hr, 500MB repo, 10MB commit | ⚠️ **API limits** - GitHub rate limits | ⚠️ **Instance-dependent** - Varies by host |
-
-*Legend: ✅ Superior • ⚠️ Acceptable • ❌ Inferior*
 
 ## Anonymous Contributor Friendly Badge
 
@@ -96,6 +68,27 @@ For verified repositories, add a `.gitgost.yml` file to your repository root and
 ![Anonymous Contributor Friendly](https://gitgost.fly.dev/badges/anonymous-friendly.svg?repo=livrasand%2FgitGost)
 
 This badge helps contributors know that anonymous contributions are accepted and encouraged.
+
+## Repository Opt-Out
+
+Maintainers can block anonymous contributions via gitGost by adding `DENY_ALL: true` to the `.gitgost.yml` file in their repository root:
+
+```yaml
+# .gitgost.yml
+DENY_ALL: true
+```
+
+When this is set, gitGost will reject any push attempt before creating a fork or PR. Contributors will see:
+
+```text
+remote: CONTRIBUTION BLOCKED
+remote:
+remote: This repository does not accept anonymous contributions
+remote: via gitGost. Please contact the maintainer directly.
+error: push rejected: repository has opted out of gitGost
+```
+
+If the file does not exist or `DENY_ALL` is not set, contributions are allowed by default.
 
 ## Why developers love gitGost
 

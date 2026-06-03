@@ -175,6 +175,24 @@ func ReceivePackHandler(c *gin.Context) {
 	// Record push globally to detect botnet/script patterns across IPs
 	go recordGlobalBurst(ip)
 
+	// Check repository opt-out policy (.gitgost.yml DENY_ALL)
+	policy, err := github.GetRepoPolicy(owner, repo)
+	if err == nil && policy != nil && policy.DenyAll {
+		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
+		c.Writer.WriteHeader(http.StatusOK)
+		var errResp bytes.Buffer
+		WriteSidebandLine(&errResp, 2, "remote: ")
+		WriteSidebandLine(&errResp, 2, "remote: CONTRIBUTION BLOCKED")
+		WriteSidebandLine(&errResp, 2, "remote: ")
+		WriteSidebandLine(&errResp, 2, "remote: This repository does not accept anonymous contributions")
+		WriteSidebandLine(&errResp, 2, "remote: via gitGost. Please contact the maintainer directly.")
+		WriteSidebandLine(&errResp, 2, "remote: ")
+		WriteSidebandLine(&errResp, 3, "push rejected: repository has opted out of gitGost")
+		WritePktLine(&errResp, "")
+		c.Writer.Write(errResp.Bytes())
+		return
+	}
+
 	// Track PR URL for potential rollback (registered after PR is created below)
 
 	// Read full body

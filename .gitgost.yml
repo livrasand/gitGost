@@ -1,2 +1,5 @@
 # gitGost Anonymous Contribution Support
 # This file indicates that this repository welcomes anonymous contributions via gitGost.
+#
+# To opt out and block all anonymous contributions via gitGost, add:
+# DENY_ALL: true

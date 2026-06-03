@@ -3,6 +3,7 @@ package github
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -13,6 +14,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 // Timeout mayor para evitar expiraciones en búsquedas lentas de GitHub.
@@ -640,6 +643,66 @@ func GetRefs(owner, repo string) ([]Ref, error) {
 	}
 
 	return refs, nil
+}
+
+// RepoPolicy contiene las directivas de configuración leídas desde .gitgost.yml del repositorio destino.
+type RepoPolicy struct {
+	DenyAll bool `yaml:"DENY_ALL"`
+}
+
+// GetRepoPolicy descarga .gitgost.yml desde el branch por defecto del repositorio y retorna la política.
+// Si el archivo no existe o no puede leerse, retorna una política permisiva (sin restricciones).
+func GetRepoPolicy(owner, repo string) (*RepoPolicy, error) {
+	token := os.Getenv("GITHUB_TOKEN")
+	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/.gitgost.yml", owner, repo)
+
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return &RepoPolicy{}, nil
+	}
+	if token != "" {
+		req.Header.Set("Authorization", "token "+token)
+	}
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", "gitGost")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return &RepoPolicy{}, nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		// Archivo no existe: política permisiva por defecto
+		return &RepoPolicy{}, nil
+	}
+
+	var fileResp struct {
+		Content  string `json:"content"`
+		Encoding string `json:"encoding"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&fileResp); err != nil {
+		return &RepoPolicy{}, nil
+	}
+
+	var raw []byte
+	if fileResp.Encoding == "base64" {
+		// GitHub devuelve el contenido en base64 con saltos de línea
+		cleaned := strings.ReplaceAll(fileResp.Content, "\n", "")
+		raw, err = base64.StdEncoding.DecodeString(cleaned)
+		if err != nil {
+			return &RepoPolicy{}, nil
+		}
+	} else {
+		raw = []byte(fileResp.Content)
+	}
+
+	var policy RepoPolicy
+	if err := yaml.Unmarshal(raw, &policy); err != nil {
+		return &RepoPolicy{}, nil
+	}
+
+	return &policy, nil
 }
 
 // IsRepoVerified checks if the repository has a .gitgost.yml file indicating support for anonymous contributions

@@ -27,16 +27,16 @@
     <meta name="keywords" content="anonymous git contributions, git privacy, github anonymous pr, open source git, gitgost, anonymous coding, privacy git, zero trace git, git contributions anonymous, gitgost app">
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://gitgost.leapcell.app">
+    <meta property="og:url" content="https://gitgost.fly.dev">
     <meta property="og:title" content="gitGost — Anonymous Git Contributions">
     <meta property="og:description" content="Contribute to any GitHub repo without leaving a trace. Anonymous Git contributions with gitGost - privacy first, zero accounts, open source.">
-    <meta property="og:image" content="https://gitgost.leapcell.app/assets/logos/favicon.ico">
+    <meta property="og:image" content="https://gitgost.fly.dev/assets/logos/favicon.ico">
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://gitgost.leapcell.app">
+    <meta property="twitter:url" content="https://gitgost.fly.dev">
     <meta property="twitter:title" content="gitGost — Anonymous Git Contributions">
     <meta property="twitter:description" content="Contribute to any GitHub repo without leaving a trace.">
-    <meta property="twitter:image" content="https://gitgost.leapcell.app/assets/logos/favicon.ico">
+    <meta property="twitter:image" content="https://gitgost.fly.dev/assets/logos/favicon.ico">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -47,7 +47,7 @@
       "name": "gitGost",
       "alternateName": "Anonymous Git Contributions",
       "description": "Contribute to any GitHub repo without leaving a trace. Anonymous Git contributions with gitGost - privacy first, zero accounts, open source.",
-      "url": "https://gitgost.leapcell.app",
+      "url": "https://gitgost.fly.dev",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "Web",
       "offers": {
@@ -413,54 +413,6 @@
             color: var(--accent);
             margin-bottom: .8rem;
             font-size: 1.15rem;
-        }
-
-        /* Recent PRs */
-        .pr-list {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 1.5rem;
-            margin: 2rem 0;
-        }
-        .pr-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem;
-            border-bottom: 1px solid var(--border);
-            transition: background .2s;
-        }
-        .pr-item:last-child { border-bottom: none; }
-        .pr-item:hover { background: var(--bg); }
-        .pr-repo {
-            font-family: 'IBM Plex Mono', monospace;
-            font-weight: 600;
-            color: var(--accent);
-            flex: 1;
-        }
-        .pr-time {
-            font-size: 0.85rem;
-            opacity: 0.6;
-        }
-        .pr-link {
-            color: var(--fg);
-            text-decoration: none;
-            padding: .4rem .8rem;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: .85rem;
-            transition: all .2s;
-        }
-        .pr-link:hover {
-            border-color: var(--accent);
-            background: var(--accent);
-            color: white;
-        }
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            opacity: 0.6;
         }
 
         /* Badge section */
@@ -959,9 +911,6 @@
             .grid { gap: 1rem; }
             .card { padding: 1.5rem; }
             .card h3 { font-size: 1.1rem; }
-            .pr-list { padding: 1rem; }
-            .pr-item { padding: 0.8rem; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
-            .pr-link { align-self: flex-end; }
             .btn { padding: .8rem 1.8rem; font-size: 0.95rem; }
             h2 { margin: 3rem 0 1.5rem; font-size: clamp(1.5rem, 4vw, 2rem); }
             .footer { margin-top: 4rem; padding-top: 2rem; font-size: .85rem; }
@@ -994,7 +943,6 @@
             .terminal-body { padding: 0.75rem; }
             .grid { grid-template-columns: 1fr; gap: 1rem; }
             .card { padding: 1.2rem; }
-            .pr-item { padding: 0.6rem; }
             .btn { padding: .7rem 1.5rem; font-size: 0.9rem; }
             .issue-container { padding: 1.2rem .9rem; }
             .issue-header p { font-size: .875rem; }
@@ -1044,9 +992,10 @@
                 <button class="terminal-tab active" data-terminal="push">Push / PR</button>
                 <button class="terminal-tab" data-terminal="update">Update PR</button>
                 <button class="terminal-tab" data-terminal="fetch">Fetch / Pull (optional)</button>
+                <button class="terminal-tab" data-terminal="tor">Push via Tor</button>
             </div>
             <div class="terminal" id="terminal-push"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Add as remote → push → done. Fully anonymous.</span>
-<span class="prompt">$</span> git remote add gost https://gitgost.leapcell.app/v1/gh/torvalds/linux
+<span class="prompt">$</span> git remote add gost https://gitgost.fly.dev/v1/gh/torvalds/linux
 <span class="prompt">$</span> git checkout -b fix-typo
 <span class="prompt">$</span> git commit -am "fix: typo in documentation
 
@@ -1066,30 +1015,89 @@ The word 'recieve' should be 'receive'."
 <span class="comment"># If the hash is unknown or the PR was closed, a new PR is created automatically.</span></div>
             </div>
             <div class="terminal" id="terminal-fetch" style="display:none;"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Clone or fetch anonymously — no GitHub account needed.</span>
-<span class="prompt">$</span> git clone https://anon:@gitgost.leapcell.app/v1/gh/torvalds/linux
+<span class="prompt">$</span> git clone https://anon:@gitgost.fly.dev/v1/gh/torvalds/linux
 <span class="comment"># Or add as remote and fetch/pull later</span>
-<span class="prompt">$</span> git remote add gost https://anon:@gitgost.leapcell.app/v1/gh/torvalds/linux
+<span class="prompt">$</span> git remote add gost https://anon:@gitgost.fly.dev/v1/gh/torvalds/linux
 <span class="prompt">$</span> git fetch gost
 <span class="prompt">$</span> git pull gost main
 <span class="success">→</span> Repository cloned with zero identity exposure</div>
             </div>
 
+            <div id="terminal-tor" style="display:none;">
+                <p style="color:var(--fg-secondary);margin:0 0 1rem;max-width:56rem;">gitGost strips your name, email, and metadata — but your IP is still visible to the server. Wrap your push with <strong>torsocks</strong> (Linux/macOS) or configure a SOCKS5 proxy (Windows) so the server only sees a Tor exit node IP, not yours.</p>
+                <div class="terminal-tabs">
+                    <button class="terminal-tab active" data-tor="linux">Linux / macOS</button>
+                    <button class="terminal-tab" data-tor="windows-browser">Windows – Tor Browser</button>
+                    <button class="terminal-tab" data-tor="windows-wsl">Windows – WSL2</button>
+                </div>
+                <div class="terminal" id="tor-linux"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Install tor + torsocks</span>
+<span class="prompt">$</span> sudo apt install tor torsocks    <span class="comment"># Debian / Ubuntu</span>
+<span class="prompt">$</span> sudo pacman -S tor torsocks      <span class="comment"># Arch</span>
+<span class="prompt">$</span> brew install tor torsocks        <span class="comment"># macOS</span>
+
+<span class="comment"># Start the Tor daemon</span>
+<span class="prompt">$</span> sudo systemctl start tor         <span class="comment"># Linux</span>
+<span class="prompt">$</span> brew services start tor          <span class="comment"># macOS</span>
+
+<span class="comment"># Verify your IP is masked</span>
+<span class="prompt">$</span> torsocks curl https://check.torproject.org/api/ip
+<span class="success">→</span> {"IsTor": <span class="hl">true</span>, "IP": "185.220.101.x"}
+
+<span class="comment"># Push through Tor</span>
+<span class="prompt">$</span> torsocks git \
+    -c http.extraHeader="X-Gost-Authorship-Confirmed: 1" \
+    push gost my-branch:main
+<span class="success">→</span> PR opened as @gitgost-anonymous — server sees Tor exit node, not you</div>
+                </div>
+                <div class="terminal" id="tor-windows-browser" style="display:none;"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># 1. Download and install Tor Browser</span>
+<span class="comment">#    https://www.torproject.org/download/</span>
+
+<span class="comment"># 2. Open it and leave it running</span>
+<span class="comment">#    It exposes a SOCKS5 proxy at 127.0.0.1:9150</span>
+
+<span class="comment"># 3. Tell Git to route through that proxy (per-repo recommended)</span>
+<span class="prompt">$</span> git config http.proxy socks5h://127.0.0.1:9150
+<span class="prompt">$</span> git config http.extraHeader "X-Gost-Authorship-Confirmed: 1"
+
+<span class="comment"># 4. Push normally</span>
+<span class="prompt">$</span> git push gost my-branch:main
+<span class="success">→</span> PR opened as @gitgost-anonymous — server sees Tor exit node, not you
+
+<span class="comment"># When done, remove the proxy (if set globally)</span>
+<span class="prompt">$</span> git config --global --unset http.proxy</div>
+                </div>
+                <div class="terminal" id="tor-windows-wsl" style="display:none;"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Inside WSL2 (Ubuntu / Debian) — works exactly like Linux</span>
+<span class="prompt">$</span> sudo apt install tor torsocks
+<span class="prompt">$</span> sudo service tor start
+
+<span class="prompt">$</span> torsocks git \
+    -c http.extraHeader="X-Gost-Authorship-Confirmed: 1" \
+    push gost my-branch:main
+<span class="success">→</span> PR opened as @gitgost-anonymous
+
+<span class="comment"># WSL2 has its own network stack — anonymity is preserved correctly.</span></div>
+                </div>
+            </div>
+
          <!-- PR counter -->
         <div class="stats-banner">
-            <div class="stats-number" id="prCounter">...</div>
-            <div class="stats-label">Anonymous PRs Created</div>
+            <div style="display: flex; gap: 3rem; justify-content: center; flex-wrap: wrap;">
+                <div>
+                    <div class="stats-number" id="prCounter">...</div>
+                    <div class="stats-label">Anonymous PRs Created</div>
+                </div>
+                <div>
+                    <div class="stats-number" id="commentCounter">...</div>
+                    <div class="stats-label">Anonymous Comments Posted</div>
+                </div>
+            </div>
             <div style="margin-top: 1rem; font-size: 0.85rem; opacity: 0.7; max-width: 600px; margin-left: auto; margin-right: auto;">
                 Database hosted in <strong>Central Europe (Zurich)</strong><br>
-                Only stores: counter + repo name + PR URL. <strong>Zero personal data.</strong>
+                Only stores: counter + repo name + URL. <strong>Zero personal data.</strong>
             </div>
         </div>
-        </section>
 
-        <!-- PRs Recientes -->
-        <h2 id="recent">Recent Anonymous Contributions</h2>
-        <div class="pr-list" id="prList">
-            <div class="loading">Loading recent PRs...</div>
-        </div>
+        </section>
 
         <h2>Features</h2>
         <section id="features" class="grid">
@@ -1147,70 +1155,6 @@ The word 'recieve' should be 'receive'."
                 <p>One-line typo fixes don't need your name attached for eternity.</p>
             </div>
         </section>
-
-        <!-- Tor / IP anonymity section -->
-        <h2>Push anonymously over Tor</h2>
-        <p style="color:var(--fg-secondary);margin-bottom:1.25rem;max-width:56rem;">
-            gitGost strips your name, email, and metadata — but your IP is still visible to the server.
-            Wrap your push with <strong>torsocks</strong> (Linux/macOS) or configure a SOCKS5 proxy (Windows)
-            so the server only sees a Tor exit node IP, not yours.
-        </p>
-
-        <div class="terminal-tabs">
-            <button class="terminal-tab active" data-tor="linux">Linux / macOS</button>
-            <button class="terminal-tab" data-tor="windows-browser">Windows – Tor Browser</button>
-            <button class="terminal-tab" data-tor="windows-wsl">Windows – WSL2</button>
-        </div>
-
-        <div class="terminal" id="tor-linux"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Install tor + torsocks</span>
-<span class="prompt">$</span> sudo apt install tor torsocks    <span class="comment"># Debian / Ubuntu</span>
-<span class="prompt">$</span> sudo pacman -S tor torsocks      <span class="comment"># Arch</span>
-<span class="prompt">$</span> brew install tor torsocks        <span class="comment"># macOS</span>
-
-<span class="comment"># Start the Tor daemon</span>
-<span class="prompt">$</span> sudo systemctl start tor         <span class="comment"># Linux</span>
-<span class="prompt">$</span> brew services start tor          <span class="comment"># macOS</span>
-
-<span class="comment"># Verify your IP is masked</span>
-<span class="prompt">$</span> torsocks curl https://check.torproject.org/api/ip
-<span class="success">→</span> {"IsTor": <span class="hl">true</span>, "IP": "185.220.101.x"}
-
-<span class="comment"># Push through Tor</span>
-<span class="prompt">$</span> torsocks git \
-    -c http.extraHeader="X-Gost-Authorship-Confirmed: 1" \
-    push gost my-branch:main
-<span class="success">→</span> PR opened as @gitgost-anonymous — server sees Tor exit node, not you</div>
-        </div>
-
-        <div class="terminal" id="tor-windows-browser" style="display:none;"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># 1. Download and install Tor Browser</span>
-<span class="comment">#    https://www.torproject.org/download/</span>
-
-<span class="comment"># 2. Open it and leave it running</span>
-<span class="comment">#    It exposes a SOCKS5 proxy at 127.0.0.1:9150</span>
-
-<span class="comment"># 3. Tell Git to route through that proxy (per-repo recommended)</span>
-<span class="prompt">$</span> git config http.proxy socks5h://127.0.0.1:9150
-<span class="prompt">$</span> git config http.extraHeader "X-Gost-Authorship-Confirmed: 1"
-
-<span class="comment"># 4. Push normally</span>
-<span class="prompt">$</span> git push gost my-branch:main
-<span class="success">→</span> PR opened as @gitgost-anonymous — server sees Tor exit node, not you
-
-<span class="comment"># When done, remove the proxy (if set globally)</span>
-<span class="prompt">$</span> git config --global --unset http.proxy</div>
-        </div>
-
-        <div class="terminal" id="tor-windows-wsl" style="display:none;"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Inside WSL2 (Ubuntu / Debian) — works exactly like Linux</span>
-<span class="prompt">$</span> sudo apt install tor torsocks
-<span class="prompt">$</span> sudo service tor start
-
-<span class="prompt">$</span> torsocks git \
-    -c http.extraHeader="X-Gost-Authorship-Confirmed: 1" \
-    push gost my-branch:main
-<span class="success">→</span> PR opened as @gitgost-anonymous
-
-<span class="comment"># WSL2 has its own network stack — anonymity is preserved correctly.</span></div>
-        </div>
 
         <!-- Anonymous Issues & PR Comments section -->
         <section class="issue-section">
@@ -1417,64 +1361,6 @@ The word 'recieve' should be 'receive'."
             </div>
         </section>
 
-        <section class="badge-section">
-            <div class="badge-container">
-                <div class="badge-header">
-                    <div class="badge-eyebrow">Show your support</div>
-                    <h3>Welcome anonymous contributions</h3>
-                    <p>Make it visible that your repository accepts PRs via gitGost. Add our badge to your README.</p>
-                </div>
-
-                <div class="badge-showcase">
-                    <div class="badge-preview-card">
-                        <div class="badge-static">
-                            <img src="/badges/anonymous-friendly.svg" alt="Anonymous Contributor Friendly" style="height: 24px;">
-                        </div>
-                        <div class="badge-code">
-                            <code>![Anonymous Contributor Friendly](https://gitgost.leapcell.app/badges/anonymous-friendly.svg)</code>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="badge-generator">
-                    <h4>Get a dynamic badge</h4>
-                    <p>Add a <code>.gitgost.yml</code> file to your repo root to enable verification and get a dynamic badge that shows your acceptance of anonymous contributions.</p>
-
-                    <div class="badge-form">
-                        <div class="form-group">
-                            <label for="repo-input">Repository (owner/repo)</label>
-                            <input type="text" id="repo-input" placeholder="your-username/your-repo" autocomplete="off">
-                        </div>
-                        <div class="form-group">
-                            <label for="badge-type">Badge type</label>
-                            <select id="badge-type">
-                                <option value="friendly">Anonymous Contributor Friendly</option>
-                                <option value="pr-count">Anonymous PRs counter</option>
-                            </select>
-                        </div>
-                        <button onclick="generateBadge()" class="btn primary" id="generate-btn">Generate Badge</button>
-                    </div>
-
-                    <div class="badge-result" id="badge-result"></div>
-
-                    <div class="badge-copy-section" id="badge-copy-section" style="display:none;">
-                        <div class="badge-generated">
-                            <img id="generated-badge" alt="Generated badge" style="height: 20px;">
-                        </div>
-                        <div class="badge-copy-row">
-                            <input type="text" id="badge-markdown" readonly>
-                            <button id="badge-copy-btn" onclick="copyBadgeMarkdown()" aria-label="Copy markdown" title="Copy">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
-                                    <path fill="currentColor" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path>
-                                    <path fill="currentColor" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
         <div class="footer">
             Built for developers who actually care about privacy • <a href="https://github.com/livrasand/gitGost" target="_blank">github.com/livrasand/gitGost</a><br>
             Icons from <a href="https://iconoir.com/" target="_blank">Iconoir</a> by Luca Burgio with License: MIT<br>
@@ -1522,7 +1408,7 @@ The word 'recieve' should be 'receive'."
         // Determine API base URL
         const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
             ? `http://${window.location.host}` 
-            : 'https://gitgost.leapcell.app';
+            : 'https://gitgost.fly.dev';
 
         // Load stats
         async function loadStats() {
@@ -1531,38 +1417,15 @@ The word 'recieve' should be 'receive'."
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 
-                // Update counter with animation
+                // Update counters with animation
                 const counter = document.getElementById('prCounter');
                 animateCounter(counter, 0, data.total_prs || 0, 1500);
+                const commentCounter = document.getElementById('commentCounter');
+                animateCounter(commentCounter, 0, data.total_comments || 0, 1500);
             } catch (error) {
                 console.error('Error loading stats:', error);
                 document.getElementById('prCounter').textContent = '0';
-            }
-        }
-
-        // Load recent PRs
-        async function loadRecentPRs() {
-            try {
-                const response = await fetch(`${API_BASE}/api/recent-prs`);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const data = await response.json();
-                
-                const prList = document.getElementById('prList');
-                
-                if (data.prs && data.prs.length > 0) {
-                    prList.innerHTML = data.prs.map(pr => `
-                        <div class="pr-item">
-                            <div class="pr-repo">${pr.owner}/${pr.repo}</div>
-                            <div class="pr-time">${formatTime(pr.created_at)}</div>
-                            <a href="${pr.url}" target="_blank" class="pr-link">View PR ↗</a>
-                        </div>
-                    `).join('');
-                } else {
-                    prList.innerHTML = '<div class="loading">No PRs yet. Be the first!</div>';
-                }
-            } catch (error) {
-                console.error('Error loading PRs:', error);
-                document.getElementById('prList').innerHTML = '<div class="loading">No recent PRs to display</div>';
+                document.getElementById('commentCounter').textContent = '0';
             }
         }
 
@@ -2004,10 +1867,11 @@ The word 'recieve' should be 'receive'."
                 document.getElementById('terminal-push').style.display = target === 'push' ? '' : 'none';
                 document.getElementById('terminal-update').style.display = target === 'update' ? '' : 'none';
                 document.getElementById('terminal-fetch').style.display = target === 'fetch' ? '' : 'none';
+                document.getElementById('terminal-tor').style.display = target === 'tor' ? '' : 'none';
             });
         });
 
-        // Tor section tab switching
+        // Tor sub-tab switching
         document.querySelectorAll('[data-tor]').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('[data-tor]').forEach(t => t.classList.remove('active'));
@@ -2021,7 +1885,6 @@ The word 'recieve' should be 'receive'."
 
         // Load data on init
         loadStats();
-        loadRecentPRs();
 
         // Load build info from /health
         async function loadBuildInfo() {
@@ -2042,36 +1905,6 @@ The word 'recieve' should be 'receive'."
         loadBuildInfo();
 
     </script>
-
-    <!-- Audit & Verification section -->
-    <section id="audit" style="margin: 4rem 0; min-width: 0;">
-        <div class="issue-container">
-            <div class="issue-header">
-                <div class="issue-eyebrow">Audit &amp; transparency</div>
-                <h2 style="margin:0 0 .5rem; font-size:1.5rem; font-weight:700;">GitHub Build Attestations</h2>
-                <p>Every build on <code>main</code> generates a cryptographic attestation via <code>actions/attest-build-provenance</code>. This anchors the build in Sigstore's public transparency log, allowing you to verify that the binary you download matches the source code on GitHub.</p>
-            </div>
-
-            <div class="terminal">
-                <div class="terminal-titlebar">
-                    <span class="terminal-btn close"></span>
-                    <span class="terminal-btn min"></span>
-                    <span class="terminal-btn max"></span>
-                </div>
-                <div class="terminal-body">
-<span class="comment"># Requires GitHub CLI (gh)</span>
-<span class="prompt">$</span> curl -o gitgost-server https://gitgost.leapcell.app/gitgost-bin
-<span class="prompt">$</span> gh attestation verify gitgost-server --repo livrasand/gitGost
-
-<span class="success">✓ Verification succeeded</span>
-                </div>
-            </div>
-
-            <div style="text-align: center; margin-top: 1.5rem;">
-                <a href="/VERIFY" target="_blank" class="btn" style="display:inline-block; width:auto; padding:.8rem 2rem;">Full Verification Instructions</a>
-            </div>
-        </div>
-    </section>
 
     <footer style="font-size:0.75rem;color:var(--fg-secondary);margin-top:2rem;padding:1.5rem 1rem;border-top:1px solid var(--border);text-align:center;">
         <div style="max-width:56rem;margin:0 auto;display:flex;flex-direction:column;gap:0.5rem;align-items:center;">

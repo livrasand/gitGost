@@ -77,6 +77,13 @@ type Stats struct {
 	TotalPRs int `json:"total_prs"`
 }
 
+type CommentRecord struct {
+	Owner     string    `json:"owner"`
+	Repo      string    `json:"repo"`
+	URL       string    `json:"url"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type KarmaRecord struct {
 	Hash      string    `json:"hash"`
 	Karma     int       `json:"karma"`
@@ -217,10 +224,10 @@ func (c *SupabaseClient) DeleteOldReports(ctx context.Context, hash string, befo
 
 func (c *SupabaseClient) GetRecentPRs(ctx context.Context, limit int) ([]PRRecord, error) {
 	if limit <= 0 {
-		limit = 10 
+		limit = 10
 	}
 	if limit > 100 {
-		limit = 100 
+		limit = 100
 	}
 
 	url := fmt.Sprintf("%s/rest/v1/prs?select=owner,repo,url,created_at&order=created_at.desc&limit=%d", c.URL, limit)
@@ -418,6 +425,88 @@ func (c *SupabaseClient) GetPRCountByRepo(ctx context.Context, owner, repo strin
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
 		return 0, fmt.Errorf("failed to get count: status %d", resp.StatusCode)
+	}
+
+	contentRange := resp.Header.Get("Content-Range")
+	if contentRange == "" {
+		return 0, fmt.Errorf("missing Content-Range header in response")
+	}
+
+	slashIdx := strings.LastIndex(contentRange, "/")
+	if slashIdx == -1 {
+		return 0, fmt.Errorf("invalid Content-Range format: %s", contentRange)
+	}
+
+	totalStr := contentRange[slashIdx+1:]
+	count, err := strconv.Atoi(totalStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse total count from Content-Range '%s': %v", contentRange, err)
+	}
+
+	return count, nil
+}
+
+func (c *SupabaseClient) InsertComment(ctx context.Context, owner, repo, commentURL string) error {
+	record := CommentRecord{
+		Owner:     owner,
+		Repo:      repo,
+		URL:       commentURL,
+		CreatedAt: time.Now(),
+	}
+
+	jsonData, err := json.Marshal(record)
+	if err != nil {
+		return err
+	}
+
+	url := fmt.Sprintf("%s/rest/v1/comments", c.URL)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return err
+	}
+
+	req = req.WithContext(ctx)
+	req.Header.Set("apikey", c.key)
+	req.Header.Set("Authorization", "Bearer "+c.key)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Prefer", "return=minimal")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("failed to insert comment: status %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+func (c *SupabaseClient) GetTotalComments(ctx context.Context) (int, error) {
+	url := fmt.Sprintf("%s/rest/v1/comments", c.URL)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	req = req.WithContext(ctx)
+	req.Header.Set("apikey", c.key)
+	req.Header.Set("Authorization", "Bearer "+c.key)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Prefer", "count=exact")
+	req.Header.Set("Range-Unit", "items")
+	req.Header.Set("Range", "0-0")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
+		return 0, fmt.Errorf("failed to get comment count: status %d", resp.StatusCode)
 	}
 
 	contentRange := resp.Header.Get("Content-Range")

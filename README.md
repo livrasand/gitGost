@@ -10,7 +10,7 @@ Zero accounts • Zero tokens • Zero metadata • Designed for strong anonymit
 
 ```bash
 # Add as remote → fix → push → done. Designed to minimize identifiable traces.
-git remote add gost https://gitgost.leapcell.app/v1/gh/torvalds/linux
+git remote add gost https://gitgost.fly.dev/v1/gh/torvalds/linux
 git checkout -b fix-typo
 git commit -am "fix: obvious typo in README"
 git push gost fix-typo:main
@@ -20,7 +20,7 @@ git push gost fix-typo:main
 That’s it. No login, token, name, or email required — gitGost provides strong anonymity features, but not perfect anonymity — see the [Threat Model](#threat-model).
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/livrasand/gitGost)
-[![Desplegado](https://gitgost.leapcell.app/badges/deployed.svg)](https://gitgost.leapcell.app/health)
+[![Desplegado](https://gitgost.fly.dev/badges/deployed.svg)](https://gitgost.fly.dev/health)
 [![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/livrasand)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Security Responsible Disclosure](https://img.shields.io/badge/Security-Responsible%20Disclosure-yellow)](SECURITY.md)
@@ -88,12 +88,12 @@ That’s it. No login, token, name, or email required — gitGost provides stron
 
 To signal that your repository welcomes anonymous contributions via gitGost, add this badge to your README:
 
-![Anonymous Contributor Friendly](https://gitgost.leapcell.app/badges/anonymous-friendly.svg)
+![Anonymous Contributor Friendly](https://gitgost.fly.dev/badges/anonymous-friendly.svg)
 
 
 For verified repositories, add a `.gitgost.yml` file to your repository root and use the dynamic version:
 
-![Anonymous Contributor Friendly](https://gitgost.leapcell.app/badges/anonymous-friendly.svg?repo=livrasand%2FgitGost)
+![Anonymous Contributor Friendly](https://gitgost.fly.dev/badges/anonymous-friendly.svg?repo=livrasand%2FgitGost)
 
 This badge helps contributors know that anonymous contributions are accepted and encouraged.
 
@@ -189,7 +189,7 @@ For the full model, see [THREAT_MODEL.md](THREAT_MODEL.md). For more operational
 
 ```bash
 # 1. Add the remote (replace with any public repo)
-git remote add gost https://gitgost.leapcell.app/v1/gh/username/repo
+git remote add gost https://gitgost.fly.dev/v1/gh/username/repo
 
 # 2. Create your branch and commit with a detailed message
 git checkout -b my-cool-fix
@@ -230,7 +230,7 @@ If you run a public instance, you must provide source code.
 ### Contributing Anonymously
 
 ```bash
-git remote add gost https://gitgost.leapcell.app/v1/gh/livrasand/gitGost
+git remote add gost https://gitgost.fly.dev/v1/gh/livrasand/gitGost
 git push gost my-feature:main
 ```
 
@@ -352,7 +352,7 @@ If abusive activity is detected (bot submissions, coordinated spam), you can sus
 **Suspend the service:**
 
 ```bash
-curl -X POST https://gitgost.leapcell.app/admin/panic \
+curl -X POST https://gitgost.fly.dev/admin/panic \
   -H "Content-Type: application/json" \
   -d '{"password":"<PANIC_PASSWORD>","active":true}'
 ```
@@ -360,7 +360,7 @@ curl -X POST https://gitgost.leapcell.app/admin/panic \
 **Restore the service:**
 
 ```bash
-curl -X POST https://gitgost.leapcell.app/admin/panic \
+curl -X POST https://gitgost.fly.dev/admin/panic \
   -H "Content-Type: application/json" \
   -d '{"password":"<PANIC_PASSWORD>","active":false}'
 ```
@@ -372,11 +372,11 @@ curl -X POST https://gitgost.leapcell.app/admin/panic \
 ```bash
 export PANIC_PASSWORD="your-password-here"
 
-alias gitgost-suspend='curl -s -X POST https://gitgost.leapcell.app/admin/panic \
+alias gitgost-suspend='curl -s -X POST https://gitgost.fly.dev/admin/panic \
   -H "Content-Type: application/json" \
   -d "{\"password\":\"$PANIC_PASSWORD\",\"active\":true}"'
 
-alias gitgost-restore='curl -s -X POST https://gitgost.leapcell.app/admin/panic \
+alias gitgost-restore='curl -s -X POST https://gitgost.fly.dev/admin/panic \
   -H "Content-Type: application/json" \
   -d "{\"password\":\"$PANIC_PASSWORD\",\"active\":false}"'
 ```
@@ -388,7 +388,7 @@ Then simply run `gitgost-restore` to bring the service back online.
 After a burst attack, close all PRs created during the attack window:
 
 ```bash
-curl -X POST https://gitgost.leapcell.app/admin/rollback \
+curl -X POST https://gitgost.fly.dev/admin/rollback \
   -H "Content-Type: application/json" \
   -d '{"password":"<PANIC_PASSWORD>"}'
 # → {"closed": 12, "failed": 0, "closed_urls": [...]}

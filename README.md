@@ -32,7 +32,7 @@ That’s it. No login, token, name, or email required — gitGost provides stron
   src="https://img.shields.io/badge/GitHub-Available-brightgreen?logo=github"
   alt="GitHub – Coming Soon"/>
 <img
-  src="https://img.shields.io/badge/GitLab-Coming%20Soon-lightgrey?logo=gitlab&logoColor=white"
+  src="https://img.shields.io/badge/GitLab-Available-brightgreen?logo=gitlab&logoColor=white"
   alt="GitLab – Coming Soon"/>
 <img
   src="https://img.shields.io/badge/Bitbucket-Coming%20Soon-lightgrey?logo=bitbucket"
@@ -40,6 +40,9 @@ That’s it. No login, token, name, or email required — gitGost provides stron
 <img
   src="https://img.shields.io/badge/Codeberg-Coming%20Soon-lightgrey?logo=codeberg&logoColor=white"
   alt="Codeberg – Coming Soon"/>
+<img
+  src="https://img.shields.io/badge/Gitea-Coming%20Soon-lightgrey?logo=gitea&logoColor=white"
+  alt="Gitea – Coming Soon"/>
 
 <br />
 

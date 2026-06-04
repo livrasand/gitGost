@@ -17,10 +17,16 @@ func min(a, b int) int {
 	return b
 }
 
-func PushToGitHub(owner, repo, tempDir, forkOwner, targetBranch string) (string, error) {
-	token := os.Getenv("GITHUB_TOKEN")
+// PushToGitHub pushes to a fork repository.
+// pushURL is the full HTTPS URL of the fork; if empty, defaults to GitHub.
+// tokenEnvVar is the env var name for the auth token; if empty, defaults to GITHUB_TOKEN.
+func PushToGitHub(owner, repo, tempDir, forkOwner, targetBranch string, pushURL string, tokenEnvVar string) (string, error) {
+	if tokenEnvVar == "" {
+		tokenEnvVar = "GITHUB_TOKEN"
+	}
+	token := os.Getenv(tokenEnvVar)
 	if token == "" {
-		return "", fmt.Errorf("GITHUB_TOKEN not set")
+		return "", fmt.Errorf("%s not set", tokenEnvVar)
 	}
 
 	branch := targetBranch
@@ -34,7 +40,10 @@ func PushToGitHub(owner, repo, tempDir, forkOwner, targetBranch string) (string,
 		return "", err
 	}
 
-	forkURL := fmt.Sprintf("https://github.com/%s/%s.git", forkOwner, repo)
+	forkURL := pushURL
+	if forkURL == "" {
+		forkURL = fmt.Sprintf("https://github.com/%s/%s.git", forkOwner, repo)
+	}
 	fmt.Printf("DEBUG: Pushing to fork: %s\n", forkURL)
 	fmt.Printf("DEBUG: Branch name: %s\n", branch)
 
@@ -60,8 +69,8 @@ func PushToGitHub(owner, repo, tempDir, forkOwner, targetBranch string) (string,
 		RemoteName: "fork",
 		RefSpecs:   []config.RefSpec{refSpec},
 		Auth: &http.BasicAuth{
-			Username: "x-access-token", 
-			Password: token,            
+			Username: "x-access-token",
+			Password: token,
 		},
 		Force: targetBranch != "",
 	})

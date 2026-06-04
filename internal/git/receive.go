@@ -25,7 +25,7 @@ func ParsePktLine(r io.Reader) ([]byte, error) {
 
 	lenStr := string(lenBuf)
 	if lenStr == "0000" {
-		return nil, nil 
+		return nil, nil
 	}
 
 	length, err := strconv.ParseInt(lenStr, 16, 32)
@@ -136,15 +136,22 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, string, error) {
 	return packfile, refUpdate, prHash, nil
 }
 
-// ReceivePack clona el repo de GitHub y aplica el packfile recibido, retorna el SHA del nuevo commit, el mensaje del commit y el pr-hash push-option (si fue enviado).
-func ReceivePack(tempDir string, body []byte, owner string, repo string) (string, string, string, error) {
-	// Clonar el repo de GitHub para tener los objetos base
-	token := os.Getenv("GITHUB_TOKEN")
+// ReceivePack clona el repo remoto y aplica el packfile recibido, retorna el SHA del nuevo commit, el mensaje del commit y el pr-hash push-option (si fue enviado).
+// cloneURL es la URL HTTPS completa del repositorio; si está vacía se usa GitHub por defecto (compatibilidad).
+// tokenEnvVar es el nombre de la variable de entorno con el token de autenticación; si está vacío usa GITHUB_TOKEN.
+func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneURL string, tokenEnvVar string) (string, string, string, error) {
+	if cloneURL == "" {
+		cloneURL = fmt.Sprintf("https://github.com/%s/%s.git", owner, repo)
+	}
+	if tokenEnvVar == "" {
+		tokenEnvVar = "GITHUB_TOKEN"
+	}
+	token := os.Getenv(tokenEnvVar)
 	if token == "" {
-		return "", "", "", fmt.Errorf("GITHUB_TOKEN not set")
+		return "", "", "", fmt.Errorf("%s not set", tokenEnvVar)
 	}
 
-	repoURL := fmt.Sprintf("https://github.com/%s/%s.git", owner, repo)
+	repoURL := cloneURL
 	fmt.Printf("DEBUG: Cloning %s/%s...\n", owner, repo)
 
 	_, err := git.PlainClone(tempDir, false, &git.CloneOptions{

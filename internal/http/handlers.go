@@ -23,12 +23,24 @@ import (
 	"github.com/livrasand/gitGost/internal/database"
 	"github.com/livrasand/gitGost/internal/git"
 	"github.com/livrasand/gitGost/internal/github"
+	"github.com/livrasand/gitGost/internal/provider"
+	ghprovider "github.com/livrasand/gitGost/internal/provider/github"
+	glprovider "github.com/livrasand/gitGost/internal/provider/gitlab"
 	"github.com/livrasand/gitGost/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
 var uploadPackClient = &http.Client{Timeout: 30 * time.Second}
+
+// providerFromPath returns the appropriate Provider based on the URL path prefix.
+// /v1/gh/... → GitHub (default), /v1/gl/... → GitLab.
+func providerFromPath(path string) provider.Provider {
+	if strings.HasPrefix(path, "/v1/gl/") {
+		return glprovider.New()
+	}
+	return ghprovider.New()
+}
 
 const anonymousFriendlyBadgeSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="180" height="20" viewBox="0 0 180 20">
   <rect width="180" height="20" fill="#4CAF50" rx="3"/>
@@ -80,8 +92,8 @@ func ReceivePackDiscoveryHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
 
-	// Get refs from GitHub
-	refs, err := github.GetRefs(owner, repo)
+	prov := providerFromPath(c.Request.URL.Path)
+	refs, err := prov.GetRefs(owner, repo)
 	if err != nil {
 		utils.Log("Error getting refs: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get refs"})
@@ -103,7 +115,7 @@ func ReceivePackDiscoveryHandler(c *gin.Context) {
 	first := true
 	for _, ref := range refs {
 		if strings.HasPrefix(ref.Ref, "refs/heads/") || strings.HasPrefix(ref.Ref, "refs/tags/") {
-			line := fmt.Sprintf("%s %s", ref.GetSha(), ref.Ref)
+			line := fmt.Sprintf("%s %s", ref.SHA, ref.Ref)
 			if first {
 				line += "\x00" + capabilities
 				first = false
@@ -175,8 +187,11 @@ func ReceivePackHandler(c *gin.Context) {
 	// Record push globally to detect botnet/script patterns across IPs
 	go recordGlobalBurst(ip)
 
+	// Detect provider from request path
+	prov := providerFromPath(c.Request.URL.Path)
+
 	// Check repository opt-out policy (.gitgost.yml DENY_ALL)
-	policy, err := github.GetRepoPolicy(owner, repo)
+	policy, err := prov.GetRepoPolicy(owner, repo)
 	if err == nil && policy != nil && policy.DenyAll {
 		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
 		c.Writer.WriteHeader(http.StatusOK)
@@ -227,7 +242,7 @@ func ReceivePackHandler(c *gin.Context) {
 	WriteSidebandLine(&response, 2, "remote: gitGost: Processing your anonymous contribution...")
 
 	// Process the packfile
-	newSHA, commitMessage, receivedPRHash, err := git.ReceivePack(tempDir, body, owner, repo)
+	newSHA, commitMessage, receivedPRHash, err := git.ReceivePack(tempDir, body, owner, repo, prov.CloneURL(owner, repo), prov.TokenEnvVar())
 	if err != nil {
 		utils.Log("Error receiving pack: %v", err)
 		WriteSidebandLine(&response, 3, fmt.Sprintf("unpack error: %v", err))
@@ -241,7 +256,7 @@ func ReceivePackHandler(c *gin.Context) {
 
 	// Create a fork of the repository
 	WriteSidebandLine(&response, 2, "remote: gitGost: Creating fork...")
-	forkOwner, err := github.ForkRepo(owner, repo)
+	forkOwner, err := prov.ForkRepo(owner, repo)
 	if err != nil {
 		utils.Log("Error creating fork: %v", err)
 		WriteSidebandLine(&response, 1, "unpack ok\n")
@@ -262,7 +277,7 @@ func ReceivePackHandler(c *gin.Context) {
 		branchFromHash := fmt.Sprintf("gitgost-%s", receivedPRHash)
 		WriteSidebandLine(&response, 2, fmt.Sprintf("remote: gitGost: Updating existing PR (hash: %s)...", receivedPRHash))
 
-		existingPRURL, branchExists, err := github.GetExistingPR(owner, repo, forkOwner, branchFromHash)
+		existingPRURL, branchExists, err := prov.GetExistingMR(owner, repo, forkOwner, branchFromHash)
 		if err != nil {
 			utils.Log("Error checking existing PR: %v", err)
 		}
@@ -270,7 +285,7 @@ func ReceivePackHandler(c *gin.Context) {
 		if branchExists {
 			// Push to the fork in the existing branch (force)
 			WriteSidebandLine(&response, 2, "remote: gitGost: Pushing update to existing branch...")
-			branch, err = git.PushToGitHub(owner, repo, tempDir, forkOwner, branchFromHash)
+			branch, err = git.PushToGitHub(owner, repo, tempDir, forkOwner, branchFromHash, prov.PushURL(forkOwner, repo), prov.TokenEnvVar())
 			if err != nil {
 				utils.Log("Error pushing update to fork: %v", err)
 				WriteSidebandLine(&response, 1, "unpack ok\n")
@@ -287,7 +302,7 @@ func ReceivePackHandler(c *gin.Context) {
 			} else {
 				// Branch exists but PR was closed/merged: create new PR
 				WriteSidebandLine(&response, 2, "remote: gitGost: PR was closed, creating new PR on existing branch...")
-				prURL, err = github.CreatePR(owner, repo, branch, forkOwner, commitMessage)
+				prURL, err = prov.CreateMR(owner, repo, branch, forkOwner, commitMessage)
 				if err != nil {
 					utils.Log("Error creating PR on existing branch: %v", err)
 					WriteSidebandLine(&response, 1, "unpack ok\n")
@@ -312,7 +327,7 @@ func ReceivePackHandler(c *gin.Context) {
 	if !isUpdate {
 		// Normal flow: push to new branch and create PR
 		WriteSidebandLine(&response, 2, "remote: gitGost: Pushing to fork...")
-		branch, err = git.PushToGitHub(owner, repo, tempDir, forkOwner, "")
+		branch, err = git.PushToGitHub(owner, repo, tempDir, forkOwner, "", prov.PushURL(forkOwner, repo), prov.TokenEnvVar())
 		if err != nil {
 			utils.Log("Error pushing to fork: %v", err)
 			WriteSidebandLine(&response, 1, "unpack ok\n")
@@ -327,7 +342,7 @@ func ReceivePackHandler(c *gin.Context) {
 
 		// Create PR from the fork to the original repository
 		WriteSidebandLine(&response, 2, "remote: gitGost: Creating pull request...")
-		prURL, err = github.CreatePR(owner, repo, branch, forkOwner, commitMessage)
+		prURL, err = prov.CreateMR(owner, repo, branch, forkOwner, commitMessage)
 		if err != nil {
 			utils.Log("Error creating PR: %v", err)
 			WriteSidebandLine(&response, 1, "unpack ok\n")
@@ -428,8 +443,9 @@ func UploadPackDiscoveryHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
 
-	githubURL := fmt.Sprintf("https://github.com/%s/%s.git/info/refs?service=git-upload-pack", owner, repo)
-	req, err := http.NewRequest("GET", githubURL, nil)
+	prov := providerFromPath(c.Request.URL.Path)
+	remoteURL := prov.CloneURL(owner, repo) + "/info/refs?service=git-upload-pack"
+	req, err := http.NewRequest("GET", remoteURL, nil)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to build request"})
 		return
@@ -439,7 +455,7 @@ func UploadPackDiscoveryHandler(c *gin.Context) {
 	resp, err := uploadPackClient.Do(req)
 	if err != nil {
 		utils.Log("UploadPackDiscovery error: %v", err)
-		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "failed to reach GitHub"})
+		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "failed to reach remote"})
 		return
 	}
 	defer resp.Body.Close()
@@ -468,8 +484,9 @@ func UploadPackHandler(c *gin.Context) {
 		return
 	}
 
-	githubURL := fmt.Sprintf("https://github.com/%s/%s.git/git-upload-pack", owner, repo)
-	req, err := http.NewRequest("POST", githubURL, bytes.NewReader(body))
+	prov := providerFromPath(c.Request.URL.Path)
+	remoteURL := prov.CloneURL(owner, repo) + "/git-upload-pack"
+	req, err := http.NewRequest("POST", remoteURL, bytes.NewReader(body))
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to build request"})
 		return
@@ -903,7 +920,13 @@ func RollbackBurstHandler(c *gin.Context) {
 			defer wg.Done()
 			closeConcurrency <- struct{}{}
 			defer func() { <-closeConcurrency }()
-			if err := github.ClosePRByURL(u); err != nil {
+			var closeErr error
+			if strings.Contains(u, "gitlab.com") {
+				closeErr = glprovider.New().CloseMRByURL(u)
+			} else {
+				closeErr = github.ClosePRByURL(u)
+			}
+			if err := closeErr; err != nil {
 				utils.Log("rollback: failed to close %s: %v", u, err)
 				mu.Lock()
 				failed = append(failed, u)
@@ -1024,7 +1047,8 @@ func CreateAnonymousIssueHandler(c *gin.Context) {
 		return
 	}
 
-	issueURL, issueNumber, err := github.CreateAnonymousIssue(owner, repo, req.Title, req.Body, req.Labels)
+	prov := providerFromPath(c.Request.URL.Path)
+	issueURL, issueNumber, err := prov.CreateAnonymousIssue(owner, repo, req.Title, req.Body, req.Labels)
 	if err != nil {
 		utils.Log("Error creating issue: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -1103,7 +1127,8 @@ func CreateAnonymousCommentHandler(c *gin.Context) {
 	legend := fmt.Sprintf("\n\n---\ngoster-%s · karma (%d) · [report](%s)", hash, karma, reportURL)
 	bodyWithLegend := req.Body + legend
 
-	commentURL, err := github.CreateAnonymousComment(owner, repo, number, bodyWithLegend)
+	prov := providerFromPath(c.Request.URL.Path)
+	commentURL, err := prov.CreateAnonymousComment(owner, repo, number, bodyWithLegend)
 	if err != nil {
 		utils.Log("Error creating comment: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -1181,7 +1206,8 @@ func CreateAnonymousPRCommentHandler(c *gin.Context) {
 	legend := fmt.Sprintf("\n\n---\ngoster-%s · karma (%d) · [report](%s)", hash, karma, reportURL)
 	bodyWithLegend := req.Body + legend
 
-	commentURL, err := github.CreateAnonymousPRComment(owner, repo, number, bodyWithLegend)
+	prov := providerFromPath(c.Request.URL.Path)
+	commentURL, err := prov.CreateAnonymousPRComment(owner, repo, number, bodyWithLegend)
 	if err != nil {
 		utils.Log("Error creating PR comment: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -1523,7 +1549,11 @@ func serveAnonymousFriendlyBadge(c *gin.Context) {
 		parts := strings.Split(repo, "/")
 		if len(parts) == 2 {
 			owner, repoName := parts[0], parts[1]
-			verified = github.IsRepoVerified(owner, repoName)
+			if c.Query("provider") == "gl" {
+				verified = glprovider.New().IsRepoVerified(owner, repoName)
+			} else {
+				verified = github.IsRepoVerified(owner, repoName)
+			}
 		}
 	}
 

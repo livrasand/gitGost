@@ -23,19 +23,19 @@
     <meta name="msapplication-TileColor" content="#d16014">
     <meta name="msapplication-TileImage" content="assets/logos/ms-icon-144x144.png">
     <meta name="theme-color" content="#d16014">
-    <meta name="description" content="Contribute to any GitHub repo without leaving a trace. Anonymous Git contributions with gitGost - privacy first, zero accounts, open source.">
+    <meta name="description" content="Contribute to any GitHub or GitLab repo without leaving a trace. Anonymous Git contributions with gitGost - privacy first, zero accounts, open source.">
     <meta name="keywords" content="anonymous git contributions, git privacy, github anonymous pr, open source git, gitgost, anonymous coding, privacy git, zero trace git, git contributions anonymous, gitgost app">
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://gitgost.fly.dev">
     <meta property="og:title" content="gitGost — Anonymous Git Contributions">
-    <meta property="og:description" content="Contribute to any GitHub repo without leaving a trace. Anonymous Git contributions with gitGost - privacy first, zero accounts, open source.">
+    <meta property="og:description" content="Contribute to any GitHub or GitLab repo without leaving a trace. Anonymous Git contributions with gitGost - privacy first, zero accounts, open source.">
     <meta property="og:image" content="https://gitgost.fly.dev/assets/logos/favicon.ico">
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://gitgost.fly.dev">
     <meta property="twitter:title" content="gitGost — Anonymous Git Contributions">
-    <meta property="twitter:description" content="Contribute to any GitHub repo without leaving a trace.">
+    <meta property="twitter:description" content="Contribute to any GitHub or GitLab repo without leaving a trace.">
     <meta property="twitter:image" content="https://gitgost.fly.dev/assets/logos/favicon.ico">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -978,10 +978,12 @@
     <main>
         <header>
             <h1>gitGost</h1>
-            <div class="tagline">Contribute to any GitHub repo without leaving a trace.</div>
+            <div class="tagline">Contribute to any GitHub or GitLab repo without leaving a trace.</div>
             <div class="badges">
                 <span class="badge">Privacy-first</span>
                 <span class="badge">Zero accounts</span>
+                <span class="badge">GitHub</span>
+                <span class="badge">GitLab</span>
                 <span class="badge">AGPL-3.0</span>
                 <span class="badge">Go-powered</span>
             </div>
@@ -989,13 +991,22 @@
 
         <section id="usage">
             <div class="terminal-tabs">
-                <button class="terminal-tab active" data-terminal="push">Push / PR</button>
-                <button class="terminal-tab" data-terminal="update">Update PR</button>
-                <button class="terminal-tab" data-terminal="fetch">Fetch / Pull</button>
+                <button class="terminal-tab active" data-terminal="push">Push</button>
+                <button class="terminal-tab" data-terminal="update">Update</button>
+                <button class="terminal-tab" data-terminal="fetch">Clone / Fetch / Pull</button>
                 <button class="terminal-tab" data-terminal="tor">Push via Tor</button>
                 <button class="terminal-tab" data-terminal="exif">Strip Metadata</button>
             </div>
-            <div class="terminal" id="terminal-push"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Add as remote → push → done. Fully anonymous.</span>
+            <p style="font-size:.82rem;color:var(--fg-secondary);margin:.75rem 0 .75rem;line-height:1.6;">
+                Use <code style="color:var(--accent);background:var(--code-bg);padding:.1em .4em;border-radius:4px;">/v1/gh/</code> for <strong style="color:var(--fg);">GitHub</strong> repos &nbsp;·&nbsp; <code style="color:#fc6d26;background:var(--code-bg);padding:.1em .4em;border-radius:4px;">/v1/gl/</code> for <strong style="color:var(--fg);">GitLab</strong> repos
+            </p>
+            <div class="terminal" id="terminal-push">
+                <div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div>
+                <div style="display:flex;gap:.5rem;padding:0 0.875rem 0;padding-bottom: 14px;background:#252636;border-bottom:1px solid var(--border);">
+                    <button class="terminal-tab active" data-push-provider="gh" style="font-size:.8rem;padding:.35rem .75rem;">GitHub</button>
+                    <button class="terminal-tab" data-push-provider="gl" style="font-size:.8rem;padding:.35rem .75rem;">GitLab</button>
+                </div>
+                <div class="terminal-body" id="push-body-gh"><span class="comment"># Add as remote → push → done. Fully anonymous.</span>
 <span class="prompt">$</span> git remote add gost https://gitgost.fly.dev/v1/gh/torvalds/linux
 <span class="prompt">$</span> git checkout -b fix-typo
 <span class="prompt">$</span> git commit -am "fix: typo in documentation
@@ -1003,8 +1014,20 @@
 This commit fixes a grammatical error in the README.
 The word 'recieve' should be 'receive'."
 <span class="prompt">$</span> git push gost fix-typo:main
-<span class="success">→</span> Anonymized commit + PR opened as @gitgost-anonymous
+<span class="success">→</span> Anonymized commit + MR opened as @gitgost-anonymous
 <span class="success">→</span> PR Hash: <span class="hl">a3f8c1d2</span>  ← save this to update the PR later
+<span class="success">→</span> Subscribe to notifications (no account needed):
+<span class="success">→</span>   <span class="hl">https://ntfy.sh/gitgost-a3f8c1d2</span></div>
+                <div class="terminal-body" id="push-body-gl" style="display:none;"><span class="comment"># Use /v1/gl/ instead of /v1/gh/ for GitLab repos.</span>
+<span class="prompt">$</span> git remote add gost https://gitgost.fly.dev/v1/gl/torvalds/linux
+<span class="prompt">$</span> git checkout -b fix-typo
+<span class="prompt">$</span> git commit -am "fix: typo in documentation
+
+This commit fixes a grammatical error in the README.
+The word 'recieve' should be 'receive'."
+<span class="prompt">$</span> git push gost fix-typo:main
+<span class="success">→</span> Anonymized commit + MR opened as @gitgost-anonymous
+<span class="success">→</span> MR Hash: <span class="hl">a3f8c1d2</span>  ← save this to update the MR later
 <span class="success">→</span> Subscribe to notifications (no account needed):
 <span class="success">→</span>   <span class="hl">https://ntfy.sh/gitgost-a3f8c1d2</span></div>
             </div>
@@ -1015,10 +1038,23 @@ The word 'recieve' should be 'receive'."
 <span class="success">→</span> Existing branch force-updated, PR refreshed — still @gitgost-anonymous
 <span class="comment"># If the hash is unknown or the PR was closed, a new PR is created automatically.</span></div>
             </div>
-            <div class="terminal" id="terminal-fetch" style="display:none;"><div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div><div class="terminal-body"><span class="comment"># Clone or fetch anonymously — no GitHub account needed.</span>
+            <div class="terminal" id="terminal-fetch" style="display:none;">
+                <div class="terminal-titlebar"><span class="terminal-btn close"></span><span class="terminal-btn min"></span><span class="terminal-btn max"></span></div>
+                <div style="display:flex;gap:.5rem;padding:0 0.875rem 0;padding-bottom: 14px;background:#252636;border-bottom:1px solid var(--border);">
+                    <button class="terminal-tab active" data-fetch-provider="gh" style="font-size:.8rem;padding:.35rem .75rem;">GitHub</button>
+                    <button class="terminal-tab" data-fetch-provider="gl" style="font-size:.8rem;padding:.35rem .75rem;">GitLab</button>
+                </div>
+                <div class="terminal-body" id="fetch-body-gh"><span class="comment"># Clone or fetch anonymously — no GitHub account needed.</span>
 <span class="prompt">$</span> git clone https://anon:@gitgost.fly.dev/v1/gh/torvalds/linux
 <span class="comment"># Or add as remote and fetch/pull later</span>
 <span class="prompt">$</span> git remote add gost https://anon:@gitgost.fly.dev/v1/gh/torvalds/linux
+<span class="prompt">$</span> git fetch gost
+<span class="prompt">$</span> git pull gost main
+<span class="success">→</span> Repository cloned with zero identity exposure</div>
+                <div class="terminal-body" id="fetch-body-gl" style="display:none;"><span class="comment"># Clone or fetch from GitLab anonymously — use /v1/gl/ prefix.</span>
+<span class="prompt">$</span> git clone https://anon:@gitgost.fly.dev/v1/gl/torvalds/linux
+<span class="comment"># Or add as remote and fetch/pull later</span>
+<span class="prompt">$</span> git remote add gost https://anon:@gitgost.fly.dev/v1/gl/torvalds/linux
 <span class="prompt">$</span> git fetch gost
 <span class="prompt">$</span> git pull gost main
 <span class="success">→</span> Repository cloned with zero identity exposure</div>
@@ -1181,7 +1217,7 @@ The word 'recieve' should be 'receive'."
             </div>
             <div class="card">
                 <h3>Fetch & Pull Support</h3>
-                <p>Clone, fetch, and pull from any GitHub repo through gitGost. Read code anonymously — no account, no trace.</p>
+                <p>Clone, fetch, and pull from any GitHub or GitLab repo through gitGost. Read code anonymously — no account, no trace.</p>
             </div>
             <div class="card">
                 <h3>Persistent PR Updates</h3>
@@ -1218,14 +1254,21 @@ The word 'recieve' should be 'receive'."
         <section class="issue-section">
             <div class="issue-container">
                 <div class="issue-header">
-                    <div class="issue-eyebrow">Anonymous issues, comments &amp; PR feedback</div>
-                    <p>Create issues, comment on them, or leave feedback on Pull Requests — all without exposing your identity. We only keep what's essential: URL, anonymous hash, and <a href="/karma.html" style="color: var(--accent);">karma</a>.</p>
+                    <div class="issue-eyebrow">Anonymous issues, comments &amp; PR/MR feedback</div>
+                    <p>Create issues, comment on them, or leave feedback on Pull Requests and Merge Requests — all without exposing your identity. We only keep what's essential: URL, anonymous hash, and <a href="/karma.html" style="color: var(--accent);">karma</a>.</p>
+                    <div style="display:flex;align-items:center;gap:.5rem;margin-top:.75rem;">
+                        <span style="font-size:.8rem;color:var(--fg-secondary);">Provider:</span>
+                        <select id="issue-provider" style="background:var(--bg-secondary);color:var(--fg);border:1px solid var(--border);border-radius:6px;padding:.25rem .6rem;font-size:.8rem;cursor:pointer;">
+                            <option value="gh">GitHub</option>
+                            <option value="gl">GitLab</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="issue-tabs">
                     <button class="issue-tab active" data-tab="create">Create Issue</button>
                     <button class="issue-tab" data-tab="comment">Post Comment</button>
-                    <button class="issue-tab" data-tab="pr-comment">PR Comment</button>
+                    <button class="issue-tab" data-tab="pr-comment" id="pr-comment-tab">PR Comment</button>
                 </div>
 
                 <div class="issue-form-container">
@@ -1327,7 +1370,7 @@ The word 'recieve' should be 'receive'."
                         </div>
 
                         <div class="form-group">
-                            <label for="pr-number">Pull Request Number</label>
+                            <label for="pr-number" id="pr-number-label">Pull Request Number</label>
                             <input id="pr-number" type="number" min="1" placeholder="42" autocomplete="off">
                         </div>
 
@@ -1708,7 +1751,17 @@ The word 'recieve' should be 'receive'."
             });
         })();
 
+        // Update PR tab label and field label when provider changes
+        document.getElementById('issue-provider')?.addEventListener('change', () => {
+            const gl = document.getElementById('issue-provider').value === 'gl';
+            const tab = document.getElementById('pr-comment-tab');
+            const label = document.getElementById('pr-number-label');
+            if (tab) tab.textContent = gl ? 'MR Comment' : 'PR Comment';
+            if (label) label.textContent = gl ? 'Merge Request Number' : 'Pull Request Number';
+        });
+
         issueSubmitBtn?.addEventListener('click', async () => {
+            const provider = document.getElementById('issue-provider')?.value || 'gh';
             const owner = document.getElementById('issue-owner')?.value.trim();
             const repo = document.getElementById('issue-repo')?.value.trim();
             const title = document.getElementById('issue-title')?.value.trim();
@@ -1729,7 +1782,7 @@ The word 'recieve' should be 'receive'."
             if (resultEl) resultEl.textContent = '';
 
             try {
-                const response = await fetch(`${API_BASE}/v1/gh/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/anonymous`, {
+                const response = await fetch(`${API_BASE}/v1/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/anonymous`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1764,6 +1817,7 @@ The word 'recieve' should be 'receive'."
         });
 
         commentSubmitBtn?.addEventListener('click', async () => {
+            const provider = document.getElementById('issue-provider')?.value || 'gh';
             const owner = document.getElementById('comment-owner')?.value.trim();
             const repo = document.getElementById('comment-repo')?.value.trim();
             const number = document.getElementById('comment-number')?.value.trim();
@@ -1785,7 +1839,7 @@ The word 'recieve' should be 'receive'."
             if (token) payload.user_token = token;
 
             try {
-                const response = await fetch(`${API_BASE}/v1/gh/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/${encodeURIComponent(number)}/comments/anonymous`, {
+                const response = await fetch(`${API_BASE}/v1/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/${encodeURIComponent(number)}/comments/anonymous`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1821,6 +1875,7 @@ The word 'recieve' should be 'receive'."
         const prCommentSubmitBtn = document.getElementById('pr-comment-submit');
         document.getElementById('pr-comment-issue-form')?.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const provider = document.getElementById('issue-provider')?.value || 'gh';
             const owner = document.getElementById('pr-owner')?.value.trim();
             const repo = document.getElementById('pr-repo')?.value.trim();
             const number = document.getElementById('pr-number')?.value.trim();
@@ -1842,7 +1897,7 @@ The word 'recieve' should be 'receive'."
             if (token) payload.user_token = token;
 
             try {
-                const response = await fetch(`${API_BASE}/v1/gh/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls/${encodeURIComponent(number)}/comments/anonymous`, {
+                const response = await fetch(`${API_BASE}/v1/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls/${encodeURIComponent(number)}/comments/anonymous`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1950,6 +2005,28 @@ The word 'recieve' should be 'receive'."
                 document.getElementById('tor-linux').style.display = target === 'linux' ? '' : 'none';
                 document.getElementById('tor-windows-browser').style.display = target === 'windows-browser' ? '' : 'none';
                 document.getElementById('tor-windows-wsl').style.display = target === 'windows-wsl' ? '' : 'none';
+            });
+        });
+
+        // Push provider sub-tab switching (GitHub / GitLab)
+        document.querySelectorAll('[data-push-provider]').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('[data-push-provider]').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const p = tab.dataset.pushProvider;
+                document.getElementById('push-body-gh').style.display = p === 'gh' ? '' : 'none';
+                document.getElementById('push-body-gl').style.display = p === 'gl' ? '' : 'none';
+            });
+        });
+
+        // Fetch provider sub-tab switching (GitHub / GitLab)
+        document.querySelectorAll('[data-fetch-provider]').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('[data-fetch-provider]').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const p = tab.dataset.fetchProvider;
+                document.getElementById('fetch-body-gh').style.display = p === 'gh' ? '' : 'none';
+                document.getElementById('fetch-body-gl').style.display = p === 'gl' ? '' : 'none';
             });
         });
 

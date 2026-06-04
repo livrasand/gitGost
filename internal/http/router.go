@@ -162,19 +162,21 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	v1.Use(validationMiddleware())
 	v1.Use(anonymousAuthMiddleware(cfg.APIKey))
 	{
+		refsHandler := func(c *gin.Context) {
+			service := c.Query("service")
+			if service == "git-receive-pack" {
+				ReceivePackDiscoveryHandler(c)
+			} else if service == "git-upload-pack" {
+				UploadPackDiscoveryHandler(c)
+			} else {
+				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Unsupported service"})
+			}
+		}
+
 		gh := v1.Group("/gh")
 		{
 			// Git Smart HTTP - info/refs (discovery)
-			gh.GET("/:owner/:repo/info/refs", func(c *gin.Context) {
-				service := c.Query("service")
-				if service == "git-receive-pack" {
-					ReceivePackDiscoveryHandler(c)
-				} else if service == "git-upload-pack" {
-					UploadPackDiscoveryHandler(c)
-				} else {
-					c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Unsupported service"})
-				}
-			})
+			gh.GET("/:owner/:repo/info/refs", refsHandler)
 
 			// Git Smart HTTP - receive-pack (push)
 			gh.POST("/:owner/:repo/git-receive-pack", ReceivePackHandler)
@@ -188,6 +190,17 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 
 			// Comentarios anónimos en Pull Requests
 			gh.POST("/:owner/:repo/pulls/:number/comments/anonymous", CreateAnonymousPRCommentHandler)
+		}
+
+		// GitLab provider — same routes under /gl/
+		gl := v1.Group("/gl")
+		{
+			gl.GET("/:owner/:repo/info/refs", refsHandler)
+			gl.POST("/:owner/:repo/git-receive-pack", ReceivePackHandler)
+			gl.POST("/:owner/:repo/git-upload-pack", UploadPackHandler)
+			gl.POST("/:owner/:repo/issues/anonymous", CreateAnonymousIssueHandler)
+			gl.POST("/:owner/:repo/issues/:number/comments/anonymous", CreateAnonymousCommentHandler)
+			gl.POST("/:owner/:repo/pulls/:number/comments/anonymous", CreateAnonymousPRCommentHandler)
 		}
 	}
 

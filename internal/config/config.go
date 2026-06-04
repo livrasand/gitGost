@@ -12,6 +12,7 @@ type Config struct {
 	WriteTimeout   time.Duration
 	APIKey         string
 	GitHubToken    string
+	GitLabToken    string
 	LogFormat      string
 	SupabaseURL    string
 	SupabaseKey    string
@@ -26,7 +27,8 @@ func Load() *Config {
 		WriteTimeout:   getDurationEnv("WRITE_TIMEOUT", 30*time.Second),
 		APIKey:         getEnv("GITGOST_API_KEY", ""),
 		GitHubToken:    getEnv("GITHUB_TOKEN", ""),
-		LogFormat:      getEnv("LOG_FORMAT", "text"), 
+		GitLabToken:    getEnv("GITLAB_TOKEN", ""),
+		LogFormat:      getEnv("LOG_FORMAT", "text"),
 		SupabaseURL:    getEnv("SUPABASE_URL", ""),
 		SupabaseKey:    getEnv("SUPABASE_KEY", ""),
 		PanicPassword:  getEnv("PANIC_PASSWORD", ""),

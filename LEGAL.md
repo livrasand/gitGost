@@ -88,9 +88,10 @@ gitGost acts solely as a neutral technical intermediary that facilitates the tra
 
 The operator of gitGost:
 
-* Does not author, review, approve, endorse, verify, or modify user-submitted content prior to transmission.
-* Does not guarantee the accuracy, legality, safety, quality, originality, or fitness of any submitted content.
-* Does not assume responsibility for the actions, statements, code, documentation, comments, issues, pull requests, merge requests, or other materials submitted through the service.
+* Does not author, review, approve, endorse, verify, or curate user-submitted content.
+* Does not make editorial decisions regarding the substance, intent, or meaning of user submissions.
+* May perform automated technical transformations necessary for operation of the service, including anonymization, metadata removal, attribution replacement, formatting adjustments, anti-abuse controls, and the insertion of service-generated notices or identifiers.
+* Does not assume responsibility for the resulting content after such automated processing.
 
 Users remain solely and exclusively responsible for:
 

@@ -82,6 +82,66 @@ This includes, but is not limited to:
 
 The author does not review, endorse, or take responsibility for the content of anonymous contributions made through this service.
 
+## 5.1 Service Operator Liability Limitation
+
+gitGost acts solely as a neutral technical intermediary that facilitates the transmission of user-submitted content to third-party platforms.
+
+The operator of gitGost:
+
+* Does not author, review, approve, endorse, verify, or curate user-submitted content.
+* Does not make editorial decisions regarding the substance, intent, or meaning of user submissions.
+* May perform automated technical transformations necessary for operation of the service, including anonymization, metadata removal, attribution replacement, formatting adjustments, anti-abuse controls, and the insertion of service-generated notices or identifiers.
+* Does not assume responsibility for the resulting content after such automated processing.
+
+Users remain solely and exclusively responsible for:
+
+* The content they submit.
+* Compliance with applicable laws.
+* Compliance with employment agreements, confidentiality obligations, export controls, intellectual property rights, and repository contribution policies.
+* Any damages arising from their submissions.
+
+Maintainers of third-party repositories retain full authority to review, reject, report, modify, revert, or remove any contribution submitted through gitGost.
+
+The existence of anonymity features does not exempt users from legal responsibility for their actions.
+
+To the maximum extent permitted by applicable law, the operator of gitGost shall not be liable for:
+
+* User-generated content.
+* Repository moderation decisions.
+* Acceptance, rejection, merging, or publication of contributions.
+* Loss of data, business interruption, reputational harm, or indirect damages.
+* Claims arising from intellectual property disputes between users and third parties.
+* Consequences resulting from reliance on anonymity features.
+
+No agency, partnership, employment relationship, joint venture, or fiduciary relationship is created between users and the operator through use of the service.
+
+## 5.2 No Guarantee of Anonymity
+
+gitGost is designed to improve contributor privacy and reduce public attribution. However, no anonymity, privacy, or security technology can provide absolute protection.
+
+The service is provided on a best-effort basis and makes no guarantee that a user's identity, location, affiliation, authorship, writing style, network information, or other identifying characteristics cannot be discovered, inferred, correlated, or disclosed.
+
+Users acknowledge and accept that:
+
+* Perfect anonymity does not exist.
+* Third parties may attempt deanonymization.
+* Operational security remains the responsibility of the user.
+* Failure to follow recommended privacy practices may significantly reduce the effectiveness of anonymity protections.
+
+By using gitGost, users assume all risks associated with anonymous or pseudonymous participation.
+
+## 5.3 Indemnification
+
+To the extent permitted by applicable law, users agree to indemnify, defend, and hold harmless the operator of gitGost from and against any claims, demands, damages, liabilities, losses, costs, and expenses (including reasonable legal fees) arising from:
+
+* Content submitted through the service.
+* Violations of these terms.
+* Violations of applicable law.
+* Intellectual property infringement claims.
+* Misuse or abuse of the service.
+
+This obligation survives termination of service access and discontinuation of use.
+
 ---
 
 ## 6. Prohibited Uses

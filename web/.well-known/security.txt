@@ -1,0 +1,4 @@
+Contact: mailto:gitGost@proton.me
+Canonical: https://gitgost.fly.dev/.well-known/security.txt
+Expires: 2027-01-01T00:00:00Z
+Preferred-Languages: en

@@ -317,6 +317,7 @@ func AdminAppealsHandler(c *gin.Context) {
 		c.String(http.StatusUnauthorized, "Unauthorized")
 		return
 	}
+	escapedPassword := template.HTMLEscapeString(password)
 
 	appealTicketsMu.Lock()
 	type appealView struct {
@@ -387,7 +388,7 @@ button.dismiss{border-color:#f85149;color:#f85149;}
 <input type="hidden" name="outcome" value="dismiss">
 <button type="submit" class="dismiss">Dismiss</button>
 </form>
-</td></tr>`, v.TicketID, v.TicketID[:8], v.Hash, msgPreview, age, v.TicketID, password, v.TicketID, password)
+</td></tr>`, v.TicketID, v.TicketID[:8], v.Hash, msgPreview, age, v.TicketID, escapedPassword, v.TicketID, escapedPassword)
 	}
 	fmt.Fprintf(c.Writer, `</table>
 <hr class="sep"><h2>Resolved (%d)</h2><table><tr><th>Ticket</th><th>Hash</th><th>Outcome</th></tr>`, len(resolvedList))

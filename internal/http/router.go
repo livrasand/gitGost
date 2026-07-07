@@ -214,6 +214,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/stats", StatsHandler)
 		api.GET("/recent-prs", RecentPRsHandler)
 		api.GET("/pr-status/:hash", PRStatusHandler)
+		api.GET("/pr/:hash/status", PRCheckHandler)
 	}
 
 	// Admin endpoints — protected by strict per-IP rate limiting

@@ -388,6 +388,7 @@ func ReceivePackHandler(c *gin.Context) {
 	go func() {
 		ntfyTopic := github.NtfyTopicForPR(outPRHash)
 		var ntfyTitle, ntfyMsg string
+		actionStatus := fmt.Sprintf("http, Check Status, %s/api/pr/%s/status, clear=true", github.NtfyServiceURL(), outPRHash)
 		if isUpdate {
 			ntfyTitle = "PR Updated · gitGost"
 			ntfyMsg = fmt.Sprintf("Your anonymous PR was updated.\nPR: %s\nTopic: %s/%s", prURL, github.NtfyBaseURL(), ntfyTopic)
@@ -395,10 +396,21 @@ func ReceivePackHandler(c *gin.Context) {
 			ntfyTitle = "PR Created · gitGost"
 			ntfyMsg = fmt.Sprintf("Your anonymous PR was created.\nPR: %s\nTopic: %s/%s", prURL, github.NtfyBaseURL(), ntfyTopic)
 		}
-		if err := github.PublishNtfyEvent(outPRHash, ntfyTitle, ntfyMsg); err != nil {
+		if err := github.PublishNtfyEvent(outPRHash, ntfyTitle, ntfyMsg, actionStatus); err != nil {
 			utils.Log("ntfy publish error for hash %s: %v", outPRHash, err)
 		}
 	}()
+
+	// Track PR for on-demand status checking
+	if prURL != "" {
+		provShort := "gh"
+		if strings.HasPrefix(c.Request.URL.Path, "/v1/gl/") {
+			provShort = "gl"
+		}
+		if num := github.ExtractPRNumber(prURL); num > 0 {
+			trackPR(outPRHash, owner, repo, num, prURL, provShort)
+		}
+	}
 
 	// CLEAR SUCCESS MESSAGES
 	WriteSidebandLine(&response, 2, "remote: ")
@@ -647,6 +659,54 @@ const (
 )
 
 var reportPolicyHTML = template.HTML(`<li><strong>0–2 reports:</strong> internal log only.</li><li><strong>3–5 reports:</strong> hash flagged, 6h cooldown, karma reset.</li><li><strong>6+ reports:</strong> hash blocked; we attempt to remove its comments.</li>`)
+
+// PR tracking store for on-demand status checking via /api/pr/:hash/status
+type prTrack struct {
+	Owner    string
+	Repo     string
+	Number   int
+	PRURL    string
+	Provider string // "gh" o "gl"
+	LastETag string
+	AddedAt  time.Time
+}
+
+var (
+	prTrackMu    sync.RWMutex
+	prTrackStore = make(map[string]*prTrack)
+)
+
+// trackPR almacena metadatos de un PR para consultas de estado posteriores.
+func trackPR(prHash, owner, repo string, number int, prURL, provider string) {
+	prTrackMu.Lock()
+	defer prTrackMu.Unlock()
+	prTrackStore[prHash] = &prTrack{
+		Owner:    owner,
+		Repo:     repo,
+		Number:   number,
+		PRURL:    prURL,
+		Provider: provider,
+		AddedAt:  time.Now(),
+	}
+}
+
+// getPRTrack obtiene los metadatos de un PR por su hash.
+func getPRTrack(prHash string) (*prTrack, bool) {
+	prTrackMu.RLock()
+	defer prTrackMu.RUnlock()
+	t, ok := prTrackStore[prHash]
+	return t, ok
+}
+
+// providerFromName devuelve el provider adecuado segun el nombre corto.
+func providerFromName(name string) provider.Provider {
+	switch name {
+	case "gl":
+		return glprovider.New()
+	default:
+		return ghprovider.New()
+	}
+}
 
 // newActionToken generates a single-use token valid for actionTokenTTL and stores it.
 func newActionToken() string {
@@ -1738,7 +1798,64 @@ func PRStatusHandler(c *gin.Context) {
 	})
 }
 
-// VerifyHandler sirve instrucciones de verificación matemática del binario desplegado.
+// PRCheckHandler devuelve el estado actual de un PR/MR consultando la API del proveedor.
+// Solo funciona para PRs creados a traves de gitGost (trackeados en memoria).
+func PRCheckHandler(c *gin.Context) {
+	hash := strings.TrimSpace(c.Param("hash"))
+	if hash == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "hash is required"})
+		return
+	}
+
+	track, ok := getPRTrack(hash)
+	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{
+			"hash":    hash,
+			"tracked": false,
+			"error":   "PR not found. This endpoint only tracks PRs created through gitGost.",
+		})
+		return
+	}
+
+	prov := providerFromName(track.Provider)
+	status, err := prov.GetMRStatus(track.Owner, track.Repo, track.Number)
+	if err != nil {
+		utils.Log("Error fetching MR status for %s/%s#%d: %v", track.Owner, track.Repo, track.Number, err)
+		c.JSON(http.StatusOK, gin.H{
+			"hash":      hash,
+			"tracked":   true,
+			"pr_number": track.Number,
+			"owner":     track.Owner,
+			"repo":      track.Repo,
+			"pr_url":    track.PRURL,
+			"error":     "could not fetch status from provider",
+		})
+		return
+	}
+
+	// Limitar eventos a los ultimos 10
+	events := status.Events
+	if len(events) > 10 {
+		events = events[len(events)-10:]
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"hash":       hash,
+		"tracked":    true,
+		"pr_number":  status.Number,
+		"owner":      track.Owner,
+		"repo":       track.Repo,
+		"pr_url":     track.PRURL,
+		"provider":   track.Provider,
+		"state":      status.State,
+		"title":      status.Title,
+		"comments":   status.Comments,
+		"updated_at": status.UpdatedAt,
+		"events":     events,
+	})
+}
+
+// VerifyHandler sirve instrucciones de verificacion matematica del binario desplegado.
 // Solo expone commitHash y sourceRepo (datos públicos, sin variables de entorno ni secretos).
 func VerifyHandler(c *gin.Context) {
 	shortHash := commitHash

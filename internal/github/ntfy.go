@@ -33,7 +33,9 @@ func NtfyServiceURL() string {
 }
 
 // PublishNtfyEvent publishes an event to the ntfy topic corresponding to a PR hash.
-func PublishNtfyEvent(prHash, title, message string) error {
+// actions: optional ntfy Actions header value (e.g. a button to check PR status).
+// Pass empty string to send without action buttons.
+func PublishNtfyEvent(prHash, title, message, actions string) error {
 	topic := NtfyTopicForPR(prHash)
 	url := fmt.Sprintf("%s/%s", NtfyBaseURL(), topic)
 
@@ -44,6 +46,9 @@ func PublishNtfyEvent(prHash, title, message string) error {
 	req.Header.Set("Title", title)
 	req.Header.Set("Tags", "bell")
 	req.Header.Set("Content-Type", "text/plain; charset=utf-8")
+	if actions != "" {
+		req.Header.Set("Actions", actions)
+	}
 
 	resp, err := ntfyClient.Do(req)
 	if err != nil {

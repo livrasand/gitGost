@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,6 +15,21 @@ import (
 )
 
 var httpClient = &http.Client{Timeout: 60 * time.Second}
+
+// ExtractMRIID extrae el IID de un MR de una URL de GitLab.
+// Formato: https://gitlab.com/{owner}/{repo}/-/merge_requests/{iid}
+func ExtractMRIID(mrURL string) int {
+	trimmed := strings.TrimPrefix(mrURL, "https://gitlab.com/")
+	parts := strings.Split(trimmed, "/-/merge_requests/")
+	if len(parts) != 2 {
+		return 0
+	}
+	n, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return 0
+	}
+	return n
+}
 
 // GitLabProvider implements provider.Provider for GitLab.
 type GitLabProvider struct{}
@@ -488,6 +504,88 @@ func (p *GitLabProvider) CreateAnonymousPRComment(owner, repo string, number int
 		return "", err
 	}
 	return fmt.Sprintf("https://gitlab.com/%s/%s/-/merge_requests/%d#note_%d", owner, repo, number, result.ID), nil
+}
+
+// GetMRStatus obtiene el estado actual de un MR desde GitLab.
+func (p *GitLabProvider) GetMRStatus(owner, repo string, number int) (*provider.MRStatus, error) {
+	t := token()
+	if t == "" {
+		return nil, fmt.Errorf("GITLAB_TOKEN not set")
+	}
+
+	pid := projectID(owner, repo)
+
+	// Obtener info del MR
+	mrURL := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/merge_requests/%d", pid, number)
+	mrReq, _ := http.NewRequest("GET", mrURL, nil)
+	authHeader(mrReq)
+	mrResp, err := httpClient.Do(mrReq)
+	if err != nil {
+		return nil, err
+	}
+	defer mrResp.Body.Close()
+
+	if mrResp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("GitLab API returned status %d", mrResp.StatusCode)
+	}
+
+	var mr struct {
+		State     string `json:"state"`
+		Title     string `json:"title"`
+		UpdatedAt string `json:"updated_at"`
+	}
+	if err := json.NewDecoder(mrResp.Body).Decode(&mr); err != nil {
+		return nil, err
+	}
+
+	// Obtener notes (comentarios)
+	notesURL := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/merge_requests/%d/notes?per_page=100", pid, number)
+	notesReq, _ := http.NewRequest("GET", notesURL, nil)
+	authHeader(notesReq)
+	notesResp, err := httpClient.Do(notesReq)
+	if err != nil {
+		return &provider.MRStatus{
+			State: mr.State, Title: mr.Title, Number: number,
+			Comments: 0, UpdatedAt: mr.UpdatedAt, Events: []provider.Event{},
+		}, nil
+	}
+	defer notesResp.Body.Close()
+
+	type note struct {
+		ID     int    `json:"id"`
+		Body   string `json:"body"`
+		Author struct {
+			Username string `json:"username"`
+		} `json:"author"`
+		CreatedAt string `json:"created_at"`
+		System    bool   `json:"system"`
+	}
+
+	var notes []note
+	if err := json.NewDecoder(notesResp.Body).Decode(&notes); err != nil {
+		notes = []note{}
+	}
+
+	comments := 0
+	events := make([]provider.Event, 0, len(notes))
+	for _, n := range notes {
+		eventType := "comment"
+		if n.System {
+			eventType = "system"
+		}
+		events = append(events, provider.Event{
+			Type: eventType, Author: n.Author.Username,
+			Body: n.Body, CreatedAt: n.CreatedAt,
+		})
+		if !n.System {
+			comments++
+		}
+	}
+
+	return &provider.MRStatus{
+		State: mr.State, Title: mr.Title, Number: number,
+		Comments: comments, UpdatedAt: mr.UpdatedAt, Events: events,
+	}, nil
 }
 
 // IsRepoVerified checks if the GitLab repo has a .gitgost.yml file.

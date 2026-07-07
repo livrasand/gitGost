@@ -83,3 +83,34 @@ func (p *GitHubProvider) CreateAnonymousComment(owner, repo string, number int, 
 func (p *GitHubProvider) CreateAnonymousPRComment(owner, repo string, number int, body string) (string, error) {
 	return github.CreateAnonymousPRComment(owner, repo, number, body)
 }
+
+func (p *GitHubProvider) GetMRStatus(owner, repo string, number int) (*provider.MRStatus, error) {
+	state, title, comments, updatedAt, err := github.FetchPRInfo(owner, repo, number)
+	if err != nil {
+		return nil, err
+	}
+
+	events, _, _, err := github.FetchPRTimeline(owner, repo, number, "")
+	if err != nil {
+		return &provider.MRStatus{
+			State: state, Title: title, Number: number,
+			Comments: comments, UpdatedAt: updatedAt, Events: []provider.Event{},
+		}, nil
+	}
+
+	providerEvents := make([]provider.Event, len(events))
+	for i, e := range events {
+		author := ""
+		if e.User != nil {
+			author = e.User.Login
+		}
+		providerEvents[i] = provider.Event{
+			Type: e.Event, Author: author, Body: e.Body, CreatedAt: e.CreatedAt,
+		}
+	}
+
+	return &provider.MRStatus{
+		State: state, Title: title, Number: number,
+		Comments: comments, UpdatedAt: updatedAt, Events: providerEvents,
+	}, nil
+}

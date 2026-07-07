@@ -400,7 +400,7 @@ button.dismiss{border-color:#f85149;color:#f85149;}
 		if v.Unbanned {
 			outcome = `<span class="tag tag-open">unbanned</span>`
 		}
-		fmt.Fprintf(c.Writer, `<tr><td>%s</td><td>%s</td><td>%s</td></tr>`, v.TicketID[:8], v.Hash, outcome)
+		fmt.Fprintf(c.Writer, `<tr><td>%s</td><td>%s</td><td>%s</td></tr>`, v.TicketID[:8], template.HTMLEscapeString(v.Hash), outcome)
 	}
 	fmt.Fprintf(c.Writer, `</table></body></html>`)
 }

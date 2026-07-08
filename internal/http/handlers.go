@@ -678,9 +678,9 @@ type prTrack struct {
 }
 
 var (
-	prTrackMu          sync.RWMutex
-	prTrackStore       = make(map[string]*prTrack)
-	prTrackTTL         = 24 * time.Hour
+	prTrackMu           sync.RWMutex
+	prTrackStore        = make(map[string]*prTrack)
+	prTrackTTL          = 24 * time.Hour
 	prTrackEvictionOnce sync.Once
 )
 
@@ -744,7 +744,6 @@ func providerFromName(name string) provider.Provider {
 	default:
 		return ghprovider.New()
 	}
-}
 }
 
 // newActionToken generates a single-use token valid for actionTokenTTL and stores it.
@@ -1911,6 +1910,8 @@ func PRCheckHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
+}
+
 // Solo expone commitHash y sourceRepo (datos públicos, sin variables de entorno ni secretos).
 func VerifyHandler(c *gin.Context) {
 	shortHash := commitHash

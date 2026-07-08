@@ -18,6 +18,7 @@ type MRStatus struct {
 	Number    int     `json:"number"`
 	Comments  int     `json:"comments"`
 	UpdatedAt string  `json:"updated_at"`
+	ETag      string  `json:"etag,omitempty"`
 	Events    []Event `json:"events"`
 }
 

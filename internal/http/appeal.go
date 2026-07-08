@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
 	"html/template"
@@ -220,20 +221,35 @@ func AppealViewHandler(c *gin.Context) {
 
 	appealTicketsMu.Lock()
 	ticket, exists := appealTickets[ticketID]
+	// Snapshot mutable fields under lock to avoid races with admin/POST updates.
+	var (
+		hash      string
+		createdAt time.Time
+		resolved  bool
+		unbanned  bool
+		message   string
+	)
+	if exists {
+		hash = ticket.Hash
+		createdAt = ticket.CreatedAt
+		resolved = ticket.Resolved
+		unbanned = ticket.Unbanned
+		message = ticket.Message
+	}
 	appealTicketsMu.Unlock()
 
-	if !exists || time.Since(ticket.CreatedAt) > appealTicketTTL {
+	if !exists || time.Since(createdAt) > appealTicketTTL {
 		c.String(http.StatusNotFound, "Appeal not found or expired.")
 		return
 	}
 
 	if c.Request.Method == http.MethodPost {
-		message := strings.TrimSpace(c.PostForm("message"))
-		if message == "" {
+		msg := strings.TrimSpace(c.PostForm("message"))
+		if msg == "" {
 			_ = appealStartTmpl.Execute(c.Writer, gin.H{
 				"Title":    "Submit appeal",
 				"Subtitle": "Your appeal message cannot be empty.",
-				"Hash":     ticket.Hash,
+				"Hash":     hash,
 				"TicketID": ticketID,
 				"Error":    "Message is required.",
 			})
@@ -241,27 +257,29 @@ func AppealViewHandler(c *gin.Context) {
 		}
 
 		appealTicketsMu.Lock()
-		ticket.Message = message
+		if t, ok := appealTickets[ticketID]; ok {
+			t.Message = msg
+		}
 		appealTicketsMu.Unlock()
 
 		// Notify admin via ntfy if configured
 		if ntfyAdminTopic != "" {
-			go notifyAdminAppeal(ticketID, ticket.Hash)
+			go notifyAdminAppeal(ticketID, hash)
 		}
 
 		_ = appealStartTmpl.Execute(c.Writer, gin.H{
 			"Title":    "Appeal submitted",
 			"Subtitle": "Your appeal has been received.",
-			"Hash":     ticket.Hash,
+			"Hash":     hash,
 			"Done":     true,
 		})
 		return
 	}
 
 	// GET: show the appeal form or status
-	if ticket.Resolved {
-		status := "closed"
-		if ticket.Unbanned {
+	if resolved {
+		var status string
+		if unbanned {
 			status = "approved — hash unbanned"
 		} else {
 			status = "dismissed — ban upheld"
@@ -269,19 +287,19 @@ func AppealViewHandler(c *gin.Context) {
 		_ = appealStartTmpl.Execute(c.Writer, gin.H{
 			"Title":    "Appeal resolved",
 			"Subtitle": "Status: " + status,
-			"Hash":     ticket.Hash,
+			"Hash":     hash,
 			"Done":     true,
 			"Resolved": true,
-			"Unbanned": ticket.Unbanned,
+			"Unbanned": unbanned,
 		})
 		return
 	}
 
-	if ticket.Message != "" {
+	if message != "" {
 		_ = appealStartTmpl.Execute(c.Writer, gin.H{
 			"Title":    "Appeal submitted",
 			"Subtitle": "Waiting for admin review.",
-			"Hash":     ticket.Hash,
+			"Hash":     hash,
 			"Done":     true,
 		})
 		return
@@ -290,7 +308,7 @@ func AppealViewHandler(c *gin.Context) {
 	_ = appealStartTmpl.Execute(c.Writer, gin.H{
 		"Title":    "Submit appeal",
 		"Subtitle": "Explain why your content should be unbanned.",
-		"Hash":     ticket.Hash,
+		"Hash":     hash,
 		"TicketID": ticketID,
 	})
 }
@@ -313,12 +331,13 @@ func notifyAdminAppeal(ticketID, hash string) {
 // AdminAppealsHandler lista las apelaciones abiertas (protegido por password).
 func AdminAppealsHandler(c *gin.Context) {
 	password := c.Query("password")
-	if password == "" || panicPassword == "" || password != panicPassword {
+	if password == "" {
+		password, _ = c.Cookie("admin_pass")
+	}
+	if password == "" || panicPassword == "" || subtle.ConstantTimeCompare([]byte(password), []byte(panicPassword)) != 1 {
 		c.String(http.StatusUnauthorized, "Unauthorized")
 		return
 	}
-	escapedPassword := template.HTMLEscapeString(password)
-
 	appealTicketsMu.Lock()
 	type appealView struct {
 		TicketID  string
@@ -376,19 +395,26 @@ button.dismiss{border-color:#f85149;color:#f85149;}
 			msgPreview = msgPreview[:60] + "..."
 		}
 		age := time.Since(v.CreatedAt).Round(time.Minute)
+		// Escape every dynamic value to prevent stored/reflected XSS.
+		ticketID := template.HTMLEscapeString(v.TicketID)
+		ticketShort := template.HTMLEscapeString(v.TicketID[:8])
+		hash := template.HTMLEscapeString(v.Hash)
+		msg := template.HTMLEscapeString(msgPreview)
+		ageStr := template.HTMLEscapeString(age.String())
+		pwd := template.HTMLEscapeString(password)
 		fmt.Fprintf(c.Writer, `<tr><td><a href="/appeal/%s">%s</a></td><td>%s</td><td>%s</td><td>%s</td>
-<td>
-<form method="POST" action="/admin/appeals/%s/resolve" style="display:inline;">
-<input type="hidden" name="password" value="%s">
-<input type="hidden" name="outcome" value="unban">
-<button type="submit" class="unban">Unban</button>
-</form>
-<form method="POST" action="/admin/appeals/%s/resolve" style="display:inline;">
-<input type="hidden" name="password" value="%s">
-<input type="hidden" name="outcome" value="dismiss">
-<button type="submit" class="dismiss">Dismiss</button>
-</form>
-</td></tr>`, v.TicketID, v.TicketID[:8], template.HTMLEscapeString(v.Hash), msgPreview, age, v.TicketID, escapedPassword, v.TicketID, escapedPassword)
+	<td>
+	<form method="POST" action="/admin/appeals/%s/resolve" style="display:inline;">
+	<input type="hidden" name="password" value="%s">
+	<input type="hidden" name="outcome" value="unban">
+	<button type="submit" class="unban">Unban</button>
+	</form>
+	<form method="POST" action="/admin/appeals/%s/resolve" style="display:inline;">
+	<input type="hidden" name="password" value="%s">
+	<input type="hidden" name="outcome" value="dismiss">
+	<button type="submit" class="dismiss">Dismiss</button>
+	</form>
+	</td></tr>`, ticketID, ticketShort, hash, msg, ageStr, ticketID, pwd, ticketID, pwd)
 	}
 	fmt.Fprintf(c.Writer, `</table>
 <hr class="sep"><h2>Resolved (%d)</h2><table><tr><th>Ticket</th><th>Hash</th><th>Outcome</th></tr>`, len(resolvedList))
@@ -400,7 +426,9 @@ button.dismiss{border-color:#f85149;color:#f85149;}
 		if v.Unbanned {
 			outcome = `<span class="tag tag-open">unbanned</span>`
 		}
-		fmt.Fprintf(c.Writer, `<tr><td>%s</td><td>%s</td><td>%s</td></tr>`, v.TicketID[:8], template.HTMLEscapeString(v.Hash), outcome)
+		ticketShort := template.HTMLEscapeString(v.TicketID[:8])
+		hash := template.HTMLEscapeString(v.Hash)
+		fmt.Fprintf(c.Writer, `<tr><td>%s</td><td>%s</td><td>%s</td></tr>`, ticketShort, hash, outcome)
 	}
 	fmt.Fprintf(c.Writer, `</table></body></html>`)
 }
@@ -411,7 +439,7 @@ func AdminAppealResolveHandler(c *gin.Context) {
 	password := c.PostForm("password")
 	outcome := c.PostForm("outcome")
 
-	if password == "" || panicPassword == "" || password != panicPassword {
+	if password == "" || panicPassword == "" || subtle.ConstantTimeCompare([]byte(password), []byte(panicPassword)) != 1 {
 		c.String(http.StatusUnauthorized, "Unauthorized")
 		return
 	}
@@ -427,14 +455,20 @@ func AdminAppealResolveHandler(c *gin.Context) {
 	ticket.Resolved = true
 	if outcome == "unban" {
 		ticket.Unbanned = true
-		// Remove from blocked hashes
-		delete(blockedHashes, ticket.Hash)
 		utils.Log("Appeal %s: hash %s unbanned", ticketID[:8], ticket.Hash)
 	} else {
 		ticket.Unbanned = false
 		utils.Log("Appeal %s: hash %s ban upheld", ticketID[:8], ticket.Hash)
 	}
+	hash := ticket.Hash
+	unbanned := outcome == "unban"
 	appealTicketsMu.Unlock()
+
+	if unbanned {
+		identityMu.Lock()
+		delete(blockedHashes, hash)
+		identityMu.Unlock()
+	}
 
 	// Send ntfy notification about resolution
 	if ntfyAdminTopic != "" && ticket.Message != "" {
@@ -451,5 +485,6 @@ func AdminAppealResolveHandler(c *gin.Context) {
 		}()
 	}
 
-	c.Redirect(http.StatusSeeOther, fmt.Sprintf("/admin/appeals?password=%s", password))
+	c.SetCookie("admin_pass", password, 3600, "/admin/", "", false, true)
+	c.Redirect(http.StatusSeeOther, "/admin/appeals")
 }

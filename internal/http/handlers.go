@@ -669,6 +669,7 @@ type prTrack struct {
 var (
 	prTrackMu    sync.RWMutex
 	prTrackStore = make(map[string]*prTrack)
+	prTrackTTL   = 24 * time.Hour
 )
 
 // trackPR almacena metadatos de un PR para consultas de estado posteriores.
@@ -684,12 +685,22 @@ func trackPR(prHash, owner, repo string, number int, prURL string) {
 	}
 }
 
-// getPRTrack obtiene los metadatos de un PR por su hash.
-func getPRTrack(prHash string) (*prTrack, bool) {
-	prTrackMu.RLock()
-	defer prTrackMu.RUnlock()
+// getPRTrack obtiene una copia de los metadatos de un PR por su hash.
+// Retorna una copia (value) obtenida bajo el lock, incluyendo LastETag,
+// para que el llamador pueda usarla sin condiciones de carrera.
+// Elimina entradas expiradas para evitar acumulacion de stale data.
+func getPRTrack(prHash string) (prTrack, bool) {
+	prTrackMu.Lock()
+	defer prTrackMu.Unlock()
 	t, ok := prTrackStore[prHash]
-	return t, ok
+	if !ok {
+		return prTrack{}, false
+	}
+	if time.Since(t.AddedAt) > prTrackTTL {
+		delete(prTrackStore, prHash)
+		return prTrack{}, false
+	}
+	return *t, true
 }
 
 // newActionToken generates a single-use token valid for actionTokenTTL and stores it.

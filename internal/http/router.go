@@ -11,6 +11,27 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// securityHeaders agrega cabeceras de seguridad a todas las respuestas.
+func securityHeaders() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		c.Header("X-Frame-Options", "DENY")
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Header("Content-Security-Policy",
+			"default-src 'self'; "+
+				"script-src 'self' https://cdn.jsdelivr.net https://unpkg.com 'unsafe-inline'; "+
+				"style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; "+
+				"font-src 'self' https://fonts.gstatic.com; "+
+				"img-src 'self' data:; "+
+				"object-src 'none'; "+
+				"frame-ancestors 'none'; "+
+				"connect-src 'self'",
+		)
+		c.Next()
+	}
+}
+
 // adminLimiterState holds per-IP sliding-window counters for admin endpoints.
 var (
 	adminLimiterMu    sync.Mutex
@@ -136,6 +157,9 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	// Solo recovery, sin logger para proteger anonimato
 	r.Use(gin.Recovery())
 
+	// Cabeceras de seguridad en todas las respuestas
+	r.Use(securityHeaders())
+
 	// Health y metrics (no auth)
 	r.GET("/health", HealthHandler)
 	r.GET("/metrics", MetricsHandler)
@@ -152,6 +176,9 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.StaticFile("/approach.html", "./web/approach.html")
 	r.StaticFile("/guidelines.html", "./web/guidelines.html")
 	r.StaticFile("/karma.html", "./web/karma.html")
+
+	// Security policy (security.txt)
+	r.StaticFile("/.well-known/security.txt", "./web/.well-known/security.txt")
 
 	// Static assets
 	r.Static("/assets", "./web/assets")
@@ -217,12 +244,20 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/pr/:hash/status", PRCheckHandler)
 	}
 
+	// Appeal routes — anonymous appeal system
+	r.GET("/appeal", AppealStartHandler)
+	r.POST("/appeal", AppealStartHandler)
+	r.GET("/appeal/:ticket", AppealViewHandler)
+	r.POST("/appeal/:ticket", AppealViewHandler)
+
 	// Admin endpoints — protected by strict per-IP rate limiting
 	admin := r.Group("/admin")
 	admin.Use(adminLimiter())
 	{
 		admin.POST("/panic", PanicHandler)
 		admin.POST("/rollback", RollbackBurstHandler)
+		admin.GET("/appeals", AdminAppealsHandler)
+		admin.POST("/appeals/:ticket/resolve", AdminAppealResolveHandler)
 	}
 
 	// Service status (para el frontend)

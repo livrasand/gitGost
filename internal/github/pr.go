@@ -717,12 +717,135 @@ func IsRepoVerified(owner, repo string) bool {
 	return resp.StatusCode == 200
 }
 
-// GeneratePRHash genera un hash determinístico de 8 caracteres basado en owner/repo/branch.
+// GeneratePRHash genera un hash deterministico de 8 caracteres basado en owner/repo/branch.
 // Esto permite que el mismo branch siempre produzca el mismo pr-hash, sin almacenar estado.
 func GeneratePRHash(owner, repo, branch string) string {
 	input := fmt.Sprintf("%s/%s/%s", owner, repo, branch)
 	sum := sha256.Sum256([]byte(input))
 	return hex.EncodeToString(sum[:])[:8]
+}
+
+// PRTimelineEvent representa un evento individual del timeline de un PR.
+// Solo contiene los campos que nos interesan.
+type PRTimelineEvent struct {
+	Event     string `json:"event"`
+	CreatedAt string `json:"created_at"`
+	Body      string `json:"body,omitempty"`
+	User      *struct {
+		Login string `json:"login"`
+	} `json:"user,omitempty"`
+	State string `json:"state,omitempty"`
+	Label *struct {
+		Name string `json:"name"`
+	} `json:"label,omitempty"`
+}
+
+// ExtractPRNumber extrae el numero de PR de una URL de GitHub.
+// Formato esperado: https://github.com/{owner}/{repo}/pull/{number}
+func ExtractPRNumber(prURL string) int {
+	parts := strings.Split(strings.TrimPrefix(prURL, "https://github.com/"), "/")
+	if len(parts) < 4 || parts[2] != "pull" {
+		return 0
+	}
+	n, err := strconv.Atoi(parts[3])
+	if err != nil {
+		return 0
+	}
+	return n
+}
+
+// FetchPRTimeline obtiene el timeline de un PR desde la API de GitHub.
+// Usa ETag/If-None-Match para evitar datos innecesarios.
+// Retorna los eventos, el nuevo ETag, si hubo cambios, o error.
+func FetchPRTimeline(owner, repo string, number int, etag string) (events []PRTimelineEvent, newETag string, changed bool, err error) {
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		return nil, "", false, fmt.Errorf("GITHUB_TOKEN not set")
+	}
+
+	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d/timeline?per_page=100", owner, repo, number)
+
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return nil, "", false, err
+	}
+	req.Header.Set("Authorization", "token "+token)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", "gitGost")
+	if etag != "" {
+		req.Header.Set("If-None-Match", etag)
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, "", false, err
+	}
+	defer resp.Body.Close()
+
+	newETag = resp.Header.Get("ETag")
+
+	if resp.StatusCode == http.StatusNotModified {
+		return nil, newETag, false, nil
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, "", false, fmt.Errorf("GitHub API returned status %d", resp.StatusCode)
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&events); err != nil {
+		return nil, "", false, err
+	}
+
+	// GitHub puede devolver null en lugar de array
+	if events == nil {
+		events = []PRTimelineEvent{}
+	}
+
+	return events, newETag, true, nil
+}
+
+// FetchPRInfo obtiene informacion basica del PR (state, title, comments count).
+// Usa el endpoint de issues ya que los PRs son issues.
+func FetchPRInfo(owner, repo string, number int) (state, title string, comments int, updatedAt string, err error) {
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		return "", "", 0, "", fmt.Errorf("GITHUB_TOKEN not set")
+	}
+
+	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d", owner, repo, number)
+
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return "", "", 0, "", err
+	}
+	req.Header.Set("Authorization", "token "+token)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", "gitGost")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", "", 0, "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", "", 0, "", fmt.Errorf("GitHub API returned status %d", resp.StatusCode)
+	}
+
+	var result struct {
+		State     string `json:"state"`
+		Title     string `json:"title"`
+		Comments  int    `json:"comments"`
+		UpdatedAt string `json:"updated_at"`
+		// El campo pull_request existe solo si es un PR
+		PullRequest *struct{} `json:"pull_request,omitempty"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", "", 0, "", err
+	}
+
+	return result.State, result.Title, result.Comments, result.UpdatedAt, nil
 }
 
 // GetExistingPR busca si existe un PR abierto desde forkOwner:branchName hacia owner/repo.

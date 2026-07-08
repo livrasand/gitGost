@@ -11,6 +11,26 @@ type RepoPolicy struct {
 	DenyAll bool
 }
 
+// MRStatus contiene el estado actual de un Merge/Pull Request.
+type MRStatus struct {
+	State     string  `json:"state"`
+	Title     string  `json:"title"`
+	Number    int     `json:"number"`
+	Comments  int     `json:"comments"`
+	UpdatedAt string  `json:"updated_at"`
+	ETag      string  `json:"etag,omitempty"`
+	Events    []Event `json:"events"`
+}
+
+// Event representa un evento en el timeline de un MR/PR.
+type Event struct {
+	ID        string `json:"id,omitempty"`
+	Type      string `json:"type"`
+	Author    string `json:"author"`
+	Body      string `json:"body,omitempty"`
+	CreatedAt string `json:"created_at"`
+}
+
 // Provider abstracts the operations needed to anonymize contributions
 // across different git hosting platforms (GitHub, GitLab, etc.).
 type Provider interface {
@@ -58,4 +78,7 @@ type Provider interface {
 
 	// CreateAnonymousPRComment posts a comment on a PR/MR and returns the comment URL.
 	CreateAnonymousPRComment(owner, repo string, number int, body string) (string, error)
+
+	// GetMRStatus obtiene el estado actual de un MR/PR incluyendo su timeline de eventos.
+	GetMRStatus(owner, repo string, number int) (*MRStatus, error)
 }

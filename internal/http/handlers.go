@@ -388,7 +388,7 @@ func ReceivePackHandler(c *gin.Context) {
 	go func() {
 		ntfyTopic := github.NtfyTopicForPR(outPRHash)
 		var ntfyTitle, ntfyMsg string
-		actionBtn := fmt.Sprintf("http, Check Status, %s/api/pr/%s/status, clear=true", github.NtfyServiceURL(), outPRHash)
+		actionBtn := fmt.Sprintf("http, Check Status, %s/api/pr/%s/status, clear=true, method=GET", github.NtfyServiceURL(), outPRHash)
 		if isUpdate {
 			ntfyTitle = "PR Updated · gitGost"
 			ntfyMsg = fmt.Sprintf("Your anonymous PR was updated.\nPR: %s\nTopic: %s/%s", prURL, github.NtfyBaseURL(), ntfyTopic)
@@ -403,8 +403,18 @@ func ReceivePackHandler(c *gin.Context) {
 
 	// Track PR for on-demand status checking
 	if prURL != "" {
-		if num := github.ExtractPRNumber(prURL); num > 0 {
-			trackPR(outPRHash, owner, repo, num, prURL)
+		provShort := "gh"
+		if strings.HasPrefix(c.Request.URL.Path, "/v1/gl/") {
+			provShort = "gl"
+		}
+		if provShort == "gl" {
+			if num := glprovider.ExtractMRIID(prURL); num > 0 {
+				trackPR(outPRHash, owner, repo, num, prURL, provShort)
+			}
+		} else {
+			if num := github.ExtractPRNumber(prURL); num > 0 {
+				trackPR(outPRHash, owner, repo, num, prURL, provShort)
+			}
 		}
 	}
 
@@ -662,30 +672,53 @@ type prTrack struct {
 	Repo     string
 	Number   int
 	PRURL    string
+	Provider string // "gh" or "gl"
 	LastETag string
 	AddedAt  time.Time
 }
 
 var (
-	prTrackMu    sync.RWMutex
-	prTrackStore = make(map[string]*prTrack)
-	prTrackTTL   = 24 * time.Hour
+	prTrackMu           sync.RWMutex
+	prTrackStore        = make(map[string]*prTrack)
+	prTrackTTL          = 24 * time.Hour
+	prTrackEvictionOnce sync.Once
 )
 
+// startPRTrackEviction inicia un goroutine que limpia entradas expiradas cada 10 min.
+func startPRTrackEviction() {
+	prTrackEvictionOnce.Do(func() {
+		go func() {
+			ticker := time.NewTicker(10 * time.Minute)
+			defer ticker.Stop()
+			for range ticker.C {
+				prTrackMu.Lock()
+				for hash, t := range prTrackStore {
+					if time.Since(t.AddedAt) > prTrackTTL {
+						delete(prTrackStore, hash)
+					}
+				}
+				prTrackMu.Unlock()
+			}
+		}()
+	})
+}
+
 // trackPR almacena metadatos de un PR para consultas de estado posteriores.
-func trackPR(prHash, owner, repo string, number int, prURL string) {
+func trackPR(prHash, owner, repo string, number int, prURL, provider string) {
+	startPRTrackEviction()
 	prTrackMu.Lock()
 	defer prTrackMu.Unlock()
 	prTrackStore[prHash] = &prTrack{
-		Owner:   owner,
-		Repo:    repo,
-		Number:  number,
-		PRURL:   prURL,
-		AddedAt: time.Now(),
+		Owner:    owner,
+		Repo:     repo,
+		Number:   number,
+		PRURL:    prURL,
+		Provider: provider,
+		AddedAt:  time.Now(),
 	}
 }
 
-// getPRTrack obtiene una copia de los metadatos de un PR por su hash.
+// getPRTrack obtiene los metadatos de un PR por su hash.
 // Retorna una copia (value) obtenida bajo el lock, incluyendo LastETag,
 // para que el llamador pueda usarla sin condiciones de carrera.
 // Elimina entradas expiradas para evitar acumulacion de stale data.
@@ -701,6 +734,16 @@ func getPRTrack(prHash string) (prTrack, bool) {
 		return prTrack{}, false
 	}
 	return *t, true
+}
+
+// providerFromName devuelve el provider adecuado segun el nombre corto.
+func providerFromName(name string) provider.Provider {
+	switch name {
+	case "gl":
+		return glprovider.New()
+	default:
+		return ghprovider.New()
+	}
 }
 
 // newActionToken generates a single-use token valid for actionTokenTTL and stores it.
@@ -1796,7 +1839,7 @@ func PRStatusHandler(c *gin.Context) {
 	})
 }
 
-// PRCheckHandler devuelve el estado actual de un PR consultando la API de GitHub.
+// PRCheckHandler devuelve el estado actual de un PR/MR consultando la API del proveedor.
 // Solo funciona para PRs creados a traves de gitGost (trackeados en memoria).
 // Usa ETag para cache eficiente: en cada respuesta devuelve el ETag actual.
 // El cliente puede enviarlo en el header If-None-Match en consultas posteriores.
@@ -1817,10 +1860,10 @@ func PRCheckHandler(c *gin.Context) {
 		return
 	}
 
-	// Obtener informacion basica del PR (state, title, comments)
-	state, title, comments, updatedAt, err := github.FetchPRInfo(track.Owner, track.Repo, track.Number)
+	prov := providerFromName(track.Provider)
+	status, err := prov.GetMRStatus(track.Owner, track.Repo, track.Number)
 	if err != nil {
-		utils.Log("Error fetching PR info for %s/%s#%d: %v", track.Owner, track.Repo, track.Number, err)
+		utils.Log("Error fetching MR status for %s/%s#%d: %v", track.Owner, track.Repo, track.Number, err)
 		c.JSON(http.StatusOK, gin.H{
 			"hash":      hash,
 			"tracked":   true,
@@ -1828,53 +1871,47 @@ func PRCheckHandler(c *gin.Context) {
 			"owner":     track.Owner,
 			"repo":      track.Repo,
 			"pr_url":    track.PRURL,
-			"error":     "could not fetch PR info from GitHub",
+			"error":     "could not fetch status from provider",
 		})
 		return
 	}
 
-	// Obtener timeline con ETag
-	events, newETag, changed, err := github.FetchPRTimeline(track.Owner, track.Repo, track.Number, track.LastETag)
-	if err != nil {
-		utils.Log("Error fetching PR timeline for %s/%s#%d: %v", track.Owner, track.Repo, track.Number, err)
-		// Devolvemos la info basica aunque falle el timeline
-	}
-
-	// Actualizar ETag si hubo cambios o si es la primera vez
-	if changed || track.LastETag == "" {
-		prTrackMu.Lock()
-		if track, ok := prTrackStore[hash]; ok {
-			track.LastETag = newETag
-		}
-		prTrackMu.Unlock()
+	// Limitar eventos a los ultimos 10
+	events := status.Events
+	if len(events) > 10 {
+		events = events[len(events)-10:]
 	}
 
 	response := gin.H{
 		"hash":       hash,
 		"tracked":    true,
-		"pr_number":  track.Number,
+		"pr_number":  status.Number,
 		"owner":      track.Owner,
 		"repo":       track.Repo,
 		"pr_url":     track.PRURL,
-		"state":      state,
-		"title":      title,
-		"comments":   comments,
-		"updated_at": updatedAt,
-		"new_events": changed,
+		"provider":   track.Provider,
+		"state":      status.State,
+		"title":      status.Title,
+		"comments":   status.Comments,
+		"updated_at": status.UpdatedAt,
 	}
 
 	if events != nil {
-		// Devolver solo los ultimos 10 eventos para no saturar
-		if len(events) > 10 {
-			events = events[len(events)-10:]
-		}
 		response["events"] = events
+	}
+
+	// Actualizar LastETag para siguiente consulta si el proveedor lo devolvio
+	if status.ETag != "" && status.ETag != track.LastETag {
+		prTrackMu.Lock()
+		if t, ok := prTrackStore[hash]; ok {
+			t.LastETag = status.ETag
+		}
+		prTrackMu.Unlock()
 	}
 
 	c.JSON(http.StatusOK, response)
 }
 
-// VerifyHandler sirve instrucciones de verificación matemática del binario desplegado.
 // Solo expone commitHash y sourceRepo (datos públicos, sin variables de entorno ni secretos).
 func VerifyHandler(c *gin.Context) {
 	shortHash := commitHash

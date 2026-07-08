@@ -754,8 +754,27 @@ func ExtractPRNumber(prURL string) int {
 	return n
 }
 
+// nextPageURL extrae la URL de la pagina siguiente del header Link de GitHub.
+func nextPageURL(linkHeader string) string {
+	if linkHeader == "" {
+		return ""
+	}
+	for _, part := range strings.Split(linkHeader, ",") {
+		part = strings.TrimSpace(part)
+		if strings.Contains(part, `rel="next"`) {
+			start := strings.Index(part, "<")
+			end := strings.Index(part, ">")
+			if start != -1 && end != -1 {
+				return part[start+1 : end]
+			}
+		}
+	}
+	return ""
+}
+
 // FetchPRTimeline obtiene el timeline de un PR desde la API de GitHub.
 // Usa ETag/If-None-Match para evitar datos innecesarios.
+// Recorre todas las paginas via Link header.
 // Retorna los eventos, el nuevo ETag, si hubo cambios, o error.
 func FetchPRTimeline(owner, repo string, number int, etag string) (events []PRTimelineEvent, newETag string, changed bool, err error) {
 	token := os.Getenv("GITHUB_TOKEN")
@@ -765,35 +784,51 @@ func FetchPRTimeline(owner, repo string, number int, etag string) (events []PRTi
 
 	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d/timeline?per_page=100", owner, repo, number)
 
-	req, err := http.NewRequest("GET", apiURL, nil)
-	if err != nil {
-		return nil, "", false, err
-	}
-	req.Header.Set("Authorization", "token "+token)
-	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("User-Agent", "gitGost")
-	if etag != "" {
-		req.Header.Set("If-None-Match", etag)
-	}
+	for apiURL != "" {
+		req, err := http.NewRequest("GET", apiURL, nil)
+		if err != nil {
+			return nil, "", false, err
+		}
+		req.Header.Set("Authorization", "token "+token)
+		req.Header.Set("Accept", "application/vnd.github+json")
+		req.Header.Set("User-Agent", "gitGost")
+		// Solo enviar ETag en la primera peticion (caching global)
+		if etag != "" && newETag == "" {
+			req.Header.Set("If-None-Match", etag)
+		}
 
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return nil, "", false, err
-	}
-	defer resp.Body.Close()
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			return nil, "", false, err
+		}
 
-	newETag = resp.Header.Get("ETag")
+		// Conservar el ETag de la primera respuesta
+		if newETag == "" {
+			newETag = resp.Header.Get("ETag")
+		}
 
-	if resp.StatusCode == http.StatusNotModified {
-		return nil, newETag, false, nil
-	}
+		if resp.StatusCode == http.StatusNotModified {
+			resp.Body.Close()
+			return nil, newETag, false, nil
+		}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, "", false, fmt.Errorf("GitHub API returned status %d", resp.StatusCode)
-	}
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			return nil, "", false, fmt.Errorf("GitHub API returned status %d", resp.StatusCode)
+		}
 
-	if err := json.NewDecoder(resp.Body).Decode(&events); err != nil {
-		return nil, "", false, err
+		var page []PRTimelineEvent
+		if err := json.NewDecoder(resp.Body).Decode(&page); err != nil {
+			resp.Body.Close()
+			return nil, "", false, err
+		}
+		resp.Body.Close()
+
+		if page != nil {
+			events = append(events, page...)
+		}
+
+		apiURL = nextPageURL(resp.Header.Get("Link"))
 	}
 
 	// GitHub puede devolver null en lugar de array
@@ -805,14 +840,15 @@ func FetchPRTimeline(owner, repo string, number int, etag string) (events []PRTi
 }
 
 // FetchPRInfo obtiene informacion basica del PR (state, title, comments count).
-// Usa el endpoint de issues ya que los PRs son issues.
+// Usa el endpoint de pulls para obtener datos especificos de PR
+// (review_comments para el conteo de discusion, merged_at para estado merged).
 func FetchPRInfo(owner, repo string, number int) (state, title string, comments int, updatedAt string, err error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		return "", "", 0, "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
 
-	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d", owner, repo, number)
+	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls/%d", owner, repo, number)
 
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
@@ -833,19 +869,23 @@ func FetchPRInfo(owner, repo string, number int) (state, title string, comments 
 	}
 
 	var result struct {
-		State     string `json:"state"`
-		Title     string `json:"title"`
-		Comments  int    `json:"comments"`
-		UpdatedAt string `json:"updated_at"`
-		// El campo pull_request existe solo si es un PR
-		PullRequest *struct{} `json:"pull_request,omitempty"`
+		State          string  `json:"state"`
+		Title          string  `json:"title"`
+		ReviewComments int     `json:"review_comments"`
+		UpdatedAt      string  `json:"updated_at"`
+		MergedAt       *string `json:"merged_at"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return "", "", 0, "", err
 	}
 
-	return result.State, result.Title, result.Comments, result.UpdatedAt, nil
+	state = result.State
+	if result.MergedAt != nil {
+		state = "merged"
+	}
+
+	return state, result.Title, result.ReviewComments, result.UpdatedAt, nil
 }
 
 // GetExistingPR busca si existe un PR abierto desde forkOwner:branchName hacia owner/repo.
@@ -913,120 +953,4 @@ func GetExistingPR(owner, repo, forkOwner, branchName string) (string, bool, err
 	}
 
 	return prs[0].HTMLURL, true, nil
-}
-
-// PRTimelineEvent representa un evento individual del timeline de un PR.
-type PRTimelineEvent struct {
-	Event     string `json:"event"`
-	CreatedAt string `json:"created_at"`
-	Body      string `json:"body,omitempty"`
-	User      *struct {
-		Login string `json:"login"`
-	} `json:"user,omitempty"`
-	State string `json:"state,omitempty"`
-	Label *struct {
-		Name string `json:"name"`
-	} `json:"label,omitempty"`
-}
-
-// ExtractPRNumber extrae el numero de PR de una URL de GitHub.
-func ExtractPRNumber(prURL string) int {
-	parts := strings.Split(strings.TrimPrefix(prURL, "https://github.com/"), "/")
-	if len(parts) < 4 || parts[2] != "pull" {
-		return 0
-	}
-	n, err := strconv.Atoi(parts[3])
-	if err != nil {
-		return 0
-	}
-	return n
-}
-
-// FetchPRTimeline obtiene el timeline de un PR desde la API de GitHub con ETag.
-func FetchPRTimeline(owner, repo string, number int, etag string) (events []PRTimelineEvent, newETag string, changed bool, err error) {
-	token := os.Getenv("GITHUB_TOKEN")
-	if token == "" {
-		return nil, "", false, fmt.Errorf("GITHUB_TOKEN not set")
-	}
-
-	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d/timeline?per_page=100", owner, repo, number)
-
-	req, err := http.NewRequest("GET", apiURL, nil)
-	if err != nil {
-		return nil, "", false, err
-	}
-	req.Header.Set("Authorization", "token "+token)
-	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("User-Agent", "gitGost")
-	if etag != "" {
-		req.Header.Set("If-None-Match", etag)
-	}
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return nil, "", false, err
-	}
-	defer resp.Body.Close()
-
-	newETag = resp.Header.Get("ETag")
-
-	if resp.StatusCode == http.StatusNotModified {
-		return nil, newETag, false, nil
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, "", false, fmt.Errorf("GitHub API returned status %d", resp.StatusCode)
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&events); err != nil {
-		return nil, "", false, err
-	}
-
-	if events == nil {
-		events = []PRTimelineEvent{}
-	}
-
-	return events, newETag, true, nil
-}
-
-// FetchPRInfo obtiene informacion basica del PR (state, title, comments).
-func FetchPRInfo(owner, repo string, number int) (state, title string, comments int, updatedAt string, err error) {
-	token := os.Getenv("GITHUB_TOKEN")
-	if token == "" {
-		return "", "", 0, "", fmt.Errorf("GITHUB_TOKEN not set")
-	}
-
-	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d", owner, repo, number)
-
-	req, err := http.NewRequest("GET", apiURL, nil)
-	if err != nil {
-		return "", "", 0, "", err
-	}
-	req.Header.Set("Authorization", "token "+token)
-	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("User-Agent", "gitGost")
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return "", "", 0, "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", "", 0, "", fmt.Errorf("GitHub API returned status %d", resp.StatusCode)
-	}
-
-	var result struct {
-		State       string    `json:"state"`
-		Title       string    `json:"title"`
-		Comments    int       `json:"comments"`
-		UpdatedAt   string    `json:"updated_at"`
-		PullRequest *struct{} `json:"pull_request,omitempty"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", "", 0, "", err
-	}
-
-	return result.State, result.Title, result.Comments, result.UpdatedAt, nil
 }

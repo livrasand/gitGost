@@ -388,7 +388,7 @@ func ReceivePackHandler(c *gin.Context) {
 	go func() {
 		ntfyTopic := github.NtfyTopicForPR(outPRHash)
 		var ntfyTitle, ntfyMsg string
-		actionBtn := fmt.Sprintf("http, Check Status, %s/api/pr/%s/status, clear=true", github.NtfyServiceURL(), outPRHash)
+		actionBtn := fmt.Sprintf("http, Check Status, %s/api/pr/%s/status, clear=true, method=GET", github.NtfyServiceURL(), outPRHash)
 		if isUpdate {
 			ntfyTitle = "PR Updated · gitGost"
 			ntfyMsg = fmt.Sprintf("Your anonymous PR was updated.\nPR: %s\nTopic: %s/%s", prURL, github.NtfyBaseURL(), ntfyTopic)
@@ -407,8 +407,14 @@ func ReceivePackHandler(c *gin.Context) {
 		if strings.HasPrefix(c.Request.URL.Path, "/v1/gl/") {
 			provShort = "gl"
 		}
-		if num := github.ExtractPRNumber(prURL); num > 0 {
-			trackPR(outPRHash, owner, repo, num, prURL, provShort)
+		if provShort == "gl" {
+			if num := glprovider.ExtractMRIID(prURL); num > 0 {
+				trackPR(outPRHash, owner, repo, num, prURL, provShort)
+			}
+		} else {
+			if num := github.ExtractPRNumber(prURL); num > 0 {
+				trackPR(outPRHash, owner, repo, num, prURL, provShort)
+			}
 		}
 	}
 
@@ -668,18 +674,38 @@ type prTrack struct {
 	PRURL    string
 	Provider string // "gh" or "gl"
 	LastETag string
-	LastETag string
 	AddedAt  time.Time
 }
 
 var (
-	prTrackMu    sync.RWMutex
-	prTrackStore = make(map[string]*prTrack)
-	prTrackTTL   = 24 * time.Hour
+	prTrackMu          sync.RWMutex
+	prTrackStore       = make(map[string]*prTrack)
+	prTrackTTL         = 24 * time.Hour
+	prTrackEvictionOnce sync.Once
 )
+
+// startPRTrackEviction inicia un goroutine que limpia entradas expiradas cada 10 min.
+func startPRTrackEviction() {
+	prTrackEvictionOnce.Do(func() {
+		go func() {
+			ticker := time.NewTicker(10 * time.Minute)
+			defer ticker.Stop()
+			for range ticker.C {
+				prTrackMu.Lock()
+				for hash, t := range prTrackStore {
+					if time.Since(t.AddedAt) > prTrackTTL {
+						delete(prTrackStore, hash)
+					}
+				}
+				prTrackMu.Unlock()
+			}
+		}()
+	})
+}
 
 // trackPR almacena metadatos de un PR para consultas de estado posteriores.
 func trackPR(prHash, owner, repo string, number int, prURL, provider string) {
+	startPRTrackEviction()
 	prTrackMu.Lock()
 	defer prTrackMu.Unlock()
 	prTrackStore[prHash] = &prTrack{

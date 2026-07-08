@@ -538,18 +538,23 @@ func (p *GitLabProvider) GetMRStatus(owner, repo string, number int) (*provider.
 		return nil, err
 	}
 
-	// Obtener notes (comentarios)
-	notesURL := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/merge_requests/%d/notes?per_page=100", pid, number)
-	notesReq, _ := http.NewRequest("GET", notesURL, nil)
-	authHeader(notesReq)
-	notesResp, err := httpClient.Do(notesReq)
-	if err != nil {
-		return &provider.MRStatus{
-			State: mr.State, Title: mr.Title, Number: number,
-			Comments: 0, UpdatedAt: mr.UpdatedAt, Events: []provider.Event{},
-		}, nil
+	// nextNotePageURL extrae la URL de la pagina siguiente del header Link de GitLab.
+	nextNotePageURL := func(linkHeader string) string {
+		if linkHeader == "" {
+			return ""
+		}
+		for _, part := range strings.Split(linkHeader, ",") {
+			part = strings.TrimSpace(part)
+			if strings.Contains(part, `rel="next"`) {
+				start := strings.Index(part, "<")
+				end := strings.Index(part, ">")
+				if start != -1 && end != -1 {
+					return part[start+1 : end]
+				}
+			}
+		}
+		return ""
 	}
-	defer notesResp.Body.Close()
 
 	type note struct {
 		ID     int    `json:"id"`
@@ -561,14 +566,41 @@ func (p *GitLabProvider) GetMRStatus(owner, repo string, number int) (*provider.
 		System    bool   `json:"system"`
 	}
 
-	var notes []note
-	if err := json.NewDecoder(notesResp.Body).Decode(&notes); err != nil {
-		notes = []note{}
+	var allNotes []note
+	notesURL := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/merge_requests/%d/notes?per_page=100&sort=desc", pid, number)
+	for notesURL != "" {
+		notesReq, _ := http.NewRequest("GET", notesURL, nil)
+		authHeader(notesReq)
+		notesResp, err := httpClient.Do(notesReq)
+		if err != nil {
+			// Si falla la primera pagina, retornar sin eventos
+			if len(allNotes) == 0 {
+				return &provider.MRStatus{
+					State: mr.State, Title: mr.Title, Number: number,
+					Comments: 0, UpdatedAt: mr.UpdatedAt, Events: []provider.Event{},
+				}, nil
+			}
+			break
+		}
+
+		var page []note
+		if err := json.NewDecoder(notesResp.Body).Decode(&page); err != nil {
+			notesResp.Body.Close()
+			if len(allNotes) == 0 {
+				page = []note{}
+			} else {
+				break
+			}
+		}
+		notesResp.Body.Close()
+
+		allNotes = append(allNotes, page...)
+		notesURL = nextNotePageURL(notesResp.Header.Get("Link"))
 	}
 
 	comments := 0
-	events := make([]provider.Event, 0, len(notes))
-	for _, n := range notes {
+	events := make([]provider.Event, 0, len(allNotes))
+	for _, n := range allNotes {
 		eventType := "comment"
 		if n.System {
 			eventType = "system"

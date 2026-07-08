@@ -66,6 +66,40 @@ func adminLimiter() gin.HandlerFunc {
 	}
 }
 
+// prCheckLimiterState holds per-IP sliding-window counters for PR status endpoint.
+var (
+	prCheckLimiterMu    sync.Mutex
+	prCheckLimiterStore = make(map[string][]time.Time)
+	prCheckLimiterMax   = 30
+	prCheckLimiterWin   = time.Minute
+)
+
+// prCheckLimiter enforces a per-IP rate limit on the PR status check endpoint.
+func prCheckLimiter() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ip := c.ClientIP()
+		now := time.Now()
+		cutoff := now.Add(-prCheckLimiterWin)
+		prCheckLimiterMu.Lock()
+		times := prCheckLimiterStore[ip]
+		valid := times[:0]
+		for _, t := range times {
+			if t.After(cutoff) {
+				valid = append(valid, t)
+			}
+		}
+		valid = append(valid, now)
+		prCheckLimiterStore[ip] = valid
+		exceeded := len(valid) > prCheckLimiterMax
+		prCheckLimiterMu.Unlock()
+		if exceeded {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "PR check rate limit exceeded"})
+			return
+		}
+		c.Next()
+	}
+}
+
 // maxPushSize is the maximum allowed push size
 const maxPushSize = 100 * 1024 * 1024 // 100MB
 
@@ -241,7 +275,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/stats", StatsHandler)
 		api.GET("/recent-prs", RecentPRsHandler)
 		api.GET("/pr-status/:hash", PRStatusHandler)
-		api.GET("/pr/:hash/status", PRCheckHandler)
+		api.GET("/pr/:hash/status", prCheckLimiter(), PRCheckHandler)
 	}
 
 	// Appeal routes — anonymous appeal system

@@ -485,6 +485,6 @@ func AdminAppealResolveHandler(c *gin.Context) {
 		}()
 	}
 
-	c.SetCookie("admin_pass", password, 3600, "/admin/", "", false, true)
+	c.SetCookie("admin_pass", password, 3600, "/admin/", "", true, true)
 	c.Redirect(http.StatusSeeOther, "/admin/appeals")
 }

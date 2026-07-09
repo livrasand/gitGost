@@ -2190,8 +2190,8 @@
                 ? `https://gitgost.fly.dev/v1/gh/${rv.owner}/${rv.repo}`
                 : `https://gitgost.fly.dev/v1/gl/${rv.owner}/${rv.repo}`;
             const options = [
-                { label: 'clone / push',  cmd: `git clone ${base}/push` },
-                { label: 'push (update)', cmd: `git remote add origin ${base}/update` },
+                { label: 'clone / push',  cmd: `git clone https://anon:@${base}` },
+                { label: 'push (update)', cmd: `git remote add gost ${base}` },
             ];
             const overlay = document.createElement('div');
             overlay.id = 'clone-modal-overlay';

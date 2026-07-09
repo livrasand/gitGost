@@ -1179,6 +1179,15 @@ func GitLabIssueNotesProxyHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
 	number := c.Param("number")
+
+	// Validar que number sea solo dígitos
+	for _, r := range number {
+		if r < '0' || r > '9' {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid issue number"})
+			return
+		}
+	}
+
 	glToken := os.Getenv("GITLAB_TOKEN")
 
 	projectID := url.PathEscape(owner + "/" + repo)
@@ -1194,7 +1203,8 @@ func GitLabIssueNotesProxyHandler(c *gin.Context) {
 	}
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{"error": "gitlab unreachable"})
 		return
@@ -2147,10 +2157,10 @@ func SearchHandler(c *gin.Context) {
 func searchGitHub(query string) []gin.H {
 	results := []gin.H{}
 
-	url := fmt.Sprintf("https://api.github.com/search/repositories?q=%s&sort=stars&order=desc&per_page=100", query)
+	apiURL := fmt.Sprintf("https://api.github.com/search/repositories?q=%s&sort=stars&order=desc&per_page=100", url.QueryEscape(query))
 
 	client := &http.Client{Timeout: 10 * time.Second}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return results
 	}
@@ -2300,11 +2310,19 @@ func TrendingHandler(c *gin.Context) {
 func getTrendingGitHub(sort string) []gin.H {
 	results := []gin.H{}
 
+	now := time.Now()
+	var dateCutoff string
+	if sort == "new" {
+		dateCutoff = now.AddDate(0, 0, -7).Format("2006-01-02") // 7 días para "new"
+	} else {
+		dateCutoff = now.AddDate(0, 0, -30).Format("2006-01-02") // 30 días para "trending"
+	}
+
 	var url string
 	if sort == "new" {
-		url = "https://api.github.com/search/repositories?q=created:>2025-01-01&sort=updated&order=desc&per_page=10"
+		url = fmt.Sprintf("https://api.github.com/search/repositories?q=created:>%s&sort=updated&order=desc&per_page=10", dateCutoff)
 	} else {
-		url = "https://api.github.com/search/repositories?q=created:>2024-01-01&sort=stars&order=desc&per_page=10"
+		url = fmt.Sprintf("https://api.github.com/search/repositories?q=created:>%s&sort=stars&order=desc&per_page=10", dateCutoff)
 	}
 
 	client := &http.Client{Timeout: 10 * time.Second}

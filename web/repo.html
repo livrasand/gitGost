@@ -991,9 +991,66 @@
         .statusbar-right { display: flex; align-items: center; gap: 0.5rem; }
         .statusbar a { color: var(--accent); text-decoration: none; }
         .statusbar a:hover { text-decoration: underline; }
+
+        /* Suspension Banner */
+        .suspension-banner {
+            display: none;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.78rem;
+            color: #856404;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        :root[data-theme="dark"] .suspension-banner {
+            background: #663d03;
+            border-color: #ffa657;
+            color: #ffe6a7;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme]) .suspension-banner {
+                background: #663d03;
+                border-color: #ffa657;
+                color: #ffe6a7;
+            }
+        }
+
+        .suspension-banner.active {
+            display: flex;
+        }
+
+        .suspension-banner-icon {
+            flex-shrink: 0;
+            font-size: 1.2rem;
+        }
+
+        .suspension-banner-content {
+            flex: 1;
+        }
+
+        .suspension-banner-content strong {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
     </style>
 </head>
 <body>
+    <!-- Suspension Banner -->
+    <div id="suspension-banner" class="suspension-banner">
+        <div class="suspension-banner-icon">⚠️</div>
+        <div class="suspension-banner-content">
+            <strong>Service Temporarily Suspended</strong>
+            The service is temporarily suspended due to detected bot activity. Push operations are currently disabled.
+        </div>
+    </div>
+
     <!-- Status Bar (Top Navigation) -->
     <div class="statusbar">
         <div class="statusbar-left">
@@ -1079,6 +1136,33 @@
     </div>
 
     <script>
+        const API_BASE = window.location.port === '8080' ? '' : 'http://localhost:8080';
+
+        // Suspension banner functions
+        async function checkServiceStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/api/status`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.panic_mode) {
+                        showSuspensionBanner();
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to check service status:', error);
+            }
+        }
+
+        function showSuspensionBanner() {
+            const banner = document.getElementById('suspension-banner');
+            if (banner) {
+                banner.classList.add('active');
+            }
+        }
+
+        // Check service status on page load
+        checkServiceStatus();
+
         // GitHub fetch helper — usa token de localStorage si existe para evitar rate limiting
         function ghFetch(url, opts = {}) {
             const token = localStorage.getItem('gh_token');

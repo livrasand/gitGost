@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -11,11 +12,24 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// isLocalhostOrigin valida que el origen sea localhost o 127.0.0.1 con puerto opcional.
+func isLocalhostOrigin(origin string) bool {
+	if origin == "" {
+		return false
+	}
+	parsed, err := url.Parse(origin)
+	if err != nil {
+		return false
+	}
+	host := parsed.Hostname()
+	return host == "localhost" || host == "127.0.0.1"
+}
+
 // localhostCORS permite peticiones cross-origin desde localhost (desarrollo local).
 func localhostCORS() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
-		if strings.HasPrefix(origin, "http://localhost") || strings.HasPrefix(origin, "http://127.0.0.1") {
+		if isLocalhostOrigin(origin) {
 			c.Header("Access-Control-Allow-Origin", origin)
 			c.Header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 			c.Header("Access-Control-Allow-Headers", "Content-Type")
@@ -40,7 +54,7 @@ func securityHeaders() gin.HandlerFunc {
 				"script-src 'self' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com 'unsafe-inline'; "+
 				"style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline'; "+
 				"font-src 'self' https://fonts.gstatic.com; "+
-				"img-src 'self' data: blob: https: https://*.amazonaws.com https://*.s3.amazonaws.com https://cdn.simpleicons.org; "+
+				"img-src 'self' data: blob: https://*.amazonaws.com https://*.s3.amazonaws.com https://cdn.simpleicons.org; "+
 				"object-src 'none'; "+
 				"frame-ancestors 'none'; "+
 				"connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://gitlab.com https://en.wikipedia.org https://www.wikidata.org",

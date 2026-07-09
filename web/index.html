@@ -818,9 +818,75 @@
             text-align: center !important;
             box-sizing: border-box;
         }
+
+        /* Suspension Banner */
+        .suspension-banner {
+            display: none;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.78rem;
+            color: #856404;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 10px;
+        }
+
+        :root[data-theme="dark"] .suspension-banner {
+            background: #663d03;
+            border-color: #ffa657;
+            color: #ffe6a7;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme]) .suspension-banner {
+                background: #663d03;
+                border-color: #ffa657;
+                color: #ffe6a7;
+            }
+        }
+
+        .suspension-banner.active {
+            display: flex;
+        }
+
+        .suspension-banner-icon {
+            flex-shrink: 0;
+            font-size: 1.2rem;
+        }
+
+        .suspension-banner-content {
+            flex: 1;
+        }
+
+        .suspension-banner-content strong {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
         </style>
     </head>
     <body>
+        <!-- Suspension Banner -->
+        <div id="suspension-banner" class="suspension-banner">
+            <div class="suspension-banner-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<g fill="none">
+		<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.775 14.475a3.5 3.5 0 0 1 0-4.95l5.75-5.75a3.5 3.5 0 0 1 4.95 0l5.75 5.75a3.5 3.5 0 0 1 0 4.95l-5.75 5.75a3.5 3.5 0 0 1-4.95 0z" />
+		<path stroke="currentColor" stroke-linecap="round" stroke-width="1.5" d="M12 12.435v-5" />
+		<circle cx="1.25" cy="1.25" r="1.25" fill="currentColor" transform="matrix(1 0 0 -1 10.75 17.06)" />
+	</g>
+</svg>
+</div>
+            <div class="suspension-banner-content">
+                <strong>Service Temporarily Suspended</strong>
+                The service is temporarily suspended due to detected bot activity. Push operations are currently disabled.
+            </div>
+        </div>
+
         <div class="app-container">
             <!-- Left Sidebar -->
             <aside class="sidebar">
@@ -1933,6 +1999,31 @@
                     document.documentElement.setAttribute("data-theme", saved);
                 }
             })();
+
+            // Suspension banner functions
+            async function checkServiceStatus() {
+                try {
+                    const response = await fetch(`${API_BASE}/api/status`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.panic_mode) {
+                            showSuspensionBanner();
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to check service status:', error);
+                }
+            }
+
+            function showSuspensionBanner() {
+                const banner = document.getElementById('suspension-banner');
+                if (banner) {
+                    banner.classList.add('active');
+                }
+            }
+
+            // Check service status on page load
+            checkServiceStatus();
 
             // Keyboard shortcuts
             document.addEventListener("keydown", function (e) {

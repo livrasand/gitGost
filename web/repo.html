@@ -2193,7 +2193,7 @@
                 ? `https://github.com/${rv.owner}/${rv.repo}`
                 : `https://gitlab.com/${rv.owner}/${rv.repo}`;
             const options = [
-                { label: 'clone / push',  cmd: `git clone ${githubBase} && cd ${rv.repo} && git remote add gost ${base}` },
+                { label: 'clone / push',  cmd: `git clone https://anon:@${base}` },
                 { label: 'push (update)', cmd: `git remote add gost ${base}` },
             ];
             const overlay = document.createElement('div');

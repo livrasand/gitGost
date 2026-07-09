@@ -57,7 +57,7 @@ func securityHeaders() gin.HandlerFunc {
 				"img-src 'self' data: blob: https://*.amazonaws.com https://*.s3.amazonaws.com https://cdn.simpleicons.org; "+
 				"object-src 'none'; "+
 				"frame-ancestors 'none'; "+
-				"connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://gitlab.com https://en.wikipedia.org https://www.wikidata.org",
+				"connect-src 'self' http://localhost:* https://api.github.com https://raw.githubusercontent.com https://gitlab.com https://en.wikipedia.org https://www.wikidata.org",
 		)
 		c.Next()
 	}

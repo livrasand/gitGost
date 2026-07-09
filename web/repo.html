@@ -2186,12 +2186,12 @@
 
         function doClone() {
             if (document.getElementById('clone-modal-overlay')) return;
-            const host = rv.provider === 'gh'
-                ? `gitgost.fly.dev/v1/gh/${rv.owner}/${rv.repo}`
-                : `gitgost.fly.dev/v1/gl/${rv.owner}/${rv.repo}`;
+            const base = rv.provider === 'gh'
+                ? `https://gitgost.fly.dev/v1/gh/${rv.owner}/${rv.repo}`
+                : `https://gitgost.fly.dev/v1/gl/${rv.owner}/${rv.repo}`;
             const options = [
-                { label: 'clone / push',  cmd: `git clone https://anon:@${host}` },
-                { label: 'push (update)', cmd: `git remote add gost https://${host}` },
+                { label: 'clone / push',  cmd: `git clone https://anon:@${base}` },
+                { label: 'push (update)', cmd: `git remote add gost ${base}` },
             ];
             const overlay = document.createElement('div');
             overlay.id = 'clone-modal-overlay';

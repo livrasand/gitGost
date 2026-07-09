@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -10,6 +11,36 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+// isLocalhostOrigin valida que el origen sea localhost o 127.0.0.1 con puerto opcional.
+func isLocalhostOrigin(origin string) bool {
+	if origin == "" {
+		return false
+	}
+	parsed, err := url.Parse(origin)
+	if err != nil {
+		return false
+	}
+	host := parsed.Hostname()
+	return host == "localhost" || host == "127.0.0.1"
+}
+
+// localhostCORS permite peticiones cross-origin desde localhost (desarrollo local).
+func localhostCORS() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		origin := c.GetHeader("Origin")
+		if isLocalhostOrigin(origin) {
+			c.Header("Access-Control-Allow-Origin", origin)
+			c.Header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			c.Header("Access-Control-Allow-Headers", "Content-Type")
+			if c.Request.Method == "OPTIONS" {
+				c.AbortWithStatus(http.StatusNoContent)
+				return
+			}
+		}
+		c.Next()
+	}
+}
 
 // securityHeaders agrega cabeceras de seguridad a todas las respuestas.
 func securityHeaders() gin.HandlerFunc {
@@ -20,13 +51,13 @@ func securityHeaders() gin.HandlerFunc {
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
 		c.Header("Content-Security-Policy",
 			"default-src 'self'; "+
-				"script-src 'self' https://cdn.jsdelivr.net https://unpkg.com 'unsafe-inline'; "+
-				"style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; "+
+				"script-src 'self' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com 'unsafe-inline'; "+
+				"style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline'; "+
 				"font-src 'self' https://fonts.gstatic.com; "+
-				"img-src 'self' data:; "+
+				"img-src 'self' data: blob: https://*.amazonaws.com https://*.s3.amazonaws.com https://cdn.simpleicons.org; "+
 				"object-src 'none'; "+
 				"frame-ancestors 'none'; "+
-				"connect-src 'self'",
+				"connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://gitlab.com https://en.wikipedia.org https://www.wikidata.org",
 		)
 		c.Next()
 	}
@@ -194,6 +225,9 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	// Cabeceras de seguridad en todas las respuestas
 	r.Use(securityHeaders())
 
+	// CORS para desarrollo local (Live Server, etc.)
+	r.Use(localhostCORS())
+
 	// Health y metrics (no auth)
 	r.GET("/health", HealthHandler)
 	r.GET("/metrics", MetricsHandler)
@@ -207,9 +241,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.GET("/badge/:owner/:repo", BadgePRCountHandler)
 
 	// Static pages
-	r.StaticFile("/approach.html", "./web/approach.html")
-	r.StaticFile("/guidelines.html", "./web/guidelines.html")
-	r.StaticFile("/karma.html", "./web/karma.html")
+	r.StaticFile("/repo.html", "./web/repo.html")
 
 	// Security policy (security.txt)
 	r.StaticFile("/.well-known/security.txt", "./web/.well-known/security.txt")
@@ -276,6 +308,11 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/recent-prs", RecentPRsHandler)
 		api.GET("/pr-status/:hash", PRStatusHandler)
 		api.GET("/pr/:hash/status", prCheckLimiter(), PRCheckHandler)
+		// Search and trending
+		api.GET("/search", SearchHandler)
+		api.GET("/trending/:provider", TrendingHandler)
+		// GitLab proxy — expone comentarios de issues sin requerir token del usuario
+		api.GET("/gl-notes/:owner/:repo/:number", GitLabIssueNotesProxyHandler)
 	}
 
 	// Appeal routes — anonymous appeal system

@@ -1,0 +1,2349 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+            rel="shortcut icon"
+            href="assets/logos/gitgost-logo.svg"
+            type="image/svg+xml"
+        />
+    <link rel="icon" href="assets/logos/gitgost-logo.svg" type="image/svg+xml" />
+    <title>gitGost — repo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link id="hljs-theme-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github.min.css" />
+    <link id="hljs-theme-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github-dark.min.css" disabled />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"></script>
+    <script>if (typeof hljs !== 'undefined') hljs.configure({ ignoreUnescapedHTML: true });</script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@4/marked.min.js"></script>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1f2e;
+            --fg-muted: #6b7280;
+            --fg-secondary: #9ca3af;
+            --bg-secondary: #f5f5f5;
+            --bg-hover: #ebebeb;
+            --accent: #d16014;
+            --border: #e0e0e0;
+            --card: #f9f9f9;
+            --code-bg: #f4f4f4;
+        }
+        :root[data-theme="dark"] {
+            --bg: #000000;
+            --fg: #d4d4d4;
+            --fg-muted: #9ca3af;
+            --fg-secondary: #6b7280;
+            --bg-secondary: #0d0d0d;
+            --bg-hover: #1a1a1a;
+            --accent: #ffa657;
+            --border: #222222;
+            --card: #0d0d0d;
+            --code-bg: #111111;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme]) {
+                --bg: #000000; --fg: #d4d4d4; --fg-muted: #9ca3af;
+                --fg-secondary: #6b7280; --bg-secondary: #0d0d0d;
+                --bg-hover: #1a1a1a; --accent: #ffa657;
+                --border: #222222; --card: #0d0d0d; --code-bg: #111111;
+            }
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--fg);
+            font-family: "IBM Plex Sans", system-ui, sans-serif;
+            font-size: 0.9rem;
+            min-height: 100vh;
+        }
+
+        /* Top bar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.5rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .topbar-logo {
+            font-family: "IBM Plex Mono", monospace;
+            font-weight: 700;
+            font-size: 0.88rem;
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .topbar-title {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.88rem;
+            color: var(--fg);
+            flex: 1;
+        }
+        .topbar-title .owner { color: var(--accent); }
+        .topbar-title .sep { color: var(--fg-muted); }
+        .topbar-actions { display: flex; gap: 0.4rem; }
+        .rv-btn {
+            padding: 0.28rem 0.7rem;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            background: transparent;
+            color: var(--fg);
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-family: "IBM Plex Mono", monospace;
+            transition: all 0.15s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .rv-btn:hover { border-color: var(--fg-secondary); }
+        .rv-btn.star { color: var(--accent); border-color: var(--accent); }
+        .rv-btn.star:disabled { opacity: 0.4; cursor: not-allowed; }
+        .rv-btn.back { color: var(--fg-muted); }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.75rem;
+            color: var(--fg-muted);
+            padding: 0.4rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            flex-wrap: wrap;
+            background: var(--bg-secondary);
+        }
+        .breadcrumb span.crumb { cursor: pointer; color: var(--accent); }
+        .breadcrumb span.crumb:hover { text-decoration: underline; }
+        .breadcrumb span.sep { color: var(--fg-secondary); }
+        .breadcrumb span.current { color: var(--fg); }
+
+        /* Layout */
+        .repo-layout {
+            display: flex;
+            height: calc(100vh - 80px);
+        }
+
+        /* File tree */
+        .file-tree {
+            width: 200px;
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex-shrink: 0;
+            background: var(--bg);
+            padding: 0.4rem 0;
+        }
+        .tree-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.78rem;
+            font-family: "IBM Plex Mono", monospace;
+            cursor: pointer;
+            color: var(--fg);
+            white-space: nowrap;
+            transition: background 0.1s;
+            line-height: 1.4;
+            user-select: none;
+            border-radius: 4px;
+            margin: 0 0.25rem;
+        }
+        .tree-item:hover { background: var(--bg-hover); }
+        .tree-item.active { background: var(--bg-hover); }
+        .tree-item.active .tree-name { color: var(--accent); }
+        .tree-chevron {
+            flex-shrink: 0;
+            color: var(--fg-secondary);
+            width: 12px;
+            transition: transform 0.15s;
+            display: flex;
+            align-items: center;
+        }
+        .tree-chevron.open { transform: rotate(90deg); }
+        .tree-chevron.hidden { visibility: hidden; }
+        .tree-icon {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+        }
+        .tree-icon.dir  { color: #e8a44a; }
+        .tree-icon.file { color: var(--fg-secondary); }
+        .tree-name { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+        .tree-name.dir  { color: var(--fg); font-weight: 500; }
+        .tree-name.file { color: var(--fg); }
+        .tree-children { display: none; }
+        .tree-children.open { display: block; }
+        .tree-loading { padding: 1rem; font-size: 0.78rem; color: var(--fg-secondary); font-family: "IBM Plex Mono", monospace; }
+        .tree-badge {
+            font-size: 0.65rem;
+            color: var(--fg-secondary);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 0 0.35em;
+            margin-left: 0.4rem;
+            flex-shrink: 0;
+            line-height: 1.6;
+        }
+
+        /* Code panel */
+        .code-panel {
+            flex: 1;
+            overflow: auto;
+            background: var(--bg);
+        }
+        .code-panel pre {
+            margin: 0;
+            padding: 1.25rem 1.5rem;
+            font-size: 0.78rem;
+            font-family: "IBM Plex Mono", monospace;
+            line-height: 1.65;
+            color: var(--fg);
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .code-loading {
+            padding: 2rem;
+            font-size: 0.78rem;
+            color: var(--fg-secondary);
+            font-family: "IBM Plex Mono", monospace;
+        }
+        .readme {
+            padding: 1.5rem 2rem;
+            font-size: 0.9rem;
+            line-height: 1.75;
+            color: var(--fg);
+            max-width: 860px;
+        }
+        .readme h1, .readme h2, .readme h3, .readme h4, .readme h5, .readme h6 {
+            margin: 1.5rem 0 0.75rem;
+            color: var(--fg);
+            font-weight: 600;
+            line-height: 1.25;
+        }
+        .readme h1 { font-size: 1.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
+        .readme h2 { font-size: 1.3rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--border); }
+        .readme h3 { font-size: 1.1rem; }
+        .readme h4 { font-size: 0.95rem; }
+        .readme p { margin: 0.75rem 0; }
+        .readme code {
+            background: var(--code-bg);
+            padding: 0.2em 0.45em;
+            border-radius: 4px;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.83em;
+            border: 1px solid var(--border);
+        }
+        .readme pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            margin: 1rem 0;
+            white-space: pre;
+        }
+        .readme pre code { background: none; padding: 0; border: none; font-size: 0.82rem; }
+        .readme a { color: var(--accent); text-decoration: none; }
+        .readme a:hover { text-decoration: underline; }
+        .readme blockquote {
+            border-left: 4px solid var(--border);
+            margin: 0.75rem 0;
+            padding: 0.5rem 1rem;
+            color: var(--fg-muted);
+            background: var(--bg-secondary);
+            border-radius: 0 4px 4px 0;
+        }
+        .readme blockquote p { margin: 0; }
+        .readme ul, .readme ol { padding-left: 2rem; margin: 0.5rem 0; }
+        .readme li { margin: 0.3rem 0; }
+        .readme img { max-width: 100%; border-radius: 4px; }
+        .readme table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+        .readme th, .readme td {
+            border: 1px solid var(--border);
+            padding: 0.5rem 0.85rem;
+            text-align: left;
+        }
+        .readme th { background: var(--bg-secondary); font-weight: 600; }
+        .readme tr:nth-child(even) { background: var(--bg-secondary); }
+        .readme hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+        .readme input[type="checkbox"] { margin-right: 0.4rem; }
+
+        /* Repo info bar */
+        .repo-info {
+            padding: 0.5rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.75rem;
+            color: var(--fg-secondary);
+            display: flex;
+            gap: 1.5rem;
+            background: var(--bg-secondary);
+        }
+        .repo-info span { display: flex; align-items: center; gap: 0.3rem; }
+        .repo-info .stars { color: var(--accent); }
+
+        /* Left nav */
+        .left-nav {
+            width: 300px;
+            border-right: 1px solid var(--border);
+            flex-shrink: 0;
+            background: var(--bg);
+            padding: 0.5rem 0;
+        }
+        .left-nav a {
+            display: block;
+            padding: 0.35rem 1rem;
+            font-size: 0.78rem;
+            font-family: "IBM Plex Mono", monospace;
+            color: var(--fg-muted);
+            text-decoration: none;
+            border-left: 2px solid transparent;
+            transition: background 0.1s, color 0.1s;
+        }
+        .left-nav a:hover { background: var(--bg-hover); color: var(--fg); }
+        .left-nav a.active { border-left-color: var(--accent); color: var(--fg); background: var(--bg-hover); }
+
+        /* Right sidebar */
+        .right-sidebar {
+            width: 300px;
+            border-left: 1px solid var(--border);
+            flex-shrink: 0;
+            background: var(--bg);
+            padding: 1rem;
+            overflow-y: auto;
+            font-size: 0.78rem;
+        }
+        .sidebar-section {
+            margin-bottom: 1.25rem;
+        }
+        .sidebar-label {
+            font-size: 0.68rem;
+            font-family: "IBM Plex Mono", monospace;
+            color: var(--fg-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.4rem;
+        }
+        .sidebar-desc {
+            font-size: 0.78rem;
+            color: var(--fg-muted);
+            line-height: 1.55;
+        }
+        .sidebar-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.2rem 0;
+            font-size: 0.75rem;
+            color: var(--fg-muted);
+        }
+        .sidebar-row .val {
+            color: var(--fg);
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.72rem;
+        }
+        .sidebar-row .val.pub { color: #22c55e; }
+        .sidebar-row .val.mirror { color: var(--fg-muted); }
+        .sidebar-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            margin-top: 0.25rem;
+        }
+        .sidebar-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.6rem;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            background: transparent;
+            color: var(--fg);
+            font-size: 0.74rem;
+            font-family: "IBM Plex Mono", monospace;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.1s, border-color 0.1s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .sidebar-btn:hover { background: var(--bg-hover); border-color: var(--fg-secondary); }
+        .sidebar-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .sidebar-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            margin-top: 0.4rem;
+        }
+        .sidebar-tag {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.68rem;
+            color: var(--accent);
+            text-decoration: none;
+            border: 1px solid var(--accent);
+            border-radius: 3px;
+            padding: 0.1em 0.45em;
+            opacity: 0.8;
+        }
+
+        /* Languages bar */
+        .lang-bar {
+            display: flex;
+            height: 6px;
+            border-radius: 4px;
+            overflow: hidden;
+            gap: 2px;
+            margin: 0.5rem 0 0.6rem;
+        }
+        .lang-bar-seg {
+            height: 100%;
+            border-radius: 2px;
+        }
+        .lang-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem 0.75rem;
+        }
+        .lang-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.68rem;
+            color: var(--fg-muted);
+        }
+        .lang-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .lang-name { color: var(--fg); font-weight: 500; }
+
+        /* Issues / PRs list */
+        .issue-list { display: flex; flex-direction: column; padding: 1rem 1.25rem; }
+        .issue-item {
+            display: flex;
+            align-items: baseline;
+            gap: 0.75rem;
+            padding: 0.45rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.82rem;
+            text-decoration: none;
+            color: var(--fg);
+        }
+        .issue-item:last-child { border-bottom: none; }
+        .issue-item:hover .issue-title { color: var(--accent); }
+        .issue-num {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.72rem;
+            color: var(--fg-secondary);
+            flex-shrink: 0;
+            min-width: 3rem;
+        }
+        .issue-title { flex: 1; line-height: 1.4; }
+        .issue-meta {
+            font-size: 0.72rem;
+            color: var(--fg-secondary);
+            flex-shrink: 0;
+            font-family: "IBM Plex Mono", monospace;
+        }
+        .issue-label {
+            display: inline-block;
+            font-size: 0.65rem;
+            font-family: "IBM Plex Mono", monospace;
+            padding: 0.1em 0.4em;
+            border-radius: 2px;
+            margin-left: 0.3rem;
+            vertical-align: middle;
+        }
+        .issue-list-header {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.72rem;
+            color: var(--fg-secondary);
+            padding: 0.75rem 1.25rem 0.4rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .issue-list-header span { color: var(--fg); font-weight: 600; }
+
+        /* Bugs toolbar */
+        .bugs-toolbar {
+            display: flex;
+            align-items: center;
+            padding: 0.6rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            gap: 1.25rem;
+        }
+        .bugs-tab {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.75rem;
+            color: var(--fg-muted);
+            cursor: pointer;
+            padding-bottom: 2px;
+            border-bottom: 2px solid transparent;
+            background: none;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+        .bugs-tab.active { color: var(--fg); border-bottom-color: var(--accent); }
+        .bugs-tab:hover:not(.active) { color: var(--fg); }
+        .bugs-spacer { flex: 1; }
+        .bugs-new-btn {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.72rem;
+            color: var(--accent);
+            background: none;
+            border: 1px solid var(--accent);
+            border-radius: 3px;
+            padding: 0.25rem 0.6rem;
+            cursor: pointer;
+            opacity: 0.85;
+        }
+        .bugs-new-btn:hover { opacity: 1; }
+        .bugs-empty {
+            padding: 3rem 1.25rem;
+            text-align: center;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.78rem;
+            color: var(--fg-muted);
+        }
+
+        /* Bug modal */
+        .bug-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .bug-modal {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            width: 480px;
+            max-width: 95vw;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+        .bug-modal-title {
+            font-size: 0.78rem;
+            font-family: "IBM Plex Mono", monospace;
+            color: var(--fg-muted);
+            margin-bottom: 0.1rem;
+        }
+        .bug-modal input, .bug-modal textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            padding: 0.35rem 0;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.82rem;
+            color: var(--fg);
+            outline: none;
+            resize: none;
+            box-sizing: border-box;
+        }
+        .bug-modal textarea { min-height: 120px; }
+        .bug-modal-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--border);
+        }
+        .bug-modal-footer .note {
+            font-size: 0.7rem;
+            color: var(--fg-muted);
+            font-family: "IBM Plex Mono", monospace;
+        }
+        .bug-modal-footer .note a { color: var(--accent); }
+        .bug-modal-actions { display: flex; gap: 0.5rem; }
+        .bug-cancel-btn {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.75rem;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.3rem 0.8rem;
+            cursor: pointer;
+            color: var(--fg-muted);
+        }
+        .bug-submit-btn {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.75rem;
+            background: var(--accent);
+            border: none;
+            border-radius: 3px;
+            padding: 0.3rem 0.8rem;
+            cursor: pointer;
+            color: #fff;
+        }
+        .bug-submit-btn:disabled { opacity: 0.5; cursor: default; }
+
+        /* Issue detail panel */
+        .issue-detail {
+            display: flex;
+            height: 100%;
+            overflow: hidden;
+        }
+        .issue-detail-main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem 2rem;
+            min-width: 0;
+        }
+        .issue-detail-header {
+            display: flex;
+            align-items: baseline;
+            gap: 0.6rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .issue-detail-num {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 1rem;
+            color: var(--fg-muted);
+        }
+        .issue-detail-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--fg);
+            flex: 1;
+        }
+        .issue-detail-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--fg-muted);
+            font-family: "IBM Plex Mono", monospace;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .issue-detail-avatar {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            flex-shrink: 0;
+        }
+        .issue-detail-body {
+            font-size: 0.88rem;
+            line-height: 1.7;
+            color: var(--fg);
+        }
+        .issue-detail-body code {
+            background: var(--code-bg);
+            padding: 0.15em 0.4em;
+            border-radius: 3px;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.83em;
+            border: 1px solid var(--border);
+        }
+        .issue-detail-body pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 0.85rem 1rem;
+            overflow: auto;
+        }
+        .issue-detail-body pre code { background:none; border:none; padding:0; }
+        .issue-detail-body ol, .issue-detail-body ul { padding-left: 1.5rem; }
+        .issue-detail-sidebar {
+            width: 200px;
+            flex-shrink: 0;
+            border-left: 1px solid var(--border);
+            padding: 1.25rem 1rem;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.72rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            overflow-y: auto;
+        }
+        .issue-detail-sidebar .ds-label {
+            color: var(--fg-muted);
+            margin-bottom: 0.15rem;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .issue-detail-sidebar .ds-val {
+            color: var(--fg);
+        }
+        .issue-back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.72rem;
+            color: var(--fg-muted);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            margin-bottom: 1rem;
+        }
+        .issue-back-btn:hover { color: var(--accent); }
+        .issue-ext-link {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.68rem;
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .issue-ext-link:hover { text-decoration: underline; }
+
+        /* Reply box */
+        .reply-section {
+            margin-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            padding-top: 1rem;
+        }
+        .reply-row {
+            display: flex;
+            gap: 0.6rem;
+            align-items: flex-start;
+        }
+        .reply-avatar {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+        .reply-box {
+            flex: 1;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            background: var(--bg);
+            padding: 0.55rem 0.7rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .reply-textarea {
+            width: 100%;
+            min-height: 56px;
+            background: none;
+            border: none;
+            outline: none;
+            resize: vertical;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.78rem;
+            color: var(--fg);
+            line-height: 1.5;
+        }
+        .reply-textarea::placeholder { color: var(--fg-muted); }
+        .reply-footer {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .reply-token {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.68rem;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.2rem 0.5rem;
+            color: var(--fg-muted);
+            width: 140px;
+        }
+        .reply-token::placeholder { color: var(--fg-muted); opacity: 0.6; }
+        .reply-send-btn {
+            background: var(--accent);
+            border: none;
+            border-radius: 4px;
+            padding: 0.3rem 0.55rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .reply-send-btn:disabled { opacity: 0.5; cursor: default; }
+        .reply-status {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.65rem;
+            color: var(--fg-muted);
+        }
+
+        /* Inline comments */
+        .comment-list {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .comment-item {
+            display: flex;
+            gap: 0.6rem;
+            align-items: flex-start;
+        }
+        .comment-bubble {
+            flex: 1;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: var(--fg);
+        }
+        .comment-meta {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.63rem;
+            color: var(--fg-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        /* Hash save modal */
+        .hash-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .hash-modal {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            max-width: 340px;
+            width: 90%;
+            font-family: "IBM Plex Mono", monospace;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        }
+        .hash-modal-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--fg);
+            margin-bottom: 0.5rem;
+        }
+        .hash-modal-body {
+            font-size: 0.72rem;
+            color: var(--fg-muted);
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+        .hash-modal-code {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.4rem 0.6rem;
+            font-size: 0.75rem;
+            color: var(--accent);
+            word-break: break-all;
+            margin-bottom: 1rem;
+        }
+        .hash-modal-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+        .hash-modal-btn {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.72rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            background: none;
+            color: var(--fg);
+        }
+        .hash-modal-btn.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+        .hash-modal-btn:hover { opacity: 0.85; }
+
+        /* Clone modal */
+        .clone-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .clone-modal {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem 1.5rem;
+            width: 420px;
+            max-width: 95vw;
+            font-family: 'IBM Plex Mono', monospace;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        }
+        .clone-modal-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--fg);
+            margin-bottom: 1rem;
+        }
+        .clone-option {
+            margin-bottom: 0.75rem;
+        }
+        .clone-option-label {
+            font-size: 0.7rem;
+            color: var(--fg-muted);
+            margin-bottom: 0.25rem;
+        }
+        .clone-option-row {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .clone-option-code {
+            flex: 1;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.35rem 0.6rem;
+            font-size: 0.72rem;
+            color: var(--fg);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .clone-copy-btn {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.3rem 0.55rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: none;
+            color: var(--fg-muted);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .clone-copy-btn:hover { background: var(--bg-hover); }
+        .clone-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+        }
+        .clone-close-btn {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+            padding: 0.35rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: none;
+            color: var(--fg);
+            cursor: pointer;
+        }
+        .clone-close-btn:hover { opacity: 0.75; }
+
+        /* Status Bar (Top Navigation) */
+        .statusbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0.5rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+        }
+        .statusbar-left { display: flex; align-items: center; gap: 0.5rem; }
+        .statusbar-right { display: flex; align-items: center; gap: 0.5rem; }
+        .statusbar a { color: var(--accent); text-decoration: none; }
+        .statusbar a:hover { text-decoration: underline; }
+
+        /* Suspension Banner */
+        .suspension-banner {
+            display: none;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.78rem;
+            color: #856404;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        :root[data-theme="dark"] .suspension-banner {
+            background: #663d03;
+            border-color: #ffa657;
+            color: #ffe6a7;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme]) .suspension-banner {
+                background: #663d03;
+                border-color: #ffa657;
+                color: #ffe6a7;
+            }
+        }
+
+        .suspension-banner.active {
+            display: flex;
+        }
+
+        .suspension-banner-icon {
+            flex-shrink: 0;
+            font-size: 1.2rem;
+        }
+
+        .suspension-banner-content {
+            flex: 1;
+        }
+
+        .suspension-banner-content strong {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Suspension Banner -->
+    <div id="suspension-banner" class="suspension-banner">
+        <div class="suspension-banner-icon">⚠️</div>
+        <div class="suspension-banner-content">
+            <strong>Service Temporarily Suspended</strong>
+            The service is temporarily suspended due to detected bot activity. Push operations are currently disabled.
+        </div>
+    </div>
+
+    <!-- Status Bar (Top Navigation) -->
+    <div class="statusbar">
+        <div class="statusbar-left">
+            <a href="/" style="color:var(--accent);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.78rem;">gitGost</a>
+            <span style="color:var(--fg-muted);">›</span>
+            <span id="statusbar-path" style="font-family:'IBM Plex Mono',monospace;display:flex;align-items:center;gap:0.2rem;"></span>
+        </div>
+        <div class="statusbar-right">
+            <span style="color:var(--fg-muted);">browsing as goster</span>
+        </div>
+    </div>
+
+    <div class="repo-layout">
+        <nav class="left-nav">
+            <a href="#" class="active" onclick="showView('home'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.75 7.21a2 2 0 0 1 2-2H8.5a3.5 3.5 0 0 1 3.5 3.5v10.885l-1.015-.721a4 4 0 0 0-2.318-.74H4.75a2 2 0 0 1-2-2zm18.5 0a2 2 0 0 0-2-2H15.5a3.5 3.5 0 0 0-3.5 3.5v10.885l1.015-.721a4 4 0 0 1 2.317-.74h3.918a2 2 0 0 0 2-2z" />
+</svg> overview</a>
+            <a href="#" onclick="showView('files'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.75 6.5L3.25 12l5.5 5.5m6.5-11l5.5 5.5l-5.5 5.5" />
+</svg> code</a>
+            <a href="#" onclick="showView('commits'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+		<path d="M4.281 14.385a8.25 8.25 0 1 0 .824-6.26l-.477.88m-.523-4.63v3.75a1 1 0 0 0 .523.88m4.227.12h-3.75a1 1 0 0 1-.477-.12" />
+		<path d="M12.25 8v4.25l3.685 2.117" />
+	</g>
+</svg> commits</a>
+            <a href="#" onclick="showView('bugs'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7.5 9.08a3.23 3.23 0 0 1 3.23-3.23h2.54a3.23 3.23 0 0 1 3.23 3.23v6.27a4.5 4.5 0 0 1-4.5 4.5v0a4.5 4.5 0 0 1-4.5-4.5zm9 3.77h4.75m-18.5 0H7.5m2.25-9.7v.45A2.25 2.25 0 0 0 12 5.85v0a2.25 2.25 0 0 0 2.25-2.25v-.45M16.5 16.6h1.253a2.5 2.5 0 0 1 2.5 2.5v1.75M7.5 16.6H6.247a2.5 2.5 0 0 0-2.5 2.5v1.75M16.5 9.1h1.253a2.5 2.5 0 0 0 2.5-2.5V4.85M7.5 9.1H6.247a2.5 2.5 0 0 1-2.5-2.5V4.85" />
+</svg> issues</a>
+            <a href="#" onclick="showView('reviews'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+		<path d="M8.25 5.5a2.75 2.75 0 1 1-5.5 0a2.75 2.75 0 0 1 5.5 0m13 13a2.75 2.75 0 1 1-5.5 0a2.75 2.75 0 0 1 5.5 0m-13 0a2.75 2.75 0 1 1-5.5 0a2.75 2.75 0 0 1 5.5 0M5.5 8.25v7.5" />
+		<path d="M18.5 15.75V8.5a3 3 0 0 0-3-3h-4.336M13.25 8l-1.793-1.793a1 1 0 0 1-.293-.707M13.25 3l-1.793 1.793a1 1 0 0 0-.293.707" />
+	</g>
+</svg> pull requests</a>
+        </nav>
+
+        <div class="file-tree" id="file-tree" style="display:none;">
+            <div class="tree-loading">loading...</div>
+        </div>
+        <div class="code-panel" id="code-panel">
+            <div class="code-loading">select a file</div>
+        </div>
+
+        <aside class="right-sidebar" id="right-sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-label">About</div>
+                <div class="sidebar-desc" id="sb-desc">—</div>
+                <div class="sidebar-tags" id="sb-tags"></div>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-row"><span>created</span><span class="val" id="sb-created">—</span></div>
+                <div class="sidebar-row"><span>type</span><span class="val mirror" id="sb-status">public proxy</span></div>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-actions">
+                    <button class="sidebar-btn" id="sb-star-btn" onclick="doStar()" title="Solo funciona en localhost"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.704 4.325a1.5 1.5 0 0 1 2.592 0l1.818 3.12a1.5 1.5 0 0 0 .978.712l3.53.764a1.5 1.5 0 0 1 .8 2.465l-2.405 2.693a1.5 1.5 0 0 0-.374 1.15l.363 3.593a1.5 1.5 0 0 1-2.097 1.524l-3.304-1.456a1.5 1.5 0 0 0-1.21 0l-3.304 1.456a1.5 1.5 0 0 1-2.097-1.524l.363-3.593a1.5 1.5 0 0 0-.373-1.15l-2.406-2.693a1.5 1.5 0 0 1 .8-2.465l3.53-.764a1.5 1.5 0 0 0 .979-.711z" />
+</svg> Star <span id="sb-star-count"></span></button>
+                    <button class="sidebar-btn" onclick="doClone()"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8.25a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0V12m0 3.75a2.75 2.75 0 1 0 0 5.5a2.75 2.75 0 0 0 0-5.5m0 0V12m10-3.75a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0V9a3 3 0 0 1-3 3H7" />
+</svg> Clone</button>
+                    <button class="sidebar-btn" onclick="openOriginalRepo()"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.25 3.75h-2.5a4 4 0 0 0-4 4v8.5a4 4 0 0 0 4 4h8.5a4 4 0 0 0 4-4v-2.5m-6.5-10h5.5c.276 0 .526.112.707.293m.293 6.207v-5.5a1 1 0 0 0-.293-.707M12.75 11.25l6.5-6.5l.707-.707" />
+</svg> Open Original</button>
+                    <!--a class="sidebar-btn" id="sb-settings" href="#" target="_blank">⚙ Settings</a-->
+                </div>
+            </div>
+            <div class="sidebar-section" id="sb-langs-section" style="display:none">
+                <div class="sidebar-label">Languages</div>
+                <div class="lang-bar" id="sb-lang-bar"></div>
+                <div class="lang-legend" id="sb-lang-legend"></div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        const API_BASE = window.location.port === '8080' ? '' : 'http://localhost:8080';
+
+        // Suspension banner functions
+        async function checkServiceStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/api/status`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.panic_mode) {
+                        showSuspensionBanner();
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to check service status:', error);
+            }
+        }
+
+        function showSuspensionBanner() {
+            const banner = document.getElementById('suspension-banner');
+            if (banner) {
+                banner.classList.add('active');
+            }
+        }
+
+        // Check service status on page load
+        checkServiceStatus();
+
+        // GitHub fetch helper — usa token de localStorage si existe para evitar rate limiting
+        function ghFetch(url, opts = {}) {
+            const token = localStorage.getItem('gh_token');
+            if (token) {
+                opts.headers = { ...(opts.headers || {}), 'Authorization': `token ${token}` };
+            }
+            return fetch(url, opts).then(res => {
+                if (res.status === 403 || res.status === 429) {
+                    return res.json().catch(() => ({})).then(body => {
+                        const msg = body.message || `rate limit exceeded (${res.status})`;
+                        throw new Error(msg + ' — set a GitHub token in settings to fix this');
+                    });
+                }
+                return res;
+            });
+        }
+
+        // Parse URL params: /repo.html?owner=X&repo=Y&provider=gh
+        const params = new URLSearchParams(window.location.search);
+        const rv = {
+            owner:    params.get('owner') || '',
+            repo:     params.get('repo')  || '',
+            provider: params.get('provider') || 'gh',
+            path:     [],
+        };
+
+        if (!rv.owner || !rv.repo) {
+            document.body.innerHTML = '<div style="padding:2rem;font-family:monospace;color:#d16014;">Error: missing owner/repo parameters in the URL.</div>';
+        } else {
+            init();
+        }
+
+        function init() {
+            document.title = `${rv.owner}/${rv.repo} · gitGost`;
+            document.getElementById('statusbar-path').innerHTML =
+                `<a href="/?q=${encodeURIComponent(rv.owner)}" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.owner)}</a>`+
+                `<span style="color:var(--fg-muted);">/</span>`+
+                `<a href="#" onclick="showView('home');return false;" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.repo)}</a>`;
+
+            // fork link
+            const forkLink = document.getElementById('fork-link');
+            if (forkLink) {
+                forkLink.href = rv.provider === 'gh'
+                    ? `https://github.com/${rv.owner}/${rv.repo}/fork`
+                    : `https://gitlab.com/${rv.owner}/${rv.repo}/-/forks/new`;
+            }
+
+            // sidebar settings link
+            const sbSettings = document.getElementById('sb-settings');
+            if (sbSettings) sbSettings.href = rv.provider === 'gh'
+                ? `https://github.com/${rv.owner}/${rv.repo}/settings`
+                : `https://gitlab.com/${rv.owner}/${rv.repo}/edit`;
+
+            const sbStarBtn = document.getElementById('sb-star-btn');
+            if (sbStarBtn) sbStarBtn.disabled = false;
+
+            // load repo info
+            loadRepoInfo();
+            loadLanguages();
+            _updateStarBtn();
+            // show home view by default (README)
+            showView('home');
+        }
+
+        function showView(view) {
+            const navLinks = document.querySelectorAll('.left-nav a');
+            navLinks.forEach(a => a.classList.remove('active'));
+            const idx = ['home','files','commits','bugs','reviews'].indexOf(view); // bugs=issues, reviews=pull requests
+            if (idx >= 0 && navLinks[idx]) navLinks[idx].classList.add('active');
+
+            const fileTree = document.getElementById('file-tree');
+            const codePanel = document.getElementById('code-panel');
+
+            if (view === 'home') {
+                fileTree.style.display = 'none';
+                codePanel.innerHTML = '<div class="code-loading">loading README...</div>';
+                loadReadme();
+            } else if (view === 'files') {
+                fileTree.style.display = '';
+                loadDir([]);
+            } else if (view === 'bugs') {
+                fileTree.style.display = 'none';
+                loadIssues();
+            } else if (view === 'reviews') {
+                fileTree.style.display = 'none';
+                loadPRs();
+            } else {
+                fileTree.style.display = 'none';
+                codePanel.innerHTML = `<div class="code-loading" style="color:var(--fg-secondary)">/${view} — coming soon</div>`;
+            }
+        }
+
+        async function loadReadme() {
+            const panel = document.getElementById('code-panel');
+            try {
+                let item = null;
+                if (rv.provider === 'gh') {
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/contents/`);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const items = await res.json();
+                    item = items.find(i => i.name.toLowerCase() === 'readme.md');
+                } else {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/files/README.md/raw?ref=HEAD`);
+                    if (res.ok) {
+                        let text = await res.text();
+                        // Limpieza muy agresiva de cualquier patrón que cause undefined
+                        text = text.replace(/\$\{[^}]+\}/g, ''); // ${variable}
+                        text = text.replace(/\$\[.*?\]/g, ''); // $[variable]
+                        text = text.replace(/undefined/g, 'GitLab'); // undefined -> GitLab
+                        text = text.replace(/\[undefined\]/g, ''); // [undefined]
+                        text = text.replace(/is undefined/g, 'is hosted on GitLab.com'); // Frase específica
+                        text = text.replace(/located at undefined/g, 'located at https://gitlab.com/gitlab-org/gitlab-foss/'); // Frase específica
+                        // Eliminar cualquier línea que contenga undefined
+                        text = text.split('\n').filter(line => !line.includes('undefined')).join('\n');
+                        panel.innerHTML = `<div class="readme">${renderMd(text)}</div>`;
+                        panel.querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
+                        return;
+                    }
+                }
+                if (item) {
+                    await loadFile(item);
+                } else {
+                    panel.innerHTML = '<div class="code-loading">no README</div>';
+                }
+            } catch(e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+            }
+        }
+
+        let _bugsCache = { open: null, closed: null };
+
+        async function loadIssues() {
+            const panel = document.getElementById('code-panel');
+            _bugsCache = { open: null, closed: null };
+            panel.innerHTML = '<div class="code-loading">loading issues...</div>';
+            try {
+                let open = [], closed = [];
+                if (rv.provider === 'gh') {
+                    const [rOpen, rClosed] = await Promise.all([
+                        ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/issues?state=open&per_page=50`),
+                        ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/issues?state=closed&per_page=50`)
+                    ]);
+                    if (rOpen.ok) { const d = await rOpen.json(); open = d.filter(i => !i.pull_request); }
+                    if (rClosed.ok) { const d = await rClosed.json(); closed = d.filter(i => !i.pull_request); }
+                } else {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const [rOpen, rClosed] = await Promise.all([
+                        fetch(`https://gitlab.com/api/v4/projects/${enc}/issues?state=opened&per_page=50`),
+                        fetch(`https://gitlab.com/api/v4/projects/${enc}/issues?state=closed&per_page=50`)
+                    ]);
+                    if (rOpen.ok) open = await rOpen.json();
+                    if (rClosed.ok) closed = await rClosed.json();
+                }
+                _bugsCache.open = open;
+                _bugsCache.closed = closed;
+                renderBugsView('open');
+            } catch(e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+            }
+        }
+
+        function renderBugsView(tab) {
+            _currentBugsTab = tab;
+            const panel = document.getElementById('code-panel');
+            const open   = _bugsCache.open   || [];
+            const closed = _bugsCache.closed || [];
+            // "pending" = open issues with no assignee
+            const pending = open.filter(i => !(i.assignees?.length || i.assignee));
+            const items = tab === 'open' ? open : tab === 'pending' ? pending : closed;
+
+            const toolbar = `
+                <div class="bugs-toolbar">
+                    <button class="bugs-tab ${tab==='open'?'active':''}" onclick="renderBugsView('open')">Open <span style="opacity:.6;">${open.length}</span></button>
+                    <button class="bugs-tab ${tab==='pending'?'active':''}" onclick="renderBugsView('pending')">Pending <span style="opacity:.6;">${pending.length}</span></button>
+                    <button class="bugs-tab ${tab==='closed'?'active':''}" onclick="renderBugsView('closed')">Closed <span style="opacity:.6;">${closed.length}</span></button>
+                    <span class="bugs-spacer"></span>
+                    <button class="bugs-new-btn" onclick="openBugModal()">+ new issue</button>
+                </div>`;
+
+            if (!items.length) {
+                panel.innerHTML = toolbar + `<div class="bugs-empty">no ${tab} issues</div>`;
+                return;
+            }
+
+            const list = items.map(i => {
+                const labels = (i.labels || []).map(l => {
+                    const color = l.color ? `#${l.color}` : 'var(--border)';
+                    return `<span class="issue-label" style="background:${color}22;border:1px solid ${color};color:${color};">${escHtml(l.name)}</span>`;
+                }).join('');
+                const user = i.user?.login || i.author?.username || '';
+                const date = new Date(i.created_at).toLocaleDateString('en', {month:'short', day:'numeric', year:'numeric'});
+                const url  = i.html_url || i.web_url || '#';
+                const assignee = i.assignees?.[0]?.login || i.assignee?.login || i.assignee?.username || '';
+                const num = i.number || i.iid;
+                return `<div class="issue-item" style="cursor:pointer;" onclick="showIssueDetail(${num})">
+                    <span class="issue-num">#${num}</span>
+                    <span class="issue-title">${escHtml(i.title)}${labels}</span>
+                    <span class="issue-meta">${assignee ? assignee + ' · ' : ''}${user} · ${date}</span>
+                </div>`;
+            }).join('');
+
+            panel.innerHTML = toolbar + `<div class="issue-list">${list}</div>`;
+        }
+
+        async function showIssueDetail(num) {
+            const all = [...(_bugsCache.open||[]), ...(_bugsCache.closed||[])];
+            const issue = all.find(i => (i.number || i.iid) === num);
+            if (!issue) return;
+
+            const panel = document.getElementById('code-panel');
+            const user   = issue.user?.login || issue.author?.username || '';
+            const avatar = issue.user?.avatar_url || issue.author?.avatar_url || '';
+            const created = new Date(issue.created_at).toLocaleDateString('en', {year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+            const updated = new Date(issue.updated_at).toLocaleDateString('en', {year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+            const url     = issue.html_url || issue.web_url || '#';
+            const state   = issue.state || 'open';
+            const body    = issue.body || issue.description || '';
+            const labels  = (issue.labels || []).map(l => {
+                const color = l.color ? `#${l.color}` : 'var(--border)';
+                return `<span class="issue-label" style="background:${color}22;border:1px solid ${color};color:${color};">${escHtml(l.name)}</span>`;
+            }).join('');
+            const renderedBody = body ? renderMd(body) : '<em style="color:var(--fg-muted)">No description provided.</em>';
+            const replyId = `reply-issue-${num}`;
+            const tokenId = `token-issue-${num}`;
+            const statusId = `status-issue-${num}`;
+            const listId = `comments-${num}`;
+
+            panel.innerHTML = `
+                <div class="issue-detail">
+                    <div class="issue-detail-main">
+                        <div class="issue-detail-header">
+                            <span class="issue-detail-num">#${num}</span>
+                            <span class="issue-detail-title">${escHtml(issue.title)}</span>
+                        </div>
+                        ${labels ? `<div style="margin-bottom:0.75rem;display:flex;gap:0.3rem;flex-wrap:wrap;">${labels}</div>` : ''}
+                        <div class="issue-detail-meta">
+                            ${avatar ? `<img class="issue-detail-avatar" src="${avatar}" alt="${user}" />` : ''}
+                            <strong style="color:var(--fg);">${escHtml(user)}</strong>
+                            <span>opened ${created}</span>
+                            <span style="margin-left:auto;"><a class="issue-ext-link" href="${url}" target="_blank" rel="noopener">${rv.owner}/${rv.repo}#${num} ↗</a></span>
+                        </div>
+                        <div class="issue-detail-body readme">${renderedBody}</div>
+                        <ul class="comment-list" id="${listId}"></ul>
+                        <div class="reply-section">
+                            <div class="reply-row">
+                                <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
+                                <div class="reply-box">
+                                    <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
+                                    <div class="reply-footer">
+                                        <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
+                                        <span class="reply-status" id="${statusId}"></span>
+                                        <button class="reply-send-btn" onclick="submitIssueComment('${rv.provider}','${rv.owner}','${rv.repo}',${num},'${replyId}','${tokenId}','${statusId}','${listId}')" title="Send">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="issue-detail-sidebar">
+                        <div>
+                            <div class="ds-label">status</div>
+                            <div class="ds-val">${escHtml(state)}</div>
+                        </div>
+                        <div>
+                            <div class="ds-label">created</div>
+                            <div class="ds-val">${created}</div>
+                        </div>
+                        <div>
+                            <div class="ds-label">updated</div>
+                            <div class="ds-val">${updated}</div>
+                        </div>
+                        ${issue.assignees?.length || issue.assignee ? `<div>
+                            <div class="ds-label">assignee</div>
+                            <div class="ds-val">${escHtml(issue.assignees?.[0]?.login || issue.assignee?.login || issue.assignee?.username || '')}</div>
+                        </div>` : ''}
+                    </div>
+                </div>`;
+
+            // Cargar comentarios de la API
+            loadIssueComments(num, listId);
+        }
+
+        async function loadIssueComments(num, listId) {
+            const list = document.getElementById(listId);
+            if (!list) return;
+            list.innerHTML = '<li style="list-style:none;font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;color:var(--fg-muted);padding:0.5rem 0;">loading comments...</li>';
+            try {
+                let comments = [];
+                if (rv.provider === 'gh') {
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/issues/${num}/comments?per_page=100`);
+                    if (res.ok) comments = await res.json();
+                } else {
+                    const res = await fetch(`/api/gl-notes/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/${num}`);
+                    if (res.ok) comments = await res.json();
+                }
+                list.innerHTML = '';
+                if (!comments.length) return;
+                for (const c of comments) {
+                    const cUser   = c.user?.login || c.author?.username || c.author?.name || 'anonymous';
+                    const cAvatar = c.user?.avatar_url || c.author?.avatar_url || '';
+                    const cDate   = new Date(c.created_at).toLocaleDateString('en', {year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+                    const cBody   = c.body || '';
+                    const li = document.createElement('li');
+                    li.className = 'comment-item';
+                    li.innerHTML = `
+                        ${cAvatar
+                            ? `<img src="${cAvatar}" style="width:26px;height:26px;border-radius:50%;flex-shrink:0;border:1px solid var(--border);" />`
+                            : `<div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>`}
+                        <div class="comment-bubble">
+                            <div class="comment-meta"><strong style="color:var(--fg);">${escHtml(cUser)}</strong> &middot; ${cDate}</div>
+                            <div class="readme" style="font-size:0.8rem;">${renderMd(cBody)}</div>
+                        </div>`;
+                    list.appendChild(li);
+                }
+                list.querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
+            } catch(e) {
+                if (list) list.innerHTML = `<li style="list-style:none;font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--accent);">error loading comments: ${e.message}</li>`;
+            }
+        }
+
+        let _currentBugsTab = 'open';
+
+        function openBugModal() {
+            if (document.getElementById('bug-modal-overlay')) return;
+            const overlay = document.createElement('div');
+            overlay.id = 'bug-modal-overlay';
+            overlay.className = 'bug-modal-overlay';
+            overlay.innerHTML = `
+                <div class="bug-modal">
+                    <div>
+                        <div class="bug-modal-title"># Title</div>
+                        <input id="bug-title-input" type="text" placeholder="Summarize the issue in one line" />
+                    </div>
+                    <div>
+                        <div class="bug-modal-title"># Description</div>
+                        <textarea id="bug-desc-input" placeholder="What happened, what you expected, steps to reproduce..."></textarea>
+                    </div>
+                    <div>
+                        <div class="bug-modal-title"># Labels (optional, comma-separated)</div>
+                        <input id="bug-labels-input" type="text" placeholder="bug, enhancement, help wanted" />
+                    </div>
+                    <div class="bug-modal-footer">
+                        <span class="note">Anonymous issue in <a href="https://github.com/${rv.owner}/${rv.repo}" target="_blank">${rv.owner}/${rv.repo}</a></span>
+                        <div class="bug-modal-actions">
+                            <span id="bug-status" style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-muted);"></span>
+                            <button class="bug-cancel-btn" onclick="closeBugModal()">Cancel</button>
+                            <button class="bug-submit-btn" id="bug-submit-btn" onclick="submitBug()">Create</button>
+                        </div>
+                    </div>
+                </div>`;
+            overlay.addEventListener('click', e => { if (e.target === overlay) closeBugModal(); });
+            document.body.appendChild(overlay);
+            document.getElementById('bug-title-input').focus();
+        }
+
+        function closeBugModal() {
+            const el = document.getElementById('bug-modal-overlay');
+            if (el) el.remove();
+        }
+
+        async function submitBug() {
+            const title = document.getElementById('bug-title-input')?.value.trim();
+            const body  = document.getElementById('bug-desc-input')?.value.trim();
+            const labelsRaw = document.getElementById('bug-labels-input')?.value.trim();
+            if (!title) { document.getElementById('bug-title-input').focus(); return; }
+            if (!body)  { document.getElementById('bug-desc-input').focus(); return; }
+            const btn = document.getElementById('bug-submit-btn');
+            const statusEl = document.getElementById('bug-status');
+            const labels = labelsRaw ? labelsRaw.split(',').map(l => l.trim()).filter(Boolean) : [];
+            if (btn) btn.disabled = true;
+            if (statusEl) statusEl.textContent = 'Sending...';
+            try {
+                const res = await fetch(`/v1/${rv.provider}/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/issues/anonymous`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Gitgost-Key': 'gitgost-anonymous' },
+                    body: JSON.stringify({ title, body, labels }),
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (statusEl) statusEl.textContent = 'Created';
+                closeBugModal();
+                if (data.issue_url) {
+                    const parts = [`Issue: ${data.issue_url}`];
+                    if (data.hash) parts.push(`Hash: ${data.hash}`);
+                    if (data.user_token) parts.push(`Token: ${data.user_token}`);
+                    alert(parts.join('\n'));
+                }
+                loadIssues();
+            } catch(e) {
+                if (statusEl) statusEl.textContent = `Error: ${e.message}`;
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        let _prsCache = null;
+
+        async function loadPRs() {
+            const panel = document.getElementById('code-panel');
+            _prsCache = null;
+            panel.innerHTML = '<div class="code-loading">loading pull requests...</div>';
+            try {
+                let open = [], closed = [];
+                if (rv.provider === 'gh') {
+                    const [rOpen, rClosed] = await Promise.all([
+                        ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/pulls?state=open&per_page=50`),
+                        ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/pulls?state=closed&per_page=50`)
+                    ]);
+                    if (rOpen.ok)   open   = await rOpen.json();
+                    if (rClosed.ok) closed = await rClosed.json();
+                } else {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const [rOpen, rClosed] = await Promise.all([
+                        fetch(`https://gitlab.com/api/v4/projects/${enc}/merge_requests?state=opened&per_page=50`),
+                        fetch(`https://gitlab.com/api/v4/projects/${enc}/merge_requests?state=closed&per_page=50`)
+                    ]);
+                    if (rOpen.ok)   open   = await rOpen.json();
+                    if (rClosed.ok) closed = await rClosed.json();
+                }
+                _prsCache = { open, closed };
+                renderPRsView('all');
+            } catch(e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+            }
+        }
+
+        function renderPRsView(tab) {
+            _currentPRsTab = tab;
+            const panel = document.getElementById('code-panel');
+            if (!_prsCache) return;
+            const { open, closed } = _prsCache;
+            const draft  = open.filter(i => i.draft);
+            const active = open.filter(i => !i.draft);
+            const all    = [...open, ...closed];
+            const items  = tab === 'all' ? all : tab === 'draft' ? draft : tab === 'open' ? active : closed;
+
+            const toolbar = `
+                <div class="bugs-toolbar">
+                    <button class="bugs-tab ${tab==='all'?'active':''}"    onclick="renderPRsView('all')">all <span style="opacity:.6;">${all.length}</span></button>
+                    <button class="bugs-tab ${tab==='draft'?'active':''}"  onclick="renderPRsView('draft')">draft <span style="opacity:.6;">${draft.length}</span></button>
+                    <button class="bugs-tab ${tab==='open'?'active':''}"   onclick="renderPRsView('open')">open <span style="opacity:.6;">${active.length}</span></button>
+                    <button class="bugs-tab ${tab==='closed'?'active':''}" onclick="renderPRsView('closed')">closed <span style="opacity:.6;">${closed.length}</span></button>
+                </div>`;
+
+            if (!items.length) {
+                panel.innerHTML = toolbar + `<div class="bugs-empty">no ${tab} pull requests</div>`;
+                return;
+            }
+
+            const list = items.map(i => {
+                const user   = i.user?.login || i.author?.username || '';
+                const date   = new Date(i.created_at).toLocaleDateString('en', {month:'short', day:'numeric', year:'numeric'});
+                const url    = i.html_url || i.web_url || '#';
+                const base   = i.base?.ref || i.target_branch || '';
+                const head   = i.head?.ref || i.source_branch || '';
+                const merged = !!(i.merged_at || i.merged);
+                const isDraft = !!(i.draft);
+
+                let stateBadge = '';
+                if (merged)       stateBadge = `<span class="issue-label" style="background:#8957e522;border:1px solid #8957e5;color:#8957e5;">merged</span>`;
+                else if (isDraft) stateBadge = `<span class="issue-label" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--fg-muted);">draft</span>`;
+                else if (i.state === 'closed' || i.state === 'merged') stateBadge = `<span class="issue-label" style="background:#da373722;border:1px solid #da3737;color:#da3737;">closed</span>`;
+
+                const branchInfo = (head && base)
+                    ? `<span class="issue-label" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--fg-muted);font-size:0.62rem;">${escHtml(head)} → ${escHtml(base)}</span>`
+                    : '';
+
+                const reviewState = i.review_comments > 0
+                    ? `<span style="font-size:0.68rem;color:var(--fg-muted);font-family:'IBM Plex Mono',monospace;flex-shrink:0;">💬 ${i.review_comments}</span>`
+                    : '';
+
+                const num = i.number || i.iid;
+                return `<div class="issue-item" style="align-items:flex-start;padding:0.6rem 0;cursor:pointer;" onclick="showPRDetail(${num})">
+                    <span class="issue-num">#${num}</span>
+                    <span class="issue-title" style="display:flex;flex-direction:column;gap:0.25rem;">
+                        <span>${escHtml(i.title)}${stateBadge}</span>
+                        <span style="display:flex;gap:0.3rem;flex-wrap:wrap;">${branchInfo}</span>
+                    </span>
+                    <span class="issue-meta" style="display:flex;flex-direction:column;align-items:flex-end;gap:0.2rem;flex-shrink:0;">
+                        ${reviewState}
+                        <span>${user} · ${date}</span>
+                    </span>
+                </div>`;
+            }).join('');
+
+            panel.innerHTML = toolbar + `<div class="issue-list">${list}</div>`;
+        }
+
+        async function submitIssueComment(provider, owner, repo, number, replyId, tokenId, statusId, listId) {
+            const textarea = document.getElementById(replyId);
+            const tokenEl  = document.getElementById(tokenId);
+            const statusEl = document.getElementById(statusId);
+            const body = textarea?.value.trim();
+            if (!body) { if (statusEl) statusEl.textContent = 'write something first'; return; }
+            const btn = textarea?.closest('.reply-box')?.querySelector('.reply-send-btn');
+            if (btn) btn.disabled = true;
+            if (statusEl) statusEl.textContent = 'sending...';
+            const savedToken = localStorage.getItem('comment_token') || '';
+            const payload = { body };
+            const manualToken = tokenEl?.value.trim();
+            const useToken = manualToken || savedToken;
+            if (useToken) payload.user_token = useToken;
+            try {
+                const res = await fetch(`/v1/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/${number}/comments/anonymous`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Gitgost-Key': 'gitgost-anonymous' },
+                    body: JSON.stringify(payload),
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                const commentBody = body;
+                if (textarea) textarea.value = '';
+                if (statusEl) statusEl.textContent = 'sent';
+
+                // Mostrar comentario inline
+                const list = document.getElementById(listId);
+                if (list) {
+                    const li = document.createElement('li');
+                    li.className = 'comment-item';
+                    li.innerHTML = `
+                        <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
+                        <div class="comment-bubble">
+                            <div class="comment-meta">you &middot; just now${data.hash ? ` &middot; <span style="color:var(--accent)">${data.hash}</span>` : ''}</div>
+                            <div>${escHtml(commentBody).replace(/\n/g, '<br>')}</div>
+                        </div>`;
+                    list.appendChild(li);
+                    li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+
+                // Modal para guardar hash
+                if (data.hash && !localStorage.getItem('comment_token')) {
+                    showHashSaveModal(data.hash, data.user_token);
+                }
+            } catch(e) {
+                if (statusEl) statusEl.textContent = 'error: ' + e.message;
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        function showHashSaveModal(hash, userToken) {
+            const existing = document.getElementById('hash-modal-overlay');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'hash-modal-overlay';
+            overlay.className = 'hash-modal-overlay';
+            overlay.innerHTML = `
+                <div class="hash-modal">
+                    <div class="hash-modal-title">save your identity?</div>
+                    <div class="hash-modal-body">Your comment was sent anonymously. Save this hash to identify your future comments and maintain karma across sessions.</div>
+                    <div class="hash-modal-code">${escHtml(hash)}</div>
+                    <div class="hash-modal-actions">
+                        <button class="hash-modal-btn" onclick="document.getElementById('hash-modal-overlay').remove()">dismiss</button>
+                        <button class="hash-modal-btn primary" onclick="saveCommentToken('${escHtml(hash)}','${escHtml(userToken||hash)}')">save hash</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(overlay);
+            overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+        }
+
+        function saveCommentToken(hash, userToken) {
+            localStorage.setItem('comment_token', userToken || hash);
+            const overlay = document.getElementById('hash-modal-overlay');
+            if (overlay) {
+                overlay.querySelector('.hash-modal-body').textContent = 'Saved! Your identity will be used automatically in future comments.';
+                overlay.querySelector('.hash-modal-code').style.display = 'none';
+                overlay.querySelector('.hash-modal-actions').innerHTML = '<button class="hash-modal-btn primary" onclick="document.getElementById(\'hash-modal-overlay\').remove()">done</button>';
+            }
+        }
+
+        let _currentPRsTab = 'all';
+
+        function showPRDetail(num) {
+            const all = [...(_prsCache?.open||[]), ...(_prsCache?.closed||[])];
+            const pr = all.find(i => (i.number || i.iid) === num);
+            if (!pr) return;
+
+            const panel = document.getElementById('code-panel');
+            const user    = pr.user?.login || pr.author?.username || '';
+            const avatar  = pr.user?.avatar_url || pr.author?.avatar_url || '';
+            const created = new Date(pr.created_at).toLocaleDateString('en', {year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+            const updated = new Date(pr.updated_at).toLocaleDateString('en', {year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+            const url     = pr.html_url || pr.web_url || '#';
+            const state   = pr.merged_at ? 'merged' : (pr.merged ? 'merged' : pr.state || 'open');
+            const body    = pr.body || pr.description || '';
+            const base    = pr.base?.ref || pr.target_branch || '';
+            const head    = pr.head?.ref || pr.source_branch || '';
+            const isDraft = !!(pr.draft);
+
+            let stateBadge = '';
+            if (state === 'merged')      stateBadge = `<span class="issue-label" style="background:#8957e522;border:1px solid #8957e5;color:#8957e5;">merged</span>`;
+            else if (isDraft)            stateBadge = `<span class="issue-label" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--fg-muted);">draft</span>`;
+            else if (state === 'closed') stateBadge = `<span class="issue-label" style="background:#da373722;border:1px solid #da3737;color:#da3737;">closed</span>`;
+            else                         stateBadge = `<span class="issue-label" style="background:#1a7f3722;border:1px solid #1a7f37;color:#1a7f37;">open</span>`;
+
+            const branchInfo = (head && base)
+                ? `<span class="issue-label" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--fg-muted);font-size:0.62rem;">${escHtml(head)} → ${escHtml(base)}</span>`
+                : '';
+
+            const renderedBody = body ? renderMd(body) : '<em style="color:var(--fg-muted)">No description provided.</em>';
+            const replyId  = `reply-pr-${num}`;
+            const tokenId  = `token-pr-${num}`;
+            const statusId = `status-pr-${num}`;
+
+            panel.innerHTML = `
+                <div class="issue-detail">
+                    <div class="issue-detail-main">
+                        <button class="issue-back-btn" onclick="renderPRsView(_currentPRsTab || 'all')">← back to pull requests</button>
+                        <div class="issue-detail-header">
+                            <span class="issue-detail-num">#${num}</span>
+                            <span class="issue-detail-title">${escHtml(pr.title)}</span>
+                        </div>
+                        <div style="margin-bottom:0.75rem;display:flex;gap:0.3rem;flex-wrap:wrap;">${stateBadge}${branchInfo}</div>
+                        <div class="issue-detail-meta">
+                            ${avatar ? `<img class="issue-detail-avatar" src="${avatar}" alt="${user}" />` : ''}
+                            <strong style="color:var(--fg);">${escHtml(user)}</strong>
+                            <span>opened ${created}</span>
+                            <span style="margin-left:auto;"><a class="issue-ext-link" href="${url}" target="_blank" rel="noopener">${rv.owner}/${rv.repo}#${num} ↗</a></span>
+                        </div>
+                        <div class="issue-detail-body readme">${renderedBody}</div>
+                        <div class="reply-section">
+                            <div class="reply-row">
+                                <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
+                                <div class="reply-box">
+                                    <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
+                                    <div class="reply-footer">
+                                        <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
+                                        <span class="reply-status" id="${statusId}"></span>
+                                        <button class="reply-send-btn" onclick="submitIssueComment('${rv.provider}','${rv.owner}','${rv.repo}',${num},'${replyId}','${tokenId}','${statusId}')" title="Send">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="issue-detail-sidebar">
+                        <div>
+                            <div class="ds-label">status</div>
+                            <div class="ds-val">${escHtml(state)}</div>
+                        </div>
+                        <div>
+                            <div class="ds-label">created</div>
+                            <div class="ds-val">${created}</div>
+                        </div>
+                        <div>
+                            <div class="ds-label">updated</div>
+                            <div class="ds-val">${updated}</div>
+                        </div>
+                        ${pr.merged_at ? `<div><div class="ds-label">merged</div><div class="ds-val">${new Date(pr.merged_at).toLocaleDateString('en',{year:'numeric',month:'short',day:'numeric'})}</div></div>` : ''}
+                        ${pr.review_comments > 0 ? `<div><div class="ds-label">comments</div><div class="ds-val">${pr.review_comments}</div></div>` : ''}
+                    </div>
+                </div>`;
+        }
+
+        async function loadRepoInfo() {
+            try {
+                if (rv.provider === 'gh') {
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}`);
+                    if (!res.ok) return;
+                    const d = await res.json();
+                    const bar       = document.getElementById('repo-info');
+                    const infoStars = document.getElementById('info-stars');
+                    const infoForks = document.getElementById('info-forks');
+                    const infoLang  = document.getElementById('info-lang');
+                    const infoDesc  = document.getElementById('info-desc');
+                    if (infoStars) infoStars.textContent = `★ ${d.stargazers_count?.toLocaleString() || 0}`;
+                    if (infoForks) infoForks.textContent = `⑂ ${d.forks_count || 0} forks`;
+                    if (infoLang && d.language) infoLang.textContent = d.language;
+                    if (infoDesc && d.description) infoDesc.textContent = d.description;
+                    if (bar) bar.style.display = 'flex';
+
+                    // sidebar
+                    const sbDesc = document.getElementById('sb-desc');
+                    if (sbDesc) sbDesc.textContent = d.description || '—';
+                    const sbTags = document.getElementById('sb-tags');
+                    if (sbTags && d.topics && d.topics.length > 0) {
+                        sbTags.innerHTML = d.topics.map(t => `<a class="sidebar-tag" href="/?tag=${encodeURIComponent(t)}" title="Search ${t}">${t}</a>`).join('');
+                    }
+                    const sbVis = document.getElementById('sb-vis');
+                    if (sbVis) {
+                        sbVis.textContent = d.private ? 'private' : 'public';
+                        sbVis.className = 'val ' + (d.private ? '' : 'pub');
+                    }
+                    const sbCreated = document.getElementById('sb-created');
+                    if (sbCreated && d.created_at) {
+                        sbCreated.textContent = new Date(d.created_at).toLocaleDateString('en', {year:'numeric', month:'short', day:'numeric'});
+                    }
+                    const sbStarCount = document.getElementById('sb-star-count');
+                    if (sbStarCount) sbStarCount.textContent = d.stargazers_count ? d.stargazers_count.toLocaleString() : '';
+                } else {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}`);
+                    if (!res.ok) {
+                        const sbDesc = document.getElementById('sb-desc');
+                        if (sbDesc) sbDesc.textContent = `gitlab API error ${res.status}`;
+                        return;
+                    }
+                    const d = await res.json();
+                    const bar = document.getElementById('repo-info');
+                    const infoStars = document.getElementById('info-stars');
+                    const infoForks = document.getElementById('info-forks');
+                    const infoDesc  = document.getElementById('info-desc');
+                    if (infoStars) infoStars.textContent = `★ ${d.star_count?.toLocaleString() || 0}`;
+                    if (infoForks) infoForks.textContent = `⑂ ${d.forks_count || 0} forks`;
+                    if (infoDesc && d.description) infoDesc.textContent = d.description;
+                    if (bar) bar.style.display = 'flex';
+
+                    const sbDesc = document.getElementById('sb-desc');
+                    if (sbDesc) sbDesc.textContent = d.description || '—';
+                    const sbTags = document.getElementById('sb-tags');
+                    const tags = d.tag_list?.length ? d.tag_list : (d.topics || []);
+                    if (sbTags && tags.length > 0) {
+                        sbTags.innerHTML = tags.map(t => `<a class="sidebar-tag" href="/?tag=${encodeURIComponent(t)}" title="Search ${t}">${t}</a>`).join('');
+                    }
+                    const sbVis = document.getElementById('sb-vis');
+                    if (sbVis) {
+                        sbVis.textContent = d.visibility || 'public';
+                        sbVis.className = 'val ' + (d.visibility === 'public' ? 'pub' : '');
+                    }
+                    const sbCreated = document.getElementById('sb-created');
+                    if (sbCreated && d.created_at) {
+                        sbCreated.textContent = new Date(d.created_at).toLocaleDateString('en', {year:'numeric', month:'short', day:'numeric'});
+                    }
+                    const sbStarCount = document.getElementById('sb-star-count');
+                    if (sbStarCount) sbStarCount.textContent = d.star_count ? d.star_count.toLocaleString() : '';
+                }
+            } catch(e) {
+                const sbDesc = document.getElementById('sb-desc');
+                if (sbDesc) sbDesc.textContent = `error: ${e.message}`;
+            }
+        }
+
+        async function loadLanguages() {
+            try {
+                let entries = [];
+                if (rv.provider === 'gh') {
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/languages`);
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    entries = Object.entries(data);
+                } else if (rv.provider === 'gl') {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}`);
+                    if (!res.ok) return;
+                    const project = await res.json();
+                    if (!project.id) return;
+                    const langRes = await fetch(`https://gitlab.com/api/v4/projects/${project.id}/languages`);
+                    if (!langRes.ok) return;
+                    const data = await langRes.json();
+                    entries = Object.entries(data);
+                } else {
+                    return;
+                }
+                if (!entries.length) return;
+
+                const total = entries.reduce((s, [, v]) => s + v, 0);
+                const colors = [
+                    '#3572A5','#f1e05a','#e34c26','#b07219','#89e051',
+                    '#4F5D95','#2b7489','#563d7c','#A97BFF','#00ADD8',
+                    '#dea584','#701516','#c397d8','#6e4c13','#3d6117',
+                ];
+
+                const bar   = document.getElementById('sb-lang-bar');
+                const legend= document.getElementById('sb-lang-legend');
+                const section = document.getElementById('sb-langs-section');
+                if (!bar || !legend || !section) return;
+
+                bar.innerHTML = '';
+                legend.innerHTML = '';
+
+                entries.forEach(([lang, value], i) => {
+                    const pct = rv.provider === 'gh' ? (value / total * 100).toFixed(1) : value.toFixed(1);
+                    const color = colors[i % colors.length];
+                    const seg = document.createElement('div');
+                    seg.className = 'lang-bar-seg';
+                    seg.style.cssText = `width:${pct}%;background:${color};`;
+                    seg.title = `${lang} ${pct}%`;
+                    bar.appendChild(seg);
+
+                    const item = document.createElement('div');
+                    item.className = 'lang-legend-item';
+                    item.innerHTML = `<span class="lang-dot" style="background:${color}"></span><span class="lang-name">${lang}</span><span>${pct}%</span>`;
+                    legend.appendChild(item);
+                });
+
+                section.style.display = '';
+            } catch {}
+        }
+
+        const ICON_FOLDER_CLOSED = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.5" d="M2.75 8.623v7.379a4 4 0 0 0 4 4h10.5a4 4 0 0 0 4-4v-5.69a4 4 0 0 0-4-4H12M2.75 8.624V6.998a3 3 0 0 1 3-3h2.9a2.5 2.5 0 0 1 1.768.732L12 6.313m-9.25 2.31h5.904a2.5 2.5 0 0 0 1.768-.732L12 6.313"/></svg>`;
+        const ICON_FOLDER_OPEN   = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.5" d="m3.882 18.043 4.041-5.623a4 4 0 0 1 3.249-1.665h8.752M3.882 18.043a3.65 3.65 0 0 0 2.777 1.277h8.343a4 4 0 0 0 3.405-1.9l2.918-4.734a1.287 1.287 0 0 0-1.115-1.931h-.286M3.882 18.043A3.65 3.65 0 0 1 3 15.661V7.424A2.744 2.744 0 0 1 5.744 4.68h2.653c.607 0 1.189.24 1.618.67l.911.91a1.83 1.83 0 0 0 1.294.537l4.044-.001a3.66 3.66 0 0 1 3.66 3.66v.299"/></svg>`;
+        const ICON_FILE          = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.688 3.063a3.5 3.5 0 0 1 1.027.712l5.968 5.97c.3.3.54.647.711 1.026m-7.706-7.708a3.5 3.5 0 0 0-1.448-.313H7.792a3.5 3.5 0 0 0-3.5 3.5v11.5a3.5 3.5 0 0 0 3.5 3.5h8.416a3.5 3.5 0 0 0 3.5-3.5v-5.53c0-.505-.109-.999-.314-1.45m-7.706-7.707V8.77a2 2 0 0 0 2 2h5.706"/></svg>`;
+        const ICON_FILE_TEXT     = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5"><path stroke-linejoin="round" d="M11.688 3.063a3.5 3.5 0 0 1 1.027.712l5.968 5.97c.3.3.54.647.711 1.026m-7.706-7.708a3.5 3.5 0 0 0-1.448-.313H7.792a3.5 3.5 0 0 0-3.5 3.5v11.5a3.5 3.5 0 0 0 3.5 3.5h8.416a3.5 3.5 0 0 0 3.5-3.5v-5.53c0-.505-.109-.999-.314-1.45m-7.706-7.707V8.77a2 2 0 0 0 2 2h5.706"/><path d="M7.29 13.77h9.42m-9.42 3.48h6.42"/></g></svg>`;
+        const ICON_CHEVRON       = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
+
+        function _fileIcon(name) {
+            const ext = name.split('.').pop().toLowerCase();
+            const textExts = ['md','txt','json','yaml','yml','toml','xml','html','htm','css','scss','less','js','ts','jsx','tsx','go','py','rs','rb','java','c','cpp','h','hpp','cs','php','swift','kt','sh','bash','sql','env','gitignore','gitattributes','dockerfile','makefile','lock','cfg','ini','conf'];
+            return textExts.includes(ext) || name.startsWith('.') ? ICON_FILE_TEXT : ICON_FILE;
+        }
+
+        let _treeActiveEl = null;
+
+        async function _fetchDirItems(pathParts) {
+            const pathStr = pathParts.join('/');
+            if (rv.provider === 'gh') {
+                const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/contents/${pathStr}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
+            } else {
+                const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/tree?path=${encodeURIComponent(pathStr)}&per_page=100`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const raw = await res.json();
+                return raw.map(i => ({ name: i.name, type: i.type === 'tree' ? 'dir' : 'file', path: i.path, download_url: null }));
+            }
+        }
+
+        function _sortItems(items) {
+            return items.slice().sort((a, b) => {
+                const ad = a.type === 'dir' || a.type === 'tree';
+                const bd = b.type === 'dir' || b.type === 'tree';
+                if (ad !== bd) return ad ? -1 : 1;
+                return a.name.localeCompare(b.name);
+            });
+        }
+
+        function _buildTreeNode(item, pathParts, depth) {
+            const isDir = item.type === 'dir' || item.type === 'tree';
+            const indent = depth * 14;
+
+            const wrapper = document.createElement('div');
+
+            const row = document.createElement('div');
+            row.className = 'tree-item';
+            row.style.paddingLeft = `${0.5 + indent / 16}rem`;
+
+            const chevron = document.createElement('span');
+            chevron.className = 'tree-chevron ' + (isDir ? 'closed' : 'hidden');
+            chevron.innerHTML = isDir ? ICON_CHEVRON : '';
+
+            const icon = document.createElement('span');
+            icon.className = 'tree-icon ' + (isDir ? 'dir' : 'file');
+            icon.innerHTML = isDir ? ICON_FOLDER_CLOSED : _fileIcon(item.name);
+
+            const name = document.createElement('span');
+            name.className = 'tree-name ' + (isDir ? 'dir' : 'file');
+            name.textContent = item.name;
+
+            row.appendChild(chevron);
+            row.appendChild(icon);
+            row.appendChild(name);
+            wrapper.appendChild(row);
+
+            if (isDir) {
+                const children = document.createElement('div');
+                children.className = 'tree-children';
+                wrapper.appendChild(children);
+
+                let loaded = false;
+                let open = false;
+
+                row.onclick = async () => {
+                    open = !open;
+                    chevron.className = 'tree-chevron ' + (open ? 'open' : 'closed');
+                    icon.innerHTML = open ? ICON_FOLDER_OPEN : ICON_FOLDER_CLOSED;
+                    children.className = 'tree-children ' + (open ? 'open' : '');
+                    if (open && !loaded) {
+                        children.innerHTML = '<div class="tree-loading" style="padding:0.3rem 0.5rem;">loading...</div>';
+                        try {
+                            const subPath = [...pathParts, item.name];
+                            const subItems = await _fetchDirItems(subPath);
+                            children.innerHTML = '';
+                            _sortItems(subItems).forEach(sub => {
+                                children.appendChild(_buildTreeNode(sub, subPath, depth + 1));
+                            });
+                            loaded = true;
+                        } catch(e) {
+                            children.innerHTML = `<div class="tree-loading" style="color:var(--accent);padding:0.3rem 0.5rem;">${e.message}</div>`;
+                        }
+                    }
+                };
+            } else {
+                row.onclick = () => {
+                    if (_treeActiveEl) _treeActiveEl.classList.remove('active');
+                    row.classList.add('active');
+                    _treeActiveEl = row;
+                    loadFile(item);
+                };
+            }
+
+            return wrapper;
+        }
+
+        async function loadDir(pathParts) {
+            rv.path = pathParts;
+            updateBreadcrumb();
+            const tree = document.getElementById('file-tree');
+            tree.innerHTML = '<div class="tree-loading">loading...</div>';
+            _treeActiveEl = null;
+
+            try {
+                const items = await _fetchDirItems(pathParts);
+                tree.innerHTML = '';
+
+                _sortItems(items).forEach(item => {
+                    tree.appendChild(_buildTreeNode(item, pathParts, 0));
+                });
+
+                // auto-load README at root
+                if (pathParts.length === 0) {
+                    const readme = items.find(i => i.name.toLowerCase() === 'readme.md');
+                    if (readme) loadFile(readme);
+                    else document.getElementById('code-panel').innerHTML = '<div class="code-loading">select a file from the tree</div>';
+                } else {
+                    document.getElementById('code-panel').innerHTML = '<div class="code-loading">select a file</div>';
+                }
+            } catch(e) {
+                tree.innerHTML = `<div class="tree-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+            }
+        }
+
+        async function loadFile(item) {
+            const panel = document.getElementById('code-panel');
+            panel.innerHTML = '<div class="code-loading">loading file...</div>';
+            try {
+                let content = '';
+                if (rv.provider === 'gh') {
+                    if (item.download_url) {
+                        const res = await fetch(item.download_url);
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        content = await res.text();
+                    } else {
+                        const res = await fetch(item.url);
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        const data = await res.json();
+                        content = atob(data.content.replace(/\n/g, ''));
+                    }
+                } else {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const fp  = encodeURIComponent(item.path || item.name);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/files/${fp}/raw?ref=HEAD`);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    content = await res.text();
+                }
+
+                const name = item.name || '';
+                const ext = name.toLowerCase().split('.').pop();
+                const imageExts = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico', 'avif', 'apng'];
+                if (imageExts.includes(ext)) {
+                    const imgUrl = item.download_url || item.url || (rv.provider === 'gh' ? `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/HEAD/${item.path}` : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/HEAD/${item.path}`);
+                    panel.innerHTML = `<div style="padding:1rem;text-align:center;"><img src="${imgUrl}" alt="${escHtml(name)}" style="max-width:100%;max-height:80vh;object-fit:contain;border-radius:4px;" /></div>`;
+                } else if (name.toLowerCase().endsWith('.md')) {
+                    panel.innerHTML = `<div class="readme">${renderMd(content)}</div>`;
+                } else {
+                    const lang = detectLang(name);
+                    let highlighted;
+                    if (lang && typeof hljs !== 'undefined' && hljs.getLanguage(lang)) {
+                        highlighted = hljs.highlight(content, { language: lang }).value;
+                    } else if (typeof hljs !== 'undefined') {
+                        highlighted = hljs.highlightAuto(content).value;
+                    } else {
+                        highlighted = escHtml(content);
+                    }
+                    panel.innerHTML = `<pre class="hljs" style="margin:0;padding:1.25rem 1.5rem;font-size:0.78rem;font-family:'IBM Plex Mono',monospace;line-height:1.65;background:var(--code-bg);color:var(--fg);white-space:pre-wrap;word-break:break-all;"><code>${highlighted}</code></pre>`;
+                }
+            } catch (e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error al cargar: ${e.message}</div>`;
+            }
+        }
+
+        function updateBreadcrumb() {
+            const bc = document.getElementById('statusbar-path');
+            if (!bc) return;
+            const parts = [
+                { label: rv.repo, path: [] },
+                ...rv.path.map((p, i) => ({ label: p, path: rv.path.slice(0, i + 1) }))
+            ];
+            bc.innerHTML = parts.map((p, i) => {
+                if (i < parts.length - 1) {
+                    return `<span class="crumb" onclick='loadDir(${JSON.stringify(p.path)})' style="cursor:pointer;color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(p.label)}</span><span style="color:var(--fg-muted);margin:0 0.2rem;">/</span>`;
+                }
+                return `<span style="color:var(--fg);">${escHtml(p.label)}</span>`;
+            }).join('');
+        }
+
+        function _starKey() { return `star:${rv.provider}:${rv.owner}/${rv.repo}`; }
+
+        function _isStarred() { return !!localStorage.getItem(_starKey()); }
+
+        function _updateStarBtn() {
+            const btn = document.getElementById('sb-star-btn');
+            if (!btn) return;
+            const starred = _isStarred();
+            btn.title = starred ? 'Remove from stars' : 'Add to stars';
+            btn.querySelector('span#sb-star-count').textContent = starred ? 'ed' : '';
+            btn.style.opacity = starred ? '1' : '';
+            // Cambiar icono a relleno si ya está starred
+            const svg = btn.querySelector('svg path:last-child');
+            if (svg) svg.setAttribute('fill', starred ? 'currentColor' : 'none');
+        }
+
+        function doStar() {
+            const key = _starKey();
+            if (_isStarred()) {
+                localStorage.removeItem(key);
+            } else {
+                localStorage.setItem(key, JSON.stringify({
+                    owner: rv.owner,
+                    repo: rv.repo,
+                    provider: rv.provider,
+                    full_name: `${rv.owner}/${rv.repo}`,
+                    starred_at: new Date().toISOString()
+                }));
+            }
+            _updateStarBtn();
+        }
+
+        function doClone() {
+            if (document.getElementById('clone-modal-overlay')) return;
+            const base = rv.provider === 'gh'
+                ? `https://gitgost.fly.dev/v1/gh/${rv.owner}/${rv.repo}`
+                : `https://gitgost.fly.dev/v1/gl/${rv.owner}/${rv.repo}`;
+            const options = [
+                { label: 'clone / push',  cmd: `git clone ${base}/push` },
+                { label: 'push (update)', cmd: `git remote add origin ${base}/update` },
+            ];
+            const overlay = document.createElement('div');
+            overlay.id = 'clone-modal-overlay';
+            overlay.className = 'clone-modal-overlay';
+            overlay.innerHTML = `
+                <div class="clone-modal">
+                    <div class="clone-modal-title"># clone ${escHtml(rv.owner)}/${escHtml(rv.repo)}</div>
+                    ${options.map((o, i) => `
+                        <div class="clone-option">
+                            <div class="clone-option-label">${o.label}</div>
+                            <div class="clone-option-row">
+                                <div class="clone-option-code" id="clone-cmd-${i}">${escHtml(o.cmd)}</div>
+                                <button class="clone-copy-btn" onclick="_copyCloneCmd(${i})">copy</button>
+                            </div>
+                        </div>`).join('')}
+                    <div class="clone-modal-footer">
+                        <button class="clone-close-btn" onclick="_closeCloneModal()">close</button>
+                    </div>
+                </div>`;
+            overlay.addEventListener('click', e => { if (e.target === overlay) _closeCloneModal(); });
+            document.body.appendChild(overlay);
+        }
+
+        function _closeCloneModal() {
+            const el = document.getElementById('clone-modal-overlay');
+            if (el) el.remove();
+        }
+
+        function _copyCloneCmd(i) {
+            const el = document.getElementById(`clone-cmd-${i}`);
+            if (!el) return;
+            navigator.clipboard.writeText(el.textContent).then(() => {
+                const btn = el.nextElementSibling;
+                if (btn) { btn.textContent = 'copied!'; setTimeout(() => btn.textContent = 'copy', 1500); }
+            });
+        }
+
+        function openOriginalRepo() {
+            const url = rv.provider === 'gh'
+                ? `https://github.com/${rv.owner}/${rv.repo}`
+                : `https://gitlab.com/${rv.owner}/${rv.repo}`;
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        function escHtml(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        function detectLang(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const map = {
+                js: 'javascript', mjs: 'javascript', cjs: 'javascript',
+                ts: 'typescript', tsx: 'typescript',
+                jsx: 'javascript',
+                py: 'python', pyw: 'python',
+                go: 'go',
+                rs: 'rust',
+                rb: 'ruby',
+                java: 'java',
+                c: 'c', h: 'c',
+                cpp: 'cpp', cc: 'cpp', cxx: 'cpp', hpp: 'cpp',
+                cs: 'csharp',
+                php: 'php',
+                swift: 'swift',
+                kt: 'kotlin', kts: 'kotlin',
+                sh: 'bash', bash: 'bash', zsh: 'bash',
+                yaml: 'yaml', yml: 'yaml',
+                json: 'json',
+                toml: 'toml',
+                xml: 'xml', svg: 'xml',
+                html: 'html', htm: 'html',
+                css: 'css', scss: 'scss', less: 'less',
+                sql: 'sql',
+                dockerfile: 'dockerfile',
+                makefile: 'makefile',
+                r: 'r',
+                lua: 'lua',
+                dart: 'dart',
+                ex: 'elixir', exs: 'elixir',
+                hs: 'haskell',
+                vue: 'xml',
+                svelte: 'xml',
+            };
+            return map[ext] || null;
+        }
+
+        function syncHljsTheme() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.getElementById('hljs-theme-light').disabled = isDark;
+            document.getElementById('hljs-theme-dark').disabled = !isDark;
+        }
+
+        // Sync theme on load and on toggle
+        syncHljsTheme();
+        const _origToggle = window.toggleTheme;
+        window.toggleTheme = function() {
+            if (_origToggle) _origToggle();
+            syncHljsTheme();
+        };
+
+        function renderMd(md, baseUrl) {
+            if (typeof marked === 'undefined') return `<pre>${escHtml(md)}</pre>`;
+            marked.setOptions({ gfm: true, breaks: false });
+            const renderer = new marked.Renderer();
+            // marked v4: link token es un objeto {href, title, text}
+            renderer.link = function(token) {
+                const href  = (token && token.href  != null) ? token.href  : (arguments[0] || '');
+                const title = (token && token.title != null) ? token.title : (arguments[1] || null);
+                const text  = (token && token.text  != null) ? token.text  : (arguments[2] || '');
+                return `<a href="${href}" target="_blank" rel="noopener"${title ? ` title="${title}"` : ''}>${text}</a>`;
+            };
+            // Bloques de código con hljs y sin word-wrap
+            renderer.code = function(token) {
+                const code = (token && token.text != null) ? token.text : (arguments[0] || '');
+                const lang = (token && token.lang != null) ? token.lang : (arguments[1] || '');
+                if (typeof hljs !== 'undefined' && lang && hljs.getLanguage(lang)) {
+                    const hl = hljs.highlight(code, { language: lang }).value;
+                    return `<pre style="white-space:pre;overflow-x:auto;"><code class="hljs language-${lang}">${hl}</code></pre>`;
+                } else if (typeof hljs !== 'undefined') {
+                    const hl = hljs.highlightAuto(code).value;
+                    return `<pre style="white-space:pre;overflow-x:auto;"><code class="hljs">${hl}</code></pre>`;
+                }
+                return `<pre style="white-space:pre;overflow-x:auto;"><code>${escHtml(code)}</code></pre>`;
+            };
+            // Resolver URLs relativas de imágenes + soporte #gh-light-mode-only / #gh-dark-mode-only
+            renderer.image = function(token) {
+                let src   = (token && token.href  != null) ? token.href  : (arguments[0] || '');
+                const alt   = (token && token.text  != null) ? token.text  : (arguments[1] || '');
+                const title = (token && token.title != null) ? token.title : (arguments[2] || null);
+                // Filtrar por tema: omitir imagen que no corresponde al tema actual
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+                    (!document.documentElement.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (/#gh-light-mode-only$/i.test(src) && isDark)  return '';
+                if (/#gh-dark-mode-only$/i.test(src)  && !isDark) return '';
+                // Quitar el fragmento #gh-*-mode-only de la URL real
+                src = src.replace(/#gh-(light|dark)-mode-only$/i, '');
+                if (src && !/^https?:\/\//i.test(src) && !/^data:/i.test(src)) {
+                    const rawBase = baseUrl ||
+                        (rv.provider === 'gh'
+                            ? `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/HEAD/`
+                            : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/HEAD/`);
+                    src = rawBase.replace(/\/$/, '') + '/' + src.replace(/^\.?\//, '');
+                }
+                return `<img src="${src}" alt="${escHtml(alt)}"${title ? ` title="${escHtml(title)}"` : ''} style="max-width:100%;border-radius:4px;" />`;
+            };
+            // Convertir :emoji_name: a emojis Unicode
+            const emojified = md.replace(/:([a-z0-9_+-]+):/g, (match, name) => {
+                const map = { 'smile':'😄','grin':'😁','joy':'😂','heart_eyes':'😍','sunglasses':'😎','thumbsup':'👍','+1':'👍','thumbsdown':'👎','-1':'👎','clap':'👏','rocket':'🚀','fire':'🔥','star':'⭐','star2':'🌟','sparkles':'✨','warning':'⚠️','x':'❌','white_check_mark':'✅','heavy_check_mark':'✔️','exclamation':'❗','question':'❓','bulb':'💡','wrench':'🔧','hammer':'🔨','gear':'⚙️','lock':'🔒','unlock':'🔓','key':'🔑','mag':'🔍','bug':'🐛','tada':'🎉','construction':'🚧','memo':'📝','pencil':'📝','book':'📖','books':'📚','package':'📦','link':'🔗','computer':'💻','desktop_computer':'🖥️','iphone':'📱','email':'📧','mailbox':'📫','inbox_tray':'📥','outbox_tray':'📤','chart_with_upwards_trend':'📈','chart_with_downwards_trend':'📉','bar_chart':'📊','calendar':'📆','clock1':'🕐','hourglass':'⌛','zap':'⚡','umbrella':'☂️','sunny':'☀️','cloud':'☁️','snowflake':'❄️','rainbow':'🌈','earth_americas':'🌎','globe_with_meridians':'🌐','wave':'👋','eyes':'👀','100':'💯','speech_balloon':'💬','thought_balloon':'💭','zzz':'💤','muscle':'💪','pray':'🙏','point_right':'👉','point_left':'👈','point_up':'☝️','point_down':'👇','raised_hands':'🙌','ok_hand':'👌','v':'✌️','skull':'💀','ghost':'👻','robot':'🤖','alien':'👽','see_no_evil':'🙈','hear_no_evil':'🙉','speak_no_evil':'🙊','rotating_light':'🚨','no_entry':'⛔','stop_sign':'🛑','recycle':'♻️','heart':'❤️','broken_heart':'💔','blue_heart':'💙','green_heart':'💚','yellow_heart':'💛','purple_heart':'💜','orange_heart':'🧡','black_heart':'🖤','white_heart':'🤍','thinking':'🤔','facepalm':'🤦','shrug':'🤷','information_source':'ℹ️','new':'🆕','free':'🆓','cool':'🆒','ok':'🆗','sos':'🆘','up':'🆙','vs':'🆚','abc':'🔤','1234':'🔢','symbols':'🔣','arrow_right':'➡️','arrow_left':'⬅️','arrow_up':'⬆️','arrow_down':'⬇️','back':'🔙','end':'🔚','on':'🔛','soon':'🔜','top':'🔝','repeat':'🔁','fast_forward':'⏩','rewind':'⏪','twisted_rightwards_arrows':'🔀','loud_sound':'🔊','mute':'🔇','bell':'🔔','no_bell':'🔕','mega':'📣','loudspeaker':'📢','dart':'🎯','trophy':'🏆','medal_sports':'🏅','1st_place_medal':'🥇','2nd_place_medal':'🥈','3rd_place_medal':'🥉','video_game':'🎮','joystick':'🕹️','art':'🎨','musical_note':'🎵','notes':'🎶','microphone':'🎤','headphones':'🎧','guitar':'🎸','pizza':'🍕','hamburger':'🍔','coffee':'☕','beer':'🍺','cake':'🎂','birthday':'🎂','apple':'🍎','banana':'🍌','grapes':'🍇','strawberry':'🍓','dog':'🐶','cat':'🐱','mouse':'🐭','bear':'🐻','panda_face':'🐼','fox_face':'🦊','wolf':'🐺','lion':'🦁','tiger':'🐯','cow':'🐮','pig':'🐷','frog':'🐸','monkey_face':'🐵','chicken':'🐔','penguin':'🐧','bird':'🐦','fish':'🐟','whale':'🐳','dolphin':'🐬','turtle':'🐢','snake':'🐍','bug':'🐛','ant':'🐜','bee':'🐝','butterfly':'🦋','crab':'🦀','shark':'🦈','whale2':'🐋','elephant':'🐘','gorilla':'🦍','unicorn':'🦄','zebra':'🦓' };
+                return map[name] || match;
+            });
+            return marked.parse(emojified, { renderer });
+        }
+    </script>
+</body>
+</html>

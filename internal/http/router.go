@@ -51,10 +51,10 @@ func securityHeaders() gin.HandlerFunc {
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
 		c.Header("Content-Security-Policy",
 			"default-src 'self'; "+
-				"script-src 'self' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com 'unsafe-inline'; "+
+				"script-src 'self' https://esm.sh https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com 'unsafe-inline'; "+
 				"style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline'; "+
 				"font-src 'self' https://fonts.gstatic.com; "+
-				"img-src 'self' data: blob: https://*.amazonaws.com https://*.s3.amazonaws.com https://cdn.simpleicons.org https://img.shields.io https://trendshift.io https://api.star-history.com; "+
+				"img-src 'self' data: blob: https://* http://*; "+
 				"object-src 'none'; "+
 				"frame-ancestors 'none'; "+
 				"connect-src 'self' http://localhost:* https://api.github.com https://raw.githubusercontent.com https://gitlab.com https://en.wikipedia.org https://www.wikidata.org",
@@ -313,6 +313,10 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/trending/:provider", TrendingHandler)
 		// GitLab proxy — expone comentarios de issues sin requerir token del usuario
 		api.GET("/gl-notes/:owner/:repo/:number", GitLabIssueNotesProxyHandler)
+		api.GET("/gl-commit-count/:owner/:repo", GitLabCommitCountHandler)
+		api.GET("/gl-avatar", GitLabAvatarHandler)
+		api.GET("/gl-commits/:owner/:repo", GitLabCommitsHandler)
+		api.GET("/gl-commit-detail/:owner/:repo/:sha", GitLabCommitDetailHandler)
 	}
 
 	// Appeal routes — anonymous appeal system

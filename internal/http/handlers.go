@@ -1215,6 +1215,291 @@ func GitLabIssueNotesProxyHandler(c *gin.Context) {
 	c.Data(resp.StatusCode, "application/json", body)
 }
 
+// GitLabCommitCountHandler devuelve el numero total de commits de un proyecto GitLab.
+// Proxea la API de GitLab para leer la cabecera X-Total si esta disponible (autenticado).
+// Si X-Total no esta presente (acceso anonimo), cuenta commits via busqueda binaria.
+func GitLabCommitCountHandler(c *gin.Context) {
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+
+	projectID := url.PathEscape(owner + "/" + repo)
+	client := &http.Client{Timeout: 30 * time.Second}
+	glToken := os.Getenv("GITLAB_TOKEN")
+
+	glFetch := func(page int) (int, error) {
+		pageURL := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/repository/commits?per_page=100&page=%d",
+			projectID, page)
+		req, err := http.NewRequest("GET", pageURL, nil)
+		if err != nil {
+			return 0, err
+		}
+		if glToken != "" {
+			req.Header.Set("PRIVATE-TOKEN", glToken)
+		}
+		req.Header.Set("Accept", "application/json")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			return 0, err
+		}
+		defer resp.Body.Close()
+
+		// Si X-Total esta disponible en la pagina 1 (autenticado), devolverlo como valor negativo
+		// para indicar que es el total exacto.
+		if page == 1 {
+			if total := resp.Header.Get("X-Total"); total != "" {
+				count, err := strconv.Atoi(total)
+				if err == nil {
+					return -count, nil
+				}
+			}
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return 0, fmt.Errorf("status %d", resp.StatusCode)
+		}
+
+		var items []struct{}
+		if err := json.NewDecoder(resp.Body).Decode(&items); err != nil {
+			return 0, err
+		}
+		return len(items), nil
+	}
+
+	// Pagina 1: ver si X-Total existe o contar items
+	n, err := glFetch(1)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"total": 0})
+		return
+	}
+	// Si n es negativo, es el total exacto de X-Total
+	if n < 0 {
+		c.JSON(http.StatusOK, gin.H{"total": -n})
+		return
+	}
+
+	// Si la pagina 1 tiene menos de 100 commits, ese es el total
+	if n < 100 {
+		c.JSON(http.StatusOK, gin.H{"total": n})
+		return
+	}
+
+	// Hay mas paginas. Usar crecimiento exponencial para encontrar un limite superior.
+	lo, hi := 2, 2
+	for {
+		n, err := glFetch(hi)
+		if err != nil || n == 0 {
+			break
+		}
+		if n < 100 {
+			// Encontramos la ultima pagina exacta
+			total := (hi-1)*100 + n
+			c.JSON(http.StatusOK, gin.H{"total": total})
+			return
+		}
+		lo = hi + 1
+		hi *= 2
+		if hi > 10000 { // Safety cap: 1,000,000 commits max
+			break
+		}
+	}
+
+	// Busqueda binaria entre lo (no vacio) y hi (vacio)
+	lastNonEmpty := lo - 1
+	firstEmpty := hi
+
+	for lo < firstEmpty {
+		mid := (lo + firstEmpty) / 2
+		n, err := glFetch(mid)
+		if err != nil {
+			break
+		}
+		if n > 0 {
+			lastNonEmpty = mid
+			if n < 100 {
+				// Ultima pagina encontrada
+				total := (mid-1)*100 + n
+				c.JSON(http.StatusOK, gin.H{"total": total})
+				return
+			}
+			lo = mid + 1
+		} else {
+			firstEmpty = mid
+		}
+	}
+
+	// Obtener el conteo exacto de la ultima pagina no vacia
+	n, err = glFetch(lastNonEmpty)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"total": (lastNonEmpty-1)*100 + 100})
+		return
+	}
+	total := (lastNonEmpty-1)*100 + n
+	c.JSON(http.StatusOK, gin.H{"total": total})
+}
+
+// GitLabAvatarHandler busca un usuario de GitLab por email y devuelve su avatar_url.
+func GitLabAvatarHandler(c *gin.Context) {
+	email := c.Query("email")
+	if email == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "email required"})
+		return
+	}
+
+	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/users?email=%s", url.QueryEscape(email))
+
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "proxy error"})
+		return
+	}
+
+	glToken := os.Getenv("GITLAB_TOKEN")
+	if glToken != "" {
+		req.Header.Set("PRIVATE-TOKEN", glToken)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"error": "gitlab unreachable"})
+		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+
+	// GitLab Users API returns an array - extract first match's avatar_url
+	var users []struct {
+		AvatarURL string `json:"avatar_url"`
+	}
+	if err := json.Unmarshal(body, &users); err != nil || len(users) == 0 {
+		c.JSON(http.StatusOK, gin.H{"avatar_url": ""})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"avatar_url": users[0].AvatarURL})
+}
+
+// GitLabCommitsHandler proxies la lista de commits de un proyecto GitLab.
+// Evita problemas de CORS y permite autenticacion via GITLAB_TOKEN.
+func GitLabCommitsHandler(c *gin.Context) {
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+
+	projectID := url.PathEscape(owner + "/" + repo)
+	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/repository/commits?per_page=30", projectID)
+
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "proxy error"})
+		return
+	}
+
+	glToken := os.Getenv("GITLAB_TOKEN")
+	if glToken != "" {
+		req.Header.Set("PRIVATE-TOKEN", glToken)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"error": "gitlab unreachable"})
+		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	c.Data(resp.StatusCode, "application/json", body)
+}
+
+// GitLabCommitDetailHandler proxies el detalle de un commit individual (info + diff) de GitLab.
+func GitLabCommitDetailHandler(c *gin.Context) {
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+	sha := c.Param("sha")
+
+	// Validar que sha sea un hash hexadecimal valido
+	if len(sha) < 6 || len(sha) > 64 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid sha"})
+		return
+	}
+
+	projectID := url.PathEscape(owner + "/" + repo)
+
+	glToken := os.Getenv("GITLAB_TOKEN")
+	authHeader := func(req *http.Request) {
+		if glToken != "" {
+			req.Header.Set("PRIVATE-TOKEN", glToken)
+		}
+		req.Header.Set("Accept", "application/json")
+	}
+
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	// Fetch commit info and diff in parallel
+	type commitResult struct {
+		data []byte
+		ok   bool
+	}
+
+	chCommit := make(chan commitResult, 1)
+	chDiff := make(chan commitResult, 1)
+
+	go func() {
+		req, _ := http.NewRequest("GET", fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/repository/commits/%s", projectID, sha), nil)
+		authHeader(req)
+		resp, err := client.Do(req)
+		if err != nil {
+			chCommit <- commitResult{nil, false}
+			return
+		}
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+		chCommit <- commitResult{body, resp.StatusCode == http.StatusOK}
+	}()
+
+	go func() {
+		req, _ := http.NewRequest("GET", fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/repository/commits/%s/diff", projectID, sha), nil)
+		authHeader(req)
+		resp, err := client.Do(req)
+		if err != nil {
+			chDiff <- commitResult{nil, false}
+			return
+		}
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+		chDiff <- commitResult{body, resp.StatusCode == http.StatusOK}
+	}()
+
+	commitRes := <-chCommit
+	if !commitRes.ok || commitRes.data == nil {
+		c.JSON(http.StatusBadGateway, gin.H{"error": "failed to fetch commit"})
+		return
+	}
+
+	diffRes := <-chDiff
+
+	// Parse commit JSON to merge with diff data
+	var commitData map[string]interface{}
+	if err := json.Unmarshal(commitRes.data, &commitData); err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"error": "invalid commit data"})
+		return
+	}
+
+	// Add diff files to the response
+	if diffRes.ok && diffRes.data != nil {
+		var diffData []interface{}
+		if err := json.Unmarshal(diffRes.data, &diffData); err == nil {
+			commitData["diff_files"] = diffData
+		}
+	}
+
+	c.JSON(http.StatusOK, commitData)
+}
+
 // CreateAnonymousCommentHandler publica comentario con hash/karma
 func CreateAnonymousCommentHandler(c *gin.Context) {
 	var req anonymousCommentRequest

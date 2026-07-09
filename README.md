@@ -1,10 +1,13 @@
-![gitGost Logo Light](web/assets/logos/light-logo.png#gh-light-mode-only)
-![gitGost Logo Dark](web/assets/logos/dark-logo.png#gh-dark-mode-only)
 
+<div align="center" markdown="1">
+<img src="./web/assets/logos/gitgost-logo.svg" width="80" alt="gitGost Logo" height="80"/>
 
-**Contribute to any GitHub repo without leaving a trace.**
+<h1>gitGost</h1>
 
-Zero accounts • Zero tokens • Zero metadata • Designed for strong anonymity
+ **Contribute to any GitHub repo without leaving a trace.**
+ 
+  Zero accounts • Zero tokens • Zero metadata • Designed for strong anonymity
+</div>
 
 ## One-liner demo
 

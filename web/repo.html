@@ -1035,11 +1035,609 @@
         }
 
         .suspension-banner-content strong {
-            font-weight: 600;
-            display: block;
-            margin-bottom: 0.25rem;
-        }
-    </style>
+                    font-weight: 600;
+                    display: block;
+                    margin-bottom: 0.25rem;
+                }
+
+                @media (max-width: 900px) {
+                    .right-sidebar {
+                        display: none;
+                    }
+
+                    .left-nav {
+                        width: 200px;
+                    }
+                }
+
+                /* Commits list */
+                .commit-list {
+                    padding: 1rem 1.25rem;
+                    flex: 1;
+                    overflow-y: auto;
+                }
+
+                .commit-item {
+                    display: flex;
+                    gap: 0.75rem;
+                    padding: 0.6rem 0;
+                    border-bottom: 1px solid var(--border);
+                    cursor: pointer;
+                }
+
+                .commit-item:last-child {
+                    border-bottom: none;
+                }
+
+                .commit-item:hover .commit-msg {
+                    color: var(--accent);
+                }
+
+                .commit-avatar {
+                    flex-shrink: 0;
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 50%;
+                    overflow: hidden;
+                    background: var(--bg-secondary);
+                }
+
+                .commit-avatar img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+
+                .commit-avatar-placeholder {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 100%;
+                    height: 100%;
+                    font-family: "IBM Plex Mono", monospace;
+                    font-size: 0.72rem;
+                    color: var(--fg-muted);
+                    background: var(--bg-hover);
+                }
+
+                .commit-body {
+                    flex: 1;
+                    min-width: 0;
+                }
+
+                .commit-msg {
+                    font-size: 0.82rem;
+                    color: var(--fg);
+                    line-height: 1.4;
+                    margin-bottom: 0.2rem;
+                    word-wrap: break-word;
+                }
+
+                .commit-meta {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    font-family: "IBM Plex Mono", monospace;
+                    font-size: 0.7rem;
+                    color: var(--fg-secondary);
+                    flex-wrap: wrap;
+                }
+
+                .commit-sha {
+                    color: var(--accent);
+                    font-weight: 600;
+                }
+
+                .commit-author {
+                    color: var(--fg-muted);
+                }
+
+                .commit-time {
+                    color: var(--fg-secondary);
+                }
+
+                /* Commit detail view */
+                .commit-detail {
+                    padding: 1.25rem;
+                    max-width: 100%;
+                    overflow: hidden;
+                }
+                .commit-detail-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    margin-bottom: 0.75rem;
+                    flex-wrap: wrap;
+                }
+                .commit-detail-header .commit-back-btn {
+                    background: none;
+                    border: 1px solid var(--border);
+                    color: var(--fg-muted);
+                    border-radius: 4px;
+                    cursor: pointer;
+                    padding: 0.25rem 0.5rem;
+                    font-size: 0.72rem;
+                    font-family: 'IBM Plex Mono', monospace;
+                }
+                .commit-detail-header .commit-back-btn:hover {
+                    color: var(--accent);
+                    border-color: var(--accent);
+                }
+                .commit-detail-header .commit-detail-sha {
+                    color: var(--accent);
+                    font-weight: 600;
+                    font-size: 0.82rem;
+                    font-family: 'IBM Plex Mono', monospace;
+                }
+                .commit-detail-header .commit-ext-link {
+                    margin-left: auto;
+                    color: var(--fg-muted);
+                    text-decoration: none;
+                    font-size: 0.7rem;
+                    font-family: 'IBM Plex Mono', monospace;
+                }
+                .commit-detail-header .commit-ext-link:hover {
+                    color: var(--accent);
+                }
+                .commit-detail-meta {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.6rem 0;
+                    border-top: 1px solid var(--border);
+                    border-bottom: 1px solid var(--border);
+                    margin-bottom: 0.75rem;
+                    flex-wrap: wrap;
+                }
+                .commit-detail-meta .cd-avatar {
+                    width: 26px;
+                    height: 26px;
+                    border-radius: 50%;
+                    flex-shrink: 0;
+                    border: 1px solid var(--border);
+                }
+                .commit-detail-meta .cd-author {
+                    color: var(--fg);
+                    font-weight: 600;
+                    font-size: 0.8rem;
+                }
+                .commit-detail-meta .cd-date {
+                    color: var(--fg-muted);
+                    font-size: 0.72rem;
+                }
+                .commit-detail-meta .cd-stats {
+                    margin-left: auto;
+                    display: flex;
+                    gap: 0.75rem;
+                    font-size: 0.72rem;
+                    font-family: 'IBM Plex Mono', monospace;
+                }
+                .commit-detail-meta .cd-stats span.add { color: #2da44e; }
+                .commit-detail-meta .cd-stats span.del { color: #cf222e; }
+                .commit-detail-body {
+                    font-size: 0.82rem;
+                    color: var(--fg);
+                    line-height: 1.5;
+                    margin-bottom: 1rem;
+                    white-space: pre-wrap;
+                    word-break: break-word;
+                    font-family: 'IBM Plex Mono', monospace;
+                    background: var(--code-bg);
+                    padding: 0.75rem 1rem;
+                    border-radius: 4px;
+                    border: 1px solid var(--border);
+                }
+                .commit-diff-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.5rem;
+                }
+                .commit-diff-file {
+                    border: 1px solid var(--border);
+                    border-radius: 4px;
+                    overflow: hidden;
+                }
+                .commit-diff-file .cdf-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.4rem 0.75rem;
+                    background: var(--bg-hover);
+                    font-size: 0.75rem;
+                    font-family: 'IBM Plex Mono', monospace;
+                    border-bottom: 1px solid var(--border);
+                    flex-wrap: wrap;
+                }
+                .commit-diff-file .cdf-header .cdf-name {
+                    color: var(--accent);
+                    flex: 1;
+                    min-width: 0;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+                .commit-diff-file .cdf-header .cdf-status {
+                    color: var(--fg-muted);
+                    font-size: 0.65rem;
+                }
+                .commit-diff-file .cdf-header .cdf-stat {
+                    font-size: 0.65rem;
+                }
+                .commit-diff-file .cdf-header .cdf-stat.add { color: #2da44e; }
+                .commit-diff-file .cdf-header .cdf-stat.del { color: #cf222e; }
+                .commit-diff-file pre {
+                    margin: 0;
+                    padding: 0.5rem 0.75rem;
+                    font-size: 0.7rem;
+                    font-family: 'IBM Plex Mono', monospace;
+                    line-height: 1.5;
+                    overflow-x: auto;
+                    background: var(--code-bg);
+                    color: var(--fg);
+                }
+
+                @media (max-width: 768px) {
+                    .topbar {
+                        flex-wrap: wrap;
+                        gap: 0.3rem;
+                        padding: 0.35rem 0.75rem;
+                    }
+
+                    .topbar-title {
+                        font-size: 0.78rem;
+                        min-width: 0;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                    }
+
+                    .topbar-actions {
+                        gap: 0.2rem;
+                    }
+
+                    .rv-btn {
+                        font-size: 0.68rem;
+                        padding: 0.2rem 0.45rem;
+                    }
+
+                    .breadcrumb {
+                        font-size: 0.68rem;
+                        padding: 0.3rem 0.75rem;
+                        overflow-x: auto;
+                        flex-wrap: nowrap;
+                        -webkit-overflow-scrolling: touch;
+                    }
+
+                    .breadcrumb span.crumb,
+                    .breadcrumb span.current {
+                        white-space: nowrap;
+                        flex-shrink: 0;
+                    }
+
+                    .repo-layout {
+                        flex-direction: column;
+                        height: auto;
+                        min-height: calc(100vh - 80px);
+                    }
+
+                    .left-nav {
+                        width: 100%;
+                        display: flex;
+                        flex-direction: row;
+                        overflow-x: auto;
+                        border-right: none;
+                        border-bottom: 1px solid var(--border);
+                        padding: 0;
+                        -webkit-overflow-scrolling: touch;
+                        scrollbar-width: none;
+                    }
+
+                    .left-nav::-webkit-scrollbar {
+                        display: none;
+                    }
+
+                    .left-nav a {
+                        white-space: nowrap;
+                        flex-shrink: 0;
+                        padding: 0.35rem 0.6rem;
+                        font-size: 0.7rem;
+                        border-left: none;
+                        border-bottom: 2px solid transparent;
+                    }
+
+                    .left-nav a.active {
+                        border-left-color: transparent;
+                        border-bottom-color: var(--accent);
+                    }
+
+                    .file-tree {
+                        width: 100%;
+                        max-height: 200px;
+                        border-right: none;
+                        border-bottom: 1px solid var(--border);
+                    }
+
+                    .code-panel {
+                        width: 100%;
+                    }
+
+                    .code-panel pre {
+                        padding: 0.75rem 1rem;
+                        font-size: 0.72rem;
+                    }
+
+                    .readme {
+                        padding: 1rem 1.25rem;
+                        font-size: 0.82rem;
+                        max-width: 100%;
+                    }
+
+                    .readme h1 { font-size: 1.3rem; }
+                    .readme h2 { font-size: 1.1rem; }
+                    .readme h3 { font-size: 0.95rem; }
+                    .readme pre {
+                        padding: 0.75rem;
+                        font-size: 0.75rem;
+                    }
+
+                    .repo-info {
+                        flex-wrap: wrap;
+                        gap: 0.5rem;
+                        padding: 0.4rem 0.75rem;
+                        font-size: 0.68rem;
+                    }
+
+                    .issue-list {
+                        padding: 0.5rem 0.75rem;
+                    }
+
+                    .issue-item {
+                        flex-wrap: wrap;
+                        gap: 0.3rem;
+                        padding: 0.35rem 0;
+                        font-size: 0.75rem;
+                    }
+
+                    .issue-num {
+                        min-width: 2.5rem;
+                        font-size: 0.65rem;
+                    }
+
+                    .issue-title {
+                        min-width: 0;
+                    }
+
+                    .issue-meta {
+                        font-size: 0.65rem;
+                    }
+
+                    .issue-label {
+                        font-size: 0.6rem;
+                    }
+
+                    .bugs-toolbar {
+                        flex-wrap: wrap;
+                        gap: 0.5rem;
+                        padding: 0.4rem 0.75rem;
+                    }
+
+                    .bugs-tab {
+                        font-size: 0.68rem;
+                    }
+
+                    .issue-detail {
+                        flex-direction: column;
+                        height: auto;
+                    }
+
+                    .issue-detail-main {
+                        padding: 1rem 1.25rem;
+                    }
+
+                    .issue-detail-title {
+                        font-size: 0.9rem;
+                    }
+
+                    .issue-detail-body {
+                        font-size: 0.8rem;
+                    }
+
+                    .issue-detail-sidebar {
+                        width: 100%;
+                        border-left: none;
+                        border-top: 1px solid var(--border);
+                        padding: 0.75rem 1rem;
+                        flex-direction: row;
+                        flex-wrap: wrap;
+                        gap: 0.5rem 1.5rem;
+                    }
+
+                    .issue-list-header {
+                        padding: 0.5rem 0.75rem 0.3rem;
+                        font-size: 0.65rem;
+                    }
+
+                    .bugs-new-btn {
+                        font-size: 0.65rem;
+                        padding: 0.2rem 0.5rem;
+                    }
+
+                    .reply-section {
+                        margin-top: 1rem;
+                        padding-top: 0.75rem;
+                    }
+
+                    .reply-row {
+                        flex-direction: column;
+                        gap: 0.4rem;
+                    }
+
+                    .reply-avatar {
+                        display: none;
+                    }
+
+                    .reply-footer {
+                        flex-wrap: wrap;
+                        justify-content: stretch;
+                    }
+
+                    .reply-token {
+                        flex: 1;
+                        min-width: 0;
+                        width: auto;
+                        font-size: 0.62rem;
+                    }
+
+                    .reply-send-btn {
+                        padding: 0.25rem 0.45rem;
+                    }
+
+                    .comment-list {
+                        gap: 0.5rem;
+                    }
+
+                    .comment-item {
+                        gap: 0.4rem;
+                    }
+
+                    .comment-bubble {
+                        font-size: 0.75rem;
+                        padding: 0.4rem 0.6rem;
+                    }
+
+                    .comment-meta {
+                        font-size: 0.6rem;
+                    }
+
+                    .statusbar {
+                        padding: 0.35rem 0.75rem;
+                        font-size: 0.68rem;
+                        flex-wrap: wrap;
+                        gap: 0.25rem;
+                    }
+
+                    .statusbar-left,
+                    .statusbar-right {
+                        font-size: 0.65rem;
+                    }
+
+                    .statusbar-right span {
+                        display: none;
+                    }
+
+                    .commit-list {
+                        padding: 0.5rem 0.75rem;
+                    }
+
+                    .commit-item {
+                        gap: 0.5rem;
+                        padding: 0.5rem 0;
+                    }
+
+                    .commit-avatar {
+                        width: 24px;
+                        height: 24px;
+                    }
+
+                    .commit-msg {
+                        font-size: 0.75rem;
+                    }
+
+                    .commit-meta {
+                        font-size: 0.62rem;
+                        gap: 0.3rem;
+                    }
+
+                    .bug-modal {
+                        width: 100%;
+                        max-width: 95vw;
+                        padding: 1rem;
+                    }
+
+                    .bug-modal input,
+                    .bug-modal textarea {
+                        font-size: 0.75rem;
+                    }
+
+                    .bug-modal-footer {
+                        flex-direction: column;
+                        gap: 0.5rem;
+                    }
+
+                    .bug-modal-actions {
+                        width: 100%;
+                    }
+
+                    .bug-cancel-btn,
+                    .bug-submit-btn {
+                        flex: 1;
+                        text-align: center;
+                    }
+
+                    .hash-modal {
+                        width: 95%;
+                        padding: 1rem;
+                    }
+
+                    .clone-modal {
+                        padding: 1rem;
+                        width: 100%;
+                    }
+
+                    .clone-option-row {
+                        flex-direction: column;
+                        align-items: stretch;
+                    }
+
+                    .clone-copy-btn {
+                        width: 100%;
+                        text-align: center;
+                    }
+
+                    .sidebar-tags {
+                        gap: 0.2rem;
+                    }
+
+                    .sidebar-tag {
+                        font-size: 0.62rem;
+                    }
+
+                    .lang-legend {
+                        gap: 0.2rem 0.5rem;
+                    }
+
+                    .lang-legend-item {
+                        font-size: 0.62rem;
+                    }
+
+                    .suspension-banner {
+                        flex-direction: column;
+                        text-align: center;
+                        padding: 0.5rem 0.75rem;
+                        gap: 0.4rem;
+                    }
+
+                    .suspension-banner-content strong {
+                        display: inline;
+                    }
+
+                    .commit-detail {
+                        padding: 0.75rem;
+                    }
+                    .commit-detail-body {
+                        font-size: 0.72rem;
+                        padding: 0.5rem 0.75rem;
+                    }
+                    .commit-diff-file pre {
+                        font-size: 0.62rem;
+                        padding: 0.3rem 0.5rem;
+                    }
+                    .commit-diff-file .cdf-header {
+                        font-size: 0.65rem;
+                        padding: 0.3rem 0.5rem;
+                    }
+                }
+            </style>
 </head>
 <body>
     <!-- Suspension Banner -->
@@ -1074,12 +1672,12 @@
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.75 6.5L3.25 12l5.5 5.5m6.5-11l5.5 5.5l-5.5 5.5" />
 </svg> code</a>
             <a href="#" onclick="showView('commits'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-	<path d="M0 0h24v24H0z" fill="none" />
-	<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
-		<path d="M4.281 14.385a8.25 8.25 0 1 0 .824-6.26l-.477.88m-.523-4.63v3.75a1 1 0 0 0 .523.88m4.227.12h-3.75a1 1 0 0 1-.477-.12" />
-		<path d="M12.25 8v4.25l3.685 2.117" />
-	</g>
-</svg> commits</a>
+            		<path d="M0 0h24v24H0z" fill="none" />
+            		<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+            			<path d="M4.281 14.385a8.25 8.25 0 1 0 .824-6.26l-.477.88m-.523-4.63v3.75a1 1 0 0 0 .523.88m4.227.12h-3.75a1 1 0 0 1-.477-.12" />
+            			<path d="M12.25 8v4.25l3.685 2.117" />
+            		</g>
+            	</svg> <span class="val" id="sb-commits"></span> commits</a>
             <a href="#" onclick="showView('bugs'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7.5 9.08a3.23 3.23 0 0 1 3.23-3.23h2.54a3.23 3.23 0 0 1 3.23 3.23v6.27a4.5 4.5 0 0 1-4.5 4.5v0a4.5 4.5 0 0 1-4.5-4.5zm9 3.77h4.75m-18.5 0H7.5m2.25-9.7v.45A2.25 2.25 0 0 0 12 5.85v0a2.25 2.25 0 0 0 2.25-2.25v-.45M16.5 16.6h1.253a2.5 2.5 0 0 1 2.5 2.5v1.75M7.5 16.6H6.247a2.5 2.5 0 0 0-2.5 2.5v1.75M16.5 9.1h1.253a2.5 2.5 0 0 0 2.5-2.5V4.85M7.5 9.1H6.247a2.5 2.5 0 0 1-2.5-2.5V4.85" />
@@ -1108,7 +1706,7 @@
             </div>
             <div class="sidebar-section">
                 <div class="sidebar-row"><span>created</span><span class="val" id="sb-created">—</span></div>
-                <div class="sidebar-row"><span>type</span><span class="val mirror" id="sb-status">public proxy</span></div>
+<div class="sidebar-row"><span>type</span><span class="val mirror" id="sb-status">public proxy</span></div>
             </div>
             <div class="sidebar-section">
                 <div class="sidebar-actions">
@@ -1223,6 +1821,8 @@
             loadRepoInfo();
             loadLanguages();
             _updateStarBtn();
+            // load commit count (independiente de loadRepoInfo para GitLab)
+            loadCommitCount();
             // show home view by default (README)
             showView('home');
         }
@@ -1249,6 +1849,9 @@
             } else if (view === 'reviews') {
                 fileTree.style.display = 'none';
                 loadPRs();
+            } else if (view === 'commits') {
+                fileTree.style.display = 'none';
+                loadCommits();
             } else {
                 fileTree.style.display = 'none';
                 codePanel.innerHTML = `<div class="code-loading" style="color:var(--fg-secondary)">/${view} — coming soon</div>`;
@@ -1403,7 +2006,11 @@
                             ${avatar ? `<img class="issue-detail-avatar" src="${avatar}" alt="${user}" />` : ''}
                             <strong style="color:var(--fg);">${escHtml(user)}</strong>
                             <span>opened ${created}</span>
-                            <span style="margin-left:auto;"><a class="issue-ext-link" href="${url}" target="_blank" rel="noopener">${rv.owner}/${rv.repo}#${num} ↗</a></span>
+                            <span style="margin-left:auto;"><a class="issue-ext-link" href="${url}" target="_blank" rel="noopener">${rv.owner}/${rv.repo}#${num} <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.25 3.75h-2.5a4 4 0 0 0-4 4v8.5a4 4 0 0 0 4 4h8.5a4 4 0 0 0 4-4v-2.5m-6.5-10h5.5c.276 0 .526.112.707.293m.293 6.207v-5.5a1 1 0 0 0-.293-.707M12.75 11.25l6.5-6.5l.707-.707" />
+                            </svg>
+</a></span>
                         </div>
                         <div class="issue-detail-body readme">${renderedBody}</div>
                         <ul class="comment-list" id="${listId}"></ul>
@@ -1652,6 +2259,292 @@
             panel.innerHTML = toolbar + `<div class="issue-list">${list}</div>`;
         }
 
+        async function loadCommits() {
+            const panel = document.getElementById('code-panel');
+            panel.innerHTML = '<div class="code-loading">loading commits...</div>';
+            try {
+                let commits = [];
+                if (rv.provider === 'gh') {
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/commits?per_page=30`);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    commits = await res.json();
+                } else {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/commits?per_page=30`);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text().catch(()=>'')}`);
+                    commits = await res.json();
+                    if (!Array.isArray(commits)) {
+                        console.warn('gl-commits: unexpected response', commits);
+                        commits = [];
+                    }
+                }
+                // Pre-fetch GitLab avatars for unique commit author emails
+                const avatarMap = new Map();
+                if (rv.provider === 'gl' && commits.length) {
+                    const emails = [...new Set(commits.map(c =>
+                        c.author_email || (c.commit?.author?.email) || ''
+                    ).filter(Boolean))];
+                    await Promise.all(emails.map(async email => {
+                        try {
+                            const ares = await fetch(`${API_BASE}/api/gl-avatar?email=${encodeURIComponent(email)}`);
+                            if (ares.ok) {
+                                const adata = await ares.json();
+                                if (adata.avatar_url) avatarMap.set(email, adata.avatar_url);
+                            }
+                        } catch(e) {}
+                    }));
+                }
+                renderCommitsView(commits, avatarMap);
+            } catch(e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+            }
+        }
+
+        function renderCommitsView(commits, avatarMap) {
+            avatarMap = avatarMap || new Map();
+            const panel = document.getElementById('code-panel');
+            if (!commits || !commits.length) {
+                panel.innerHTML = '<div class="bugs-empty">no commits found</div>';
+                return;
+            }
+            const list = commits.map(c => {
+                const fullSha = c.sha || c.id || '';
+                const sha = fullSha.substring(0, 7);
+                const msg = c.commit?.message || c.message || c.title || '';
+                const firstLine = msg.split('\n')[0];
+                const author = c.commit?.author?.name || c.author_name || c.author?.login || '';
+                const date = new Date(c.commit?.author?.date || c.authored_date || c.created_at)
+                    .toLocaleDateString('en', {month:'short', day:'numeric', year:'numeric'});
+                const time = new Date(c.commit?.author?.date || c.authored_date || c.created_at)
+                    .toLocaleTimeString('en', {hour:'2-digit', minute:'2-digit'});
+                const email = c.author_email || c.commit?.author?.email || c.committer_email || '';
+                const avatarUrl = avatarMap.get(email) || c.author?.avatar_url || '';
+                const initial = (author[0]||'?').toUpperCase();
+                let avatarHtml;
+                if (avatarUrl) {
+                    avatarHtml = `<img src="${avatarUrl}" alt="" />`;
+                } else if (email) {
+                    const gravatarSrc = `https://www.gravatar.com/avatar/${md5(email.trim().toLowerCase())}?s=28&d=identicon`;
+                    avatarHtml = `<img src="${gravatarSrc}" alt="" onerror='this.outerHTML="<span class=commit-avatar-placeholder>${initial}</span>"' />`;
+                } else {
+                    avatarHtml = `<span class="commit-avatar-placeholder">${initial}</span>`;
+                }
+                return `<div class="commit-item" onclick="showCommitDetail('${fullSha}')">
+                    <div class="commit-avatar">${avatarHtml}</div>
+                    <div class="commit-body">
+                        <div class="commit-msg">${escHtml(firstLine)}</div>
+                        <div class="commit-meta">
+                            <span class="commit-sha">${sha}</span>
+                            <span class="commit-author">${escHtml(author)}</span>
+                            <span class="commit-time">${date} at ${time}</span>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+            panel.innerHTML = `<div class="commit-list">${list}</div>`;
+        }
+
+        async function showCommitDetail(sha) {
+            const panel = document.getElementById('code-panel');
+            panel.innerHTML = '<div class="code-loading">loading commit...</div>';
+            try {
+                let commit, files;
+                if (rv.provider === 'gh') {
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/commits/${sha}`);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    commit = await res.json();
+                    files = commit.files || [];
+                } else {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const [resCommit, resDiff] = await Promise.all([
+                        fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/commits/${sha}`),
+                        fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/commits/${sha}/diff`)
+                    ]);
+                    if (!resCommit.ok) throw new Error(`HTTP ${resCommit.status}`);
+                    commit = await resCommit.json();
+                    const rawDiff = resDiff.ok ? await resDiff.json() : [];
+                    files = rawDiff.map(d => ({
+                        filename: d.new_path,
+                        status: d.new_file ? 'added' : d.deleted_file ? 'removed' : d.renamed_file ? 'renamed' : 'modified',
+                        additions: 0,
+                        deletions: 0,
+                        patch: d.diff || ''
+                    }));
+                }
+                // Pre-fetch GitLab avatar for the commit author
+                let glAvatarUrl = '';
+                if (rv.provider === 'gl') {
+                    const email = commit.author_email || commit.commit?.author?.email || commit.committer_email || '';
+                    if (email) {
+                        try {
+                            const ares = await fetch(`${API_BASE}/api/gl-avatar?email=${encodeURIComponent(email)}`);
+                            if (ares.ok) {
+                                const adata = await ares.json();
+                                glAvatarUrl = adata.avatar_url || '';
+                            }
+                        } catch(e) {}
+                    }
+                }
+                renderCommitDetail(commit, files, glAvatarUrl);
+            } catch(e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+            }
+        }
+
+        function getThemeName() {
+            const html = document.documentElement;
+            if (html.getAttribute('data-theme') === 'dark') return 'github-dark';
+            if (html.getAttribute('data-theme') === 'light') return 'github-light';
+            if (window.matchMedia('(prefers-color-scheme: dark)').matches) return 'github-dark';
+            return 'github-light';
+        }
+
+        let _shikiHighlighter = null;
+
+        async function _getShiki() {
+            if (_shikiHighlighter) return _shikiHighlighter;
+            // jsdelivr ya está en la CSP del servidor; esm.sh como alternativo
+            const cdnUrls = [
+                'https://cdn.jsdelivr.net/npm/shiki@4.3.1/+esm',
+                'https://esm.sh/shiki@4.3.1'
+            ];
+            for (const cdnUrl of cdnUrls) {
+                try {
+                    const shiki = await import(cdnUrl);
+                    const engine = shiki.createJavaScriptRegexEngine();
+                    _shikiHighlighter = await shiki.createHighlighter({
+                        themes: ['github-light', 'github-dark'],
+                        langs: ['diff', 'javascript', 'typescript', 'python', 'go', 'rust',
+                                'html', 'css', 'json', 'bash', 'yaml', 'sql', 'ruby',
+                                'php', 'java', 'c', 'cpp', 'csharp', 'shell',
+                                'kotlin', 'swift', 'lua', 'dart', 'vue', 'svelte',
+                                'docker', 'make', 'toml', 'xml'],
+                        engine
+                    });
+                    console.log('shiki loaded from', cdnUrl);
+                    return _shikiHighlighter;
+                } catch(e) {
+                    console.warn('shiki load failed from ' + cdnUrl + ':', e.message);
+                }
+            }
+            console.warn('shiki: all CDNs failed, syntax highlighting disabled');
+            return null;
+        }
+
+        function _detectDiffLang(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const map = {
+                js: 'javascript', mjs: 'javascript', cjs: 'javascript',
+                ts: 'typescript', tsx: 'typescript', jsx: 'javascript',
+                py: 'python', pyw: 'python', go: 'go', rs: 'rust',
+                rb: 'ruby', java: 'java', c: 'c', h: 'c',
+                cpp: 'cpp', cc: 'cpp', cxx: 'cpp', hpp: 'cpp',
+                cs: 'csharp', php: 'php', swift: 'swift',
+                kt: 'kotlin', kts: 'kotlin',
+                sh: 'shell', bash: 'shell', zsh: 'shell',
+                yaml: 'yaml', yml: 'yaml', json: 'json',
+                toml: 'toml', xml: 'xml', svg: 'xml',
+                html: 'html', htm: 'html', css: 'css', scss: 'css', less: 'css',
+                sql: 'sql', dockerfile: 'docker', makefile: 'make',
+                lua: 'lua', dart: 'dart', vue: 'vue', svelte: 'svelte'
+            };
+            return map[ext] || 'diff';
+        }
+
+        async function _highlightDiffs(root) {
+            const hi = await _getShiki();
+            if (!hi) return;
+            const theme = getThemeName();
+            const pres = root.querySelectorAll('.commit-diff-file pre');
+            let count = 0;
+            for (const pre of pres) {
+                const code = pre.textContent || '';
+                if (!code.trim()) continue;
+                const filename = pre.closest('.commit-diff-file')?.querySelector('.cdf-name')?.textContent || '';
+                const lang = _detectDiffLang(filename);
+                try {
+                    const highlighted = hi.codeToHtml(code, { lang, theme });
+                    pre.outerHTML = highlighted;
+                    count++;
+                } catch(e) {
+                    console.warn('shiki highlight failed for', filename, e.message);
+                }
+            }
+            if (count > 0) console.log('shiki highlighted', count, 'files');
+        }
+
+        function renderCommitDetail(commit, files, glAvatarUrl) {
+            const panel = document.getElementById('code-panel');
+            const fullSha = commit.sha || commit.id || '';
+            const shortSha = fullSha.substring(0, 7);
+            const msg = commit.commit?.message || commit.message || commit.title || '';
+            const author = commit.commit?.author?.name || commit.author_name || commit.author?.login || '';
+            const email = commit.commit?.author?.email || commit.author_email || commit.committer_email || '';
+            const avatarUrl = glAvatarUrl || commit.author?.avatar_url || '';
+            const initial = (author[0]||'?').toUpperCase();
+            let avatarHtml;
+            if (avatarUrl) {
+                avatarHtml = `<img class="cd-avatar" src="${avatarUrl}" alt="${author}" />`;
+            } else if (email) {
+                const gravatarSrc = `https://www.gravatar.com/avatar/${md5(email.trim().toLowerCase())}?s=28&d=identicon`;
+                avatarHtml = `<img class="cd-avatar" src="${gravatarSrc}" alt="${author}" onerror='this.outerHTML="<div class=cd-avatar style=\\"display:flex;align-items:center;justify-content:center;background:var(--bg-hover);color:var(--fg-muted);font-size:0.7rem;font-weight:600;\">${initial}</div>"' />`;
+            } else {
+                avatarHtml = `<div class="cd-avatar" style="display:flex;align-items:center;justify-content:center;background:var(--bg-hover);color:var(--fg-muted);font-size:0.7rem;font-weight:600;">${initial}</div>`;
+            }
+            const date = new Date(commit.commit?.author?.date || commit.authored_date || commit.created_at)
+                .toLocaleDateString('en', {year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'});
+            const url = commit.html_url || commit.web_url || '#';
+            const stats = commit.stats || { total: 0, additions: 0, deletions: 0 };
+
+            let diffsHtml = '';
+            if (files && files.length) {
+                diffsHtml = '<div class="commit-diff-list">' + files.map(f => {
+                    const patch = f.patch || '';
+                    const status = f.status || 'modified';
+                    const adds = f.additions || 0;
+                    const dels = f.deletions || 0;
+                    return `<div class="commit-diff-file">
+                        <div class="cdf-header">
+                            <span class="cdf-name">${escHtml(f.filename)}</span>
+                            <span class="cdf-status">${status}</span>
+                            ${adds ? `<span class="cdf-stat add">+${adds}</span>` : ''}
+                            ${dels ? `<span class="cdf-stat del">-${dels}</span>` : ''}
+                        </div>
+                        ${patch ? `<pre>${escHtml(patch)}</pre>` : ''}
+                    </div>`;
+                }).join('') + '</div>';
+            } else {
+                diffsHtml = '<div style="padding:0.5rem 0;color:var(--fg-muted);font-size:0.75rem;">no file changes to display</div>';
+            }
+
+            panel.innerHTML = `
+                <div class="commit-detail">
+                    <div class="commit-detail-header">
+                        <span class="commit-detail-sha">${shortSha}</span>
+                        <a class="commit-ext-link" href="${url}" target="_blank" rel="noopener">open on ${rv.provider === 'gh' ? 'GitHub' : 'GitLab'} <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.25 3.75h-2.5a4 4 0 0 0-4 4v8.5a4 4 0 0 0 4 4h8.5a4 4 0 0 0 4-4v-2.5m-6.5-10h5.5c.276 0 .526.112.707.293m.293 6.207v-5.5a1 1 0 0 0-.293-.707M12.75 11.25l6.5-6.5l.707-.707" />
+                        </svg>
+</a>
+                    </div>
+                    <div class="commit-detail-meta">
+                        ${avatarHtml}
+                        <span class="cd-author">${escHtml(author)}</span>
+                        <span class="cd-date">committed ${date}</span>
+                        <span class="cd-stats">
+                            <span class="add">+${stats.additions || 0}</span>
+                            <span class="del">-${stats.deletions || 0}</span>
+                            <span style="color:var(--fg-muted);">${stats.total || (files ? files.length : 0)} ${((stats.total || files?.length) === 1) ? 'file' : 'files'}</span>
+                        </span>
+                    </div>
+                    <div class="commit-detail-body">${escHtml(msg).split('\n').join('<br>')}</div>
+                    ${diffsHtml}
+                </div>`;
+
+            // Realzar sintaxis con Shiki de forma asincrona
+            _highlightDiffs(panel);
+        }
+
         async function submitIssueComment(provider, owner, repo, number, replyId, tokenId, statusId, listId) {
             const textarea = document.getElementById(replyId);
             const tokenEl  = document.getElementById(tokenId);
@@ -1772,7 +2665,6 @@
             panel.innerHTML = `
                 <div class="issue-detail">
                     <div class="issue-detail-main">
-                        <button class="issue-back-btn" onclick="renderPRsView(_currentPRsTab || 'all')">← back to pull requests</button>
                         <div class="issue-detail-header">
                             <span class="issue-detail-num">#${num}</span>
                             <span class="issue-detail-title">${escHtml(pr.title)}</span>
@@ -1782,7 +2674,11 @@
                             ${avatar ? `<img class="issue-detail-avatar" src="${avatar}" alt="${user}" />` : ''}
                             <strong style="color:var(--fg);">${escHtml(user)}</strong>
                             <span>opened ${created}</span>
-                            <span style="margin-left:auto;"><a class="issue-ext-link" href="${url}" target="_blank" rel="noopener">${rv.owner}/${rv.repo}#${num} ↗</a></span>
+                            <span style="margin-left:auto;"><a class="issue-ext-link" href="${url}" target="_blank" rel="noopener">${rv.owner}/${rv.repo}#${num} <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.25 3.75h-2.5a4 4 0 0 0-4 4v8.5a4 4 0 0 0 4 4h8.5a4 4 0 0 0 4-4v-2.5m-6.5-10h5.5c.276 0 .526.112.707.293m.293 6.207v-5.5a1 1 0 0 0-.293-.707M12.75 11.25l6.5-6.5l.707-.707" />
+                            </svg>
+</a></span>
                         </div>
                         <div class="issue-detail-body readme">${renderedBody}</div>
                         <div class="reply-section">
@@ -1855,6 +2751,7 @@
                     }
                     const sbStarCount = document.getElementById('sb-star-count');
                     if (sbStarCount) sbStarCount.textContent = d.stargazers_count ? d.stargazers_count.toLocaleString() : '';
+                    loadCommitCount();
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}`);
@@ -1891,10 +2788,37 @@
                     }
                     const sbStarCount = document.getElementById('sb-star-count');
                     if (sbStarCount) sbStarCount.textContent = d.star_count ? d.star_count.toLocaleString() : '';
+                    loadCommitCount();
                 }
             } catch(e) {
                 const sbDesc = document.getElementById('sb-desc');
                 if (sbDesc) sbDesc.textContent = `error: ${e.message}`;
+            }
+        }
+
+        async function loadCommitCount() {
+            const el = document.getElementById('sb-commits');
+            if (!el) return;
+            try {
+                if (rv.provider === 'gh') {
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/commits?per_page=1&anon=true`);
+                    if (!res.ok) { el.textContent = '?'; return; }
+                    const link = res.headers.get('Link') || '';
+                    const match = link.match(/&page=(\d+)>; rel="last"/);
+                    el.textContent = match ? parseInt(match[1]).toLocaleString() : '?';
+                } else {
+                    const res = await fetch(`${API_BASE}/api/gl-commit-count/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        const total = parseInt(data.total);
+                        el.textContent = !isNaN(total) ? total.toLocaleString() : '?';
+                    } else {
+                        el.textContent = '?';
+                    }
+                }
+            } catch(e) {
+                const el2 = document.getElementById('sb-commits');
+                if (el2) el2.textContent = '?';
             }
         }
 
@@ -2119,7 +3043,11 @@
                     const imgUrl = item.download_url || item.url || (rv.provider === 'gh' ? `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/HEAD/${item.path}` : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/HEAD/${item.path}`);
                     panel.innerHTML = `<div style="padding:1rem;text-align:center;"><img src="${imgUrl}" alt="${escHtml(name)}" style="max-width:100%;max-height:80vh;object-fit:contain;border-radius:4px;" /></div>`;
                 } else if (name.toLowerCase().endsWith('.md')) {
-                    panel.innerHTML = `<div class="readme">${renderMd(content)}</div>`;
+                    const dir = item.path ? item.path.substring(0, item.path.lastIndexOf('/') + 1) : '';
+                    const mdBaseUrl = (rv.provider === 'gh')
+                        ? `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/HEAD/${dir}`
+                        : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/HEAD/${dir}`;
+                    panel.innerHTML = `<div class="readme">${renderMd(content, mdBaseUrl)}</div>`;
                 } else {
                     const lang = detectLang(name);
                     let highlighted;
@@ -2239,6 +3167,20 @@
             window.open(url, '_blank', 'noopener,noreferrer');
         }
 
+        function md5(s) {
+            function md5cycle(x,k){let a=x[0],b=x[1],c=x[2],d=x[3];a=ff(a,b,c,d,k[0],7,-680876936);d=ff(d,a,b,c,k[1],12,-389564586);c=ff(c,d,a,b,k[2],17,606105819);b=ff(b,c,d,a,k[3],22,-1044525330);a=ff(a,b,c,d,k[4],7,-176418897);d=ff(d,a,b,c,k[5],12,1200080426);c=ff(c,d,a,b,k[6],17,-1473231341);b=ff(b,c,d,a,k[7],22,-45705983);a=ff(a,b,c,d,k[8],7,1770035416);d=ff(d,a,b,c,k[9],12,-1958414417);c=ff(c,d,a,b,k[10],17,-42063);b=ff(b,c,d,a,k[11],22,-1990404162);a=ff(a,b,c,d,k[12],7,1804603682);d=ff(d,a,b,c,k[13],12,-40341101);c=ff(c,d,a,b,k[14],17,-1502002290);b=ff(b,c,d,a,k[15],22,1236535329);a=gg(a,b,c,d,k[1],5,-165796510);d=gg(d,a,b,c,k[6],9,-1069501632);c=gg(c,d,a,b,k[11],14,643717713);b=gg(b,c,d,a,k[0],20,-373897302);a=gg(a,b,c,d,k[5],5,-701558691);d=gg(d,a,b,c,k[10],9,38016083);c=gg(c,d,a,b,k[15],14,-660478335);b=gg(b,c,d,a,k[4],20,-405537848);a=gg(a,b,c,d,k[9],5,568446438);d=gg(d,a,b,c,k[14],9,-1019803690);c=gg(c,d,a,b,k[3],14,-187363961);b=gg(b,c,d,a,k[8],20,1163531501);a=gg(a,b,c,d,k[13],5,-1444681467);d=gg(d,a,b,c,k[2],9,-51403784);c=gg(c,d,a,b,k[7],14,1735328473);b=gg(b,c,d,a,k[12],20,-1926607734);a=hh(a,b,c,d,k[5],4,-378558);d=hh(d,a,b,c,k[8],11,-2022574463);c=hh(c,d,a,b,k[11],16,1839030562);b=hh(b,c,d,a,k[14],23,-35309556);a=hh(a,b,c,d,k[1],4,-1530992060);d=hh(d,a,b,c,k[4],11,1272893353);c=hh(c,d,a,b,k[7],16,-155497632);b=hh(b,c,d,a,k[10],23,-1094730640);a=hh(a,b,c,d,k[13],4,681279174);d=hh(d,a,b,c,k[0],11,-358537222);c=hh(c,d,a,b,k[3],16,-722521979);b=hh(b,c,d,a,k[6],23,76029189);a=hh(a,b,c,d,k[9],4,-640364487);d=hh(d,a,b,c,k[12],11,-421815835);c=hh(c,d,a,b,k[15],16,530742520);b=hh(b,c,d,a,k[2],23,-995338651);a=ii(a,b,c,d,k[0],6,-198630844);d=ii(d,a,b,c,k[7],10,1126891415);c=ii(c,d,a,b,k[14],15,-1416354905);b=ii(b,c,d,a,k[5],21,-57434055);a=ii(a,b,c,d,k[12],6,1700485571);d=ii(d,a,b,c,k[3],10,-1894986606);c=ii(c,d,a,b,k[10],15,-1051523);b=ii(b,c,d,a,k[1],21,-2054922799);a=ii(a,b,c,d,k[8],6,1873313359);d=ii(d,a,b,c,k[15],10,-30611744);c=ii(c,d,a,b,k[6],15,-1560198380);b=ii(b,c,d,a,k[13],21,1309151649);a=ii(a,b,c,d,k[4],6,-145523070);d=ii(d,a,b,c,k[11],10,-1120210379);c=ii(c,d,a,b,k[2],15,718787259);b=ii(b,c,d,a,k[9],21,-343485551);x[0]=add32(a,x[0]);x[1]=add32(b,x[1]);x[2]=add32(c,x[2]);x[3]=add32(d,x[3])}
+            function cmn(q,a,b,x,s,t){a=add32(add32(a,q),add32(x,t));return add32((a<<s)|(a>>>(32-s)),b)}
+            function ff(a,b,c,d,x,s,t){return cmn((b&c)|((~b)&d),a,b,x,s,t)}
+            function gg(a,b,c,d,x,s,t){return cmn((b&d)|(c&(~d)),a,b,x,s,t)}
+            function hh(a,b,c,d,x,s,t){return cmn(b^c^d,a,b,x,s,t)}
+            function ii(a,b,c,d,x,s,t){return cmn(c^(b|(~d)),a,b,x,s,t)}
+            function add32(a,b){return ((a+b)&0xFFFFFFFF)}
+            function hex(i){let h='';for(let j=0;j<4;j++){h+=((i>>(j*8))&0xFF).toString(16).padStart(2,'0')}return h}
+            function str2binl(s){let bin=Array(s.length>>2);for(let i=0;i<bin.length;i++)bin[i]=0;for(let i=0;i<s.length*8;i+=8)bin[i>>5]|=(s.charCodeAt(i/8)&255)<<(i%32);return bin}
+            function coreMD5(s){let bin=str2binl(s);bin[s.length*8>>5]|=0x80<<((s.length*8)%32);bin[(((s.length*8+64)>>9)<<4)+14]=s.length*8;let h=[0x67452301,0xEFCDAB89,0x98BADCFE,0x10325476];for(let i=0;i<bin.length;i+=16)md5cycle(h,bin.slice(i,i+16));return h}
+            return coreMD5(s).map(hex).join('');
+        }
+
         function escHtml(s) {
             return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
         }
@@ -2345,7 +3287,32 @@
                 const map = { 'smile':'😄','grin':'😁','joy':'😂','heart_eyes':'😍','sunglasses':'😎','thumbsup':'👍','+1':'👍','thumbsdown':'👎','-1':'👎','clap':'👏','rocket':'🚀','fire':'🔥','star':'⭐','star2':'🌟','sparkles':'✨','warning':'⚠️','x':'❌','white_check_mark':'✅','heavy_check_mark':'✔️','exclamation':'❗','question':'❓','bulb':'💡','wrench':'🔧','hammer':'🔨','gear':'⚙️','lock':'🔒','unlock':'🔓','key':'🔑','mag':'🔍','bug':'🐛','tada':'🎉','construction':'🚧','memo':'📝','pencil':'📝','book':'📖','books':'📚','package':'📦','link':'🔗','computer':'💻','desktop_computer':'🖥️','iphone':'📱','email':'📧','mailbox':'📫','inbox_tray':'📥','outbox_tray':'📤','chart_with_upwards_trend':'📈','chart_with_downwards_trend':'📉','bar_chart':'📊','calendar':'📆','clock1':'🕐','hourglass':'⌛','zap':'⚡','umbrella':'☂️','sunny':'☀️','cloud':'☁️','snowflake':'❄️','rainbow':'🌈','earth_americas':'🌎','globe_with_meridians':'🌐','wave':'👋','eyes':'👀','100':'💯','speech_balloon':'💬','thought_balloon':'💭','zzz':'💤','muscle':'💪','pray':'🙏','point_right':'👉','point_left':'👈','point_up':'☝️','point_down':'👇','raised_hands':'🙌','ok_hand':'👌','v':'✌️','skull':'💀','ghost':'👻','robot':'🤖','alien':'👽','see_no_evil':'🙈','hear_no_evil':'🙉','speak_no_evil':'🙊','rotating_light':'🚨','no_entry':'⛔','stop_sign':'🛑','recycle':'♻️','heart':'❤️','broken_heart':'💔','blue_heart':'💙','green_heart':'💚','yellow_heart':'💛','purple_heart':'💜','orange_heart':'🧡','black_heart':'🖤','white_heart':'🤍','thinking':'🤔','facepalm':'🤦','shrug':'🤷','information_source':'ℹ️','new':'🆕','free':'🆓','cool':'🆒','ok':'🆗','sos':'🆘','up':'🆙','vs':'🆚','abc':'🔤','1234':'🔢','symbols':'🔣','arrow_right':'➡️','arrow_left':'⬅️','arrow_up':'⬆️','arrow_down':'⬇️','back':'🔙','end':'🔚','on':'🔛','soon':'🔜','top':'🔝','repeat':'🔁','fast_forward':'⏩','rewind':'⏪','twisted_rightwards_arrows':'🔀','loud_sound':'🔊','mute':'🔇','bell':'🔔','no_bell':'🔕','mega':'📣','loudspeaker':'📢','dart':'🎯','trophy':'🏆','medal_sports':'🏅','1st_place_medal':'🥇','2nd_place_medal':'🥈','3rd_place_medal':'🥉','video_game':'🎮','joystick':'🕹️','art':'🎨','musical_note':'🎵','notes':'🎶','microphone':'🎤','headphones':'🎧','guitar':'🎸','pizza':'🍕','hamburger':'🍔','coffee':'☕','beer':'🍺','cake':'🎂','birthday':'🎂','apple':'🍎','banana':'🍌','grapes':'🍇','strawberry':'🍓','dog':'🐶','cat':'🐱','mouse':'🐭','bear':'🐻','panda_face':'🐼','fox_face':'🦊','wolf':'🐺','lion':'🦁','tiger':'🐯','cow':'🐮','pig':'🐷','frog':'🐸','monkey_face':'🐵','chicken':'🐔','penguin':'🐧','bird':'🐦','fish':'🐟','whale':'🐳','dolphin':'🐬','turtle':'🐢','snake':'🐍','bug':'🐛','ant':'🐜','bee':'🐝','butterfly':'🦋','crab':'🦀','shark':'🦈','whale2':'🐋','elephant':'🐘','gorilla':'🦍','unicorn':'🦄','zebra':'🦓' };
                 return map[name] || match;
             });
-            return marked.parse(emojified, { renderer });
+            let result = marked.parse(emojified, { renderer });
+            // Post-procesar HTML <img> tags con rutas relativas (marked no los pasa por renderer.image)
+            const rawBase = baseUrl ||
+                (rv.provider === 'gh'
+                    ? `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/HEAD/`
+                    : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/HEAD/`);
+            result = result.replace(/<img\s+[^>]*?src=("[^"]+"|'[^']+')([^>]*?)>/gi, (match, srcQuoted, rest) => {
+                const quote = srcQuoted[0];
+                const src = srcQuoted.slice(1, -1);
+                if (src && !/^https?:\/\//i.test(src) && !/^data:/i.test(src)) {
+                    const resolved = rawBase.replace(/\/$/, '') + '/' + src.replace(/^\.?\//, '');
+                    return match.replace(srcQuoted, quote + resolved + quote);
+                }
+                return match;
+            });
+            // Tambien procesar <a href> con rutas relativas en HTML directo
+            result = result.replace(/<a\s+[^>]*?href=("[^"]+"|'[^']+')([^>]*?)>/gi, (match, hrefQuoted) => {
+                const quote = hrefQuoted[0];
+                const href = hrefQuoted.slice(1, -1);
+                if (href && !/^https?:\/\//i.test(href) && !/^mailto:/i.test(href) && !/^#/.test(href) && !/^\//.test(href)) {
+                    const resolved = rawBase.replace(/\/$/, '') + '/' + href.replace(/^\.?\//, '');
+                    return match.replace(hrefQuoted, quote + resolved + quote);
+                }
+                return match;
+            });
+            return result;
         }
     </script>
 </body>

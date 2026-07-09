@@ -793,7 +793,310 @@
                     display: none;
                 }
                 .sidebar {
-                    width: 100px;
+                    width: 120px;
+                }
+            }
+
+            @media (max-width: 640px) {
+                html, body {
+                    overflow: auto;
+                    height: auto;
+                    min-height: 100vh;
+                }
+
+                .app-container {
+                    flex-direction: column;
+                    padding: 0.5rem;
+                    gap: 0.25rem;
+                    overflow: visible;
+                    min-height: 0;
+                }
+
+                .sidebar {
+                    width: 100%;
+                    flex-direction: row;
+                    flex-wrap: wrap;
+                    gap: 0.15rem;
+                    padding: 0.4rem 0.5rem;
+                    overflow-y: visible;
+                    border-bottom: 1px solid var(--border);
+                    margin-bottom: 0.35rem;
+                }
+
+                .sidebar .logo {
+                    width: 100%;
+                    margin-bottom: 0.15rem;
+                    font-size: 0.95rem;
+                }
+
+                .nav-link {
+                    font-size: 0.65rem;
+                    padding: 0.15rem 0.3rem;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.2rem;
+                }
+
+                .nav-link svg {
+                    width: 0.85em;
+                    height: 0.85em;
+                }
+
+                .sidebar > div:not(#rate-limit-section), 
+                #rate-limit-section,
+                .sidebar .section-title {
+                    display: none;
+                }
+
+                .main-content {
+                    width: 100%;
+                    min-height: 0;
+                }
+
+                .content-tabs {
+                    gap: 0.4rem;
+                    overflow-x: auto;
+                    flex-wrap: nowrap;
+                    -webkit-overflow-scrolling: touch;
+                    padding-bottom: 0.25rem;
+                }
+
+                .content-tab {
+                    font-size: 0.7rem;
+                    white-space: nowrap;
+                    flex-shrink: 0;
+                }
+
+                #search-input {
+                    font-size: 0.72rem !important;
+                    margin-bottom: 0.4rem !important;
+                }
+
+                .repo-list {
+                    overflow-y: visible;
+                }
+
+                .repo-item {
+                    flex-wrap: wrap;
+                    gap: 0.1rem;
+                    padding: 0.3rem 0;
+                }
+
+                .repo-item-left {
+                    flex: 1 1 100%;
+                }
+
+                .repo-item-name {
+                    font-size: 0.75rem;
+                }
+
+                .repo-item-desc {
+                    max-width: 100%;
+                    white-space: normal;
+                    font-size: 0.68rem;
+                }
+
+                .repo-count,
+                .repo-ago {
+                    font-size: 0.6rem;
+                }
+
+                .statusbar {
+                    flex-direction: column;
+                    gap: 0.15rem;
+                    padding: 0.3rem 0.75rem;
+                    font-size: 0.62rem;
+                    position: sticky;
+                    bottom: 0;
+                }
+
+                .statusbar-left,
+                .statusbar-right {
+                    width: 100%;
+                    justify-content: center;
+                    flex-wrap: wrap;
+                    gap: 0.3rem;
+                }
+
+                .terminal-body {
+                    padding: 0.75rem;
+                    font-size: 0.75rem;
+                }
+
+                .terminal-tab {
+                    font-size: 0.65rem;
+                    padding: 0.15rem 0.4rem;
+                }
+
+                .terminal-titlebar {
+                    height: 30px;
+                    padding: 0 10px;
+                }
+
+                .terminal-btn {
+                    width: 10px;
+                    height: 10px;
+                }
+
+                .modal {
+                    max-width: 100%;
+                    margin: 0 0.25rem;
+                    max-height: 90vh;
+                }
+
+                .modal-header {
+                    padding: 0.75rem 1rem 0.5rem;
+                }
+
+                .modal-title {
+                    font-size: 0.82rem;
+                }
+
+                .modal-body {
+                    padding: 0.75rem 1rem 1rem;
+                }
+
+                #page-content {
+                    font-size: 0.8rem;
+                    overflow-y: visible;
+                }
+
+                .page-header {
+                    font-size: 0.65rem;
+                    margin-bottom: 0.75rem;
+                }
+
+                .command-item {
+                    padding: 0.3rem 0;
+                }
+
+                .command-label {
+                    font-size: 0.75rem;
+                }
+
+                .command-shortcut {
+                    font-size: 0.62rem;
+                }
+
+                .form-group {
+                    margin-bottom: 0.75rem;
+                }
+
+                .form-group label {
+                    font-size: 0.72rem;
+                }
+
+                .form-group input,
+                .form-group textarea {
+                    font-size: 0.75rem;
+                    padding: 0.4rem 0.5rem;
+                }
+
+                .issue-tab {
+                    font-size: 0.72rem;
+                    padding: 0.3rem 0.5rem;
+                }
+
+                .repo-input-group {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                .repo-input-group input {
+                    width: 100%;
+                }
+
+                .repo-separator {
+                    text-align: center;
+                }
+
+                .suspension-banner {
+                    flex-direction: column;
+                    text-align: center;
+                    gap: 0.4rem;
+                    padding: 0.5rem 0.75rem;
+                    margin: 6px;
+                }
+
+                .suspension-banner-content strong {
+                    display: inline;
+                }
+
+                .form-actions {
+                    flex-direction: column;
+                    gap: 0.5rem;
+                }
+
+                .search-history-dropdown {
+                    font-size: 0.7rem;
+                }
+
+                .search-history-item {
+                    font-size: 0.68rem;
+                    padding: 0.3rem 0.4rem;
+                }
+
+                .btn {
+                    font-size: 0.75rem;
+                    padding: 0.35rem 0.75rem;
+                }
+
+                .ntfy-result-row code {
+                    font-size: 0.7rem;
+                }
+
+                /* CLI section responsive overrides */
+                #page-content [style*="gap: 2.5rem"] {
+                    gap: 1.25rem !important;
+                }
+
+                #page-content [style*="display:flex"][style*="align-items:baseline"][style*="gap:0.75rem"] {
+                    flex-wrap: wrap !important;
+                    gap: 0.4rem !important;
+                }
+
+                #page-content code[style*="display:block"] {
+                    font-size: 0.72rem !important;
+                    padding: 0.4rem 0.5rem !important;
+                    white-space: normal !important;
+                    word-break: break-all !important;
+                }
+
+                #page-content [style*="font-size:0.88rem"][style*="font-weight:600"] {
+                    font-size: 0.78rem !important;
+                }
+
+                #page-content [style*="font-size:0.75rem"][style*="color:var(--fg-secondary)"] {
+                    font-size: 0.68rem !important;
+                }
+
+                #page-content .terminal [style*="display:flex"][style*="padding:0 0.875rem"] {
+                    overflow-x: auto !important;
+                    flex-wrap: nowrap !important;
+                    -webkit-overflow-scrolling: touch !important;
+                    padding: 0 0.5rem 12px !important;
+                    gap: 0.3rem !important;
+                }
+
+                #page-content .terminal [style*="display:flex"][style*="padding:0 0.875rem"] .terminal-tab {
+                    flex-shrink: 0 !important;
+                    white-space: nowrap !important;
+                }
+
+                #page-content [style*="background:var(--bg-secondary)"][style*="border:1px solid var(--border)"][style*="padding:1rem"] {
+                    padding: 0.75rem !important;
+                }
+
+                #page-content p[style*="font-size:0.78rem"] {
+                    font-size: 0.72rem !important;
+                }
+
+                #page-content [style*="text-transform:uppercase"][style*="letter-spacing:0.06em"] {
+                    font-size: 0.62rem !important;
+                }
+
+                #page-content [style*="margin-top:0.6rem"] > div[style*="font-family:'IBM Plex Mono',monospace"][style*="font-size:0.68rem"] {
+                    font-size: 0.62rem !important;
                 }
             }
         /* Notifications section */

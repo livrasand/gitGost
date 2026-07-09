@@ -9,10 +9,12 @@ import (
 	"encoding/base32"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"runtime"
 	"strconv"
@@ -1171,6 +1173,38 @@ func CreateAnonymousIssueHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// GitLabIssueNotesProxyHandler proxea los comentarios de una issue de GitLab usando el token del servidor,
+// permitiendo que usuarios anónimos sin cuenta vean los comentarios.
+func GitLabIssueNotesProxyHandler(c *gin.Context) {
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+	number := c.Param("number")
+	glToken := os.Getenv("GITLAB_TOKEN")
+
+	projectID := url.PathEscape(owner + "/" + repo)
+	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/issues/%s/notes?per_page=100&sort=asc", projectID, number)
+
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "proxy error"})
+		return
+	}
+	if glToken != "" {
+		req.Header.Set("PRIVATE-TOKEN", glToken)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"error": "gitlab unreachable"})
+		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	c.Data(resp.StatusCode, "application/json", body)
+}
+
 // CreateAnonymousCommentHandler publica comentario con hash/karma
 func CreateAnonymousCommentHandler(c *gin.Context) {
 	var req anonymousCommentRequest
@@ -2068,4 +2102,323 @@ func BinaryHandler(c *gin.Context) {
 	c.Header("X-Source-Repo", sourceRepo)
 	c.Status(http.StatusOK)
 	io.Copy(c.Writer, f)
+}
+
+// SearchHandler busca repositorios en GitHub y GitLab
+func SearchHandler(c *gin.Context) {
+	query := c.Query("q")
+	provider := c.Query("provider")
+	topicParam := c.Query("topic")
+
+	if query == "" && topicParam == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "query parameter required"})
+		return
+	}
+
+	results := []gin.H{}
+
+	// Si viene topic=, usar sintaxis topic: para GitHub y tag_list para GitLab
+	ghQuery := query
+	glQuery := query
+	if topicParam != "" {
+		ghQuery = "topic:" + topicParam
+		glQuery = topicParam
+	}
+
+	// Buscar en GitHub si provider es "gh" o "all"
+	if provider == "gh" || provider == "all" || provider == "" {
+		ghResults := searchGitHub(ghQuery)
+		results = append(results, ghResults...)
+	}
+
+	// Buscar en GitLab si provider es "gl" o "all"
+	if provider == "gl" || provider == "all" || provider == "" {
+		glResults := searchGitLab(glQuery)
+		results = append(results, glResults...)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"query":   query,
+		"results": results,
+	})
+}
+
+// searchGitHub busca repositorios en GitHub usando la API pública
+func searchGitHub(query string) []gin.H {
+	results := []gin.H{}
+
+	url := fmt.Sprintf("https://api.github.com/search/repositories?q=%s&sort=stars&order=desc&per_page=100", query)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return results
+	}
+	if token := os.Getenv("GITHUB_TOKEN"); token != "" {
+		req.Header.Set("Authorization", "token "+token)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.Log("GitHub search error: %v", err)
+		return results
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		utils.Log("GitHub search returned status: %d", resp.StatusCode)
+		return results
+	}
+
+	var data struct {
+		Items []struct {
+			Name     string `json:"name"`
+			FullName string `json:"full_name"`
+			Owner    struct {
+				Login string `json:"login"`
+			} `json:"owner"`
+			Description string   `json:"description"`
+			Stargazers  int      `json:"stargazers_count"`
+			Forks       int      `json:"forks_count"`
+			Topics      []string `json:"topics"`
+		} `json:"items"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		utils.Log("GitHub search decode error: %v", err)
+		return results
+	}
+
+	for _, item := range data.Items {
+		results = append(results, gin.H{
+			"provider":    "github",
+			"name":        item.Name,
+			"full_name":   item.FullName,
+			"owner":       item.Owner.Login,
+			"description": item.Description,
+			"stars":       item.Stargazers,
+			"forks":       item.Forks,
+			"topics":      item.Topics,
+			"url":         fmt.Sprintf("/gh/%s/%s", item.Owner.Login, item.Name),
+		})
+	}
+
+	return results
+}
+
+// searchGitLab busca repositorios en GitLab usando la API pública
+func searchGitLab(query string) []gin.H {
+	results := []gin.H{}
+
+	// Usar la API pública de GitLab (sin autenticación)
+	url := fmt.Sprintf("https://gitlab.com/api/v4/projects?search=%s&order_by=star_count&sort=desc&per_page=100", query)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(url)
+	if err != nil {
+		utils.Log("GitLab search error: %v", err)
+		return results
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		utils.Log("GitLab search returned status: %d", resp.StatusCode)
+		return results
+	}
+
+	var data []struct {
+		Name              string `json:"name"`
+		PathWithNamespace string `json:"path_with_namespace"`
+		Description       string `json:"description"`
+		StarCount         int    `json:"star_count"`
+		ForksCount        int    `json:"forks_count"`
+		Namespace         struct {
+			Path string `json:"path"`
+		} `json:"namespace"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		utils.Log("GitLab search decode error: %v", err)
+		return results
+	}
+
+	for _, item := range data {
+		// Extraer owner/name de path_with_namespace (sin espacios)
+		parts := strings.Split(item.PathWithNamespace, "/")
+		if len(parts) < 2 {
+			continue
+		}
+		owner := parts[0]
+
+		results = append(results, gin.H{
+			"provider":    "gitlab",
+			"name":        item.Name,
+			"full_name":   item.PathWithNamespace,
+			"owner":       owner,
+			"description": item.Description,
+			"stars":       item.StarCount,
+			"forks":       item.ForksCount,
+			"url":         fmt.Sprintf("/gl/%s/%s", owner, item.Name),
+		})
+	}
+
+	return results
+}
+
+// TrendingHandler retorna repos trending de GitHub o GitLab
+func TrendingHandler(c *gin.Context) {
+	provider := c.Param("provider")
+	sort := c.Query("sort") // "trending" (default) o "new"
+
+	if provider == "" {
+		provider = "gh"
+	}
+	if sort == "" {
+		sort = "trending"
+	}
+
+	var results []gin.H
+
+	switch provider {
+	case "gh":
+		results = getTrendingGitHub(sort)
+	case "gl":
+		results = getTrendingGitLab(sort)
+	case "all":
+		results = append(getTrendingGitHub(sort), getTrendingGitLab(sort)...)
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid provider, use 'gh', 'gl' or 'all'"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"provider": provider,
+		"results":  results,
+	})
+}
+
+// getTrendingGitHub obtiene repos trending de GitHub
+func getTrendingGitHub(sort string) []gin.H {
+	results := []gin.H{}
+
+	var url string
+	if sort == "new" {
+		url = "https://api.github.com/search/repositories?q=created:>2025-01-01&sort=updated&order=desc&per_page=10"
+	} else {
+		url = "https://api.github.com/search/repositories?q=created:>2024-01-01&sort=stars&order=desc&per_page=10"
+	}
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return results
+	}
+	if token := os.Getenv("GITHUB_TOKEN"); token != "" {
+		req.Header.Set("Authorization", "token "+token)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.Log("GitHub trending error: %v", err)
+		return results
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		utils.Log("GitHub trending returned status: %d", resp.StatusCode)
+		return results
+	}
+
+	var data struct {
+		Items []struct {
+			Name     string `json:"name"`
+			FullName string `json:"full_name"`
+			Owner    struct {
+				Login string `json:"login"`
+			} `json:"owner"`
+			Description string `json:"description"`
+			Stargazers  int    `json:"stargazers_count"`
+			Forks       int    `json:"forks_count"`
+		} `json:"items"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		utils.Log("GitHub trending decode error: %v", err)
+		return results
+	}
+
+	for _, item := range data.Items {
+		results = append(results, gin.H{
+			"provider":    "github",
+			"name":        item.Name,
+			"full_name":   item.FullName,
+			"owner":       item.Owner.Login,
+			"description": item.Description,
+			"stars":       item.Stargazers,
+			"forks":       item.Forks,
+			"url":         fmt.Sprintf("/gh/%s/%s", item.Owner.Login, item.Name),
+		})
+	}
+
+	return results
+}
+
+// getTrendingGitLab obtiene repos trending de GitLab
+func getTrendingGitLab(sort string) []gin.H {
+	results := []gin.H{}
+
+	var url string
+	if sort == "new" {
+		url = "https://gitlab.com/api/v4/projects?order_by=created_at&sort=desc&per_page=10"
+	} else {
+		url = "https://gitlab.com/api/v4/projects?order_by=star_count&sort=desc&per_page=10"
+	}
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(url)
+	if err != nil {
+		utils.Log("GitLab trending error: %v", err)
+		return results
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		utils.Log("GitLab trending returned status: %d", resp.StatusCode)
+		return results
+	}
+
+	var data []struct {
+		Name              string `json:"name"`
+		PathWithNamespace string `json:"path_with_namespace"`
+		Description       string `json:"description"`
+		StarCount         int    `json:"star_count"`
+		ForksCount        int    `json:"forks_count"`
+		Namespace         struct {
+			Path string `json:"path"`
+		} `json:"namespace"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		utils.Log("GitLab trending decode error: %v", err)
+		return results
+	}
+
+	for _, item := range data {
+		parts := strings.Split(item.PathWithNamespace, "/")
+		if len(parts) < 2 {
+			continue
+		}
+		owner := parts[0]
+
+		results = append(results, gin.H{
+			"provider":    "gitlab",
+			"name":        item.Name,
+			"full_name":   item.PathWithNamespace,
+			"owner":       owner,
+			"description": item.Description,
+			"stars":       item.StarCount,
+			"forks":       item.ForksCount,
+			"url":         fmt.Sprintf("/gl/%s/%s", owner, item.Name),
+		})
+	}
+
+	return results
 }

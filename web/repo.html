@@ -10,9 +10,7 @@
         />
     <link rel="icon" href="assets/logos/gitgost-logo.svg" type="image/svg+xml" />
     <title>gitGost — repo</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Google Fonts removidas por content blocker; se usan system fonts como fallback -->
     <link id="hljs-theme-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github.min.css" />
     <link id="hljs-theme-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github-dark.min.css" disabled />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"></script>
@@ -523,6 +521,26 @@
             font-family: "IBM Plex Mono", monospace;
             font-size: 0.78rem;
             color: var(--fg-muted);
+        }
+
+        /* Discussions */
+        .disc-category {
+            display: inline-block;
+            font-size: 0.65rem;
+            font-family: "IBM Plex Mono", monospace;
+            padding: 0.1em 0.4em;
+            border-radius: 2px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--fg-muted);
+            margin-left: 0.3rem;
+            vertical-align: middle;
+        }
+        .disc-answer-badge {
+            color: #2da44e;
+            font-size: 0.65rem;
+            font-family: "IBM Plex Mono", monospace;
+            margin-left: 0.3rem;
         }
 
         /* Bug modal */
@@ -1683,12 +1701,28 @@
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7.5 9.08a3.23 3.23 0 0 1 3.23-3.23h2.54a3.23 3.23 0 0 1 3.23 3.23v6.27a4.5 4.5 0 0 1-4.5 4.5v0a4.5 4.5 0 0 1-4.5-4.5zm9 3.77h4.75m-18.5 0H7.5m2.25-9.7v.45A2.25 2.25 0 0 0 12 5.85v0a2.25 2.25 0 0 0 2.25-2.25v-.45M16.5 16.6h1.253a2.5 2.5 0 0 1 2.5 2.5v1.75M7.5 16.6H6.247a2.5 2.5 0 0 0-2.5 2.5v1.75M16.5 9.1h1.253a2.5 2.5 0 0 0 2.5-2.5V4.85M7.5 9.1H6.247a2.5 2.5 0 0 1-2.5-2.5V4.85" />
 </svg> issues</a>
             <a href="#" onclick="showView('reviews'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+		<path d="M0 0h24v24H0z" fill="none" />
+		<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+			<path d="M8.25 5.5a2.75 2.75 0 1 1-5.5 0a2.75 2.75 0 0 1 5.5 0m13 13a2.75 2.75 0 1 1-5.5 0a2.75 2.75 0 0 1 5.5 0m-13 0a2.75 2.75 0 1 1-5.5 0a2.75 2.75 0 0 1 5.5 0M5.5 8.25v7.5" />
+			<path d="M18.5 15.75V8.5a3 3 0 0 0-3-3h-4.336M13.25 8l-1.793-1.793a1 1 0 0 1-.293-.707M13.25 3l-1.793 1.793a1 1 0 0 0-.293.707" />
+		</g>
+	</svg> pull requests</a>
+            <a href="#" id="nav-discussions" style="display:none;" onclick="showView('discussions'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
-		<path d="M8.25 5.5a2.75 2.75 0 1 1-5.5 0a2.75 2.75 0 0 1 5.5 0m13 13a2.75 2.75 0 1 1-5.5 0a2.75 2.75 0 0 1 5.5 0m-13 0a2.75 2.75 0 1 1-5.5 0a2.75 2.75 0 0 1 5.5 0M5.5 8.25v7.5" />
-		<path d="M18.5 15.75V8.5a3 3 0 0 0-3-3h-4.336M13.25 8l-1.793-1.793a1 1 0 0 1-.293-.707M13.25 3l-1.793 1.793a1 1 0 0 0-.293.707" />
+		<path d="M5.985 5.76a3 3 0 0 0-3 3v5.982a3 3 0 0 0 3 3h.446v3.017a.5.5 0 0 0 .839.367l3.67-3.385h4.045a3 3 0 0 0 3-3V8.76a3 3 0 0 0-3-3z" />
+		<path d="M6.985 2.76h8a6 6 0 0 1 6 6v4.982" />
 	</g>
-</svg> pull requests</a>
+            </svg> discussions</a>
+            <a href="#" id="nav-wiki" style="display:none;" onclick="showView('wiki'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<g fill="none">
+		<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.5 16.25V5.75a3 3 0 0 1 3-3h11a1 1 0 0 1 1 1v12.5H7.375M4.5 16.245v2.38" />
+		<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.5 21.25H7a2.5 2.5 0 0 1 0-5h12.5v4a1 1 0 0 1-1 1" />
+		<path stroke="currentColor" stroke-linecap="round" stroke-width="1.5" d="M12 9.45v3.79" />
+		<circle cx="12" cy="6.217" r="1.197" fill="currentColor" />
+	</g>
+            </svg> wiki</a>
         </nav>
 
         <div class="file-tree" id="file-tree" style="display:none;">
@@ -1830,7 +1864,7 @@
         function showView(view) {
             const navLinks = document.querySelectorAll('.left-nav a');
             navLinks.forEach(a => a.classList.remove('active'));
-            const idx = ['home','files','commits','bugs','reviews'].indexOf(view); // bugs=issues, reviews=pull requests
+            const idx = ['home','files','commits','bugs','reviews','discussions','wiki'].indexOf(view); // bugs=issues, reviews=pull requests
             if (idx >= 0 && navLinks[idx]) navLinks[idx].classList.add('active');
 
             const fileTree = document.getElementById('file-tree');
@@ -1852,9 +1886,15 @@
             } else if (view === 'commits') {
                 fileTree.style.display = 'none';
                 loadCommits();
+            } else if (view === 'discussions') {
+                fileTree.style.display = 'none';
+                loadDiscussions();
+            } else if (view === 'wiki') {
+                fileTree.style.display = 'none';
+                loadWiki();
             } else {
                 fileTree.style.display = 'none';
-                codePanel.innerHTML = `<div class="code-loading" style="color:var(--fg-secondary)">/${view} — coming soon</div>`;
+                codePanel.innerHTML = `<div class="code-loading" style="color:var(--fg-secondary)">/${view} &mdash; coming soon</div>`;
             }
         }
 
@@ -2257,6 +2297,223 @@
             }).join('');
 
             panel.innerHTML = toolbar + `<div class="issue-list">${list}</div>`;
+        }
+
+        /* ── Discussions ── */
+        async function loadDiscussions() {
+            const panel = document.getElementById('code-panel');
+            panel.innerHTML = '<div class="code-loading">loading discussions...</div>';
+            try {
+                const query = JSON.stringify({
+                    query: `{
+                        repository(owner: ${JSON.stringify(rv.owner)}, name: ${JSON.stringify(rv.repo)}) {
+                            discussions(first: 20, orderBy: {field: CREATED_AT, direction: DESC}) {
+                                totalCount
+                                nodes {
+                                    title
+                                    number
+                                    bodyText
+                                    createdAt
+                                    upvoteCount
+                                    isAnswered
+                                    category { name emoji }
+                                    author { login }
+                                }
+                            }
+                        }
+                    }`
+                });
+
+                const res = await ghFetch('https://api.github.com/graphql', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: query
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({message: `HTTP ${res.status}`}));
+                    throw new Error(err.message || `HTTP ${res.status}`);
+                }
+
+                const body = await res.json();
+                if (body.errors) {
+                    throw new Error(body.errors[0]?.message || 'GraphQL error');
+                }
+
+                const discussions = body.data?.repository?.discussions;
+                if (!discussions) {
+                    panel.innerHTML = '<div class="bugs-empty">no discussions found</div>';
+                    return;
+                }
+
+                renderDiscussionsView(discussions);
+            } catch(e) {
+                panel.innerHTML = `<div style="padding:1rem;color:var(--fg-secondary);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;">
+                    error loading discussions: ${escHtml(e.message)}
+                    <div style="margin-top:0.5rem;font-size:0.72rem;color:var(--fg-muted);">
+                        <a href="https://github.com/${rv.owner}/${rv.repo}/discussions" target="_blank" style="color:var(--accent);">
+                            Open on GitHub ↗
+                        </a>
+                    </div>
+                </div>`;
+            }
+        }
+
+        function renderDiscussionsView(discussions) {
+            const panel = document.getElementById('code-panel');
+            const total = discussions.totalCount || 0;
+            const items = discussions.nodes || [];
+
+            const header = `<div class="issue-list-header"><span>discussions</span> · ${total}</div>`;
+
+            if (!items.length) {
+                panel.innerHTML = header + '<div class="bugs-empty">no discussions</div>';
+                return;
+            }
+
+            const list = items.map(d => {
+                const num  = d.number;
+                const title = d.title || 'untitled';
+                const user  = d.author?.login || 'anonymous';
+                const date  = new Date(d.createdAt).toLocaleDateString('en', {month:'short', day:'numeric', year:'numeric'});
+                const cat   = d.category
+                    ? `<span class="disc-category">${d.category.emoji || ''} ${escHtml(d.category.name)}</span>`
+                    : '';
+                const votes = d.upvoteCount > 0
+                    ? `<span style="font-size:0.68rem;color:var(--fg-muted);font-family:'IBM Plex Mono',monospace;flex-shrink:0;">▲ ${d.upvoteCount}</span>`
+                    : '';
+                const answered = d.isAnswered
+                    ? `<span class="disc-answer-badge">✔ answered</span>`
+                    : '';
+
+                return `<div class="issue-item" style="cursor:pointer;" onclick="window.open('https://github.com/${rv.owner}/${rv.repo}/discussions/${num}','_blank')">
+                    <span class="issue-num">#${num}</span>
+                    <span class="issue-title">${escHtml(title)}${cat}${answered}</span>
+                    <span class="issue-meta" style="display:flex;flex-direction:column;align-items:flex-end;gap:0.2rem;flex-shrink:0;">
+                        ${votes}
+                        <span>${escHtml(user)} · ${date}</span>
+                    </span>
+                </div>`;
+            }).join('');
+
+            panel.innerHTML = header + `<div class="issue-list">${list}</div>`;
+        }
+
+        /* ── Wiki ── */
+        async function loadWiki(page) {
+            const panel = document.getElementById('code-panel');
+            panel.innerHTML = '<div class="code-loading">loading wiki...</div>';
+
+            const pageSlug = page || 'Home';
+
+            try {
+                if (rv.provider === 'gh') {
+                    // GitHub wiki: raw content via raw.githubusercontent.com/wiki/
+                    async function fetchWikiRaw(name) {
+                        // intentar con .md primero, luego sin extension
+                        let r = await fetch(`https://raw.githubusercontent.com/wiki/${rv.owner}/${rv.repo}/${encodeURIComponent(name)}.md`);
+                        if (r.ok) return r.text();
+                        r = await fetch(`https://raw.githubusercontent.com/wiki/${rv.owner}/${rv.repo}/${encodeURIComponent(name)}`);
+                        if (r.ok) return r.text();
+                        return null;
+                    }
+
+                    let pageText = await fetchWikiRaw(pageSlug);
+                    if (pageText === null) throw new Error(`wiki page not found`);
+
+                    // intentar obtener _Sidebar para navegacion
+                    let navPages = [];
+                    try {
+                        const sbText = await fetchWikiRaw('_Sidebar');
+                        if (sbText) {
+                            // extraer links [[Page]] o [[Page|Text]] o [text](url)
+                            const wikiLinkRe = /\[\[([^|\]]+)(?:\|([^\]]+))?\]\]/g;
+                            let m;
+                            while ((m = wikiLinkRe.exec(sbText)) !== null) {
+                                const raw = m[1].trim();
+                                const label = (m[2] || m[1]).trim();
+                                // separar anchor si existe: [[Home#section]] -> slug=Home
+                                const anchorIdx = raw.indexOf('#');
+                                const slug = (anchorIdx >= 0 ? raw.slice(0, anchorIdx) : raw)
+                                    .replace(/\s+/g, '-')
+                                    .replace(/[^a-zA-Z0-9\u00a0-\uffff_\-]/g, '')
+                                    .replace(/-+/g, '-');
+                                if (slug && !navPages.find(p => p.slug === slug)) {
+                                    navPages.push({ slug, title: label });
+                                }
+                            }
+                            // tambien links markdown
+                            const mdLinkRe = /\[([^\]]+)\]\(([^)]+)\)/g;
+                            while ((m = mdLinkRe.exec(sbText)) !== null) {
+                                const href = m[2].trim();
+                                const label = m[1].trim();
+                                if (href.startsWith('/') || href.startsWith('./') || !href.includes('://')) {
+                                    const anchorIdx = href.indexOf('#');
+                                    const base = anchorIdx >= 0 ? href.slice(0, anchorIdx) : href;
+                                    // skip pure anchor links como #section
+                                    if (!base || base === '.' || base === './') continue;
+                                    const slug = decodeURIComponent(base.replace(/^.*\//, '').replace(/\.md$/i, ''));
+                                    if (slug && !navPages.find(p => p.slug === slug)) {
+                                        navPages.push({ slug, title: label });
+                                    }
+                                }
+                            }
+                        }
+                    } catch(_) { /* sidebar no disponible */ }
+
+                    // armar navegacion
+                    let navHtml = '';
+                    if (navPages.length > 0) {
+                        navHtml = `<div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-family:'IBM Plex Mono',monospace;color:var(--fg-muted);display:flex;gap:0.5rem;flex-wrap:wrap;">
+                            ${navPages.map(p =>
+                                `<a href="#" onclick="loadWiki('${escHtml(p.slug)}');return false;" style="color:${p.slug === pageSlug ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${p.slug === pageSlug ? 'var(--accent)' : 'var(--border)'};border-radius:3px;">${escHtml(p.title)}</a>`
+                            ).join('')}
+                            <a href="https://github.com/${rv.owner}/${rv.repo}/wiki" target="_blank" style="color:var(--accent);text-decoration:none;padding:0.15rem 0.4rem;">Open on GitHub ↗</a>
+                        </div>`;
+                    } else {
+                        navHtml = `<div style="padding:0.5rem 1.25rem 1rem;font-size:0.72rem;font-family:'IBM Plex Mono',monospace;color:var(--fg-muted);">
+                            <a href="https://github.com/${rv.owner}/${rv.repo}/wiki" target="_blank" style="color:var(--accent);">Open wiki on GitHub ↗</a>
+                        </div>`;
+                    }
+
+                    panel.innerHTML = navHtml + `<div class="readme">${renderMd(pageText)}</div>`;
+                } else {
+                    // GitLab wiki: API REST
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/wikis?with_content=1`);
+                    if (!res.ok) throw new Error(`GitLab wiki API error ${res.status}`);
+                    const pages = await res.json();
+
+                    if (!pages || !pages.length) {
+                        panel.innerHTML = '<div class="bugs-empty">this project has no wiki pages</div>';
+                        return;
+                    }
+
+                    // buscar la pagina solicitada o la primera
+                    let wikiPage = pages.find(p => p.slug === pageSlug);
+                    if (!wikiPage) wikiPage = pages[0];
+
+                    // sidebar con lista de paginas
+                    const sidebar = `<div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-family:'IBM Plex Mono',monospace;color:var(--fg-muted);display:flex;gap:0.5rem;flex-wrap:wrap;">
+                        ${pages.map(p =>
+                            `<a href="#" onclick="loadWiki('${escHtml(p.slug)}');return false;" style="color:${p.slug === wikiPage.slug ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${p.slug === wikiPage.slug ? 'var(--accent)' : 'var(--border)'};border-radius:3px;">${escHtml(p.title)}</a>`
+                        ).join('')}
+                        <a href="https://gitlab.com/${rv.owner}/${rv.repo}/-/wikis" target="_blank" style="color:var(--accent);text-decoration:none;padding:0.15rem 0.4rem;">Open on GitLab ↗</a>
+                    </div>`;
+
+                    const content = wikiPage.content || '';
+                    panel.innerHTML = sidebar + `<div class="readme" style="padding-top:0;">${renderMd(content)}</div>`;
+                }
+            } catch(e) {
+                panel.innerHTML = `<div style="padding:1rem;color:var(--fg-secondary);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;">
+                    error loading wiki: ${escHtml(e.message)}
+                    <div style="margin-top:0.5rem;font-size:0.72rem;color:var(--fg-muted);">
+                        <a href="https://${rv.provider === 'gh' ? `github.com/${rv.owner}/${rv.repo}/wiki` : `gitlab.com/${rv.owner}/${rv.repo}/-/wikis`}" target="_blank" style="color:var(--accent);">
+                            Open on ${rv.provider === 'gh' ? 'GitHub' : 'GitLab'} ↗
+                        </a>
+                    </div>
+                </div>`;
+            }
         }
 
         async function loadCommits() {
@@ -2751,6 +3008,19 @@
                     }
                     const sbStarCount = document.getElementById('sb-star-count');
                     if (sbStarCount) sbStarCount.textContent = d.stargazers_count ? d.stargazers_count.toLocaleString() : '';
+
+                    // discussions nav — solo GitHub y si el repo lo tiene habilitado
+                    const navDiscussions = document.getElementById('nav-discussions');
+                    if (navDiscussions && d.has_discussions) {
+                        navDiscussions.style.display = '';
+                    }
+
+                    // wiki nav — GitHub
+                    const navWiki = document.getElementById('nav-wiki');
+                    if (navWiki && d.has_wiki) {
+                        navWiki.style.display = '';
+                    }
+
                     loadCommitCount();
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
@@ -2788,6 +3058,13 @@
                     }
                     const sbStarCount = document.getElementById('sb-star-count');
                     if (sbStarCount) sbStarCount.textContent = d.star_count ? d.star_count.toLocaleString() : '';
+
+                    // wiki nav — GitLab (siempre visible, loadWiki maneja errores)
+                    const navWiki = document.getElementById('nav-wiki');
+                    if (navWiki) {
+                        navWiki.style.display = '';
+                    }
+
                     loadCommitCount();
                 }
             } catch(e) {

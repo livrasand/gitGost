@@ -610,6 +610,10 @@ var (
 	panicPassword  string
 	ntfyAdminTopic string
 
+	// mentaAPIEndpoint/mentaAPIKey: Menta CAPTCHA verification config (empty = captcha disabled)
+	mentaAPIEndpoint string
+	mentaAPIKey      string
+
 	// rateLimitStore: PR counter per IP within a 1-hour window
 	rateLimitStore  = make(map[string][]time.Time)
 	rateLimitMu     sync.Mutex
@@ -651,14 +655,16 @@ var (
 
 type anonymousIssueRequest struct {
 	// ...
-	Title  string   `json:"title"`
-	Body   string   `json:"body"`
-	Labels []string `json:"labels"`
+	Title        string   `json:"title"`
+	Body         string   `json:"body"`
+	Labels       []string `json:"labels"`
+	CaptchaToken string   `json:"captcha_token"`
 }
 
 type anonymousCommentRequest struct {
-	UserToken string `json:"user_token"`
-	Body      string `json:"body"`
+	UserToken    string `json:"user_token"`
+	Body         string `json:"body"`
+	CaptchaToken string `json:"captcha_token"`
 }
 
 const (
@@ -779,6 +785,50 @@ func consumeActionToken(token string) bool {
 func InitPanicConfig(password, adminTopic string) {
 	panicPassword = password
 	ntfyAdminTopic = adminTopic
+}
+
+// InitMentaConfig initializes the Menta CAPTCHA verification endpoint and tenant API key.
+func InitMentaConfig(apiEndpoint, apiKey string) {
+	mentaAPIEndpoint = strings.TrimRight(apiEndpoint, "/")
+	mentaAPIKey = apiKey
+}
+
+// verifyMentaCaptcha valida un token de Menta contra el endpoint /verify configurado.
+// Si MENTA_API_ENDPOINT no está configurado, no se exige captcha (comportamiento actual sin cambios).
+func verifyMentaCaptcha(token string) bool {
+	if mentaAPIEndpoint == "" {
+		return true
+	}
+	if strings.TrimSpace(token) == "" {
+		return false
+	}
+	body, err := json.Marshal(map[string]string{"token": token})
+	if err != nil {
+		return false
+	}
+	req, err := http.NewRequest(http.MethodPost, mentaAPIEndpoint+"/verify", bytes.NewReader(body))
+	if err != nil {
+		return false
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if mentaAPIKey != "" {
+		req.Header.Set("X-API-Key", mentaAPIKey)
+	}
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.Log("Menta verify request failed: %v", err)
+		return false
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Valid bool `json:"valid"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return false
+	}
+	return result.Valid
 }
 
 // isPanicMode returns whether the service is suspended
@@ -1144,6 +1194,11 @@ func CreateAnonymousIssueHandler(c *gin.Context) {
 
 	if strings.TrimSpace(req.Title) == "" || strings.TrimSpace(req.Body) == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "title and body are required"})
+		return
+	}
+
+	if !verifyMentaCaptcha(req.CaptchaToken) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "captcha verification failed"})
 		return
 	}
 
@@ -1805,6 +1860,11 @@ func CreateAnonymousCommentHandler(c *gin.Context) {
 		return
 	}
 
+	if !verifyMentaCaptcha(req.CaptchaToken) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "captcha verification failed"})
+		return
+	}
+
 	userToken := req.UserToken
 	if strings.TrimSpace(userToken) == "" {
 		userToken = generateUserToken()
@@ -1885,6 +1945,11 @@ func CreateAnonymousPRCommentHandler(c *gin.Context) {
 		return
 	}
 
+	if !verifyMentaCaptcha(req.CaptchaToken) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "captcha verification failed"})
+		return
+	}
+
 	userToken := req.UserToken
 	if strings.TrimSpace(userToken) == "" {
 		userToken = generateUserToken()
@@ -1960,6 +2025,11 @@ func CreateAnonymousDiscussionCommentHandler(c *gin.Context) {
 
 	if strings.TrimSpace(req.Body) == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "body is required"})
+		return
+	}
+
+	if !verifyMentaCaptcha(req.CaptchaToken) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "captcha verification failed"})
 		return
 	}
 

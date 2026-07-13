@@ -51,13 +51,13 @@ func securityHeaders() gin.HandlerFunc {
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
 		c.Header("Content-Security-Policy",
 			"default-src 'self'; "+
-				"script-src 'self' https://esm.sh https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com 'unsafe-inline'; "+
+				"script-src 'self' https://esm.sh https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://mentacaptchaeu.eu.pythonanywhere.com 'unsafe-inline'; "+
 				"style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline'; "+
 				"font-src 'self' https://fonts.gstatic.com; "+
 				"img-src 'self' data: blob: https://* http://*; "+
 				"object-src 'none'; "+
 				"frame-ancestors 'none'; "+
-				"connect-src 'self' http://localhost:* https://api.github.com https://raw.githubusercontent.com https://github.com https://gitlab.com https://en.wikipedia.org https://www.wikidata.org",
+				"connect-src 'self' http://localhost:* https://api.github.com https://raw.githubusercontent.com https://github.com https://gitlab.com https://en.wikipedia.org https://www.wikidata.org https://mentacaptchaeu.eu.pythonanywhere.com",
 		)
 		c.Next()
 	}

@@ -434,6 +434,88 @@
         }
         .lang-name { color: var(--fg); font-weight: 500; }
 
+                /* Releases */
+                .release-list { display: flex; flex-direction: column; padding: 1rem 1.25rem; gap: 0; }
+                .release-item {
+                    display: flex; gap: 0.75rem; padding: 0.6rem 0.75rem;
+                    border-bottom: 1px solid var(--border); cursor: pointer;
+                    transition: background 0.15s;
+                }
+                .release-item:last-child { border-bottom: none; }
+                .release-item:hover { background: var(--hover-bg); }
+                .release-tag-badge {
+                    display: inline-flex; align-items: center; gap: 0.3rem;
+                    padding: 0.15rem 0.5rem; border-radius: 9999px;
+                    font-size: 0.7rem; font-weight: 600;
+                    font-family: 'IBM Plex Mono', monospace;
+                    background: var(--bg-secondary); color: var(--accent);
+                    border: 1px solid var(--accent); white-space: nowrap;
+                }
+                .release-latest-badge {
+                    display: inline-block; padding: 0.1rem 0.4rem;
+                    border-radius: 9999px; font-size: 0.5rem; font-weight: 600;
+                    background: #2da44e22; color: #2da44e; border: 1px solid #2da44e;
+                    text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;
+                }
+                .release-prerelease-badge {
+                    display: inline-block; padding: 0.1rem 0.4rem;
+                    border-radius: 9999px; font-size: 0.5rem; font-weight: 600;
+                    background: #bf870022; color: #bf8700; border: 1px solid #bf8700;
+                    text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;
+                }
+                .release-title {
+                    font-size: 0.85rem; font-weight: 600; color: var(--accent);
+                    text-decoration: none; flex: 1;
+                }
+                .release-meta {
+                    font-size: 0.7rem; color: var(--fg-muted); margin-top: 0.15rem;
+                }
+                .release-detail {
+                    padding: 1rem 1.25rem; flex: 1; overflow-y: auto;
+                }
+                .release-detail-header {
+                    display: flex; align-items: center; gap: 0.75rem;
+                    margin-bottom: 1rem; flex-wrap: wrap;
+                }
+                .release-back-btn {
+                    background: none; border: 1px solid var(--border); color: var(--fg);
+                    padding: 0.3rem 0.6rem; border-radius: 6px; cursor: pointer;
+                    font-size: 0.75rem; font-family: inherit;
+                    display: inline-flex; align-items: center; gap: 0.3rem;
+                }
+                .release-back-btn:hover { border-color: var(--accent); color: var(--accent); }
+                .release-detail-body {
+                    padding: 0.75rem 0; border-top: 1px solid var(--border);
+                    line-height: 1.6; font-size: 0.88rem; color: var(--fg);
+                }
+                .release-detail-body p { margin: 0.5rem 0; }
+                .release-detail-body h1, .release-detail-body h2, .release-detail-body h3,
+                .release-detail-body h4, .release-detail-body h5, .release-detail-body h6 { margin: 1rem 0 0.4rem; }
+                .release-detail-body ul, .release-detail-body ol { padding-left: 1.2rem; margin: 0.5rem 0; }
+                .release-detail-body li { margin: 0.2rem 0; }
+                .release-detail-body code {
+                    background: var(--bg-secondary); padding: 0.15rem 0.35rem;
+                    border-radius: 4px; font-size: 0.82rem;
+                }
+                .release-detail-body pre {
+                    background: var(--bg-secondary); padding: 0.75rem;
+                    border-radius: 6px; overflow-x: auto; margin: 0.5rem 0;
+                }
+                .release-detail-body pre code { background: none; padding: 0; }
+                .release-detail-body a { color: var(--accent); text-decoration: none; }
+                .release-detail-body a:hover { text-decoration: underline; }
+                .release-detail-body blockquote {
+                    border-left: 3px solid var(--accent); padding-left: 0.75rem;
+                    margin: 0.5rem 0; color: var(--fg-muted);
+                }
+                .release-detail-body img { max-width: 100%; border-radius: 6px; }
+                .release-detail-body table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; }
+                .release-detail-body th, .release-detail-body td {
+                    border: 1px solid var(--border); padding: 0.4rem 0.6rem;
+                    font-size: 0.8rem; text-align: left;
+                }
+                .release-detail-body th { background: var(--bg-secondary); font-weight: 600; }
+
         /* Issues / PRs list */
         .issue-list { display: flex; flex-direction: column; padding: 1rem 1.25rem; }
         .issue-item {
@@ -1654,6 +1736,10 @@
                         font-size: 0.65rem;
                         padding: 0.3rem 0.5rem;
                     }
+                    .release-list { padding: 0.75rem; }
+                    .release-item { padding: 0.5rem 0.6rem; }
+                    .release-detail { padding: 0.75rem; }
+                    .release-detail-body { font-size: 0.82rem; }
                 }
             </style>
 </head>
@@ -1723,7 +1809,7 @@
 		<circle cx="12" cy="6.217" r="1.197" fill="currentColor" />
 	</g>
             </svg> wiki</a>
-        </nav>
+                    </nav>
 
         <div class="file-tree" id="file-tree" style="display:none;">
             <div class="tree-loading">loading...</div>
@@ -1757,6 +1843,15 @@
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.25 3.75h-2.5a4 4 0 0 0-4 4v8.5a4 4 0 0 0 4 4h8.5a4 4 0 0 0 4-4v-2.5m-6.5-10h5.5c.276 0 .526.112.707.293m.293 6.207v-5.5a1 1 0 0 0-.293-.707M12.75 11.25l6.5-6.5l.707-.707" />
 </svg> Open Original</button>
                     <!--a class="sidebar-btn" id="sb-settings" href="#" target="_blank">⚙ Settings</a-->
+                </div>
+            </div>
+            <div class="sidebar-section" id="sb-releases-section" style="display:none">
+                <div class="sidebar-label">Releases</div>
+                <div id="sb-latest-release"></div>
+                <div style="padding:0.2rem 0 0;">
+                    <a href="#" onclick="showView('releases'); return false;" style="color:var(--fg-muted);text-decoration:none;font-size:0.75rem;">
+                        View all <span id="sb-releases"></span> releases
+                    </a>
                 </div>
             </div>
             <div class="sidebar-section" id="sb-langs-section" style="display:none">
@@ -1857,6 +1952,10 @@
             _updateStarBtn();
             // load commit count (independiente de loadRepoInfo para GitLab)
             loadCommitCount();
+            loadReleaseCount();
+            // interceptar clics en enlaces wiki/anclas del panel
+            const codePanel = document.getElementById('code-panel');
+            if (codePanel) codePanel.addEventListener('click', handlePanelLinkClick);
             // show home view by default (README)
             showView('home');
         }
@@ -1892,6 +1991,9 @@
             } else if (view === 'wiki') {
                 fileTree.style.display = 'none';
                 loadWiki();
+            } else if (view === 'releases') {
+                fileTree.style.display = 'none';
+                loadReleases();
             } else {
                 fileTree.style.display = 'none';
                 codePanel.innerHTML = `<div class="code-loading" style="color:var(--fg-secondary)">/${view} &mdash; coming soon</div>`;
@@ -2300,66 +2402,57 @@
         }
 
         /* ── Discussions ── */
+        let _discussionsCache = null;
+
         async function loadDiscussions() {
             const panel = document.getElementById('code-panel');
             panel.innerHTML = '<div class="code-loading">loading discussions...</div>';
             try {
-                const query = JSON.stringify({
-                    query: `{
-                        repository(owner: ${JSON.stringify(rv.owner)}, name: ${JSON.stringify(rv.repo)}) {
-                            discussions(first: 20, orderBy: {field: CREATED_AT, direction: DESC}) {
-                                totalCount
-                                nodes {
-                                    title
-                                    number
-                                    bodyText
-                                    createdAt
-                                    upvoteCount
-                                    isAnswered
-                                    category { name emoji }
-                                    author { login }
-                                }
-                            }
-                        }
-                    }`
-                });
-
-                const res = await ghFetch('https://api.github.com/graphql', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: query
-                });
-
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({message: `HTTP ${res.status}`}));
-                    throw new Error(err.message || `HTTP ${res.status}`);
-                }
-
-                const body = await res.json();
-                if (body.errors) {
-                    throw new Error(body.errors[0]?.message || 'GraphQL error');
-                }
-
-                const discussions = body.data?.repository?.discussions;
-                if (!discussions) {
-                    panel.innerHTML = '<div class="bugs-empty">no discussions found</div>';
+                if (rv.provider !== 'gh') {
+                    panel.innerHTML = '<div class="bugs-empty">discussions are only available on GitHub repositories</div>';
                     return;
                 }
+                const url = `${API_BASE}/api/gh-discussions/${rv.owner}/${rv.repo}`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (!res.ok) {
+                    const errMsg = data.message || data.error || `HTTP ${res.status}`;
+                    const isRateLimit = res.status === 429 || (data.error === 'rate_limited');
+                    const hint = isRateLimit
+                        ? 'GitHub API rate limit reached for this server. Try again later, or open discussions directly on GitHub.'
+                        : errMsg;
+                    throw new Error(hint);
+                }
+
+                // data is { totalCount, nodes: [{ number, title, createdAt, author: {login}, category: {name, emoji}, comments: {totalCount} }] }
+                const discussions = {
+                    totalCount: data.totalCount || 0,
+                    nodes: (data.nodes || []).map(n => ({
+                        number: n.number,
+                        title: n.title || `Discussion #${n.number}`,
+                        createdAt: n.createdAt || '',
+                        author: n.author?.login || '',
+                        category: n.category?.name || '',
+                        categoryEmoji: n.category?.emoji || '',
+                        commentCount: n.comments?.totalCount || 0
+                    }))
+                };
 
                 renderDiscussionsView(discussions);
             } catch(e) {
+                const msg = e.message || 'unknown error';
                 panel.innerHTML = `<div style="padding:1rem;color:var(--fg-secondary);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;">
-                    error loading discussions: ${escHtml(e.message)}
+                    error loading discussions: ${escHtml(msg)}
                     <div style="margin-top:0.5rem;font-size:0.72rem;color:var(--fg-muted);">
-                        <a href="https://github.com/${rv.owner}/${rv.repo}/discussions" target="_blank" style="color:var(--accent);">
-                            Open on GitHub ↗
-                        </a>
+                        <a href="https://github.com/${rv.owner}/${rv.repo}/discussions" target="_blank" rel="noopener" style="color:var(--accent);" onclick="event.preventDefault(); window.open(this.href, '_blank', 'noopener');">Open on GitHub ↗</a>
                     </div>
                 </div>`;
             }
         }
 
         function renderDiscussionsView(discussions) {
+            _discussionsCache = discussions;
             const panel = document.getElementById('code-panel');
             const total = discussions.totalCount || 0;
             const items = discussions.nodes || [];
@@ -2374,24 +2467,21 @@
             const list = items.map(d => {
                 const num  = d.number;
                 const title = d.title || 'untitled';
-                const user  = d.author?.login || 'anonymous';
-                const date  = new Date(d.createdAt).toLocaleDateString('en', {month:'short', day:'numeric', year:'numeric'});
-                const cat   = d.category
-                    ? `<span class="disc-category">${d.category.emoji || ''} ${escHtml(d.category.name)}</span>`
+                const user  = d.author || 'anonymous';
+                const dateRaw = d.createdAt || d.date || '';
+                const date = dateRaw ? timeAgo(new Date(dateRaw)) : '';
+                const catName = d.category || (d.category?.name) || '';
+                const catEmoji = d.categoryEmoji || (d.category?.emoji) || '';
+                const cat = catName
+                    ? `<span class="disc-category">${catEmoji ? catEmoji + ' ' : ''}${escHtml(catName)}</span>`
                     : '';
-                const votes = d.upvoteCount > 0
-                    ? `<span style="font-size:0.68rem;color:var(--fg-muted);font-family:'IBM Plex Mono',monospace;flex-shrink:0;">▲ ${d.upvoteCount}</span>`
-                    : '';
-                const answered = d.isAnswered
-                    ? `<span class="disc-answer-badge">✔ answered</span>`
-                    : '';
+                const comments = d.commentCount ? `<span style="color:var(--fg-muted);font-size:0.72rem;margin-left:0.4rem;">💬 ${d.commentCount}</span>` : '';
 
-                return `<div class="issue-item" style="cursor:pointer;" onclick="window.open('https://github.com/${rv.owner}/${rv.repo}/discussions/${num}','_blank')">
+                return `<div class="issue-item" style="cursor:pointer;" onclick="showDiscussionDetail(${num})">
                     <span class="issue-num">#${num}</span>
-                    <span class="issue-title">${escHtml(title)}${cat}${answered}</span>
+                    <span class="issue-title">${escHtml(title)}${cat}${comments}</span>
                     <span class="issue-meta" style="display:flex;flex-direction:column;align-items:flex-end;gap:0.2rem;flex-shrink:0;">
-                        ${votes}
-                        <span>${escHtml(user)} · ${date}</span>
+                        <span>${escHtml(user)}${date ? ' · ' + date : ''}</span>
                     </span>
                 </div>`;
             }).join('');
@@ -2399,26 +2489,211 @@
             panel.innerHTML = header + `<div class="issue-list">${list}</div>`;
         }
 
+        async function showDiscussionDetail(num) {
+            const panel = document.getElementById('code-panel');
+            panel.innerHTML = '<div class="code-loading">loading discussion...</div>';
+            try {
+                const cached = (_discussionsCache?.nodes || []).find(d => d.number === num);
+                const res = await fetch(`${API_BASE}/api/gh-discussion/${rv.owner}/${rv.repo}/${num}`);
+                const raw = await res.text();
+                let data = {};
+                try { if (raw) data = JSON.parse(raw); } catch(_) { data = { error: raw.slice(0, 120) } }
+                if (!res.ok) throw new Error(data.message || data.error || `HTTP ${res.status}`);
+
+                const title = data.title || cached?.title || `Discussion #${num}`;
+                const body = data.body || '';
+                const user = data.author?.login || cached?.author || 'anonymous';
+                const created = data.createdAt ? new Date(data.createdAt).toLocaleDateString('en', {year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
+                const updated = data.updatedAt ? new Date(data.updatedAt).toLocaleDateString('en', {year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
+                const catName = data.category?.name || cached?.category || '';
+                const catEmoji = data.category?.emoji || cached?.categoryEmoji || '';
+                const cat = catName
+                    ? `<span class="disc-category">${catEmoji ? catEmoji + ' ' : ''}${escHtml(catName)}</span>`
+                    : '';
+                const answered = data.isAnswered ? `<span class="disc-answer-badge">✓ answered</span>` : '';
+                const renderedBody = body ? renderMd(body) : '<em style="color:var(--fg-muted)">No description provided.</em>';
+                const url = `https://github.com/${rv.owner}/${rv.repo}/discussions/${num}`;
+                const replyId = `reply-disc-${num}`;
+                const tokenId = `token-disc-${num}`;
+                const statusId = `status-disc-${num}`;
+
+                const comments = (data.comments?.nodes || []).map(c => {
+                    const cUser = c.author?.login || 'anonymous';
+                    const cDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString('en', {year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
+                    const cBody = c.body || '';
+                    const answerBadge = c.isAnswer ? '<span class="disc-answer-badge">✓ answer</span>' : '';
+                    return `<li class="comment-item">
+                        <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
+                        <div class="comment-bubble">
+                            <div class="comment-meta"><strong style="color:var(--fg);">${escHtml(cUser)}</strong> ${answerBadge} · ${cDate}</div>
+                            <div class="readme" style="font-size:0.8rem;">${renderMd(cBody)}</div>
+                        </div>
+                    </li>`;
+                }).join('');
+
+                panel.innerHTML = `
+                    <div class="issue-detail">
+                        <div class="issue-detail-main">
+                            <div class="issue-detail-header">
+                                <span class="issue-detail-num">#${num}</span>
+                                <span class="issue-detail-title">${escHtml(title)}</span>
+                            </div>
+                            <div style="margin-bottom:0.75rem;display:flex;gap:0.3rem;flex-wrap:wrap;">${cat}${answered}</div>
+                            <div class="issue-detail-meta">
+                                <strong style="color:var(--fg);">${escHtml(user)}</strong>
+                                <span>opened ${created}</span>
+                                <span style="margin-left:auto;"><a class="issue-ext-link" href="${url}" target="_blank" rel="noopener">${rv.owner}/${rv.repo}#${num} <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.25 3.75h-2.5a4 4 0 0 0-4 4v8.5a4 4 0 0 0 4 4h8.5a4 4 0 0 0 4-4v-2.5m-6.5-10h5.5c.276 0 .526.112.707.293m.293 6.207v-5.5a1 1 0 0 0-.293-.707M12.75 11.25l6.5-6.5l.707-.707" />
+                                </svg>
+</a></span>
+                            </div>
+                            <div class="issue-detail-body readme">${renderedBody}</div>
+                            <ul class="comment-list">${comments}</ul>
+                            <div class="reply-section">
+                                <div class="reply-row">
+                                    <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
+                                    <div class="reply-box">
+                                        <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
+                                        <div class="reply-footer">
+                                            <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
+                                            <span class="reply-status" id="${statusId}"></span>
+                                            <button class="reply-send-btn" onclick="submitDiscussionComment('${rv.owner}','${rv.repo}',${num},'${replyId}','${tokenId}','${statusId}')" title="Send">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="issue-detail-sidebar">
+                            <div>
+                                <div class="ds-label">status</div>
+                                <div class="ds-val">${data.isAnswered ? 'answered' : 'open'}</div>
+                            </div>
+                            <div>
+                                <div class="ds-label">category</div>
+                                <div class="ds-val">${catName ? escHtml(catName) : '—'}</div>
+                            </div>
+                            <div>
+                                <div class="ds-label">created</div>
+                                <div class="ds-val">${created}</div>
+                            </div>
+                            ${updated ? `<div><div class="ds-label">updated</div><div class="ds-val">${updated}</div></div>` : ''}
+                            <div>
+                                <div class="ds-label">comments</div>
+                                <div class="ds-val">${(data.comments?.nodes || []).length}</div>
+                            </div>
+                        </div>
+                    </div>`;
+
+                panel.querySelectorAll('.issue-detail-body pre code, .comment-list pre code, .reply-section pre code').forEach(b => {
+                    try { hljs.highlightElement(b); } catch(_) {}
+                });
+            } catch(e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+            }
+        }
+
+        async function submitDiscussionComment(owner, repo, number, replyId, tokenId, statusId) {
+            const textarea = document.getElementById(replyId);
+            const tokenEl  = document.getElementById(tokenId);
+            const statusEl = document.getElementById(statusId);
+            const body = textarea?.value.trim();
+            if (!body) { if (statusEl) statusEl.textContent = 'write something first'; return; }
+            const btn = textarea?.closest('.reply-box')?.querySelector('.reply-send-btn');
+            if (btn) btn.disabled = true;
+            if (statusEl) statusEl.textContent = 'sending...';
+            const savedToken = localStorage.getItem('comment_token') || '';
+            const payload = { body };
+            const manualToken = tokenEl?.value.trim();
+            const useToken = manualToken || savedToken;
+            if (useToken) payload.user_token = useToken;
+            try {
+                const res = await fetch(`/v1/gh/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/discussions/${number}/comments/anonymous`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Gitgost-Key': 'gitgost-anonymous' },
+                    body: JSON.stringify(payload),
+                });
+                const raw = await res.text();
+                const errData = raw ? (() => { try { return JSON.parse(raw); } catch(_) { return { error: raw.slice(0, 120) }; } })() : {};
+                if (!res.ok) {
+                    throw new Error(errData.error || `HTTP ${res.status}`);
+                }
+                const data = errData;
+                const commentBody = body;
+                if (textarea) textarea.value = '';
+                if (statusEl) statusEl.textContent = 'sent';
+
+                // Mostrar comentario inline
+                const list = textarea?.closest('.issue-detail-main')?.querySelector('.comment-list');
+                if (list) {
+                    const li = document.createElement('li');
+                    li.className = 'comment-item';
+                    li.innerHTML = `
+                        <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
+                        <div class="comment-bubble">
+                            <div class="comment-meta">you · just now${data.hash ? ` · <span style="color:var(--accent)">${data.hash}</span>` : ''}</div>
+                            <div>${escHtml(commentBody).replace(/\n/g, '<br>')}</div>
+                        </div>`;
+                    list.appendChild(li);
+                    li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+
+                if (data.hash && !localStorage.getItem('comment_token')) {
+                    showHashSaveModal(data.hash, data.user_token);
+                }
+            } catch(e) {
+                if (statusEl) statusEl.textContent = 'error: ' + e.message;
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        let _wikiCache = { slug: '', html: '' };
+
         /* ── Wiki ── */
         async function loadWiki(page) {
             const panel = document.getElementById('code-panel');
-            panel.innerHTML = '<div class="code-loading">loading wiki...</div>';
+            if (!panel) return;
 
-            const pageSlug = page || 'Home';
+            const full = page || 'Home';
+            const hashIdx = full.indexOf('#');
+            const pageSlug = hashIdx >= 0 ? full.slice(0, hashIdx) : full;
+            const anchor = hashIdx >= 0 ? full.slice(hashIdx + 1).toLowerCase().trim() : '';
+
+            // Si ya tenemos la misma página renderizada, solo reutilizamos y scroll
+            if (_wikiCache.slug === pageSlug && _wikiCache.html) {
+                panel.innerHTML = _wikiCache.html;
+                if (anchor) scrollToAnchor(anchor);
+                else panel.scrollTop = 0;
+                return;
+            }
+
+            panel.innerHTML = '<div class="code-loading">loading wiki...</div>';
 
             try {
                 if (rv.provider === 'gh') {
-                    // GitHub wiki: raw content via raw.githubusercontent.com/wiki/
+                    // GitHub wiki: via server-side proxy to avoid CORS/rate-limit issues
                     async function fetchWikiRaw(name) {
-                        // intentar con .md primero, luego sin extension
-                        let r = await fetch(`https://raw.githubusercontent.com/wiki/${rv.owner}/${rv.repo}/${encodeURIComponent(name)}.md`);
-                        if (r.ok) return r.text();
-                        r = await fetch(`https://raw.githubusercontent.com/wiki/${rv.owner}/${rv.repo}/${encodeURIComponent(name)}`);
+                        const url = `${API_BASE}/api/gh-wiki/${rv.owner}/${rv.repo}/${encodeURIComponent(name)}`;
+                        const r = await fetch(url);
                         if (r.ok) return r.text();
                         return null;
                     }
 
                     let pageText = await fetchWikiRaw(pageSlug);
+                    if (pageText === null && pageSlug === 'Home') {
+                        // La pagina Home no existe, puede que la wiki no tenga contenido
+                        panel.innerHTML = `<div style="padding:1rem;color:var(--fg-secondary);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;">
+                            This repository has no wiki content yet.
+                            <div style="margin-top:0.5rem;font-size:0.72rem;color:var(--fg-muted);">
+                                <a href="https://github.com/${rv.owner}/${rv.repo}/wiki" target="_blank" style="color:var(--accent);">Open wiki on GitHub ↗</a>
+                            </div>
+                        </div>`;
+                        _wikiCache = { slug: '', html: '' };
+                        return;
+                    }
                     if (pageText === null) throw new Error(`wiki page not found`);
 
                     // intentar obtener _Sidebar para navegacion
@@ -2426,20 +2701,20 @@
                     try {
                         const sbText = await fetchWikiRaw('_Sidebar');
                         if (sbText) {
-                            // extraer links [[Page]] o [[Page|Text]] o [text](url)
+                            // extraer links [[Page]] o [[Page|Text]] o [[Page#anchor|Text]]
                             const wikiLinkRe = /\[\[([^|\]]+)(?:\|([^\]]+))?\]\]/g;
                             let m;
                             while ((m = wikiLinkRe.exec(sbText)) !== null) {
                                 const raw = m[1].trim();
                                 const label = (m[2] || m[1]).trim();
-                                // separar anchor si existe: [[Home#section]] -> slug=Home
                                 const anchorIdx = raw.indexOf('#');
                                 const slug = (anchorIdx >= 0 ? raw.slice(0, anchorIdx) : raw)
                                     .replace(/\s+/g, '-')
                                     .replace(/[^a-zA-Z0-9\u00a0-\uffff_\-]/g, '')
                                     .replace(/-+/g, '-');
-                                if (slug && !navPages.find(p => p.slug === slug)) {
-                                    navPages.push({ slug, title: label });
+                                const a = anchorIdx >= 0 ? raw.slice(anchorIdx + 1).toLowerCase().trim() : '';
+                                if (slug && !navPages.find(p => p.slug === slug && (p.anchor || '') === a)) {
+                                    navPages.push({ slug, title: label, anchor: a });
                                 }
                             }
                             // tambien links markdown
@@ -2448,13 +2723,9 @@
                                 const href = m[2].trim();
                                 const label = m[1].trim();
                                 if (href.startsWith('/') || href.startsWith('./') || !href.includes('://')) {
-                                    const anchorIdx = href.indexOf('#');
-                                    const base = anchorIdx >= 0 ? href.slice(0, anchorIdx) : href;
-                                    // skip pure anchor links como #section
-                                    if (!base || base === '.' || base === './') continue;
-                                    const slug = decodeURIComponent(base.replace(/^.*\//, '').replace(/\.md$/i, ''));
-                                    if (slug && !navPages.find(p => p.slug === slug)) {
-                                        navPages.push({ slug, title: label });
+                                    const p = parseWikiHref(href);
+                                    if (p.slug && !navPages.find(n => n.slug === p.slug && (n.anchor || '') === p.anchor)) {
+                                        navPages.push({ slug: p.slug, title: label, anchor: p.anchor });
                                     }
                                 }
                             }
@@ -2465,9 +2736,11 @@
                     let navHtml = '';
                     if (navPages.length > 0) {
                         navHtml = `<div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-family:'IBM Plex Mono',monospace;color:var(--fg-muted);display:flex;gap:0.5rem;flex-wrap:wrap;">
-                            ${navPages.map(p =>
-                                `<a href="#" onclick="loadWiki('${escHtml(p.slug)}');return false;" style="color:${p.slug === pageSlug ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${p.slug === pageSlug ? 'var(--accent)' : 'var(--border)'};border-radius:3px;">${escHtml(p.title)}</a>`
-                            ).join('')}
+                            ${navPages.map(p => {
+                                const active = p.slug === pageSlug && (p.anchor || '') === anchor;
+                                const target = p.slug + (p.anchor ? '#' + p.anchor : '');
+                                return `<a href="#" data-wiki="${escAttr(target)}" style="color:${active ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${active ? 'var(--accent)' : 'var(--border)'};border-radius:3px;">${escHtml(p.title)}</a>`;
+                            }).join('')}
                             <a href="https://github.com/${rv.owner}/${rv.repo}/wiki" target="_blank" style="color:var(--accent);text-decoration:none;padding:0.15rem 0.4rem;">Open on GitHub ↗</a>
                         </div>`;
                     } else {
@@ -2476,7 +2749,8 @@
                         </div>`;
                     }
 
-                    panel.innerHTML = navHtml + `<div class="readme">${renderMd(pageText)}</div>`;
+                    panel.innerHTML = navHtml + `<div class="readme">${renderMd(pageText, null, true)}</div>`;
+                    _wikiCache = { slug: pageSlug, html: panel.innerHTML };
                 } else {
                     // GitLab wiki: API REST
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
@@ -2486,24 +2760,30 @@
 
                     if (!pages || !pages.length) {
                         panel.innerHTML = '<div class="bugs-empty">this project has no wiki pages</div>';
+                        _wikiCache = { slug: '', html: '' };
                         return;
                     }
 
                     // buscar la pagina solicitada o la primera
                     let wikiPage = pages.find(p => p.slug === pageSlug);
+                    const targetSlug = wikiPage ? pageSlug : (pages[0]?.slug || '');
                     if (!wikiPage) wikiPage = pages[0];
 
                     // sidebar con lista de paginas
                     const sidebar = `<div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-family:'IBM Plex Mono',monospace;color:var(--fg-muted);display:flex;gap:0.5rem;flex-wrap:wrap;">
-                        ${pages.map(p =>
-                            `<a href="#" onclick="loadWiki('${escHtml(p.slug)}');return false;" style="color:${p.slug === wikiPage.slug ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${p.slug === wikiPage.slug ? 'var(--accent)' : 'var(--border)'};border-radius:3px;">${escHtml(p.title)}</a>`
-                        ).join('')}
+                        ${pages.map(p => {
+                            const active = p.slug === targetSlug;
+                            return `<a href="#" data-wiki="${escAttr(p.slug)}" style="color:${active ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${active ? 'var(--accent)' : 'var(--border)'};border-radius:3px;">${escHtml(p.title)}</a>`;
+                        }).join('')}
                         <a href="https://gitlab.com/${rv.owner}/${rv.repo}/-/wikis" target="_blank" style="color:var(--accent);text-decoration:none;padding:0.15rem 0.4rem;">Open on GitLab ↗</a>
                     </div>`;
 
                     const content = wikiPage.content || '';
-                    panel.innerHTML = sidebar + `<div class="readme" style="padding-top:0;">${renderMd(content)}</div>`;
+                    panel.innerHTML = sidebar + `<div class="readme" style="padding-top:0;">${renderMd(content, null, true)}</div>`;
+                    _wikiCache = { slug: wikiPage.slug, html: panel.innerHTML };
                 }
+
+                if (anchor) scrollToAnchor(anchor);
             } catch(e) {
                 panel.innerHTML = `<div style="padding:1rem;color:var(--fg-secondary);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;">
                     error loading wiki: ${escHtml(e.message)}
@@ -2513,6 +2793,7 @@
                         </a>
                     </div>
                 </div>`;
+                _wikiCache = { slug: '', html: '' };
             }
         }
 
@@ -2599,6 +2880,190 @@
                 </div>`;
             }).join('');
             panel.innerHTML = `<div class="commit-list">${list}</div>`;
+        }
+
+        /* ── Releases ── */
+        let _releasesCache = null;
+        let _currentReleaseView = 'list';
+
+        function normalizeRelease(r) {
+            if (!r) return r;
+            const assets = r.assets || {};
+            const glAssets = [];
+            // GitLab agrupa fuentes y enlaces bajo assets.{sources,links}
+            if (assets.sources && Array.isArray(assets.sources)) {
+                assets.sources.forEach(s => {
+                    glAssets.push({
+                        name: s.format ? `Source code (${s.format})` : 'Source code',
+                        browser_download_url: s.url || '',
+                        size: 0
+                    });
+                });
+            }
+            if (assets.links && Array.isArray(assets.links)) {
+                assets.links.forEach(a => {
+                    glAssets.push({
+                        name: a.name || '',
+                        browser_download_url: a.direct_asset_url || a.url || '',
+                        size: a.size || 0
+                    });
+                });
+            }
+            return {
+                tag_name: r.tag_name || r.tag || '',
+                name: r.name || '',
+                published_at: r.published_at || r.released_at || r.created_at || '',
+                released_at: r.released_at || r.published_at || r.created_at || '',
+                created_at: r.created_at || '',
+                prerelease: r.prerelease || false,
+                author: r.author || null,
+                body: r.body || r.description || r.release_notes || '',
+                tarball_url: r.tarball_url || '',
+                zipball_url: r.zipball_url || '',
+                assets: Array.isArray(r.assets) ? r.assets : glAssets
+            };
+        }
+
+        async function loadReleases() {
+            const panel = document.getElementById('code-panel');
+            _releasesCache = null;
+            _currentReleaseView = 'list';
+            panel.innerHTML = '<div class="code-loading">loading releases...</div>';
+            try {
+                let releases = [];
+                if (rv.provider === 'gh') {
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/releases?per_page=30`);
+                    if (res.ok) releases = await res.json();
+                } else {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/releases?per_page=30`);
+                    if (res.ok) releases = await res.json();
+                }
+                _releasesCache = releases.map(normalizeRelease);
+                renderReleasesView();
+            } catch(e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+            }
+        }
+
+        function renderReleasesView() {
+            const panel = document.getElementById('code-panel');
+            if (!_releasesCache) return;
+            const releases = _releasesCache;
+
+            if (!releases.length) {
+                panel.innerHTML = '<div class="bugs-empty">no releases found</div>';
+                return;
+            }
+
+            const count = releases.length;
+            const header = `<div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;">
+                <span style="font-size:0.85rem;font-weight:600;color:var(--fg);">${count} release${count !== 1 ? 's' : ''}</span>
+            </div>`;
+
+            const list = releases.map((r, idx) => {
+                const tag = r.tag_name || r.tag || '';
+                const name = r.name || tag;
+                const date = r.published_at || r.released_at || r.created_at || '';
+                const dateStr = date ? new Date(date).toLocaleDateString('en', {month:'short', day:'numeric', year:'numeric'}) : '';
+                const isLatest = idx === 0;
+                const isPrerelease = r.prerelease;
+                const author = r.author?.login || r.author?.username || '';
+
+                const badges = [];
+                if (isLatest) badges.push('<span class="release-latest-badge">Latest</span>');
+                if (isPrerelease) badges.push('<span class="release-prerelease-badge">Pre-release</span>');
+
+                return `<div class="release-item" onclick="showReleaseDetail(${idx})">
+                    <div style="display:flex;flex-direction:column;gap:0.25rem;min-width:0;flex:1;">
+                        <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;">
+                            <span class="release-tag-badge">${escHtml(tag)}</span>
+                            ${badges.join(' ')}
+                        </div>
+                        <span class="release-title">${escHtml(name)}</span>
+                        <span class="release-meta">${author ? escHtml(author) + ' · ' : ''}${dateStr}</span>
+                    </div>
+                </div>`;
+            }).join('');
+
+            panel.innerHTML = header + `<div class="release-list">${list}</div>`;
+        }
+
+        function showReleaseDetail(idx) {
+            const panel = document.getElementById('code-panel');
+            if (!_releasesCache || !_releasesCache[idx]) return;
+            _currentReleaseView = 'detail';
+            const r = _releasesCache[idx];
+            const tag = r.tag_name || r.tag || '';
+            const name = r.name || tag;
+            const date = r.published_at || r.released_at || r.created_at || '';
+            const dateStr = date ? new Date(date).toLocaleDateString('en', {month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
+            const author = r.author?.login || r.author?.username || '';
+            const isLatest = idx === 0;
+            const isPrerelease = r.prerelease;
+            const body = r.body || '';
+            const tarball = r.tarball_url || '';
+            const zipball = r.zipball_url || '';
+            const assets = r.assets || [];
+
+            const badges = [];
+            if (isLatest) badges.push('<span class="release-latest-badge">Latest</span>');
+            if (isPrerelease) badges.push('<span class="release-prerelease-badge">Pre-release</span>');
+
+            let assetsHtml = '';
+            if (assets.length > 0) {
+                const items = assets.map(a => {
+                    const size = a.size ? (a.size / 1024).toFixed(1) + ' KB' : '';
+                    return `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;font-size:0.8rem;">
+                        <span style="color:var(--fg-muted);"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12.074 3.25v12.478M6.19 10.465l4.822 4.822c.293.293.677.44 1.06.44m5.883-5.262l-4.822 4.822c-.293.293-.677.44-1.06.44m8.677.788v.935a3.3 3.3 0 0 1-3.3 3.3H6.55a3.3 3.3 0 0 1-3.3-3.3v-.935" />
+</svg></span>
+                        <a href="${a.browser_download_url || '#'}" style="color:var(--accent);text-decoration:none;" target="_blank" rel="noopener">${escHtml(a.name)}</a>
+                        <span style="color:var(--fg-muted);font-size:0.7rem;">${size}</span>
+                    </div>`;
+                }).join('');
+                assetsHtml = `<div style="margin-top:1rem;">
+                    <div style="font-size:0.75rem;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.4rem;">Assets (${assets.length})</div>
+                    ${items}
+                </div>`;
+            }
+
+            const renderedBody = body ? renderMd(body) : '<div style="color:var(--fg-muted);font-style:italic;">No release notes.</div>';
+
+            panel.innerHTML = `<div class="release-detail">
+                <div class="release-detail-header">
+                    <button class="release-back-btn" onclick="renderReleasesView()">← Back to releases</button>
+                    <span class="release-tag-badge">${escHtml(tag)}</span>
+                    ${badges.join(' ')}
+                </div>
+                <div style="margin-bottom:0.75rem;">
+                    <h2 style="font-size:1.1rem;margin:0 0 0.3rem;color:var(--fg);">${escHtml(name)}</h2>
+                    <div style="font-size:0.75rem;color:var(--fg-muted);">
+                        ${author ? 'Published by <strong>' + escHtml(author) + '</strong>' : ''}
+                        ${dateStr ? ' · ' + dateStr : ''}
+                    </div>
+                </div>
+                <div class="release-detail-body">
+                    ${renderedBody}
+                </div>
+                ${assetsHtml}
+                <div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+                    ${zipball ? `<a href="${zipball}" style="font-size:0.75rem;color:var(--accent);text-decoration:none;border:1px solid var(--border);padding:0.25rem 0.5rem;border-radius:6px;" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.5" d="m12 12l8.073-4.625M12 12v9.25M12 12L7.963 9.688m12.11-2.313a3.17 3.17 0 0 0-1.165-1.156L16.25 4.696m3.823 2.679c.275.472.427 1.015.427 1.58v6.09a3.15 3.15 0 0 1-1.592 2.736l-5.316 3.046A3.2 3.2 0 0 1 12 21.25M3.926 7.375a3.14 3.14 0 0 0-.426 1.58v6.09c0 1.13.607 2.172 1.592 2.736l5.316 3.046A3.2 3.2 0 0 0 12 21.25M3.926 7.375a3.17 3.17 0 0 1 1.166-1.156l5.316-3.046a3.2 3.2 0 0 1 3.184 0l2.658 1.523M3.926 7.375l4.037 2.313m0 0l8.287-4.992" />
+</svg> Source (zip)</a>` : ''}
+                    ${tarball ? `<a href="${tarball}" style="font-size:0.75rem;color:var(--accent);text-decoration:none;border:1px solid var(--border);padding:0.25rem 0.5rem;border-radius:6px;" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.5" d="m12 12l8.073-4.625M12 12v9.25M12 12L7.963 9.688m12.11-2.313a3.17 3.17 0 0 0-1.165-1.156L16.25 4.696m3.823 2.679c.275.472.427 1.015.427 1.58v6.09a3.15 3.15 0 0 1-1.592 2.736l-5.316 3.046A3.2 3.2 0 0 1 12 21.25M3.926 7.375a3.14 3.14 0 0 0-.426 1.58v6.09c0 1.13.607 2.172 1.592 2.736l5.316 3.046A3.2 3.2 0 0 0 12 21.25M3.926 7.375a3.17 3.17 0 0 1 1.166-1.156l5.316-3.046a3.2 3.2 0 0 1 3.184 0l2.658 1.523M3.926 7.375l4.037 2.313m0 0l8.287-4.992" />
+</svg> Source (tar.gz)</a>` : ''}
+                </div>
+            </div>`;
+
+            // Highlight code blocks in the rendered body
+            panel.querySelectorAll('.release-detail-body pre code').forEach(b => {
+                try { hljs.highlightElement(b); } catch(_) {}
+            });
         }
 
         async function showCommitDetail(sha) {
@@ -3059,10 +3524,19 @@
                     const sbStarCount = document.getElementById('sb-star-count');
                     if (sbStarCount) sbStarCount.textContent = d.star_count ? d.star_count.toLocaleString() : '';
 
-                    // wiki nav — GitLab (siempre visible, loadWiki maneja errores)
+                    // wiki nav — GitLab: ocultar por defecto y mostrar solo si hay paginas reales
                     const navWiki = document.getElementById('nav-wiki');
                     if (navWiki) {
-                        navWiki.style.display = '';
+                        navWiki.style.display = 'none';
+                        try {
+                            const wikiRes = await fetch(`https://gitlab.com/api/v4/projects/${enc}/wikis?per_page=1`);
+                            if (wikiRes.ok) {
+                                const wikiPages = await wikiRes.json();
+                                if (Array.isArray(wikiPages) && wikiPages.length > 0) {
+                                    navWiki.style.display = '';
+                                }
+                            }
+                        } catch(_) {}
                     }
 
                     loadCommitCount();
@@ -3097,6 +3571,67 @@
                 const el2 = document.getElementById('sb-commits');
                 if (el2) el2.textContent = '?';
             }
+        }
+
+        async function loadReleaseCount() {
+            const el = document.getElementById('sb-releases');
+            const section = document.getElementById('sb-releases-section');
+            const latestEl = document.getElementById('sb-latest-release');
+            if (!el) return;
+            try {
+                if (rv.provider === 'gh') {
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/releases?per_page=1`);
+                    if (!res.ok) { el.textContent = ''; if (section) section.style.display = 'none'; return; }
+                    const link = res.headers.get('Link') || '';
+                    const match = link.match(/&page=(\d+)>; rel="last"/);
+                    const count = match ? parseInt(match[1]) : 0;
+                    const releases = await res.json();
+                    const latest = releases[0];
+                    if (count > 0 && latest) {
+                        el.textContent = count.toLocaleString();
+                        if (latestEl) {
+                            const tag = latest.tag_name || latest.name || '';
+                            const name = latest.name || tag;
+                            const ago = timeAgo(latest.published_at || latest.created_at);
+                            latestEl.innerHTML = `<a href="#" onclick="showView('releases'); return false;" style="color:var(--fg);text-decoration:none;display:block;padding:0.3rem 0;">
+                                <div style="font-size:0.82rem;font-weight:500;line-height:1.3;">${escHtml(name)}  <span class="release-latest-badge">Latest</span></div>
+                                ${ago ? `<div style="font-size:0.7rem;color:var(--fg-muted);margin-top:0.15rem;">${ago}</div>` : ''}
+                            </a>`;
+                        }
+                        if (section) section.style.display = '';
+                    } else {
+                        el.textContent = '';
+                        if (section) section.style.display = 'none';
+                    }
+                } else {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/releases?per_page=1`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        const xTotal = res.headers.get('X-Total');
+                        const count = xTotal ? parseInt(xTotal) : data.length;
+                        const latest = data[0];
+                        if (count > 0 && latest) {
+                            el.textContent = count.toLocaleString();
+                            if (latestEl) {
+                                const tag = latest.tag_name || latest.tag || '';
+                                const name = latest.name || tag;
+                                const ago = timeAgo(latest.released_at || latest.created_at);
+                                latestEl.innerHTML = `<a href="#" onclick="showView('releases'); return false;" style="color:var(--fg);text-decoration:none;display:block;padding:0.3rem 0;">
+                                    <div style="font-size:0.82rem;font-weight:500;line-height:1.3;">${escHtml(name)}  <span class="release-latest-badge">Latest</span></div>
+                                    ${ago ? `<div style="font-size:0.7rem;color:var(--fg-muted);margin-top:0.15rem;">${ago}</div>` : ''}
+                                </a>`;
+                            }
+                            if (section) section.style.display = '';
+                        } else {
+                            el.textContent = '';
+                            if (section) section.style.display = 'none';
+                        }
+                    } else {
+                        if (section) section.style.display = 'none';
+                    }
+                }
+            } catch(_) {}
         }
 
         async function loadLanguages() {
@@ -3462,6 +3997,72 @@
             return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
         }
 
+        function escAttr(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+
+        function parseWikiHref(href) {
+            const h = String(href || '').trim();
+            const hashIdx = h.indexOf('#');
+            const base = hashIdx >= 0 ? h.slice(0, hashIdx) : h;
+            const anchor = hashIdx >= 0 ? h.slice(hashIdx + 1).toLowerCase().trim() : '';
+            let slug = '';
+            if (base) {
+                const b = base.replace(/^.*\//, '').replace(/\.(md|markdown)$/i, '');
+                if (b && b !== '.' && b !== './') {
+                    try { slug = decodeURIComponent(b).trim(); }
+                    catch(_) { slug = b.trim(); }
+                }
+            }
+            return { slug, anchor };
+        }
+
+        function scrollToAnchor(anchor) {
+            const panel = document.getElementById('code-panel');
+            if (!panel || !anchor) return;
+            const el = document.getElementById(anchor) || document.getElementsByName(anchor)[0];
+            if (!el || !panel.contains(el)) return;
+            const nav = panel.querySelector('.readme')?.previousElementSibling;
+            const offset = (nav ? nav.offsetHeight : 0) + 12;
+            panel.scrollTop = el.offsetTop - panel.offsetTop - offset;
+        }
+
+        function handlePanelLinkClick(e) {
+            const a = e.target.closest('a');
+            if (!a) return;
+            const wiki = a.getAttribute('data-wiki');
+            const anchor = a.getAttribute('data-anchor');
+            if (wiki) {
+                e.preventDefault();
+                loadWiki(wiki);
+            } else if (anchor) {
+                e.preventDefault();
+                scrollToAnchor(anchor);
+            }
+        }
+
+        function timeAgo(dateStr) {
+            if (!dateStr) return '';
+            const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+            if (diff < 0) return '';
+            const units = [
+                [31536000, 'year', 'years'],
+                [2592000, 'month', 'months'],
+                [604800, 'week', 'weeks'],
+                [86400, 'day', 'days'],
+                [3600, 'hour', 'hours'],
+                [60, 'minute', 'minutes'],
+                [1, 'second', 'seconds'],
+            ];
+            for (const [secs, sing, plur] of units) {
+                if (diff >= secs) {
+                    const n = Math.floor(diff / secs);
+                    return `${n} ${n === 1 ? sing : plur} ago`;
+                }
+            }
+            return '';
+        }
+
         function detectLang(filename) {
             const ext = filename.split('.').pop().toLowerCase();
             const map = {
@@ -3514,16 +4115,28 @@
             syncHljsTheme();
         };
 
-        function renderMd(md, baseUrl) {
+        function renderMd(md, baseUrl, isWiki) {
             if (typeof marked === 'undefined') return `<pre>${escHtml(md)}</pre>`;
-            marked.setOptions({ gfm: true, breaks: false });
+            marked.setOptions({ gfm: true, breaks: false, headerIds: true, headerPrefix: '' });
             const renderer = new marked.Renderer();
             // marked v4: link token es un objeto {href, title, text}
             renderer.link = function(token) {
                 const href  = (token && token.href  != null) ? token.href  : (arguments[0] || '');
                 const title = (token && token.title != null) ? token.title : (arguments[1] || null);
                 const text  = (token && token.text  != null) ? token.text  : (arguments[2] || '');
-                return `<a href="${href}" target="_blank" rel="noopener"${title ? ` title="${title}"` : ''}>${text}</a>`;
+                const t = title ? ` title="${escAttr(title)}"` : '';
+                if (typeof href === 'string' && href.startsWith('#')) {
+                    const anchor = href.slice(1);
+                    return anchor ? `<a href="#" data-anchor="${escAttr(anchor)}"${t}>${text}</a>` : `<a href="#"${t}>${text}</a>`;
+                }
+                if (isWiki && typeof href === 'string' && !/^[a-z][a-z0-9+.-]*:/i.test(href) && !/^\/\//.test(href)) {
+                    const p = parseWikiHref(href);
+                    if (p.slug || p.anchor) {
+                        const target = p.slug + (p.anchor ? '#' + p.anchor : '');
+                        return `<a href="#" data-wiki="${escAttr(target)}"${t}>${text}</a>`;
+                    }
+                }
+                return `<a href="${escAttr(href)}" target="_blank" rel="noopener"${t}>${text}</a>`;
             };
             // Bloques de código con hljs y sin word-wrap
             renderer.code = function(token) {
@@ -3557,7 +4170,7 @@
                             : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/HEAD/`);
                     src = rawBase.replace(/\/$/, '') + '/' + src.replace(/^\.?\//, '');
                 }
-                return `<img src="${src}" alt="${escHtml(alt)}"${title ? ` title="${escHtml(title)}"` : ''} style="max-width:100%;border-radius:4px;" />`;
+                return `<img src="${escAttr(src)}" alt="${escAttr(alt)}"${title ? ` title="${escAttr(title)}"` : ''} style="max-width:100%;border-radius:4px;" />`;
             };
             // Convertir :emoji_name: a emojis Unicode
             const emojified = md.replace(/:([a-z0-9_+-]+):/g, (match, name) => {
@@ -3581,6 +4194,7 @@
             });
             // Tambien procesar <a href> con rutas relativas en HTML directo
             result = result.replace(/<a\s+[^>]*?href=("[^"]+"|'[^']+')([^>]*?)>/gi, (match, hrefQuoted) => {
+                if (isWiki) return match;
                 const quote = hrefQuoted[0];
                 const href = hrefQuoted.slice(1, -1);
                 if (href && !/^https?:\/\//i.test(href) && !/^mailto:/i.test(href) && !/^#/.test(href) && !/^\//.test(href)) {

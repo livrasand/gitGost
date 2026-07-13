@@ -1500,6 +1500,289 @@ func GitLabCommitDetailHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, commitData)
 }
 
+// GitHubDiscussionsProxyHandler consulta la GraphQL API de GitHub para discussions,
+// evitando problemas de CORS y scraping de HTML.
+func GitHubDiscussionsProxyHandler(c *gin.Context) {
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+
+	query := fmt.Sprintf(`{
+			repository(owner: %q, name: %q) {
+				discussions(first: 30, orderBy: {field: CREATED_AT, direction: DESC}) {
+					totalCount
+					nodes {
+						number
+						title
+						createdAt
+						author { login }
+						category { name emoji }
+						comments { totalCount }
+					}
+				}
+			}
+		}`, owner, repo)
+
+	payload := map[string]string{"query": query}
+	jsonBody, err := json.Marshal(payload)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "marshal error"})
+		return
+	}
+
+	req, err := http.NewRequest("POST", "https://api.github.com/graphql", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "proxy error"})
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	ghToken := os.Getenv("GITHUB_TOKEN")
+	if ghToken != "" {
+		req.Header.Set("Authorization", "bearer "+ghToken)
+	}
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"error": "github unreachable"})
+		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+
+	// Rate limit from GitHub GraphQL
+	if resp.StatusCode == 403 {
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"error":   "rate_limited",
+			"message": "GitHub API rate limit reached for this server.",
+		})
+		return
+	}
+
+	if resp.StatusCode != 200 {
+		c.Data(resp.StatusCode, "application/json", body)
+		return
+	}
+
+	// Parse GraphQL response
+	var ghResp struct {
+		Data struct {
+			Repository struct {
+				Discussions struct {
+					TotalCount int `json:"totalCount"`
+					Nodes      []struct {
+						Number    int    `json:"number"`
+						Title     string `json:"title"`
+						CreatedAt string `json:"createdAt"`
+						Author    struct {
+							Login string `json:"login"`
+						} `json:"author"`
+						Category struct {
+							Name  string `json:"name"`
+							Emoji string `json:"emoji"`
+						} `json:"category"`
+						Comments struct {
+							TotalCount int `json:"totalCount"`
+						} `json:"comments"`
+					} `json:"nodes"`
+				} `json:"discussions"`
+			} `json:"repository"`
+		} `json:"data"`
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+
+	if err := json.Unmarshal(body, &ghResp); err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"error": "failed to parse GitHub response"})
+		return
+	}
+
+	if len(ghResp.Errors) > 0 {
+		c.JSON(http.StatusBadGateway, gin.H{"error": ghResp.Errors[0].Message})
+		return
+	}
+
+	disc := ghResp.Data.Repository.Discussions
+	c.JSON(http.StatusOK, gin.H{
+		"totalCount": disc.TotalCount,
+		"nodes":      disc.Nodes,
+	})
+}
+
+// GitHubDiscussionDetailProxyHandler consulta la GraphQL API de GitHub para una sola discusión,
+// incluyendo su cuerpo y comentarios, evitando problemas de CORS.
+func GitHubDiscussionDetailProxyHandler(c *gin.Context) {
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+	numberStr := c.Param("number")
+	number, err := strconv.Atoi(numberStr)
+	if err != nil || number <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid discussion number"})
+		return
+	}
+
+	query := fmt.Sprintf(`{
+		repository(owner: %q, name: %q) {
+			discussion(number: %d) {
+				number
+				title
+				body
+				createdAt
+				updatedAt
+				author { login }
+				category { name emoji }
+				isAnswered
+				comments(first: 100) {
+					nodes {
+						author { login }
+						body
+						createdAt
+						isAnswer
+					}
+				}
+			}
+		}
+	}`, owner, repo, number)
+
+	payload := map[string]string{"query": query}
+	jsonBody, err := json.Marshal(payload)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "marshal error"})
+		return
+	}
+
+	req, err := http.NewRequest("POST", "https://api.github.com/graphql", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "proxy error"})
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	ghToken := os.Getenv("GITHUB_TOKEN")
+	if ghToken != "" {
+		req.Header.Set("Authorization", "bearer "+ghToken)
+	}
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"error": "github unreachable"})
+		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode == 403 {
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"error":   "rate_limited",
+			"message": "GitHub API rate limit reached for this server.",
+		})
+		return
+	}
+
+	if resp.StatusCode != 200 {
+		c.Data(resp.StatusCode, "application/json", body)
+		return
+	}
+
+	var ghResp struct {
+		Data struct {
+			Repository struct {
+				Discussion *struct {
+					Number    int    `json:"number"`
+					Title     string `json:"title"`
+					Body      string `json:"body"`
+					CreatedAt string `json:"createdAt"`
+					UpdatedAt string `json:"updatedAt"`
+					Author    struct {
+						Login string `json:"login"`
+					} `json:"author"`
+					Category struct {
+						Name  string `json:"name"`
+						Emoji string `json:"emoji"`
+					} `json:"category"`
+					IsAnswered bool `json:"isAnswered"`
+					Comments   struct {
+						Nodes []struct {
+							Author struct {
+								Login string `json:"login"`
+							} `json:"author"`
+							Body      string `json:"body"`
+							CreatedAt string `json:"createdAt"`
+							IsAnswer  bool   `json:"isAnswer"`
+						} `json:"nodes"`
+					} `json:"comments"`
+				} `json:"discussion"`
+			} `json:"repository"`
+		} `json:"data"`
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+
+	if err := json.Unmarshal(body, &ghResp); err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"error": "failed to parse GitHub response"})
+		return
+	}
+
+	if len(ghResp.Errors) > 0 {
+		c.JSON(http.StatusBadGateway, gin.H{"error": ghResp.Errors[0].Message})
+		return
+	}
+
+	disc := ghResp.Data.Repository.Discussion
+	if disc == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "discussion not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, disc)
+}
+
+// GitHubWikiProxyHandler proxea contenido de wiki de GitHub desde raw.githubusercontent.com,
+// evitando problemas de CORS y rate limiting desde el navegador.
+func GitHubWikiProxyHandler(c *gin.Context) {
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+	page := c.Param("page")
+	if page == "" {
+		page = "Home"
+	}
+
+	// intentar con .md primero, luego sin extension
+	pageURLs := []string{
+		fmt.Sprintf("https://raw.githubusercontent.com/wiki/%s/%s/%s.md", owner, repo, page),
+		fmt.Sprintf("https://raw.githubusercontent.com/wiki/%s/%s/%s", owner, repo, page),
+	}
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	for _, pageURL := range pageURLs {
+		req, err := http.NewRequest("GET", pageURL, nil)
+		if err != nil {
+			continue
+		}
+		req.Header.Set("Accept", "text/plain")
+		req.Header.Set("User-Agent", "gitGost/1.0")
+
+		resp, err := client.Do(req)
+		if err != nil || resp.StatusCode != 200 {
+			if resp != nil {
+				resp.Body.Close()
+			}
+			continue
+		}
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+		c.Data(200, "text/plain; charset=utf-8", body)
+		return
+	}
+
+	c.JSON(http.StatusNotFound, gin.H{"error": "wiki page not found"})
+}
+
 // CreateAnonymousCommentHandler publica comentario con hash/karma
 func CreateAnonymousCommentHandler(c *gin.Context) {
 	var req anonymousCommentRequest
@@ -1646,6 +1929,81 @@ func CreateAnonymousPRCommentHandler(c *gin.Context) {
 	if dbClient != nil {
 		if err := dbClient.InsertComment(c.Request.Context(), owner, repo, commentURL); err != nil {
 			utils.Log("Error recording PR comment in DB: %v", err)
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"comment_url":  commentURL,
+		"hash":         hash,
+		"karma":        karma,
+		"user_token":   userToken,
+		"appeal_token": generateAppealToken(hash),
+	})
+}
+
+// CreateAnonymousDiscussionCommentHandler publica un comentario anónimo en una Discussion de GitHub
+func CreateAnonymousDiscussionCommentHandler(c *gin.Context) {
+	var req anonymousCommentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
+		return
+	}
+
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+	numberStr := c.Param("number")
+	number, err := strconv.Atoi(numberStr)
+	if err != nil || number <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid discussion number"})
+		return
+	}
+
+	if strings.TrimSpace(req.Body) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "body is required"})
+		return
+	}
+
+	userToken := req.UserToken
+	if strings.TrimSpace(userToken) == "" {
+		userToken = generateUserToken()
+	}
+	hash := deriveHash(owner, repo, number, userToken)
+	reports := getReportCountWithWindow(c.Request.Context(), hash)
+	if reports > 5 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "hash bloqueado por reportes"})
+		return
+	}
+	if reports > 2 {
+		if blocked := isFlaggedCooldown(hash); blocked {
+			c.JSON(http.StatusTooManyRequests, gin.H{"error": "cooldown activo por reportes"})
+			return
+		}
+	}
+	currentKarma := getKarma(c.Request.Context(), hash)
+	karma := currentKarma + 1
+	if reports > 2 {
+		karma = 0
+	}
+	updateKarma(c.Request.Context(), hash, karma)
+	if reports > 2 {
+		markFlaggedAction(hash)
+	}
+	reportURL := fmt.Sprintf("%s://%s/v1/moderation/report?hash=%s", getScheme(c.Request), c.Request.Host, hash)
+
+	legend := fmt.Sprintf("\n\n---\ngoster-%s · karma (%d) · [report](%s)", hash, karma, reportURL)
+	bodyWithLegend := req.Body + legend
+
+	prov := providerFromPath(c.Request.URL.Path)
+	commentURL, err := prov.CreateAnonymousDiscussionComment(owner, repo, number, bodyWithLegend)
+	if err != nil {
+		utils.Log("Error creating discussion comment: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if dbClient != nil {
+		if err := dbClient.InsertComment(c.Request.Context(), owner, repo, commentURL); err != nil {
+			utils.Log("Error recording discussion comment in DB: %v", err)
 		}
 	}
 

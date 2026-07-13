@@ -84,6 +84,10 @@ func (p *GitHubProvider) CreateAnonymousPRComment(owner, repo string, number int
 	return github.CreateAnonymousPRComment(owner, repo, number, body)
 }
 
+func (p *GitHubProvider) CreateAnonymousDiscussionComment(owner, repo string, number int, body string) (string, error) {
+	return github.CreateAnonymousDiscussionComment(owner, repo, number, body)
+}
+
 func (p *GitHubProvider) GetMRStatus(owner, repo string, number int) (*provider.MRStatus, error) {
 	state, title, comments, updatedAt, err := github.FetchPRInfo(owner, repo, number)
 	if err != nil {

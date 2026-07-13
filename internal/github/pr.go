@@ -426,6 +426,117 @@ func CreateAnonymousPRComment(owner, repo string, number int, body string) (stri
 	return result.HTMLURL, nil
 }
 
+// CreateAnonymousDiscussionComment publica un comentario en una Discussion de GitHub
+// mediante la API GraphQL (requiere node id de la discusión).
+func CreateAnonymousDiscussionComment(owner, repo string, number int, body string) (string, error) {
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		return "", fmt.Errorf("GITHUB_TOKEN not set")
+	}
+
+	// Resolver el node id de la discusión
+	idQuery := fmt.Sprintf(`{
+		repository(owner: %q, name: %q) {
+			discussion(number: %d) { id }
+		}
+	}`, owner, repo, number)
+	idPayload := map[string]string{"query": idQuery}
+	idJSON, err := json.Marshal(idPayload)
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequest("POST", "https://api.github.com/graphql", bytes.NewBuffer(idJSON))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Authorization", "bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("failed to resolve discussion id: %s", resp.Status)
+	}
+
+	var idResp struct {
+		Data struct {
+			Repository struct {
+				Discussion struct {
+					ID string `json:"id"`
+				} `json:"discussion"`
+			} `json:"repository"`
+		} `json:"data"`
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&idResp); err != nil {
+		return "", err
+	}
+	if len(idResp.Errors) > 0 {
+		return "", fmt.Errorf("graphql: %s", idResp.Errors[0].Message)
+	}
+	discussionID := idResp.Data.Repository.Discussion.ID
+	if discussionID == "" {
+		return "", fmt.Errorf("discussion not found")
+	}
+
+	// Publicar comentario
+	mutation := fmt.Sprintf(`mutation {
+		addDiscussionComment(input: {discussionId: %q, body: %q}) {
+			comment { url }
+		}
+	}`, discussionID, body)
+	mutPayload := map[string]string{"query": mutation}
+	mutJSON, err := json.Marshal(mutPayload)
+	if err != nil {
+		return "", err
+	}
+
+	mreq, err := http.NewRequest("POST", "https://api.github.com/graphql", bytes.NewBuffer(mutJSON))
+	if err != nil {
+		return "", err
+	}
+	mreq.Header.Set("Authorization", "bearer "+token)
+	mreq.Header.Set("Content-Type", "application/json")
+
+	mresp, err := httpClient.Do(mreq)
+	if err != nil {
+		return "", err
+	}
+	defer mresp.Body.Close()
+
+	if mresp.StatusCode != 200 {
+		return "", fmt.Errorf("failed to create discussion comment: %s", mresp.Status)
+	}
+
+	var mutResp struct {
+		Data struct {
+			AddDiscussionComment struct {
+				Comment struct {
+					URL string `json:"url"`
+				} `json:"comment"`
+			} `json:"addDiscussionComment"`
+		} `json:"data"`
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+	if err := json.NewDecoder(mresp.Body).Decode(&mutResp); err != nil {
+		return "", err
+	}
+	if len(mutResp.Errors) > 0 {
+		return "", fmt.Errorf("graphql: %s", mutResp.Errors[0].Message)
+	}
+
+	return mutResp.Data.AddDiscussionComment.Comment.URL, nil
+}
+
 // GetSha returns the SHA of the ref
 func (r *Ref) GetSha() string {
 	return r.Object.Sha

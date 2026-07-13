@@ -466,6 +466,11 @@ func (p *GitLabProvider) CreateAnonymousComment(owner, repo string, number int, 
 	return fmt.Sprintf("https://gitlab.com/%s/%s/-/issues/%d#note_%d", owner, repo, number, result.ID), nil
 }
 
+// CreateAnonymousDiscussionComment is not supported by GitLab; returns an error.
+func (p *GitLabProvider) CreateAnonymousDiscussionComment(owner, repo string, number int, body string) (string, error) {
+	return "", fmt.Errorf("GitLab does not support GitHub Discussions")
+}
+
 // CreateAnonymousPRComment posts a note (comment) on a GitLab merge request.
 func (p *GitLabProvider) CreateAnonymousPRComment(owner, repo string, number int, body string) (string, error) {
 	t := token()

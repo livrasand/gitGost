@@ -79,6 +79,9 @@ type Provider interface {
 	// CreateAnonymousPRComment posts a comment on a PR/MR and returns the comment URL.
 	CreateAnonymousPRComment(owner, repo string, number int, body string) (string, error)
 
+	// CreateAnonymousDiscussionComment posts a comment on a GitHub Discussion and returns the comment URL.
+	CreateAnonymousDiscussionComment(owner, repo string, number int, body string) (string, error)
+
 	// GetMRStatus obtiene el estado actual de un MR/PR incluyendo su timeline de eventos.
 	GetMRStatus(owner, repo string, number int) (*MRStatus, error)
 }

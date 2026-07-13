@@ -57,7 +57,7 @@ func securityHeaders() gin.HandlerFunc {
 				"img-src 'self' data: blob: https://* http://*; "+
 				"object-src 'none'; "+
 				"frame-ancestors 'none'; "+
-				"connect-src 'self' http://localhost:* https://api.github.com https://raw.githubusercontent.com https://gitlab.com https://en.wikipedia.org https://www.wikidata.org",
+				"connect-src 'self' http://localhost:* https://api.github.com https://raw.githubusercontent.com https://github.com https://gitlab.com https://en.wikipedia.org https://www.wikidata.org",
 		)
 		c.Next()
 	}
@@ -283,6 +283,9 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 
 			// Comentarios anónimos en Pull Requests
 			gh.POST("/:owner/:repo/pulls/:number/comments/anonymous", CreateAnonymousPRCommentHandler)
+
+			// Comentarios anónimos en Discussions
+			gh.POST("/:owner/:repo/discussions/:number/comments/anonymous", CreateAnonymousDiscussionCommentHandler)
 		}
 
 		// GitLab provider — same routes under /gl/
@@ -317,6 +320,9 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/gl-avatar", GitLabAvatarHandler)
 		api.GET("/gl-commits/:owner/:repo", GitLabCommitsHandler)
 		api.GET("/gl-commit-detail/:owner/:repo/:sha", GitLabCommitDetailHandler)
+		api.GET("/gh-discussions/:owner/:repo", GitHubDiscussionsProxyHandler)
+		api.GET("/gh-discussion/:owner/:repo/:number", GitHubDiscussionDetailProxyHandler)
+		api.GET("/gh-wiki/:owner/:repo/:page", GitHubWikiProxyHandler)
 	}
 
 	// Appeal routes — anonymous appeal system

@@ -7,32 +7,36 @@ import (
 )
 
 type Config struct {
-	Port           string
-	ReadTimeout    time.Duration
-	WriteTimeout   time.Duration
-	APIKey         string
-	GitHubToken    string
-	GitLabToken    string
-	LogFormat      string
-	SupabaseURL    string
-	SupabaseKey    string
-	PanicPassword  string
-	NtfyAdminTopic string
+	Port             string
+	ReadTimeout      time.Duration
+	WriteTimeout     time.Duration
+	APIKey           string
+	GitHubToken      string
+	GitLabToken      string
+	LogFormat        string
+	SupabaseURL      string
+	SupabaseKey      string
+	PanicPassword    string
+	NtfyAdminTopic   string
+	MentaAPIEndpoint string
+	MentaAPIKey      string
 }
 
 func Load() *Config {
 	cfg := &Config{
-		Port:           getEnv("PORT", "8080"),
-		ReadTimeout:    getDurationEnv("READ_TIMEOUT", 30*time.Second),
-		WriteTimeout:   getDurationEnv("WRITE_TIMEOUT", 30*time.Second),
-		APIKey:         getEnv("GITGOST_API_KEY", ""),
-		GitHubToken:    getEnv("GITHUB_TOKEN", ""),
-		GitLabToken:    getEnv("GITLAB_TOKEN", ""),
-		LogFormat:      getEnv("LOG_FORMAT", "text"),
-		SupabaseURL:    getEnv("SUPABASE_URL", ""),
-		SupabaseKey:    getEnv("SUPABASE_KEY", ""),
-		PanicPassword:  getEnv("PANIC_PASSWORD", ""),
-		NtfyAdminTopic: getEnv("NTFY_ADMIN_TOPIC", ""),
+		Port:             getEnv("PORT", "8080"),
+		ReadTimeout:      getDurationEnv("READ_TIMEOUT", 30*time.Second),
+		WriteTimeout:     getDurationEnv("WRITE_TIMEOUT", 30*time.Second),
+		APIKey:           getEnv("GITGOST_API_KEY", ""),
+		GitHubToken:      getEnv("GITHUB_TOKEN", ""),
+		GitLabToken:      getEnv("GITLAB_TOKEN", ""),
+		LogFormat:        getEnv("LOG_FORMAT", "text"),
+		SupabaseURL:      getEnv("SUPABASE_URL", ""),
+		SupabaseKey:      getEnv("SUPABASE_KEY", ""),
+		PanicPassword:    getEnv("PANIC_PASSWORD", ""),
+		NtfyAdminTopic:   getEnv("NTFY_ADMIN_TOPIC", ""),
+		MentaAPIEndpoint: getEnv("MENTA_API_ENDPOINT", ""),
+		MentaAPIKey:      getEnv("MENTA_API_KEY", ""),
 	}
 
 	return cfg

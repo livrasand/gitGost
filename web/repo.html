@@ -13,6 +13,7 @@
     <!-- Google Fonts removidas por content blocker; se usan system fonts como fallback -->
     <link id="hljs-theme-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github.min.css" />
     <link id="hljs-theme-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github-dark.min.css" disabled />
+    <script src="https://mentacaptchaeu.eu.pythonanywhere.com/menta-captcha.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"></script>
     <script>if (typeof hljs !== 'undefined') hljs.configure({ ignoreUnescapedHTML: true });</script>
     <script src="https://cdn.jsdelivr.net/npm/marked@4/marked.min.js"></script>
@@ -2135,6 +2136,7 @@
             const tokenId = `token-issue-${num}`;
             const statusId = `status-issue-${num}`;
             const listId = `comments-${num}`;
+            const captchaId = `menta-issue-${num}`;
 
             panel.innerHTML = `
                 <div class="issue-detail">
@@ -2161,10 +2163,11 @@
                                 <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                                 <div class="reply-box">
                                     <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
+                                    <menta-widget id="${captchaId}" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                     <div class="reply-footer">
                                         <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                         <span class="reply-status" id="${statusId}"></span>
-                                        <button class="reply-send-btn" onclick="submitIssueComment('${rv.provider}','${rv.owner}','${rv.repo}',${num},'${replyId}','${tokenId}','${statusId}','${listId}')" title="Send">
+                                        <button class="reply-send-btn" onclick="submitIssueComment('${rv.provider}','${rv.owner}','${rv.repo}',${num},'${replyId}','${tokenId}','${statusId}','${listId}','${captchaId}')" title="Send">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                                         </button>
                                     </div>
@@ -2255,6 +2258,9 @@
                         <div class="bug-modal-title"># Labels (optional, comma-separated)</div>
                         <input id="bug-labels-input" type="text" placeholder="bug, enhancement, help wanted" />
                     </div>
+                    <div>
+                        <menta-widget id="menta-bug" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                    </div>
                     <div class="bug-modal-footer">
                         <span class="note">Anonymous issue in <a href="https://github.com/${rv.owner}/${rv.repo}" target="_blank">${rv.owner}/${rv.repo}</a></span>
                         <div class="bug-modal-actions">
@@ -2283,13 +2289,15 @@
             const btn = document.getElementById('bug-submit-btn');
             const statusEl = document.getElementById('bug-status');
             const labels = labelsRaw ? labelsRaw.split(',').map(l => l.trim()).filter(Boolean) : [];
+            const captchaToken = document.getElementById('menta-bug')?.token;
+            if (!captchaToken) { if (statusEl) statusEl.textContent = 'Please complete the captcha'; return; }
             if (btn) btn.disabled = true;
             if (statusEl) statusEl.textContent = 'Sending...';
             try {
                 const res = await fetch(`/v1/${rv.provider}/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/issues/anonymous`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-Gitgost-Key': 'gitgost-anonymous' },
-                    body: JSON.stringify({ title, body, labels }),
+                    body: JSON.stringify({ title, body, labels, captcha_token: captchaToken }),
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
@@ -2516,6 +2524,7 @@
                 const replyId = `reply-disc-${num}`;
                 const tokenId = `token-disc-${num}`;
                 const statusId = `status-disc-${num}`;
+                const captchaId = `menta-disc-${num}`;
 
                 const comments = (data.comments?.nodes || []).map(c => {
                     const cUser = c.author?.login || 'anonymous';
@@ -2555,10 +2564,11 @@
                                     <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                                     <div class="reply-box">
                                         <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
+                                        <menta-widget id="${captchaId}" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                         <div class="reply-footer">
                                             <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                             <span class="reply-status" id="${statusId}"></span>
-                                            <button class="reply-send-btn" onclick="submitDiscussionComment('${rv.owner}','${rv.repo}',${num},'${replyId}','${tokenId}','${statusId}')" title="Send">
+                                            <button class="reply-send-btn" onclick="submitDiscussionComment('${rv.owner}','${rv.repo}',${num},'${replyId}','${tokenId}','${statusId}','${captchaId}')" title="Send">
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                                             </button>
                                         </div>
@@ -2595,17 +2605,19 @@
             }
         }
 
-        async function submitDiscussionComment(owner, repo, number, replyId, tokenId, statusId) {
+        async function submitDiscussionComment(owner, repo, number, replyId, tokenId, statusId, captchaId) {
             const textarea = document.getElementById(replyId);
             const tokenEl  = document.getElementById(tokenId);
             const statusEl = document.getElementById(statusId);
             const body = textarea?.value.trim();
             if (!body) { if (statusEl) statusEl.textContent = 'write something first'; return; }
+            const captchaToken = captchaId ? document.getElementById(captchaId)?.token : null;
+            if (!captchaToken) { if (statusEl) statusEl.textContent = 'please complete the captcha'; return; }
             const btn = textarea?.closest('.reply-box')?.querySelector('.reply-send-btn');
             if (btn) btn.disabled = true;
             if (statusEl) statusEl.textContent = 'sending...';
             const savedToken = localStorage.getItem('comment_token') || '';
-            const payload = { body };
+            const payload = { body, captcha_token: captchaToken };
             const manualToken = tokenEl?.value.trim();
             const useToken = manualToken || savedToken;
             if (useToken) payload.user_token = useToken;
@@ -3267,17 +3279,19 @@
             _highlightDiffs(panel);
         }
 
-        async function submitIssueComment(provider, owner, repo, number, replyId, tokenId, statusId, listId) {
+        async function submitIssueComment(provider, owner, repo, number, replyId, tokenId, statusId, listId, captchaId) {
             const textarea = document.getElementById(replyId);
             const tokenEl  = document.getElementById(tokenId);
             const statusEl = document.getElementById(statusId);
             const body = textarea?.value.trim();
             if (!body) { if (statusEl) statusEl.textContent = 'write something first'; return; }
+            const captchaToken = captchaId ? document.getElementById(captchaId)?.token : null;
+            if (!captchaToken) { if (statusEl) statusEl.textContent = 'please complete the captcha'; return; }
             const btn = textarea?.closest('.reply-box')?.querySelector('.reply-send-btn');
             if (btn) btn.disabled = true;
             if (statusEl) statusEl.textContent = 'sending...';
             const savedToken = localStorage.getItem('comment_token') || '';
-            const payload = { body };
+            const payload = { body, captcha_token: captchaToken };
             const manualToken = tokenEl?.value.trim();
             const useToken = manualToken || savedToken;
             if (useToken) payload.user_token = useToken;
@@ -3383,6 +3397,7 @@
             const replyId  = `reply-pr-${num}`;
             const tokenId  = `token-pr-${num}`;
             const statusId = `status-pr-${num}`;
+            const captchaId = `menta-pr-${num}`;
 
             panel.innerHTML = `
                 <div class="issue-detail">
@@ -3408,10 +3423,11 @@
                                 <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                                 <div class="reply-box">
                                     <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
+                                    <menta-widget id="${captchaId}" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                     <div class="reply-footer">
                                         <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                         <span class="reply-status" id="${statusId}"></span>
-                                        <button class="reply-send-btn" onclick="submitIssueComment('${rv.provider}','${rv.owner}','${rv.repo}',${num},'${replyId}','${tokenId}','${statusId}')" title="Send">
+                                        <button class="reply-send-btn" onclick="submitIssueComment('${rv.provider}','${rv.owner}','${rv.repo}',${num},'${replyId}','${tokenId}','${statusId}',null,'${captchaId}')" title="Send">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                                         </button>
                                     </div>

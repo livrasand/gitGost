@@ -56,7 +56,7 @@ func main() {
 		}
 
 		// Try Go build info
-		if (commitHash == "main" || commitHash == "") {
+		if commitHash == "main" || commitHash == "" {
 			if info, ok := debug.ReadBuildInfo(); ok {
 				for _, setting := range info.Settings {
 					if setting.Key == "vcs.revision" {
@@ -95,6 +95,9 @@ func main() {
 
 	// Initialize panic button
 	handler.InitPanicConfig(cfg.PanicPassword, cfg.NtfyAdminTopic)
+
+	// Initialize Menta CAPTCHA verification (no-op if MENTA_API_ENDPOINT is unset)
+	handler.InitMentaConfig(cfg.MentaAPIEndpoint, cfg.MentaAPIKey)
 
 	// Setup router
 	router := handler.SetupRouter(cfg)

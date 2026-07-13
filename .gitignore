@@ -23,8 +23,8 @@ server
 # OS files
 .DS_Store
 
-# Logs
-
 # Environment variables
 .env
 *.log
+
+menta-account.txt

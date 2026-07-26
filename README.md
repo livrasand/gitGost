@@ -4,15 +4,10 @@
 
 <h1>gitGost</h1>
 
- **Contribute to any GitHub repo without leaving a trace.**
+ **Contribute to any Git repository without exposing your identity.**
  
   Zero accounts • Zero tokens • Zero metadata • Designed for strong anonymity
 </div>
-
-<br><br><br>
-
-> [!IMPORTANT]
-> Upvote gitGost on [ProductHunt](https://www.producthunt.com/posts/gitgost-anonymous-git-contributions), [PeerPush](https://peerpush.com/p/gitgost), to help me promote it.
 
 ## One-liner demo
 
@@ -28,7 +23,7 @@ git push gost fix-typo:main
 That’s it. No login, token, name, or email required — gitGost provides strong anonymity features, but not perfect anonymity — see the [Threat Model](#threat-model).
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/livrasand/gitGost)
-[![Desplegado](https://gitgost.fly.dev/badges/deployed.svg)](https://gitgost.fly.dev/health)
+[![Docs](https://img.shields.io/badge/docs-mintlify-blue?logo=readthedocs&logoColor=white)](https://mintlify.wiki/livrasand/gitGost/introduction)
 [![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/livrasand)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Security Responsible Disclosure](https://img.shields.io/badge/Security-Responsible%20Disclosure-yellow)](SECURITY.md)
@@ -36,6 +31,7 @@ That’s it. No login, token, name, or email required — gitGost provides stron
 [![Powered by Go](https://img.shields.io/badge/Powered%20by-Go-00ADD8.svg?logo=go)](https://go.dev)
 [![Privacy First](https://img.shields.io/badge/Privacy-First-59316b)](https://github.com/livrasand/gitGost)
 [![GitHub repo size](https://img.shields.io/github/repo-size/livrasand/gitGost)](https://github.com/EduardaSRBastos/my-essential-toolbox)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/livrasand?label=GitHub%20Sponsors)](https://github.com/sponsors/livrasand)
   <img
   src="https://img.shields.io/badge/GitHub-Available-brightgreen?logo=github"
   alt="GitHub – Coming Soon"/>
@@ -57,6 +53,8 @@ That’s it. No login, token, name, or email required — gitGost provides stron
 > "Fixed GPIO mapping bug in 10s without doxxing risk – @gitgost-anonymous"  
 > [View PR ↗](https://github.com/mehdi7129/inky-photo-frame/pull/3) *(Example from mehdi7129/inky-photo-frame)*
 
+⭐ Star this repo if you believe developers deserve the right to contribute anonymously.
+
 ## Features
 
 | Feature                     | Description                                                                 |
@@ -67,18 +65,46 @@ That’s it. No login, token, name, or email required — gitGost provides stron
 | **Works Everywhere**        | Terminal, CI/CD, Docker, scripts – any public GitHub repo, anywhere Git runs. |
 | **Open Source & AGPL**      | 100% transparent. Fork it, audit it, host it yourself.                     |
 
-## Anonymous Contributor Friendly Badge
+## Quick Start
 
-To signal that your repository welcomes anonymous contributions via gitGost, add this badge to your README:
+```bash
+# 1. Add the remote (replace with any public repo)
+git remote add gost https://gitgost.fly.dev/v1/gh/username/repo
 
-![Anonymous Contributor Friendly](https://gitgost.fly.dev/badges/anonymous-friendly.svg)
+# 2. Create your branch and commit with a detailed message
+git checkout -b my-cool-fix
+git commit -am "fix: typo in documentation
 
+This commit fixes a grammatical error in the README.
+The word 'recieve' should be 'receive'."
 
-For verified repositories, add a `.gitgost.yml` file to your repository root and use the dynamic version:
+# 3. Push – PR opens anonymously
+git push gost my-cool-fix:main
+```
 
-![Anonymous Contributor Friendly](https://gitgost.fly.dev/badges/anonymous-friendly.svg?repo=livrasand%2FgitGost)
+Done. The PR appears instantly from `@gitgost-anonymous` with your commit message as the PR description.
 
-This badge helps contributors know that anonymous contributions are accepted and encouraged.
+**Pro tip:** Write detailed commit messages! Your commit message becomes the PR description, allowing you to provide context while staying anonymous.
+
+## Why developers love gitGost
+
+> “Your commit history shouldn’t be an HR liability forever.”
+
+- No permanent public record of your activity  
+- Safely contribute to controversial projects (employer or country doesn’t like it? no problem)  
+- Stop email harvesting & doxxing from public commits  
+- Fix that one annoying typo without attaching your name for eternity  
+- Be a ghost when you want to be
+
+Built for developers who actually care about privacy.
+
+## 💸 Donations
+
+gitGost is a non-profit project run entirely by volunteers, not employees.
+We need your funds to pay for software, hardware and hosting around continuous integration and future improvements to the project.
+Every donation will be spent on making gitGost better for our users.
+
+Please consider a regular donation through [GitHub Sponsors](https://github.com/sponsors/livrasand).
 
 ## Repository Opt-Out
 
@@ -100,18 +126,6 @@ error: push rejected: repository has opted out of gitGost
 ```
 
 If the file does not exist or `DENY_ALL` is not set, contributions are allowed by default.
-
-## Why developers love gitGost
-
-> “Your commit history shouldn’t be an HR liability forever.”
-
-- No permanent public record of your activity  
-- Safely contribute to controversial projects (employer or country doesn’t like it? no problem)  
-- Stop email harvesting & doxxing from public commits  
-- Fix that one annoying typo without attaching your name for eternity  
-- Be a ghost when you want to be
-
-Built for developers who actually care about privacy.
 
 ## Legitimate Use Cases
 
@@ -188,27 +202,6 @@ gitGost assumes the user:
 - Understands that perfect anonymity does not exist
 
 For the full model, see [THREAT_MODEL.md](THREAT_MODEL.md). For more operational details, see [SECURITY.md](SECURITY.md).
-
-## Quick Start
-
-```bash
-# 1. Add the remote (replace with any public repo)
-git remote add gost https://gitgost.fly.dev/v1/gh/username/repo
-
-# 2. Create your branch and commit with a detailed message
-git checkout -b my-cool-fix
-git commit -am "fix: typo in documentation
-
-This commit fixes a grammatical error in the README.
-The word 'recieve' should be 'receive'."
-
-# 3. Push – PR opens anonymously
-git push gost my-cool-fix:main
-```
-
-Done. The PR appears instantly from `@gitgost-anonymous` with your commit message as the PR description.
-
-**Pro tip:** Write detailed commit messages! Your commit message becomes the PR description, allowing you to provide context while staying anonymous.
 
 ## Security & Limits (we’re not reckless)
 
@@ -446,9 +439,19 @@ curl -X POST https://gitgost.fly.dev/admin/rollback \
 
 This closes up to 2 hours of recorded PRs in parallel via the GitHub API. PRs older than 2 hours are not affected.
 
+## Community Integrations
+
+> Want to add your project? Open a pull request.
+
+| Project | Description | Repository |
+|---------|-------------|-------------|
+| **bug-bounties** | Anonymous bug bounty program submissions powered by gitGost. Uses a server-side proxy to create GitHub issues anonymously through gitGost. | https://github.com/Lissy93/bug-bounties |
+
+
 ---
 
-Star this repo if you believe developers deserve the right to contribute anonymously.
+> [!IMPORTANT]
+> Upvote gitGost on [Product Hunt](https://www.producthunt.com/posts/gitgost-anonymous-git-contributions), [PeerPush](https://peerpush.com/p/gitgost), to help me promote it.
 
 [![Share](https://img.shields.io/badge/share-000000?logo=x&logoColor=white)](https://x.com/intent/tweet?text=Check%20out%20this%20project%20on%20GitHub:%20https://github.com/livrasand/gitGost%20%23gitGost%20%23anonymous%20%23privacy)
 [![Share](https://img.shields.io/badge/share-1877F2?logo=facebook&logoColor=white)](https://www.facebook.com/sharer/sharer.php?u=https://github.com/livrasand/gitGost)

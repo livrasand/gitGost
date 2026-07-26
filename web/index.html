@@ -1245,6 +1245,14 @@
 		<path d="M8.5 6.755h7m-7 4h7m-7 4H12" />
 	</g>
 </svg> karma</a>
+                <a href="#" onclick="showPage('about'); return false;" class="nav-link"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+		<circle cx="12" cy="12" r="9.25" />
+		<path d="M12 11v6" />
+		<circle cx="12" cy="7.5" r="0.5" fill="currentColor" />
+	</g>
+</svg> about</a>
 
                 <div class="section-content" id="rate-limit-section">
                     <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-muted);display:flex;flex-direction:column;gap:0.75rem;margin-top:10px;">
@@ -3204,6 +3212,101 @@
                         <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;">
                             <h3 style="margin-top:0;color:var(--accent);">Privacy first</h3>
                             <p>We don't store personal data: only the anonymous hash, its karma and the relation to sent messages. We don't track IPs or link identities.</p>
+                        </div>`
+                },
+                about: {
+                    title: 'About',
+                    html: () => `
+                        <div style="display:flex;flex-direction:column;gap:2.5rem;">
+                            <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:1.5rem 0 2rem;border-bottom:1px solid var(--border);">
+                                <img src="assets/logos/gitgost-logo.svg" width="72" height="72" style="margin-bottom:1rem;" alt="gitGost logo" />
+                                <h2 style="font-size:1.75rem;font-weight:700;margin:0 0 0.5rem;color:var(--fg);font-family:'IBM Plex Mono',monospace;">gitGost</h2>
+                                <p style="font-size:1rem;color:var(--fg-muted);margin:0 0 1.5rem;max-width:520px;">Contribute to any Git repository without exposing your identity.</p>
+                                <a href="#" onclick="showPage('cli'); return false;" class="btn primary" style="text-decoration:none;display:inline-block;">Start Contributing Anonymously</a>
+                            </div>
+
+                            <div>
+                                <h3 style="font-size:1rem;color:var(--fg);margin:0 0 1rem;">Browse freely. Push privately.</h3>
+                                <p style="font-size:0.85rem;color:var(--fg-muted);margin:0 0 1rem;">Defend yourself against identity exposure and email harvesting. Contribute to open source without attaching your name, email, or history to every commit.</p>
+                                <p style="font-size:0.85rem;color:var(--fg-muted);margin:0;">gitGost sits between your local Git client and GitHub/GitLab. It strips identifying metadata, opens pull requests and issues from a neutral bot, lets you comment on issues, pull requests, and GitHub Discussions, and keeps no personal data on disk.</p>
+                            </div>
+
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;">
+                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Strip Metadata</div>
+                                    <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">No name, email, or timestamps</h3>
+                                    <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Author, committer, and timestamp fields are removed before anything reaches the target platform.</p>
+                                </div>
+                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">No Accounts</div>
+                                    <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Zero signup required</h3>
+                                    <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">No tokens, logins, or browser extensions. Just add a remote and push like you always do.</p>
+                                </div>
+                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Open Source</div>
+                                    <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Auditable and copyleft</h3>
+                                    <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">AGPL-3.0 licensed with reproducible builds and signed attestations. Don't trust, verify.</p>
+                                </div>
+                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Push via Tor</div>
+                                    <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Network-layer privacy</h3>
+                                    <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Route your git push through Tor or a VPN so the server never sees your real IP.</p>
+                                </div>
+                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Rate Limits</div>
+                                    <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Abuse-resistant by design</h3>
+                                    <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Caps on PRs, repo size, and commit size keep the service sustainable and fair.</p>
+                                </div>
+                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Issues / Discussions / Reviews</div>
+                                    <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Participate beyond PRs</h3>
+                                    <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Open anonymous issues and comment on issues, pull requests, and GitHub Discussions.</p>
+                                </div>
+                            </div>
+
+                            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;">
+                                <h3 style="margin-top:0;color:var(--accent);">About Us</h3>
+                                <p style="font-size:0.85rem;color:var(--fg-muted);margin:0 0 1rem;">We believe every developer should be able to fix the internet without fear. gitGost is an open-source project dedicated to making anonymous contribution practical, secure, and accountable through maintainer review.</p>
+                                <p style="font-size:0.85rem;color:var(--fg-muted);margin:0 0 1rem;">We advance privacy in software development by providing free tools that remove identity barriers while preserving the collaborative quality of open source.</p>
+                                <p style="font-size:0.85rem;color:var(--fg-muted);margin:0;">Meet the project on <a href="https://github.com/livrasand/gitGost" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">GitHub</a>.</p>
+                            </div>
+
+                            <div>
+                                <h3 style="font-size:1rem;color:var(--fg);margin:0 0 1rem;">Our mission</h3>
+                                <p style="font-size:0.85rem;color:var(--fg-muted);margin:0 0 1rem;">To advance human rights and freedoms by creating and deploying free and open source anonymity technologies for software development, supporting their unrestricted availability and use, and furthering their scientific and popular understanding.</p>
+                                <p style="font-size:0.85rem;color:var(--fg-muted);margin:0;">We envision a future where privacy and anonymity are the norm in collaborative coding, and where "being a ghost" is a powerful choice, not a limitation.</p>
+                            </div>
+
+                            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;">
+                                <h3 style="margin-top:0;color:var(--accent);">What we don't keep</h3>
+                                <ul style="margin:0.4rem 0 0 1.2rem;padding:0;font-size:0.82rem;color:var(--fg-muted);">
+                                    <li>No commits, blobs, or refs after forwarding.</li>
+                                    <li>No GitHub tokens or access keys.</li>
+                                    <li>No IP addresses or session histories.</li>
+                                    <li>No names, emails, or SSH fingerprints.</li>
+                                    <li>No persistent request logs.</li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h3 style="font-size:1rem;color:var(--fg);margin:0 0 1rem;">Don't trust, verify</h3>
+                                <p style="font-size:0.85rem;color:var(--fg-muted);margin:0 0 1rem;">gitGost is 100% open source under AGPL-3.0. Every release includes cryptographic attestations mapping the binary back to a commit in the repository, so you can verify the server runs exactly the code you can audit.</p>
+                                <p style="font-size:0.85rem;color:var(--fg-muted);margin:0;">Read the <a href="https://github.com/livrasand/gitGost/blob/main/ARCHITECTURE.md" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">architecture</a>, <a href="https://github.com/livrasand/gitGost/blob/main/THREAT_MODEL.md" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">threat model</a>, and <a href="https://github.com/livrasand/gitGost/blob/main/SECURITY.md" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">security policy</a>.</p>
+                            </div>
+
+                            <div style="text-align:center;padding:1.5rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);">
+                                <h3 style="margin:0 0 0.75rem;color:var(--fg);">Be a gost. Fix the internet.</h3>
+                                <a href="https://github.com/sponsors/livrasand" target="_blank" rel="noopener" class="btn primary" style="text-decoration:none;display:inline-block;margin-right:0.5rem;">Donate</a>
+                                <a href="https://github.com/livrasand/gitGost" target="_blank" rel="noopener" class="btn" style="text-decoration:none;display:inline-block;">Fork on GitHub</a>
+                            </div>
+
+                            <div style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:center;font-size:0.75rem;color:var(--fg-secondary);">
+                                <a href="https://github.com/livrasand/gitGost" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">GitHub</a>
+                                <a href="https://github.com/sponsors/livrasand" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">Donate</a>
+                                <a href="https://github.com/livrasand/gitGost/blob/main/SECURITY.md" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">Security</a>
+                                <a href="https://github.com/livrasand/gitGost/blob/main/Privacy%20Guarantees.md" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">Privacy Guarantees</a>
+                                <a href="https://github.com/livrasand/gitGost/blob/main/AI-POLICY.md" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">AI Policy</a>
+                            </div>
                         </div>`
                 }
             };

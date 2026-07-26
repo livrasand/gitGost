@@ -63,6 +63,7 @@ That’s it. No login, token, name, or email required — gitGost provides stron
 | **One-Command Setup**       | Just `git remote add gost <url>` – no accounts, tokens, or browser extensions. |
 | **Battle-tested Security**  | Rate limiting, repository size caps, commit validation. Written in pure Go with minimal dependencies – fully auditable. |
 | **Works Everywhere**        | Terminal, CI/CD, Docker, scripts – any public GitHub repo, anywhere Git runs. |
+| **Issues, Discussions & Reviews** | Open anonymous issues and comment on issues, pull requests, and GitHub Discussions. |
 | **Open Source & AGPL**      | 100% transparent. Fork it, audit it, host it yourself.                     |
 
 ## Quick Start

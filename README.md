@@ -9,6 +9,11 @@
   Zero accounts • Zero tokens • Zero metadata • Designed for strong anonymity
 </div>
 
+<br><br><br>
+
+> [!IMPORTANT]
+> Upvote gitGost on [ProductHunt](https://www.producthunt.com/posts/gitgost-anonymous-git-contributions), [PeerPush](https://peerpush.com/p/gitgost), to help me promote it.
+
 ## One-liner demo
 
 ```bash

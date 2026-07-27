@@ -13,6 +13,7 @@ type Config struct {
 	APIKey           string
 	GitHubToken      string
 	GitLabToken      string
+	CodebergToken    string
 	LogFormat        string
 	SupabaseURL      string
 	SupabaseKey      string
@@ -30,6 +31,7 @@ func Load() *Config {
 		APIKey:           getEnv("GITGOST_API_KEY", ""),
 		GitHubToken:      getEnv("GITHUB_TOKEN", ""),
 		GitLabToken:      getEnv("GITLAB_TOKEN", ""),
+		CodebergToken:    getEnv("CODEBERG_TOKEN", ""),
 		LogFormat:        getEnv("LOG_FORMAT", "text"),
 		SupabaseURL:      getEnv("SUPABASE_URL", ""),
 		SupabaseKey:      getEnv("SUPABASE_KEY", ""),

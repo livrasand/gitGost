@@ -208,8 +208,23 @@ For users located outside Mexico, nothing in this notice limits the rights grant
 
 For legal inquiries, intellectual property concerns, or DMCA takedown notices, contact:
 
-- **Email:** `gitGos@proton.me`
+- **Email:** `livrasa@outlook.com`
 - **Anonymous channel:** Open an issue with the prefix `[LEGAL]` in this repository.
+
+## 10. Attribution
+
+This project uses icons from the following icon sets:
+
+- **coolicons** by [Kryston Schwarze](https://github.com/krystonschwarze/coolicons), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- **Typicons** by [Stephen Hutchings](https://github.com/stephenhutchings/typicons.font), licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+- **ProIcons** by ProCode, licensed under MIT (No attribution required, commercial use is allowed). Icons grid: 24.
+- **Simple Icons**: los iconos de las plataformas Git son extraídos de [Simple Icons](https://simpleicons.org/).
+  Un proyecto CC0 mantenido por los contribuidores de Simple Icons.
+  Usa GitHub para solicitudes, correcciones y contribuciones.
+  Amablemente apoyado por tus donaciones en Open Collective.
+- **github-language-color-themes**: los colores de los lenguajes de programación son obtenidos del repositorio [hiroppy/github-language-color-themes](https://github.com/hiroppy/github-language-color-themes), con referencia a [github/linguist](https://github.com/github/linguist).
+
+[Return to icon sets list](https://icon-sets.iconify.design/)
 
 ---
 

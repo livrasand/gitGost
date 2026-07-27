@@ -88,7 +88,7 @@
         <meta name="theme-color" content="#d16014" />
         <meta
             name="description"
-            content="Contribute to any GitHub or GitLab repository without leaving a trace. Anonymous Git contributions with gitGost — privacy first, no accounts, open source. Defend your identity in open source."
+            content="Contribute to any GitHub, GitLab or Codeberg repository without leaving a trace. Anonymous Git contributions with gitGost — privacy first, no accounts, open source. Defend your identity in open source."
         />
         <meta
             name="keywords"
@@ -103,7 +103,7 @@
         />
         <meta
             property="og:description"
-            content="Contribute to any GitHub or GitLab repository without leaving a trace. Privacy first, no accounts, open source."
+            content="Contribute to any GitHub, GitLab or Codeberg repository without leaving a trace. Privacy first, no accounts, open source."
         />
         <meta
             property="og:image"
@@ -118,7 +118,7 @@
         />
         <meta
             property="twitter:description"
-            content="Contribute to any GitHub or GitLab repository without leaving a trace. Privacy first, no accounts, open source."
+            content="Contribute to any GitHub, GitLab or Codeberg repository without leaving a trace. Privacy first, no accounts, open source."
         />
         <meta
             property="twitter:image"
@@ -136,7 +136,7 @@
                 "@type": "SoftwareApplication",
                 "name": "gitGost",
                 "alternateName": "Anonymous Git Contributions",
-                "description": "Contribute to any GitHub repo without leaving a trace. Anonymous Git contributions with gitGost - privacy first, zero accounts, open source.",
+                "description": "Contribute to any GitHub, GitLab or Codeberg repo without leaving a trace. Anonymous Git contributions with gitGost - privacy first, zero accounts, open source.",
                 "url": "https://gitgost.fly.dev",
                 "applicationCategory": "DeveloperApplication",
                 "operatingSystem": "Web",
@@ -191,6 +191,128 @@
                     --card: #0d0d0d;
                     --code-bg: #111111;
                 }
+            }
+
+            .rate-limit-providers {
+                display: flex;
+                justify-content: center;
+                gap: 0.7rem;
+                margin-top: 10px;
+            }
+
+            .rate-limit-provider {
+                position: relative;
+                width: 52px;
+                height: 52px;
+                padding: 4px;
+                border: 0;
+                border-radius: 50%;
+                color: var(--fg-muted);
+                background: transparent;
+                cursor: pointer;
+            }
+
+            .rate-limit-provider svg {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                transform: rotate(-90deg);
+                pointer-events: none;
+            }
+
+            .rate-limit-provider .rate-limit-track,
+            .rate-limit-provider .rate-limit-progress {
+                fill: none;
+                stroke-width: 2;
+            }
+
+            .rate-limit-provider .rate-limit-track {
+                stroke: var(--border);
+            }
+
+            .rate-limit-provider .rate-limit-progress {
+                stroke: var(--accent);
+                stroke-linecap: round;
+                stroke-dasharray: 138.2;
+                stroke-dashoffset: 138.2;
+                transition: stroke-dashoffset 0.4s, stroke 0.4s;
+            }
+
+            .rate-limit-icon {
+                position: relative;
+                z-index: 1;
+                display: grid;
+                place-items: center;
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                font-family: "IBM Plex Sans", sans-serif;
+                font-size: 0.65rem;
+                font-weight: 700;
+            }
+
+            .rate-limit-icon svg {
+                position: static;
+                width: 1.35rem;
+                height: 1.35rem;
+                transform: none;
+            }
+
+            .rate-limit-modal {
+                position: fixed;
+                inset: 0;
+                z-index: 20;
+                display: grid;
+                place-items: center;
+                padding: 1rem;
+                background: rgb(0 0 0 / 45%);
+            }
+
+            .rate-limit-modal[hidden] {
+                display: none;
+            }
+
+            .rate-limit-modal-content {
+                position: relative;
+                width: min(100%, 300px);
+                padding: 1.25rem;
+                border: 1px solid var(--border);
+                border-radius: var(--radius-lg);
+                background: var(--card);
+                box-shadow: 0 12px 36px rgb(0 0 0 / 25%);
+                font-family: "IBM Plex Mono", monospace;
+            }
+
+            .rate-limit-modal-close {
+                position: absolute;
+                top: 0.55rem;
+                right: 0.65rem;
+                border: 0;
+                color: var(--fg-muted);
+                background: transparent;
+                font-size: 1.1rem;
+                cursor: pointer;
+            }
+
+            .rate-limit-modal-title {
+                margin: 0 1.5rem 1rem 0;
+                color: var(--fg);
+                font-size: 0.85rem;
+                text-transform: lowercase;
+            }
+
+            .rate-limit-modal-details {
+                display: grid;
+                gap: 0.45rem;
+                color: var(--fg-muted);
+                font-size: 0.68rem;
+            }
+
+            .rate-limit-modal-details div {
+                display: flex;
+                justify-content: space-between;
+                gap: 1rem;
             }
 
             *,
@@ -303,6 +425,69 @@
 
             .section-content {
                 margin-bottom: 1.5rem;
+            }
+
+            .mt-5.loaded.raised {
+                width: min(182px, 100%);
+                margin: 0 auto 1.5rem;
+                padding: 0.45rem 0.45rem 0.65rem;
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                background: var(--card);
+                box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+                font-family: Arial, sans-serif;
+            }
+
+            .mt-5.loaded.raised .ea-content {
+                overflow: hidden;
+                border-radius: 2px;
+                background: var(--bg-secondary);
+            }
+
+            .mt-5.loaded.raised .ea-content > a {
+                display: block;
+            }
+
+            .mt-5.loaded.raised img {
+                display: block;
+                width: 100%;
+                height: auto;
+            }
+
+            .mt-5.loaded.raised .ea-text {
+                padding: 0.7rem 0.45rem 0.25rem;
+                text-align: center;
+                line-height: 1.18;
+            }
+
+            .mt-5.loaded.raised .ea-text a {
+                display: block;
+                overflow-wrap: anywhere;
+                color: var(--fg);
+                font-size: clamp(0.62rem, 2.8vw, 0.75rem);
+                text-decoration: none;
+            }
+
+            .mt-5.loaded.raised .ea-text strong {
+                color: var(--accent);
+            }
+
+            .mt-5.loaded.raised .ea-callout {
+                padding-top: 0.55rem;
+                text-align: right;
+                font-size: 0.58rem;
+                font-style: italic;
+            }
+
+            .mt-5.loaded.raised .ea-callout a {
+                color: var(--fg-muted);
+                text-decoration: none;
+            }
+
+            @media (max-width: 700px) {
+                .mt-5.loaded.raised {
+                    width: min(182px, calc(100vw - 2rem));
+                }
             }
 
             .section-content p {
@@ -430,6 +615,16 @@
             .repo-item-name {
                 font-size: 0.82rem;
                 line-height: 1.4;
+                display: flex;
+                align-items: center;
+                gap: 0.35rem;
+            }
+
+            .repo-item-name .forge-icon {
+                width: 1em;
+                height: 1em;
+                flex-shrink: 0;
+                color: var(--fg-muted);
             }
 
             .repo-item-name .owner {
@@ -462,6 +657,23 @@
                 font-size: 0.72rem;
                 color: var(--fg-secondary);
                 flex-shrink: 0;
+            }
+
+            .repo-lang {
+                font-family: "IBM Plex Mono", monospace;
+                font-size: 0.7rem;
+                color: var(--fg-secondary);
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+                flex-shrink: 0;
+            }
+
+            .repo-lang-dot {
+                width: 0.65em;
+                height: 0.65em;
+                border-radius: 50%;
+                display: inline-block;
             }
 
             .repo-ago {
@@ -1255,63 +1467,64 @@
 </svg> about</a>
 
                 <div class="section-content" id="rate-limit-section">
-                    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-muted);display:flex;flex-direction:column;gap:0.75rem;margin-top:10px;">
-                        <!-- GitHub -->
-                        <div>
-                            <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem;">
-                                <span style="font-size:0.63rem;opacity:0.7;">github api rate limit</span>
-                                <span id="rl-status" style="font-size:0.63rem;"></span>
-                            </div>
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem;">
-                                <span id="rl-remaining">—</span>
-                                <span id="rl-limit" style="opacity:0.5;">/ —</span>
-                            </div>
-                            <div style="background:var(--bg-secondary);border-radius:3px;height:4px;overflow:hidden;margin-bottom:0.2rem;">
-                                <div id="rl-bar" style="height:100%;width:0%;background:var(--accent);border-radius:3px;transition:width 0.4s;"></div>
-                            </div>
-                            <span id="rl-reset" style="font-size:0.63rem;opacity:0.5;"></span>
-                        </div>
-                        <!-- GitLab -->
-                        <div>
-                            <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem;">
-                                <span style="font-size:0.63rem;opacity:0.7;">gitlab api rate limit</span>
-                                <span id="gl-status" style="font-size:0.63rem;"></span>
-                            </div>
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem;">
-                                <span id="gl-remaining">—</span>
-                                <span id="gl-limit" style="opacity:0.5;">/ —</span>
-                            </div>
-                            <div style="background:var(--bg-secondary);border-radius:3px;height:4px;overflow:hidden;margin-bottom:0.2rem;">
-                                <div id="gl-bar" style="height:100%;width:0%;background:#fc6d26;border-radius:3px;transition:width 0.4s;"></div>
-                            </div>
-                            <span id="gl-reset" style="font-size:0.63rem;opacity:0.5;"></span>
+                    <div class="rate-limit-providers" aria-label="API rate limits">
+                        <button class="rate-limit-provider" type="button" data-provider="github" aria-label="View GitHub API rate limit">
+                            <svg viewBox="0 0 48 48" aria-hidden="true">
+                                <circle class="rate-limit-track" cx="24" cy="24" r="22" />
+                                <circle class="rate-limit-progress" id="rl-bar" cx="24" cy="24" r="22" />
+                            </svg>
+                            <span class="rate-limit-icon" aria-hidden="true"><svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>GitHub</title><path fill="#181717" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></span>
+                        </button>
+                        <button class="rate-limit-provider" type="button" data-provider="gitlab" aria-label="View GitLab API rate limit">
+                            <svg viewBox="0 0 48 48" aria-hidden="true">
+                                <circle class="rate-limit-track" cx="24" cy="24" r="22" />
+                                <circle class="rate-limit-progress" id="gl-bar" cx="24" cy="24" r="22" style="stroke:#fc6d26;" />
+                            </svg>
+                            <span class="rate-limit-icon" aria-hidden="true"><svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#FC6D26" d="m23.6004 9.5927-.0337-.0862L20.3.9814a.851.851 0 0 0-.3362-.405.8748.8748 0 0 0-.9997.0539.8748.8748 0 0 0-.29.4399l-2.2055 6.748H7.5375l-2.2057-6.748a.8573.8573 0 0 0-.29-.4412.8748.8748 0 0 0-.9997-.0537.8585.8585 0 0 0-.3362.4049L.4332 9.5015l-.0325.0862a6.0657 6.0657 0 0 0 2.0119 7.0105l.0113.0087.03.0213 4.976 3.7264 2.462 1.8633 1.4995 1.1321a1.0085 1.0085 0 0 0 1.2197 0l1.4995-1.1321 2.4619-1.8633 5.006-3.7489.0125-.01a6.0682 6.0682 0 0 0 2.0094-7.003z"/></svg></span>
+                        </button>
+                        <button class="rate-limit-provider" type="button" data-provider="codeberg" aria-label="View Codeberg API rate limit">
+                            <svg viewBox="0 0 48 48" aria-hidden="true">
+                                <circle class="rate-limit-track" cx="24" cy="24" r="22" />
+                                <circle class="rate-limit-progress" id="cb-bar" cx="24" cy="24" r="22" style="stroke:#2185D0;" />
+                            </svg>
+                            <span class="rate-limit-icon" aria-hidden="true"><svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Codeberg</title><path fill="#2185D0" d="M11.999.747A11.974 11.974 0 0 0 0 12.75c0 2.254.635 4.465 1.833 6.376L11.837 6.19c.072-.092.251-.092.323 0l4.178 5.402h-2.992l.065.239h3.113l.882 1.138h-3.674l.103.374h3.86l.777 1.003h-4.358l.135.483h4.593l.695.894h-5.038l.165.589h5.326l.609.785h-5.717l.182.65h6.038l.562.727h-6.397l.183.65h6.717A12.003 12.003 0 0 0 24 12.75 11.977 11.977 0 0 0 11.999.747zm3.654 19.104.182.65h5.326c.173-.204.353-.433.513-.65zm.385 1.377.18.65h3.563c.233-.198.485-.428.712-.65zm.383 1.377.182.648h1.203c.356-.204.685-.412 1.042-.648zz"/></svg></span>
+                        </button>
+                    </div>
+                    <div hidden>
+                        <span id="rl-remaining">—</span><span id="rl-limit">/ —</span><span id="rl-status"></span><span id="rl-reset"></span>
+                        <span id="gl-remaining">—</span><span id="gl-limit">/ —</span><span id="gl-status"></span><span id="gl-reset"></span>
+                        <span id="cb-remaining">—</span><span id="cb-limit">/ —</span><span id="cb-status"></span><span id="cb-reset"></span>
+                    </div>
+                </div>
+                <div class="rate-limit-modal" id="rate-limit-modal" hidden role="dialog" aria-modal="true" aria-labelledby="rate-limit-modal-title">
+                    <div class="rate-limit-modal-content">
+                        <button class="rate-limit-modal-close" id="rate-limit-modal-close" type="button" aria-label="Close">×</button>
+                        <h2 class="rate-limit-modal-title" id="rate-limit-modal-title"></h2>
+                        <div class="rate-limit-modal-details">
+                            <div><span>remaining</span><strong id="rate-limit-modal-remaining">—</strong></div>
+                            <div><span>limit</span><strong id="rate-limit-modal-limit">—</strong></div>
+                            <div><span>status</span><strong id="rate-limit-modal-status">—</strong></div>
+                            <div><span>reset</span><strong id="rate-limit-modal-reset">—</strong></div>
                         </div>
                     </div>
                 </div>
-                <div class="section-title" style="margin-top: 1rem">
-                    #about
-                </div>
+                <!-- div class="mt-5 loaded raised" data-ea-type="image" data-ea-publisher="unknown">
+                    <div class="ea-content">
+                        <a href="https://openbin.livrasand.com/?ref=gitgost" rel="nofollow noopener" target="_blank">
+                            <img src="assets/sponsors/openbin.livrasand.com.png" alt="Openbin">
+                        </a>
+                        <div class="ea-text">
+                            <a href="https://openbin.livrasand.com/?ref=gitgost" rel="nofollow noopener" target="_blank">
+                                <strong>Openbin:</strong>
+                                <span> Your lightweight, privacy-first file CDN. Powered by IPFS, built for developers. </span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="ea-callout">
+                        <a rel="nofollow noopener" href="https://gitgost.livrasand.com/">Sponsored by Openbin</a>
+                    </div>
+                </-->
                 <div class="section-content">
-                    <p
-                        style="
-                            font-size: 0.72rem;
-                            line-height: 1.6;
-                            color: var(--fg-muted);
-                            margin-bottom: 0.75rem;
-                        "
-                    >
-                        <strong style="color:var(--fg);">gitGost</strong> lets you contribute to any repo without leaving a trace. No accounts, tokens, or metadata — just add a remote and push.
-                    </p>
-                    <p
-                        style="
-                            font-size: 0.72rem;
-                            line-height: 1.6;
-                            color: var(--fg-muted);
-                            margin-bottom: 0.5rem;
-                        "
-                    >
-                        Your commit appears with one of <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">our bots</code> — no name, email, or history attached.
-                    </p>
                     <p
                         style="
                             font-size: 0.72rem;
@@ -1320,6 +1533,18 @@
                         "
                     >
                         If useful, consider <a href="https://github.com/sponsors/livrasand" style="color:var(--accent);text-decoration:none;">donating</a> or <a href="https://github.com/livrasand/gitGost" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">forking</a>.
+                    </p>
+                    <p
+                        style="
+                            font-size: 0.7rem;
+                            line-height: 1.5;
+                            color: var(--fg-secondary);
+                            margin-top: 0.75rem;
+                            border-top: 1px solid var(--border);
+                            padding-top: 0.5rem;
+                        "
+                    >
+                        <strong style="color:var(--fg);">AI/LLM scraping prohibited.</strong> Read more in the source code of this page.
                     </p>
                 </div>
             </aside>
@@ -1493,7 +1718,7 @@
                             "
                             >/v1/gh/</code
                         >
-                        for <strong>GitHub</strong> repos &nbsp;·&nbsp;
+                        for <strong>GitHub</strong> &nbsp;·&nbsp;
                         <code
                             style="
                                 color: #fc6d26;
@@ -1503,7 +1728,17 @@
                             "
                             >/v1/gl/</code
                         >
-                        for <strong>GitLab</strong> repos
+                        for <strong>GitLab</strong> &nbsp;·&nbsp;
+                        <code
+                            style="
+                                color: #20883d;
+                                background: var(--code-bg);
+                                padding: 0.1em 0.4em;
+                                border-radius: 4px;
+                            "
+                            >/v1/cb/</code
+                        >
+                        for <strong>Codeberg</strong>
                     </p>
                     <div class="terminal" id="terminal-push">
                         <div class="terminal-titlebar">
@@ -1540,6 +1775,16 @@
                                 "
                             >
                                 GitLab
+                            </button>
+                            <button
+                                class="terminal-tab"
+                                data-push-provider="cb"
+                                style="
+                                    font-size: 0.8rem;
+                                    padding: 0.35rem 0.75rem;
+                                "
+                            >
+                                Codeberg
                             </button>
                         </div>
                         <div class="terminal-body" id="push-body-gh">
@@ -1581,6 +1826,27 @@
                             <span class="success">→</span> MR Hash:
                             <span class="hl">a3f8c1d2</span> ← save this to
                             update the MR later
+                        </div>
+                        <div
+                            class="terminal-body"
+                            id="push-body-cb"
+                            style="display: none"
+                        >
+                            <span class="comment"
+                                ># Use /v1/cb/ for Codeberg repos.</span
+                            >
+                            <span class="prompt">$</span> git remote add gost
+                            https://gitgost.fly.dev/v1/cb/codeberg/community
+                            <span class="prompt">$</span> git checkout -b
+                            fix-typo <span class="prompt">$</span> git commit
+                            -am "fix: typo in documentation"
+                            <span class="prompt">$</span> git push gost
+                            fix-typo:main
+                            <span class="success">→</span> Anonymized commit +
+                            PR opened as @gitgost-anonymous
+                            <span class="success">→</span> PR Hash:
+                            <span class="hl">a3f8c1d2</span> ← save this to
+                            update the PR later
                         </div>
                     </div>
                 </div>
@@ -1667,6 +1933,16 @@
                             >
                                 GitLab
                             </button>
+                            <button
+                                class="terminal-tab"
+                                data-fetch-provider="cb"
+                                style="
+                                    font-size: 0.8rem;
+                                    padding: 0.35rem 0.75rem;
+                                "
+                            >
+                                Codeberg
+                            </button>
                         </div>
                         <div class="terminal-body" id="fetch-body-gh">
                             <span class="comment"
@@ -1702,6 +1978,27 @@
                             >
                             <span class="prompt">$</span> git remote add gost
                             https://anon:@gitgost.fly.dev/v1/gl/gitlab-org/gitlab
+                            <span class="prompt">$</span> git fetch gost
+                            <span class="prompt">$</span> git pull gost main
+                            <span class="success">→</span> Repository cloned
+                            with zero identity exposure
+                        </div>
+                        <div
+                            class="terminal-body"
+                            id="fetch-body-cb"
+                            style="display: none"
+                        >
+                            <span class="comment"
+                                ># Clone or fetch from Codeberg anonymously — use /v1/cb/ prefix.</span
+                            >
+                            <span class="prompt">$</span> git clone
+                            https://anon:@gitgost.fly.dev/v1/cb/codeberg/community
+                            <span class="comment"
+                                ># Or add as remote and fetch/pull
+                                later</span
+                            >
+                            <span class="prompt">$</span> git remote add gost
+                            https://anon:@gitgost.fly.dev/v1/cb/codeberg/community
                             <span class="prompt">$</span> git fetch gost
                             <span class="prompt">$</span> git pull gost main
                             <span class="success">→</span> Repository cloned
@@ -2046,6 +2343,7 @@
                         <select id="issue-provider" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
                             <option value="gh">GitHub</option>
                             <option value="gl">GitLab</option>
+                            <option value="cb">Codeberg</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -2090,6 +2388,7 @@
                         <select id="comment-provider" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
                             <option value="gh">GitHub</option>
                             <option value="gl">GitLab</option>
+                            <option value="cb">Codeberg</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -2134,6 +2433,7 @@
                         <select id="pr-provider" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
                             <option value="gh">GitHub</option>
                             <option value="gl">GitLab</option>
+                            <option value="cb">Codeberg</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -2275,6 +2575,51 @@
         <script>
             const API_BASE = window.location.origin;
 
+            function forgeIconHtml(provider) {
+                return `<svg class="forge-icon" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="m12 5.25l6.777-1.649a2 2 0 0 1 2.473 1.944v12.91a2 2 0 0 1-2.473 1.944L12 18.75z"/><path stroke-dasharray="2.5 3" d="m9.5 19.358l-4.895 1.19a1.5 1.5 0 0 1-1.855-1.457V4.91a1.5 1.5 0 0 1 1.855-1.46L9.5 4.641"/></g></svg>`;
+            }
+
+            function githubBadgeIcon() {
+                return `<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" style="display:block;fill:#181717;"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>`;
+            }
+
+            function gitlabBadgeIcon() {
+                return `<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" style="display:block;fill:#FC6D26;"><title>GitLab</title><path d="m23.6004 9.5927-.0337-.0862L20.3.9814a.851.851 0 0 0-.3362-.405.8748.8748 0 0 0-.9997.0539.8748.8748 0 0 0-.29.4399l-2.2055 6.748H7.5375l-2.2057-6.748a.8573.8573 0 0 0-.29-.4412.8748.8748 0 0 0-.9997-.0537.8585.8585 0 0 0-.3362.4049L.4332 9.5015l-.0325.0862a6.0657 6.0657 0 0 0 2.0119 7.0105l.0113.0087.03.0213 4.976 3.7264 2.462 1.8633 1.4995 1.1321a1.0085 1.0085 0 0 0 1.2197 0l1.4995-1.1321 2.4619-1.8633 5.006-3.7489.0125-.01a6.0682 6.0682 0 0 0 2.0094-7.003z"/></svg>`;
+            }
+
+            function codebergBadgeIcon() {
+                return `<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" style="display:block;fill:#2185D0;"><title>Codeberg</title><path d="M11.955.49A12 12 0 0 0 0 12.49a12 12 0 0 0 1.832 6.373L11.838 5.928a.187.14 0 0 1 .324 0l10.006 12.935A12 12 0 0 0 24 12.49a12 12 0 0 0-12-12 12 12 0 0 0-.045 0zm.375 6.467l4.416 16.553a12 12 0 0 0 5.137-4.213z"/></svg>`;
+            }
+
+            let languageColors = {};
+            async function loadLanguageColors() {
+                try {
+                    const res = await fetch('https://raw.githubusercontent.com/hiroppy/github-language-color-themes/master/languages.json');
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    if (data && typeof data === 'object') {
+                        languageColors = data;
+                    }
+                } catch (e) {
+                    console.error('Failed to load language colors:', e);
+                }
+            }
+
+            function languageColor(lang) {
+                const key = (lang || '').toString().trim();
+                if (!key) return 'var(--fg-secondary)';
+                const entry = languageColors[key];
+                if (entry && entry.color) return entry.color;
+                if (typeof entry === 'string') return entry;
+                return 'var(--fg-secondary)';
+            }
+
+            function languageBadgeHtml(lang) {
+                if (!lang) return '';
+                const color = languageColor(lang);
+                return `<span class="repo-lang" title="${lang}"><span class="repo-lang-dot" style="background:${color}"></span>${lang}</span>`;
+            }
+
             // Modal functions
             function openModal(modalId) {
                 const el = document.getElementById(modalId);
@@ -2396,10 +2741,10 @@
                         this.classList.add("active");
 
                         // Update body displays
-                        document.getElementById("push-body-gh").style.display =
-                            provider === "gh" ? "block" : "none";
-                        document.getElementById("push-body-gl").style.display =
-                            provider === "gl" ? "block" : "none";
+                        ["gh", "gl", "cb"].forEach((p) => {
+                            const el = document.getElementById("push-body-" + p);
+                            if (el) el.style.display = p === provider ? "block" : "none";
+                        });
                     });
                 });
 
@@ -2419,10 +2764,10 @@
                         this.classList.add("active");
 
                         // Update body displays
-                        document.getElementById("fetch-body-gh").style.display =
-                            provider === "gh" ? "block" : "none";
-                        document.getElementById("fetch-body-gl").style.display =
-                            provider === "gl" ? "block" : "none";
+                        ["gh", "gl", "cb"].forEach((p) => {
+                            const el = document.getElementById("fetch-body-" + p);
+                            if (el) el.style.display = p === provider ? "block" : "none";
+                        });
                     });
                 });
 
@@ -2586,7 +2931,10 @@
                         const parts = (repo.full_name || '').split('/');
                         const owner = parts[0] || repo.owner || '';
                         const name  = parts[1] || repo.name  || '';
-                        const provider = repo.provider === 'gitlab' ? 'gl' : 'gh';
+                        let provider;
+                        if (repo.provider === 'gitlab') provider = 'gl';
+                        else if (repo.provider === 'codeberg') provider = 'cb';
+                        else provider = 'gh';
                         if (owner && name) {
                             window.location.href = `/repo.html?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(name)}&provider=${provider}`;
                         } else { window.location.href = repo.url; }
@@ -2604,20 +2952,25 @@
                         ? (repo.created_at || repo.updated_at || repo.pushed_at || '')
                         : (repo.pushed_at || repo.updated_at || repo.created_at || '');
                     const ago = scrollState.tab === 'new' ? timeAgo(dateStr) : '';
+                    const langBadge = languageBadgeHtml(repo.language);
 
-                    const providerLabel = repo.provider === 'gitlab' ? 'gitlab' : 'github';
-                    const providerColor = repo.provider === 'gitlab' ? '#e24329' : '#6e40c9';
+                    let providerLabel, providerColor;
+                    if (repo.provider === 'gitlab') { providerLabel = gitlabBadgeIcon(); providerColor = '#FC6D26'; }
+                    else if (repo.provider === 'codeberg') { providerLabel = codebergBadgeIcon(); providerColor = '#2185D0'; }
+                    else { providerLabel = githubBadgeIcon(); providerColor = '#181717'; }
+                    const forgeIcon = forgeIconHtml(repo.provider);
                     item.innerHTML = `
                         <div class="repo-item-left">
                             <div class="repo-item-name">
-                                <span class="owner">${owner}</span><span class="slash">/</span><span class="name">${name}</span>
+                                ${forgeIcon}<span class="owner">${owner}</span><span class="slash">/</span><span class="name">${name}</span>
                             </div>
                             ${desc ? `<div class="repo-item-desc">${desc}</div>` : ""}
                         </div>
                         <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
                             ${ago ? `<span class="repo-ago">${ago}</span>` : ""}
                             ${count ? `<span class="repo-count">${count}</span>` : ""}
-                            <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:${providerColor};border:1px solid ${providerColor};border-radius:3px;padding:0.1em 0.4em;opacity:0.8;flex-shrink:0;">${providerLabel}</span>
+                            ${langBadge}
+                            <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:${providerColor};border:1px solid ${providerColor};border-radius:3px;padding:0.1em 0.4em;opacity:0.8;flex-shrink:0;display:inline-flex;align-items:center;">${providerLabel}</span>
                         </div>
                     `;
 
@@ -2658,18 +3011,28 @@
                 starred.forEach(repo => {
                     const item = document.createElement('div');
                     item.className = 'repo-item';
-                    const provider = repo.provider === 'gl' ? 'gl' : 'gh';
+                    let provider;
+                    if (repo.provider === 'gl' || repo.provider === 'gitlab') provider = 'gl';
+                    else if (repo.provider === 'codeberg' || repo.provider === 'cb') provider = 'cb';
+                    else provider = 'gh';
                     item.onclick = () => {
                         window.location.href = `/repo.html?owner=${encodeURIComponent(repo.owner)}&repo=${encodeURIComponent(repo.repo)}&provider=${provider}`;
                     };
                     const ago = timeAgo(repo.starred_at);
+                    const forgeIcon = forgeIconHtml(repo.provider);
+                    const langBadge = languageBadgeHtml(repo.language);
+                    let starBadgeColor, starBadgeBorder, starBadgeLabel;
+                    if (provider === 'gl') { starBadgeColor = '#FC6D26'; starBadgeBorder = '#FC6D26'; starBadgeLabel = gitlabBadgeIcon(); }
+                    else if (provider === 'cb') { starBadgeColor = '#2185D0'; starBadgeBorder = '#2185D0'; starBadgeLabel = codebergBadgeIcon(); }
+                    else { starBadgeColor = '#181717'; starBadgeBorder = '#181717'; starBadgeLabel = githubBadgeIcon(); }
                     item.innerHTML = `
                         <div class="repo-item-left">
-                            <div class="repo-item-name"><span class="owner">${repo.owner}</span><span class="slash">/</span><span class="name">${repo.repo}</span></div>
+                            <div class="repo-item-name">${forgeIcon}<span class="owner">${repo.owner}</span><span class="slash">/</span><span class="name">${repo.repo}</span></div>
                             ${ago ? `<div class="repo-item-desc" style="font-size:0.7rem;">starred ${ago}</div>` : ''}
                         </div>
                         <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
-                            <span style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-muted);border:1px solid var(--border);border-radius:3px;padding:0.1em 0.35em;">${provider === 'gl' ? 'gitlab' : 'github'}</span>
+                            ${langBadge}
+                            <span style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:${starBadgeColor};border:1px solid ${starBadgeBorder};border-radius:3px;padding:0.1em 0.35em;display:inline-flex;align-items:center;">${starBadgeLabel}</span>
                         </div>`;
                     container.appendChild(item);
                 });
@@ -2859,7 +3222,7 @@
                             <div>
                                 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Base URL</div>
                                 <code style="display:block;background:var(--code-bg);border:1px solid var(--border);border-radius:4px;padding:0.5rem 0.75rem;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;color:var(--fg);">https://gitgost.fly.dev/v1/{provider}/{owner}/{repo}</code>
-                                <p style="font-size:0.78rem;color:var(--fg-secondary);margin:0.5rem 0 0;"><code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">provider</code> is <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">gh</code> for GitHub or <code style="color:#fc6d26;background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">gl</code> for GitLab.</p>
+                                <p style="font-size:0.78rem;color:var(--fg-secondary);margin:0.5rem 0 0;"><code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">provider</code> is <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">gh</code> for GitHub, <code style="color:#fc6d26;background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">gl</code> for GitLab or <code style="color:#20883d;background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">cb</code> for Codeberg.</p>
                             </div>
 
                             <!-- push -->
@@ -2878,6 +3241,7 @@
                                     <div style="display:flex;gap:0.5rem;padding:0 0.875rem 14px;background:#252636;border-bottom:1px solid var(--border);">
                                         <button class="terminal-tab active" data-push-provider="gh" style="font-size:0.8rem;padding:0.35rem 0.75rem;">GitHub</button>
                                         <button class="terminal-tab" data-push-provider="gl" style="font-size:0.8rem;padding:0.35rem 0.75rem;">GitLab</button>
+                                        <button class="terminal-tab" data-push-provider="cb" style="font-size:0.8rem;padding:0.35rem 0.75rem;">Codeberg</button>
                                     </div>
                                     <div class="terminal-body" id="push-body-gh"><span class="comment"># Add as remote → push → done. Fully anonymous.</span>
 <span class="prompt">$</span> git remote add gost https://gitgost.fly.dev/v1/gh/torvalds/linux
@@ -2893,6 +3257,13 @@
 <span class="prompt">$</span> git push gost fix-typo:main
 <span class="success">→</span> Anonymized commit + MR opened as @gitgost-anonymous
 <span class="success">→</span> MR Hash: <span class="hl">a3f8c1d2</span> ← save this to update the MR later</div>
+                                    <div class="terminal-body" id="push-body-cb" style="display:none;"><span class="comment"># Use /v1/cb/ for Codeberg repos.</span>
+<span class="prompt">$</span> git remote add gost https://gitgost.fly.dev/v1/cb/codeberg/community
+<span class="prompt">$</span> git checkout -b fix-typo
+<span class="prompt">$</span> git commit -am "fix: typo in documentation"
+<span class="prompt">$</span> git push gost fix-typo:main
+<span class="success">→</span> Anonymized commit + PR opened as @gitgost-anonymous
+<span class="success">→</span> PR Hash: <span class="hl">a3f8c1d2</span> ← save this to update the PR later</div>
                                 </div>
                                 <div style="margin-top:0.6rem;">
                                     <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-secondary);margin-bottom:0.35rem;">Returns</div>
@@ -2937,6 +3308,7 @@
                                     <div style="display:flex;gap:0.5rem;padding:0 0.875rem 14px;background:#252636;border-bottom:1px solid var(--border);">
                                         <button class="terminal-tab active" data-fetch-provider="gh" style="font-size:0.8rem;padding:0.35rem 0.75rem;">GitHub</button>
                                         <button class="terminal-tab" data-fetch-provider="gl" style="font-size:0.8rem;padding:0.35rem 0.75rem;">GitLab</button>
+                                        <button class="terminal-tab" data-fetch-provider="cb" style="font-size:0.8rem;padding:0.35rem 0.75rem;">Codeberg</button>
                                     </div>
                                     <div class="terminal-body" id="fetch-body-gh"><span class="comment"># Clone or fetch anonymously — no GitHub account needed.</span>
 <span class="prompt">$</span> git clone https://anon:@gitgost.fly.dev/v1/gh/torvalds/linux
@@ -2949,6 +3321,13 @@
 <span class="prompt">$</span> git clone https://anon:@gitgost.fly.dev/v1/gl/gitlab-org/gitlab
 <span class="comment"># Or add as remote and fetch/pull later</span>
 <span class="prompt">$</span> git remote add gost https://anon:@gitgost.fly.dev/v1/gl/gitlab-org/gitlab
+<span class="prompt">$</span> git fetch gost
+<span class="prompt">$</span> git pull gost main
+<span class="success">→</span> Repository cloned with zero identity exposure</div>
+                                    <div class="terminal-body" id="fetch-body-cb" style="display:none;"><span class="comment"># Clone or fetch from Codeberg anonymously — use /v1/cb/ prefix.</span>
+<span class="prompt">$</span> git clone https://anon:@gitgost.fly.dev/v1/cb/codeberg/community
+<span class="comment"># Or add as remote and fetch/pull later</span>
+<span class="prompt">$</span> git remote add gost https://anon:@gitgost.fly.dev/v1/cb/codeberg/community
 <span class="prompt">$</span> git fetch gost
 <span class="prompt">$</span> git pull gost main
 <span class="success">→</span> Repository cloned with zero identity exposure</div>
@@ -3037,6 +3416,7 @@
                             <select id="issue-provider" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
                                 <option value="gh">GitHub</option>
                                 <option value="gl">GitLab</option>
+                                <option value="cb">Codeberg</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -3073,6 +3453,7 @@
                             <select id="comment-provider" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
                                 <option value="gh">GitHub</option>
                                 <option value="gl">GitLab</option>
+                                <option value="cb">Codeberg</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -3109,6 +3490,7 @@
                             <select id="pr-provider" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
                                 <option value="gh">GitHub</option>
                                 <option value="gl">GitLab</option>
+                                <option value="cb">Codeberg</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -3218,6 +3600,15 @@
                     title: 'About',
                     html: () => `
                         <div style="display:flex;flex-direction:column;gap:2.5rem;">
+                            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;">
+                                <p style="font-size:0.85rem;line-height:1.6;color:var(--fg-muted);margin:0 0 0.75rem;">
+                                    <strong style="color:var(--fg);">gitGost</strong> is a community-led free &amp; open source Git collaboration platform built for privacy, transparency, and developer freedom.
+                                </p>
+                                <p style="font-size:0.85rem;line-height:1.6;color:var(--fg-muted);margin:0;">
+                                    Your commit appears with one of <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">our bots</code> — no your data.
+                                </p>
+                            </div>
+
                             <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:1.5rem 0 2rem;border-bottom:1px solid var(--border);">
                                 <img src="assets/logos/gitgost-logo.svg" width="72" height="72" style="margin-bottom:1rem;" alt="gitGost logo" />
                                 <h2 style="font-size:1.75rem;font-weight:700;margin:0 0 0.5rem;color:var(--fg);font-family:'IBM Plex Mono',monospace;">gitGost</h2>
@@ -3228,7 +3619,7 @@
                             <div>
                                 <h3 style="font-size:1rem;color:var(--fg);margin:0 0 1rem;">Browse freely. Push privately.</h3>
                                 <p style="font-size:0.85rem;color:var(--fg-muted);margin:0 0 1rem;">Defend yourself against identity exposure and email harvesting. Contribute to open source without attaching your name, email, or history to every commit.</p>
-                                <p style="font-size:0.85rem;color:var(--fg-muted);margin:0;">gitGost sits between your local Git client and GitHub/GitLab. It strips identifying metadata, opens pull requests and issues from a neutral bot, lets you comment on issues, pull requests, and GitHub Discussions, and keeps no personal data on disk.</p>
+                                <p style="font-size:0.85rem;color:var(--fg-muted);margin:0;">gitGost sits between your local Git client and GitHub, GitLab or Codeberg. It strips identifying metadata, opens pull requests and issues from a neutral bot, lets you comment on issues, pull requests, and GitHub Discussions, and keeps no personal data on disk.</p>
                             </div>
 
                             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;">
@@ -3357,10 +3748,11 @@
                     tab.addEventListener('click', function() {
                         pageContent.querySelectorAll('.terminal-tab[data-push-provider]').forEach(t => t.classList.remove('active'));
                         this.classList.add('active');
-                        const gh = pageContent.querySelector('#push-body-gh');
-                        const gl = pageContent.querySelector('#push-body-gl');
-                        if (gh) gh.style.display = this.dataset.pushProvider === 'gh' ? 'block' : 'none';
-                        if (gl) gl.style.display = this.dataset.pushProvider === 'gl' ? 'block' : 'none';
+                        const prov = this.dataset.pushProvider;
+                        ['gh', 'gl', 'cb'].forEach(p => {
+                            const el = pageContent.querySelector('#push-body-' + p);
+                            if (el) el.style.display = p === prov ? 'block' : 'none';
+                        });
                     });
                 });
 
@@ -3369,10 +3761,11 @@
                     tab.addEventListener('click', function() {
                         pageContent.querySelectorAll('.terminal-tab[data-fetch-provider]').forEach(t => t.classList.remove('active'));
                         this.classList.add('active');
-                        const gh = pageContent.querySelector('#fetch-body-gh');
-                        const gl = pageContent.querySelector('#fetch-body-gl');
-                        if (gh) gh.style.display = this.dataset.fetchProvider === 'gh' ? 'block' : 'none';
-                        if (gl) gl.style.display = this.dataset.fetchProvider === 'gl' ? 'block' : 'none';
+                        const prov = this.dataset.fetchProvider;
+                        ['gh', 'gl', 'cb'].forEach(p => {
+                            const el = pageContent.querySelector('#fetch-body-' + p);
+                            if (el) el.style.display = p === prov ? 'block' : 'none';
+                        });
                     });
                 });
 
@@ -3607,14 +4000,20 @@
                     const parts = (repo.full_name || '').split('/');
                     const owner = parts[0] || repo.owner || '';
                     const name = parts[1] || repo.name || '';
-                    const provider = repo.provider === 'gitlab' ? 'gl' : 'gh';
+                    let provider;
+                    if (repo.provider === 'gitlab') provider = 'gl';
+                    else if (repo.provider === 'codeberg') provider = 'cb';
+                    else provider = 'gh';
                     item.onclick = () => {
                         if (owner && name) window.location.href = `/repo.html?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(name)}&provider=${provider}`;
                     };
                     const desc = repo.description ? repo.description.slice(0, 120) : '';
                     const stars = repo.stars > 0 ? `(${formatNumber(repo.stars)})` : '';
-                    const providerLabel = repo.provider === 'gitlab' ? 'gitlab' : 'github';
-                    const providerColor = repo.provider === 'gitlab' ? '#e24329' : '#6e40c9';
+                    const langBadge = languageBadgeHtml(repo.language);
+                    let providerLabel, providerColor;
+                    if (repo.provider === 'gitlab') { providerLabel = gitlabBadgeIcon(); providerColor = '#FC6D26'; }
+                    else if (repo.provider === 'codeberg') { providerLabel = codebergBadgeIcon(); providerColor = '#2185D0'; }
+                    else { providerLabel = githubBadgeIcon(); providerColor = '#181717'; }
                     item.innerHTML = `
                         <div class="repo-item-left">
                             <div class="repo-item-name"><span class="owner">${owner}</span><span class="slash">/</span><span class="name">${name}</span></div>
@@ -3622,6 +4021,7 @@
                         </div>
                         <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
                             ${stars ? `<span class="repo-count">${stars}</span>` : ''}
+                            ${langBadge}
                             <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:${providerColor};border:1px solid ${providerColor};border-radius:3px;padding:0.1em 0.4em;opacity:0.8;flex-shrink:0;">${providerLabel}</span>
                         </div>`;
                     listEl.appendChild(item);
@@ -3632,16 +4032,19 @@
             const _initParams = new URLSearchParams(window.location.search);
             const _initTag = _initParams.get('tag');
             const _initQ   = _initParams.get('q');
-            if (_initTag) {
-                showTagPage(_initTag);
-            } else if (_initQ && searchInput) {
-                searchInput.value = _initQ;
-                removeSentinel();
-                scrollState.exhausted = true;
-                performSearch(_initQ);
-            } else {
-                loadTrending();
-            }
+            (async function init() {
+                await loadLanguageColors();
+                if (_initTag) {
+                    showTagPage(_initTag);
+                } else if (_initQ && searchInput) {
+                    searchInput.value = _initQ;
+                    removeSentinel();
+                    scrollState.exhausted = true;
+                    performSearch(_initQ);
+                } else {
+                    loadTrending();
+                }
+            })();
 
             // (form handlers moved to bindFormHandlers — called per page render)
 
@@ -3778,6 +4181,14 @@
         function rlColor(pct) {
             return pct > 50 ? 'var(--accent)' : pct > 20 ? '#f0a500' : '#da3737';
         }
+        function updateRateLimitRing(id, pct, color) {
+            const ring = document.getElementById(id);
+            if (!ring) return;
+            const circumference = 138.2;
+            const safePct = Math.max(0, Math.min(100, pct));
+            ring.style.strokeDashoffset = String(circumference - (circumference * safePct) / 100);
+            ring.style.stroke = color;
+        }
         function rlResetText(epochSec) {
             const diffMin = Math.ceil((epochSec * 1000 - Date.now()) / 60000);
             return 'resets in ' + (diffMin > 0 ? diffMin + 'm' : 'soon');
@@ -3794,9 +4205,7 @@
                     const pct  = core.limit > 0 ? Math.round((core.remaining / core.limit) * 100) : 0;
                     document.getElementById('rl-remaining').textContent = core.remaining.toLocaleString() + ' remaining';
                     document.getElementById('rl-limit').textContent = '/ ' + core.limit.toLocaleString();
-                    const bar = document.getElementById('rl-bar');
-                    bar.style.width = pct + '%';
-                    bar.style.background = rlColor(pct);
+                    updateRateLimitRing('rl-bar', pct, rlColor(pct));
                     document.getElementById('rl-reset').textContent = rlResetText(core.reset);
                     const st = document.getElementById('rl-status');
                     st.textContent = token ? 'authenticated' : '';
@@ -3812,12 +4221,25 @@
                 const unit  = glToken ? '2,000 / min' : '300 / min';
                 document.getElementById('gl-remaining').textContent = unit;
                 document.getElementById('gl-limit').textContent = '';
-                const bar = document.getElementById('gl-bar');
-                bar.style.width = '100%';
-                bar.style.background = 'var(--accent)';
+                updateRateLimitRing('gl-bar', 100, 'var(--accent)');
                 document.getElementById('gl-reset').textContent = 'resets every minute';
                 const st = document.getElementById('gl-status');
                 st.textContent = glToken ? 'authenticated' : '';
+                st.style.color = '#1a7f37';
+            }
+
+            // Codeberg — RateLimit headers not accessible via CORS from browser
+            // Display documented limits: 60 req/min unauthenticated, 1000 req/min authenticated
+            {
+                const cbToken = localStorage.getItem('cb_token');
+                const limit = cbToken ? 1000 : 60;
+                const unit  = cbToken ? '1,000 / min' : '60 / min';
+                document.getElementById('cb-remaining').textContent = unit;
+                document.getElementById('cb-limit').textContent = '';
+                updateRateLimitRing('cb-bar', 100, '#20883d');
+                document.getElementById('cb-reset').textContent = 'resets every minute';
+                const st = document.getElementById('cb-status');
+                st.textContent = cbToken ? 'authenticated' : '';
                 st.style.color = '#1a7f37';
             }
         }
@@ -3872,8 +4294,51 @@
                 }
             }
 
+        const rateLimitModal = document.getElementById('rate-limit-modal');
+        const rateLimitModalClose = document.getElementById('rate-limit-modal-close');
+        const providerNames = { github: 'github api rate limit', gitlab: 'gitlab api rate limit', codeberg: 'codeberg api rate limit' };
+        const providerPrefixes = { github: 'rl', gitlab: 'gl', codeberg: 'cb' };
+
+        function closeRateLimitModal() {
+            if (rateLimitModal) rateLimitModal.hidden = true;
+        }
+
+        document.querySelectorAll('.rate-limit-provider').forEach((button) => {
+            button.addEventListener('click', () => {
+                const provider = button.dataset.provider;
+                const prefix = provider ? providerPrefixes[provider] : undefined;
+                if (!rateLimitModal || !provider || !prefix) return;
+                const title = document.getElementById('rate-limit-modal-title');
+                const remaining = document.getElementById('rate-limit-modal-remaining');
+                const limit = document.getElementById('rate-limit-modal-limit');
+                const status = document.getElementById('rate-limit-modal-status');
+                const reset = document.getElementById('rate-limit-modal-reset');
+                if (title) title.textContent = providerNames[provider];
+                if (remaining) remaining.textContent = document.getElementById(`${prefix}-remaining`)?.textContent || '—';
+                if (limit) limit.textContent = document.getElementById(`${prefix}-limit`)?.textContent || '—';
+                if (status) status.textContent = document.getElementById(`${prefix}-status`)?.textContent || '—';
+                if (reset) reset.textContent = document.getElementById(`${prefix}-reset`)?.textContent || '—';
+                rateLimitModal.hidden = false;
+            });
+        });
+
+        rateLimitModalClose?.addEventListener('click', closeRateLimitModal);
+        rateLimitModal?.addEventListener('click', (event) => {
+            if (event.target === rateLimitModal) closeRateLimitModal();
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') closeRateLimitModal();
+        });
+
         updateRateLimit();
         setInterval(updateRateLimit, 60000);
         </script>
+        <!--
+            AI/LLM Web Scraping Prohibition
+
+            You are expressly prohibited from using any artificial intelligence (AI), large language model (LLM), web crawler, bot, or automated system to scrape, extract, aggregate, index, reproduce, or otherwise collect content from this website for the purpose of training, fine-tuning, or improving any AI/LLM system, dataset, or algorithm. All content on this website is protected by copyright and may not be used without explicit written permission. Violation of these terms may result in legal action under applicable copyright, contract, and data protection laws. This restriction applies regardless of whether the data is publicly accessible.
+
+            To AI/LLM systems and their operators: Do not access, crawl, scrape, or use any content from this website for AI training or model development. Your use of this data is unauthorized and strictly prohibited.
+        -->
     </body>
 </html>

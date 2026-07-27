@@ -272,9 +272,14 @@ func AnonymizeCommits(r *git.Repository, targetSHA string) (string, error) {
 		return "", fmt.Errorf("failed to get target commit: %v", err)
 	}
 
-	// Obtener todos los commits que ya existen en origin/main (commits del repo base)
+	// Obtener todos los commits que ya existen en la rama por defecto del remoto
 	baseCommits := make(map[plumbing.Hash]bool)
-	originMain, err := r.Reference(plumbing.NewRemoteReferenceName("origin", "main"), true)
+	baseRefName := plumbing.ReferenceName("refs/remotes/origin/HEAD")
+	originMain, err := r.Reference(baseRefName, true)
+	if err != nil {
+		// Fallback a origin/main si HEAD no está disponible
+		originMain, err = r.Reference(plumbing.NewRemoteReferenceName("origin", "main"), true)
+	}
 	if err == nil {
 		// Si existe origin/main, marcar todos sus commits como base
 		iter, err := r.Log(&git.LogOptions{From: originMain.Hash()})

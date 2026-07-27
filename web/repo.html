@@ -1783,6 +1783,14 @@
             			<path d="M12.25 8v4.25l3.685 2.117" />
             		</g>
             	</svg> <span class="val" id="sb-commits"></span> commits</a>
+            <a href="#" onclick="showView('branches'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                <path d="M0 0h24v24H0z" fill="none" />
+                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8.25a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0v7.5m0-7.5c0 2.9 2.35 5.25 5.25 5.25h2M7 15.75a2.75 2.75 0 1 0 0 5.5a2.75 2.75 0 0 0 0-5.5m7.25-2.25a2.75 2.75 0 1 0 5.5 0a2.75 2.75 0 0 0-5.5 0" />
+            </svg> branches</a>
+            <a href="#" id="nav-packages" style="display:none;" onclick="showView('packages'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                <path d="M0 0h24v24H0z" fill="none" />
+                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8.25a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0v7.5m0-7.5c0 2.9 2.35 5.25 5.25 5.25h2M7 15.75a2.75 2.75 0 1 0 0 5.5a2.75 2.75 0 0 0 0-5.5m7.25-2.25a2.75 2.75 0 1 0 5.5 0a2.75 2.75 0 0 0-5.5 0" />
+            </svg> packages</a>
             <a href="#" onclick="showView('bugs'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7.5 9.08a3.23 3.23 0 0 1 3.23-3.23h2.54a3.23 3.23 0 0 1 3.23 3.23v6.27a4.5 4.5 0 0 1-4.5 4.5v0a4.5 4.5 0 0 1-4.5-4.5zm9 3.77h4.75m-18.5 0H7.5m2.25-9.7v.45A2.25 2.25 0 0 0 12 5.85v0a2.25 2.25 0 0 0 2.25-2.25v-.45M16.5 16.6h1.253a2.5 2.5 0 0 1 2.5 2.5v1.75M7.5 16.6H6.247a2.5 2.5 0 0 0-2.5 2.5v1.75M16.5 9.1h1.253a2.5 2.5 0 0 0 2.5-2.5V4.85M7.5 9.1H6.247a2.5 2.5 0 0 1-2.5-2.5V4.85" />
@@ -1834,7 +1842,7 @@
                     <button class="sidebar-btn" id="sb-star-btn" onclick="doStar()" title="Solo funciona en localhost"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.704 4.325a1.5 1.5 0 0 1 2.592 0l1.818 3.12a1.5 1.5 0 0 0 .978.712l3.53.764a1.5 1.5 0 0 1 .8 2.465l-2.405 2.693a1.5 1.5 0 0 0-.374 1.15l.363 3.593a1.5 1.5 0 0 1-2.097 1.524l-3.304-1.456a1.5 1.5 0 0 0-1.21 0l-3.304 1.456a1.5 1.5 0 0 1-2.097-1.524l.363-3.593a1.5 1.5 0 0 0-.373-1.15l-2.406-2.693a1.5 1.5 0 0 1 .8-2.465l3.53-.764a1.5 1.5 0 0 0 .979-.711z" />
-</svg> Star <span id="sb-star-count"></span></button>
+</svg> <span id="sb-star-text">Star</span> <span id="sb-star-count"></span></button>
                     <button class="sidebar-btn" onclick="doClone()"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8.25a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0V12m0 3.75a2.75 2.75 0 1 0 0 5.5a2.75 2.75 0 0 0 0-5.5m0 0V12m10-3.75a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0V9a3 3 0 0 1-3 3H7" />
@@ -1891,6 +1899,8 @@
         // Check service status on page load
         checkServiceStatus();
 
+        const CB_BASE = `${window.location.origin}/api/cb-proxy/api/v1`;
+
         // GitHub fetch helper — usa token de localStorage si existe para evitar rate limiting
         function ghFetch(url, opts = {}) {
             const token = localStorage.getItem('gh_token');
@@ -1908,14 +1918,47 @@
             });
         }
 
+        // Codeberg fetch helper — usa token de localStorage si existe para evitar rate limiting
+        function cbFetch(url, opts = {}) {
+            const token = localStorage.getItem('cb_token');
+            if (token) {
+                opts.headers = { ...(opts.headers || {}), 'Authorization': `token ${token}` };
+            }
+            return fetch(url, opts).then(res => {
+                if (res.status === 403 || res.status === 429) {
+                    return res.json().catch(() => ({})).then(body => {
+                        const msg = body.message || `rate limit exceeded (${res.status})`;
+                        throw new Error(msg + ' — set a Codeberg token in settings to fix this');
+                    });
+                }
+                return res;
+            });
+        }
+
         // Parse URL params: /repo.html?owner=X&repo=Y&provider=gh
         const params = new URLSearchParams(window.location.search);
         const rv = {
             owner:    params.get('owner') || '',
             repo:     params.get('repo')  || '',
             provider: params.get('provider') || 'gh',
+            branch:   params.get('branch') || '',
             path:     [],
         };
+
+        function currentBranch() { return rv.branch || 'HEAD'; }
+
+        const BRANCH_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8.25a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0v7.5m0-7.5c0 2.9 2.35 5.25 5.25 5.25h2M7 15.75a2.75 2.75 0 1 0 0 5.5a2.75 2.75 0 0 0 0-5.5m7.25-2.25a2.75 2.75 0 1 0 5.5 0a2.75 2.75 0 0 0-5.5 0"/></svg>`;
+
+        function updateStatusbarPath() {
+            const el = document.getElementById('statusbar-path');
+            if (!el) return;
+            const branchName = rv.branch ? escHtml(rv.branch) : '';
+            el.innerHTML =
+                `<a href="/?q=${encodeURIComponent(rv.owner)}" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.owner)}</a>`+
+                `<span style="color:var(--fg-muted);">/</span>`+
+                `<a href="#" onclick="showView('home');return false;" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.repo)}</a>`+
+                (branchName ? `<span style="color:var(--fg-muted);">/</span><span style="color:var(--fg-muted);display:inline-flex;align-items:center;gap:0.25rem;">${BRANCH_SVG}${branchName}</span>` : '');
+        }
 
         if (!rv.owner || !rv.repo) {
             document.body.innerHTML = '<div style="padding:2rem;font-family:monospace;color:#d16014;">Error: missing owner/repo parameters in the URL.</div>';
@@ -1925,24 +1968,23 @@
 
         function init() {
             document.title = `${rv.owner}/${rv.repo} · gitGost`;
-            document.getElementById('statusbar-path').innerHTML =
-                `<a href="/?q=${encodeURIComponent(rv.owner)}" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.owner)}</a>`+
-                `<span style="color:var(--fg-muted);">/</span>`+
-                `<a href="#" onclick="showView('home');return false;" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.repo)}</a>`;
+            updateStatusbarPath();
 
             // fork link
             const forkLink = document.getElementById('fork-link');
             if (forkLink) {
-                forkLink.href = rv.provider === 'gh'
-                    ? `https://github.com/${rv.owner}/${rv.repo}/fork`
-                    : `https://gitlab.com/${rv.owner}/${rv.repo}/-/forks/new`;
+                if (rv.provider === 'gh') forkLink.href = `https://github.com/${rv.owner}/${rv.repo}/fork`;
+                else if (rv.provider === 'cb') forkLink.href = `https://codeberg.org/${rv.owner}/${rv.repo}/fork`;
+                else forkLink.href = `https://gitlab.com/${rv.owner}/${rv.repo}/-/forks/new`;
             }
 
             // sidebar settings link
             const sbSettings = document.getElementById('sb-settings');
-            if (sbSettings) sbSettings.href = rv.provider === 'gh'
-                ? `https://github.com/${rv.owner}/${rv.repo}/settings`
-                : `https://gitlab.com/${rv.owner}/${rv.repo}/edit`;
+            if (sbSettings) {
+                if (rv.provider === 'gh') sbSettings.href = `https://github.com/${rv.owner}/${rv.repo}/settings`;
+                else if (rv.provider === 'cb') sbSettings.href = `https://codeberg.org/${rv.owner}/${rv.repo}/settings`;
+                else sbSettings.href = `https://gitlab.com/${rv.owner}/${rv.repo}/edit`;
+            }
 
             const sbStarBtn = document.getElementById('sb-star-btn');
             if (sbStarBtn) sbStarBtn.disabled = false;
@@ -1954,6 +1996,7 @@
             // load commit count (independiente de loadRepoInfo para GitLab)
             loadCommitCount();
             loadReleaseCount();
+            checkPackages();
             // interceptar clics en enlaces wiki/anclas del panel
             const codePanel = document.getElementById('code-panel');
             if (codePanel) codePanel.addEventListener('click', handlePanelLinkClick);
@@ -1964,7 +2007,7 @@
         function showView(view) {
             const navLinks = document.querySelectorAll('.left-nav a');
             navLinks.forEach(a => a.classList.remove('active'));
-            const idx = ['home','files','commits','bugs','reviews','discussions','wiki'].indexOf(view); // bugs=issues, reviews=pull requests
+            const idx = ['home','files','commits','branches','packages','bugs','reviews','discussions','wiki'].indexOf(view); // bugs=issues, reviews=pull requests
             if (idx >= 0 && navLinks[idx]) navLinks[idx].classList.add('active');
 
             const fileTree = document.getElementById('file-tree');
@@ -1977,6 +2020,12 @@
             } else if (view === 'files') {
                 fileTree.style.display = '';
                 loadDir([]);
+            } else if (view === 'branches') {
+                fileTree.style.display = 'none';
+                loadBranches();
+            } else if (view === 'packages') {
+                fileTree.style.display = 'none';
+                loadPackages();
             } else if (view === 'bugs') {
                 fileTree.style.display = 'none';
                 loadIssues();
@@ -2005,14 +2054,20 @@
             const panel = document.getElementById('code-panel');
             try {
                 let item = null;
+                const ref = currentBranch();
                 if (rv.provider === 'gh') {
-                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/contents/`);
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/contents/?ref=${encodeURIComponent(ref)}`);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const items = await res.json();
+                    item = items.find(i => i.name.toLowerCase() === 'readme.md');
+                } else if (rv.provider === 'cb') {
+                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/contents/?ref=${encodeURIComponent(ref)}`);
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const items = await res.json();
                     item = items.find(i => i.name.toLowerCase() === 'readme.md');
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
-                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/files/README.md/raw?ref=HEAD`);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/files/README.md/raw?ref=${currentBranch()}`);
                     if (res.ok) {
                         let text = await res.text();
                         // Limpieza muy agresiva de cualquier patrón que cause undefined
@@ -2054,6 +2109,21 @@
                     ]);
                     if (rOpen.ok) { const d = await rOpen.json(); open = d.filter(i => !i.pull_request); }
                     if (rClosed.ok) { const d = await rClosed.json(); closed = d.filter(i => !i.pull_request); }
+                } else if (rv.provider === 'cb') {
+                    const [rOpen, rClosed] = await Promise.all([
+                        cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/issues?state=open&limit=50&type=issues`),
+                        cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/issues?state=closed&limit=50&type=issues`)
+                    ]);
+                    if (rOpen.ok) {
+                        open = await rOpen.json();
+                        const t = rOpen.headers.get('X-Total-Count');
+                        if (t) _bugsCache.openTotal = parseInt(t);
+                    }
+                    if (rClosed.ok) {
+                        closed = await rClosed.json();
+                        const t = rClosed.headers.get('X-Total-Count');
+                        if (t) _bugsCache.closedTotal = parseInt(t);
+                    }
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const [rOpen, rClosed] = await Promise.all([
@@ -2080,11 +2150,13 @@
             const pending = open.filter(i => !(i.assignees?.length || i.assignee));
             const items = tab === 'open' ? open : tab === 'pending' ? pending : closed;
 
+            const openTotal   = _bugsCache.openTotal   != null ? _bugsCache.openTotal   : open.length;
+            const closedTotal = _bugsCache.closedTotal != null ? _bugsCache.closedTotal : closed.length;
             const toolbar = `
                 <div class="bugs-toolbar">
-                    <button class="bugs-tab ${tab==='open'?'active':''}" onclick="renderBugsView('open')">Open <span style="opacity:.6;">${open.length}</span></button>
+                    <button class="bugs-tab ${tab==='open'?'active':''}" onclick="renderBugsView('open')">Open <span style="opacity:.6;">${openTotal.toLocaleString()}</span></button>
                     <button class="bugs-tab ${tab==='pending'?'active':''}" onclick="renderBugsView('pending')">Pending <span style="opacity:.6;">${pending.length}</span></button>
-                    <button class="bugs-tab ${tab==='closed'?'active':''}" onclick="renderBugsView('closed')">Closed <span style="opacity:.6;">${closed.length}</span></button>
+                    <button class="bugs-tab ${tab==='closed'?'active':''}" onclick="renderBugsView('closed')">Closed <span style="opacity:.6;">${closedTotal.toLocaleString()}</span></button>
                     <span class="bugs-spacer"></span>
                     <button class="bugs-new-btn" onclick="openBugModal()">+ new issue</button>
                 </div>`;
@@ -2208,6 +2280,9 @@
                 if (rv.provider === 'gh') {
                     const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/issues/${num}/comments?per_page=100`);
                     if (res.ok) comments = await res.json();
+                } else if (rv.provider === 'cb') {
+                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/issues/${num}/comments?limit=100`);
+                    if (res.ok) comments = await res.json();
                 } else {
                     const res = await fetch(`/api/gl-notes/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/${num}`);
                     if (res.ok) comments = await res.json();
@@ -2262,7 +2337,7 @@
                         <menta-widget id="menta-bug" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                     </div>
                     <div class="bug-modal-footer">
-                        <span class="note">Anonymous issue in <a href="https://github.com/${rv.owner}/${rv.repo}" target="_blank">${rv.owner}/${rv.repo}</a></span>
+                        <span class="note">Anonymous issue in <a href="${rv.provider === 'cb' ? `https://codeberg.org/${rv.owner}/${rv.repo}` : rv.provider === 'gh' ? `https://github.com/${rv.owner}/${rv.repo}` : `https://gitlab.com/${rv.owner}/${rv.repo}`}" target="_blank">${rv.owner}/${rv.repo}</a></span>
                         <div class="bug-modal-actions">
                             <span id="bug-status" style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-muted);"></span>
                             <button class="bug-cancel-btn" onclick="closeBugModal()">Cancel</button>
@@ -2324,6 +2399,7 @@
             panel.innerHTML = '<div class="code-loading">loading pull requests...</div>';
             try {
                 let open = [], closed = [];
+                let openTotal = null, closedTotal = null;
                 if (rv.provider === 'gh') {
                     const [rOpen, rClosed] = await Promise.all([
                         ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/pulls?state=open&per_page=50`),
@@ -2331,6 +2407,21 @@
                     ]);
                     if (rOpen.ok)   open   = await rOpen.json();
                     if (rClosed.ok) closed = await rClosed.json();
+                } else if (rv.provider === 'cb') {
+                    const [rOpen, rClosed] = await Promise.all([
+                        cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/pulls?state=open&limit=50`),
+                        cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/pulls?state=closed&limit=50`)
+                    ]);
+                    if (rOpen.ok) {
+                        open = await rOpen.json();
+                        const t = rOpen.headers.get('X-Total-Count');
+                        if (t) openTotal = parseInt(t);
+                    }
+                    if (rClosed.ok) {
+                        closed = await rClosed.json();
+                        const t = rClosed.headers.get('X-Total-Count');
+                        if (t) closedTotal = parseInt(t);
+                    }
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const [rOpen, rClosed] = await Promise.all([
@@ -2340,7 +2431,7 @@
                     if (rOpen.ok)   open   = await rOpen.json();
                     if (rClosed.ok) closed = await rClosed.json();
                 }
-                _prsCache = { open, closed };
+                _prsCache = { open, closed, openTotal, closedTotal };
                 renderPRsView('all');
             } catch(e) {
                 panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
@@ -2357,12 +2448,15 @@
             const all    = [...open, ...closed];
             const items  = tab === 'all' ? all : tab === 'draft' ? draft : tab === 'open' ? active : closed;
 
+            const openTotal   = _prsCache.openTotal   != null ? _prsCache.openTotal   : active.length;
+            const closedTotal = _prsCache.closedTotal != null ? _prsCache.closedTotal : closed.length;
+            const allTotal    = openTotal + closedTotal;
             const toolbar = `
                 <div class="bugs-toolbar">
-                    <button class="bugs-tab ${tab==='all'?'active':''}"    onclick="renderPRsView('all')">all <span style="opacity:.6;">${all.length}</span></button>
+                    <button class="bugs-tab ${tab==='all'?'active':''}"    onclick="renderPRsView('all')">all <span style="opacity:.6;">${allTotal.toLocaleString()}</span></button>
                     <button class="bugs-tab ${tab==='draft'?'active':''}"  onclick="renderPRsView('draft')">draft <span style="opacity:.6;">${draft.length}</span></button>
-                    <button class="bugs-tab ${tab==='open'?'active':''}"   onclick="renderPRsView('open')">open <span style="opacity:.6;">${active.length}</span></button>
-                    <button class="bugs-tab ${tab==='closed'?'active':''}" onclick="renderPRsView('closed')">closed <span style="opacity:.6;">${closed.length}</span></button>
+                    <button class="bugs-tab ${tab==='open'?'active':''}"   onclick="renderPRsView('open')">open <span style="opacity:.6;">${openTotal.toLocaleString()}</span></button>
+                    <button class="bugs-tab ${tab==='closed'?'active':''}" onclick="renderPRsView('closed')">closed <span style="opacity:.6;">${closedTotal.toLocaleString()}</span></button>
                 </div>`;
 
             if (!items.length) {
@@ -2389,7 +2483,7 @@
                     : '';
 
                 const reviewState = i.review_comments > 0
-                    ? `<span style="font-size:0.68rem;color:var(--fg-muted);font-family:'IBM Plex Mono',monospace;flex-shrink:0;">💬 ${i.review_comments}</span>`
+                    ? `<span style="font-size:0.68rem;color:var(--fg-muted);font-family:'IBM Plex Mono',monospace;flex-shrink:0;display:inline-flex;align-items:center;gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7.09 2.75a4 4 0 0 0-4 4v6.208a4 4 0 0 0 4 4h.093v3.792a.5.5 0 0 0 .839.368l4.52-4.16h4.369a4 4 0 0 0 4-4V6.75a4 4 0 0 0-4-4z"/></svg> ${i.review_comments}</span>`
                     : '';
 
                 const num = i.number || i.iid;
@@ -2453,7 +2547,7 @@
                 panel.innerHTML = `<div style="padding:1rem;color:var(--fg-secondary);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;">
                     error loading discussions: ${escHtml(msg)}
                     <div style="margin-top:0.5rem;font-size:0.72rem;color:var(--fg-muted);">
-                        <a href="https://github.com/${rv.owner}/${rv.repo}/discussions" target="_blank" rel="noopener" style="color:var(--accent);" onclick="event.preventDefault(); window.open(this.href, '_blank', 'noopener');">Open on GitHub ↗</a>
+                        <a href="${rv.provider === 'gh' ? `https://github.com/${rv.owner}/${rv.repo}/discussions` : rv.provider === 'cb' ? `https://codeberg.org/${rv.owner}/${rv.repo}/issues` : `https://gitlab.com/${rv.owner}/${rv.repo}/-/issues`}" target="_blank" rel="noopener" style="color:var(--accent);" onclick="event.preventDefault(); window.open(this.href, '_blank', 'noopener');">Open on ${rv.provider === 'gh' ? 'GitHub' : rv.provider === 'cb' ? 'Codeberg' : 'GitLab'} ↗</a>
                     </div>
                 </div>`;
             }
@@ -2700,7 +2794,7 @@
                         panel.innerHTML = `<div style="padding:1rem;color:var(--fg-secondary);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;">
                             This repository has no wiki content yet.
                             <div style="margin-top:0.5rem;font-size:0.72rem;color:var(--fg-muted);">
-                                <a href="https://github.com/${rv.owner}/${rv.repo}/wiki" target="_blank" style="color:var(--accent);">Open wiki on GitHub ↗</a>
+                                <a href="${rv.provider === 'cb' ? `https://codeberg.org/${rv.owner}/${rv.repo}/wiki` : rv.provider === 'gh' ? `https://github.com/${rv.owner}/${rv.repo}/wiki` : `https://gitlab.com/${rv.owner}/${rv.repo}/-/wikis`}" target="_blank" style="color:var(--accent);">${rv.provider === 'cb' ? 'Open wiki on Codeberg' : rv.provider === 'gh' ? 'Open wiki on GitHub' : 'Open wiki on GitLab'} ↗</a>
                             </div>
                         </div>`;
                         _wikiCache = { slug: '', html: '' };
@@ -2763,7 +2857,62 @@
 
                     panel.innerHTML = navHtml + `<div class="readme">${renderMd(pageText, null, true)}</div>`;
                     _wikiCache = { slug: pageSlug, html: panel.innerHTML };
-                } else {
+                } else if (rv.provider === 'cb') {
+                    // Codeberg wiki: API REST Gitea/Forgejo
+                    const listRes = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/wiki/pages?limit=100`);
+                    if (!listRes.ok) throw new Error(`Codeberg wiki API error ${listRes.status}`);
+                    const pages = await listRes.json();
+
+                    if (!pages || !pages.length) {
+                        panel.innerHTML = '<div class="bugs-empty">this project has no wiki pages</div>';
+                        _wikiCache = { slug: '', html: '' };
+                        return;
+                    }
+
+                    const pageMatch = p => p.sub_url === pageSlug || p.title === pageSlug || p.sub_url?.toLowerCase() === pageSlug.toLowerCase() || p.title?.toLowerCase() === pageSlug.toLowerCase();
+                    let listPage = pages.find(pageMatch);
+                    const targetSubUrl = listPage ? listPage.sub_url : (pages[0]?.sub_url || '');
+                    if (!listPage) listPage = pages[0];
+
+                    const pageRes = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/wiki/page/${encodeURIComponent(targetSubUrl)}`);
+                    if (!pageRes.ok) throw new Error(`Codeberg wiki API error ${pageRes.status}`);
+                    const wikiPage = await pageRes.json();
+
+                    let content = '';
+                    if (wikiPage.content_base64) content = decodeBase64Utf8(wikiPage.content_base64);
+
+                    const sidebarText = wikiPage.sidebar ? decodeBase64Utf8(wikiPage.sidebar) : '';
+                    const navPages = [];
+                    if (sidebarText) {
+                        const re = /\[([^\]]+)\]\(([^)]+)\)/g;
+                        let m;
+                        while ((m = re.exec(sidebarText)) !== null) {
+                            const label = m[1].trim();
+                            const href = m[2].trim();
+                            const parsed = parseWikiHref(href);
+                            if (parsed.slug && !navPages.find(n => n.slug === parsed.slug && (n.anchor || '') === parsed.anchor)) {
+                                navPages.push({ slug: parsed.slug, title: label, anchor: parsed.anchor });
+                            }
+                        }
+                    }
+                    if (!navPages.length) {
+                        pages.forEach(p => {
+                            if (!navPages.find(n => n.slug === p.sub_url)) navPages.push({ slug: p.sub_url, title: p.title });
+                        });
+                    }
+
+                    const sidebar = `<div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-family:'IBM Plex Mono',monospace;color:var(--fg-muted);display:flex;gap:0.5rem;flex-wrap:wrap;">
+                        ${navPages.map(p => {
+                            const active = p.slug === targetSubUrl && (p.anchor || '') === anchor;
+                            const target = p.slug + (p.anchor ? '#' + p.anchor : '');
+                            return `<a href="#" data-wiki="${escAttr(target)}" style="color:${active ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${active ? 'var(--accent)' : 'var(--border)'};border-radius:3px;">${escHtml(p.title)}</a>`;
+                        }).join('')}
+                        <a href="https://codeberg.org/${rv.owner}/${rv.repo}/wiki" target="_blank" style="color:var(--accent);text-decoration:none;padding:0.15rem 0.4rem;">Open on Codeberg ↗</a>
+                    </div>`;
+
+                    panel.innerHTML = sidebar + `<div class="readme" style="padding-top:0;">${renderMd(content, null, true)}</div>`;
+                    _wikiCache = { slug: targetSubUrl, html: panel.innerHTML };
+                } else if (rv.provider === 'gl') {
                     // GitLab wiki: API REST
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/wikis?with_content=1`);
@@ -2800,8 +2949,8 @@
                 panel.innerHTML = `<div style="padding:1rem;color:var(--fg-secondary);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;">
                     error loading wiki: ${escHtml(e.message)}
                     <div style="margin-top:0.5rem;font-size:0.72rem;color:var(--fg-muted);">
-                        <a href="https://${rv.provider === 'gh' ? `github.com/${rv.owner}/${rv.repo}/wiki` : `gitlab.com/${rv.owner}/${rv.repo}/-/wikis`}" target="_blank" style="color:var(--accent);">
-                            Open on ${rv.provider === 'gh' ? 'GitHub' : 'GitLab'} ↗
+                        <a href="${rv.provider === 'cb' ? `https://codeberg.org/${rv.owner}/${rv.repo}/wiki` : rv.provider === 'gh' ? `https://github.com/${rv.owner}/${rv.repo}/wiki` : `https://gitlab.com/${rv.owner}/${rv.repo}/-/wikis`}" target="_blank" style="color:var(--accent);">
+                            Open on ${rv.provider === 'cb' ? 'Codeberg' : rv.provider === 'gh' ? 'GitHub' : 'GitLab'} ↗
                         </a>
                     </div>
                 </div>`;
@@ -2814,13 +2963,22 @@
             panel.innerHTML = '<div class="code-loading">loading commits...</div>';
             try {
                 let commits = [];
+                const ref = currentBranch();
                 if (rv.provider === 'gh') {
-                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/commits?per_page=30`);
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/commits?per_page=30&sha=${encodeURIComponent(ref)}`);
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     commits = await res.json();
+                } else if (rv.provider === 'cb') {
+                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/commits?limit=30&sha=${encodeURIComponent(ref)}`);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    commits = await res.json();
+                    if (!Array.isArray(commits)) {
+                        console.warn('cb-commits: unexpected response', commits);
+                        commits = [];
+                    }
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
-                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/commits?per_page=30`);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/commits?per_page=30&ref_name=${encodeURIComponent(ref)}`);
                     if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text().catch(()=>'')}`);
                     commits = await res.json();
                     if (!Array.isArray(commits)) {
@@ -2946,6 +3104,18 @@
                 if (rv.provider === 'gh') {
                     const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/releases?per_page=30`);
                     if (res.ok) releases = await res.json();
+                } else if (rv.provider === 'cb') {
+                    let page = 1;
+                    while (true) {
+                        const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/releases?limit=50&page=${page}`);
+                        if (!res.ok) break;
+                        const data = await res.json();
+                        if (!Array.isArray(data) || data.length === 0) break;
+                        releases.push(...data);
+                        const link = res.headers.get('Link') || '';
+                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                        page++;
+                    }
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/releases?per_page=30`);
@@ -2953,6 +3123,225 @@
                 }
                 _releasesCache = releases.map(normalizeRelease);
                 renderReleasesView();
+            } catch(e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+            }
+        }
+
+        async function loadBranches() {
+            const panel = document.getElementById('code-panel');
+            panel.innerHTML = '<div class="code-loading">loading branches...</div>';
+            try {
+                let branches = [];
+                if (rv.provider === 'gh') {
+                    let page = 1;
+                    while (true) {
+                        const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/branches?per_page=100&page=${page}`);
+                        if (!res.ok) break;
+                        const data = await res.json();
+                        if (!Array.isArray(data) || data.length === 0) break;
+                        branches.push(...data);
+                        const link = res.headers.get('Link') || '';
+                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                        page++;
+                    }
+                } else if (rv.provider === 'cb') {
+                    let page = 1;
+                    while (true) {
+                        const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/branches?limit=50&page=${page}`);
+                        if (!res.ok) break;
+                        const data = await res.json();
+                        if (!Array.isArray(data) || data.length === 0) break;
+                        branches.push(...data);
+                        const link = res.headers.get('Link') || '';
+                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                        page++;
+                    }
+                } else {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    let page = 1;
+                    while (true) {
+                        const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/branches?per_page=100&page=${page}`);
+                        if (!res.ok) break;
+                        const data = await res.json();
+                        if (!Array.isArray(data) || data.length === 0) break;
+                        branches.push(...data);
+                        const link = res.headers.get('Link') || '';
+                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                        page++;
+                    }
+                }
+                renderBranchesView(branches);
+            } catch(e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+            }
+        }
+
+        function renderBranchesView(branches) {
+            const panel = document.getElementById('code-panel');
+            if (!branches.length) {
+                panel.innerHTML = '<div class="bugs-empty">no branches found</div>';
+                return;
+            }
+            const baseUrl = rv.provider === 'cb'
+                ? `https://codeberg.org/${rv.owner}/${rv.repo}/src/branch/`
+                : rv.provider === 'gh'
+                    ? `https://github.com/${rv.owner}/${rv.repo}/tree/`
+                    : `https://gitlab.com/${rv.owner}/${rv.repo}/-/tree/`;
+            const defaultName = (branches.find(b => b.name === 'main' || b.name === 'master') || branches[0]).name;
+            const header = `<div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;">
+                <span style="font-size:0.85rem;font-weight:600;color:var(--fg);">${branches.length.toLocaleString()} branches</span>
+            </div>`;
+            const list = branches.map(b => {
+                const name = b.name || '';
+                const sha = String(b.commit?.sha || b.commit?.id || '').substring(0, 7);
+                const protectedBadge = b.protected ? `<span class="issue-label" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--fg-muted);margin-left:0.4rem;">protected</span>` : '';
+                const defaultBadge = name === defaultName ? `<span class="issue-label" style="background:#2da44e22;border:1px solid #2da44e;color:#2da44e;margin-left:0.4rem;">default</span>` : '';
+                return `<div class="issue-item" style="cursor:default;align-items:flex-start;">
+                    <span class="issue-title" style="display:flex;align-items:center;flex-wrap:wrap;gap:0.3rem;">
+                        <a href="${baseUrl}${escAttr(name)}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-family:'IBM Plex Mono',monospace;">${escHtml(name)}</a>
+                        ${defaultBadge}${protectedBadge}
+                    </span>
+                    <span class="issue-meta" style="font-family:'IBM Plex Mono',monospace;">${sha}</span>
+                </div>`;
+            }).join('');
+            panel.innerHTML = header + '<div class="commit-list">' + list + '</div>';
+        }
+
+        let _packagesCache = [];
+
+        async function checkPackages() {
+            try {
+                let has = false;
+                if (rv.provider === 'cb') {
+                    const res = await cbFetch(`${CB_BASE}/packages/${rv.owner}?limit=50`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        has = Array.isArray(data) && data.some(p => p.repository?.name === rv.repo);
+                    }
+                } else if (rv.provider === 'gl') {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/packages?per_page=1`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        has = Array.isArray(data) && data.length > 0;
+                    }
+                } else if (rv.provider === 'gh') {
+                    let res = await ghFetch(`https://api.github.com/users/${rv.owner}/packages?per_page=100`);
+                    if (res.status === 404) res = await ghFetch(`https://api.github.com/orgs/${rv.owner}/packages?per_page=100`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        has = Array.isArray(data) && data.some(p => p.repository?.name === rv.repo);
+                    }
+                }
+                const nav = document.getElementById('nav-packages');
+                if (nav) nav.style.display = has ? '' : 'none';
+            } catch(_) {}
+        }
+
+        async function loadPackages() {
+            const panel = document.getElementById('code-panel');
+            _packagesCache = [];
+            panel.innerHTML = '<div class="code-loading">loading packages...</div>';
+            try {
+                let packages = [];
+                if (rv.provider === 'cb') {
+                    let page = 1;
+                    while (true) {
+                        const res = await cbFetch(`${CB_BASE}/packages/${rv.owner}?limit=50&page=${page}`);
+                        if (!res.ok) break;
+                        const data = await res.json();
+                        if (!Array.isArray(data) || data.length === 0) break;
+                        packages.push(...data.filter(p => p.repository?.name === rv.repo));
+                        const link = res.headers.get('Link') || '';
+                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                        page++;
+                    }
+                } else if (rv.provider === 'gl') {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    let page = 1;
+                    while (true) {
+                        const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/packages?per_page=100&page=${page}`);
+                        if (!res.ok) break;
+                        const data = await res.json();
+                        if (!Array.isArray(data) || data.length === 0) break;
+                        packages.push(...data);
+                        const link = res.headers.get('Link') || '';
+                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                        page++;
+                    }
+                } else if (rv.provider === 'gh') {
+                    let res = await ghFetch(`https://api.github.com/users/${rv.owner}/packages?per_page=100`);
+                    if (res.status === 404) res = await ghFetch(`https://api.github.com/orgs/${rv.owner}/packages?per_page=100`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        packages = (data || []).filter(p => p.repository?.name === rv.repo);
+                    }
+                }
+                _packagesCache = packages;
+                renderPackagesView();
+            } catch(e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+            }
+        }
+
+        function renderPackagesView() {
+            const panel = document.getElementById('code-panel');
+            const packages = _packagesCache || [];
+            if (!packages.length) {
+                panel.innerHTML = '<div class="bugs-empty">no packages found</div>';
+                return;
+            }
+            const header = `<div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;">
+                <span style="font-size:0.85rem;font-weight:600;color:var(--fg);">${packages.length.toLocaleString()} packages</span>
+            </div>`;
+            const list = packages.map((p, idx) => {
+                const name = p.name || '';
+                const version = p.version || '';
+                const type = p.type || p.package_type || '';
+                const date = p.created_at ? new Date(p.created_at).toLocaleDateString('en', {month:'short', day:'numeric', year:'numeric'}) : '';
+                return `<div class="issue-item" style="cursor:pointer;" onclick="showPackageDetail(${idx})">
+                    <span class="issue-title" style="font-family:'IBM Plex Mono',monospace;">${escHtml(name)}:${escHtml(version)}</span>
+                    <span class="issue-meta">${type}${date ? ' · ' + date : ''}</span>
+                </div>`;
+            }).join('');
+            panel.innerHTML = header + '<div class="commit-list">' + list + '</div>';
+        }
+
+        async function showPackageDetail(idx) {
+            const panel = document.getElementById('code-panel');
+            const pkg = _packagesCache[idx];
+            if (!pkg) return;
+            panel.innerHTML = '<div class="code-loading">loading package...</div>';
+            try {
+                let files = [];
+                if (rv.provider === 'cb') {
+                    const type = encodeURIComponent(pkg.type || '');
+                    const name = encodeURIComponent(pkg.name || '');
+                    const version = encodeURIComponent(pkg.version || '');
+                    const res = await cbFetch(`${CB_BASE}/packages/${rv.owner}/${type}/${name}/${version}/files`);
+                    if (res.ok) files = await res.json();
+                } else if (rv.provider === 'gl') {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/packages/${pkg.id}/package_files`);
+                    if (res.ok) files = await res.json();
+                }
+                const date = pkg.created_at ? new Date(pkg.created_at).toLocaleString('en') : '';
+                const fileList = Array.isArray(files) && files.length
+                    ? files.map(f => `<li>${escHtml(f.name || f.file_name || 'file')} <span style="color:var(--fg-muted);font-size:0.7rem;">(${formatBytes(f.size || f.Size || 0)})</span></li>`).join('')
+                    : '<li style="color:var(--fg-muted);">no files listed</li>';
+                panel.innerHTML = `
+                    <div class="commit-detail-header" style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);">
+                        <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;">${escHtml(pkg.name || '')}:${escHtml(pkg.version || '')}</span>
+                        ${pkg.html_url ? `<a class="commit-ext-link" href="${escAttr(pkg.html_url)}" target="_blank" rel="noopener">Open Original</a>` : ''}
+                    </div>
+                    <div style="padding:1rem 1.25rem;">
+                        <div style="font-size:0.78rem;color:var(--fg-muted);margin-bottom:1rem;">
+                            ${pkg.type || pkg.package_type || ''}${date ? ' · ' + date : ''}
+                        </div>
+                        <div style="font-size:0.85rem;font-weight:600;margin-bottom:0.5rem;">Files</div>
+                        <ul style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.4rem;">${fileList}</ul>
+                    </div>`;
             } catch(e) {
                 panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
             }
@@ -3078,6 +3467,50 @@
             });
         }
 
+        function parseGitDiff(diffText) {
+            if (!diffText) return [];
+            const parts = diffText.split(/^diff --git /m);
+            const files = [];
+            parts.slice(1).forEach(part => {
+                const text = 'diff --git ' + part;
+                const lines = text.split('\n');
+                const first = lines[0];
+                const m = first.match(/^diff --git a\/(.+?) b\/(.+)$/);
+                if (!m) return;
+                let filename = m[2];
+                let status = 'modified';
+                let oldName = '';
+                let additions = 0;
+                let deletions = 0;
+                let patchLines = [];
+                let i = 1;
+                while (i < lines.length) {
+                    const l = lines[i];
+                    if (l.startsWith('new file mode')) { status = 'added'; i++; }
+                    else if (l.startsWith('deleted file mode')) { status = 'removed'; i++; }
+                    else if (l.startsWith('rename from ')) { status = 'renamed'; i++; }
+                    else if (l.startsWith('rename to ')) { filename = l.slice(10); i++; }
+                    else if (l.startsWith('similarity index')) { i++; }
+                    else if (l.startsWith('--- ')) { i++; }
+                    else if (l.startsWith('+++ ')) { i++; }
+                    else if (l.startsWith('index ')) { i++; }
+                    else break;
+                }
+                for (const l of lines) {
+                    if (l.startsWith('+') && !l.startsWith('+++')) additions++;
+                    if (l.startsWith('-') && !l.startsWith('---')) deletions++;
+                }
+                files.push({
+                    filename,
+                    status,
+                    additions,
+                    deletions,
+                    patch: text
+                });
+            });
+            return files;
+        }
+
         async function showCommitDetail(sha) {
             const panel = document.getElementById('code-panel');
             panel.innerHTML = '<div class="code-loading">loading commit...</div>';
@@ -3088,6 +3521,15 @@
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     commit = await res.json();
                     files = commit.files || [];
+                } else if (rv.provider === 'cb') {
+                    const [resCommit, resDiff] = await Promise.all([
+                        cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/git/commits/${sha}`),
+                        cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/git/commits/${sha}.diff`)
+                    ]);
+                    if (!resCommit.ok) throw new Error(`HTTP ${resCommit.status}`);
+                    commit = await resCommit.json();
+                    const diffText = resDiff.ok ? await resDiff.text() : '';
+                    files = diffText ? parseGitDiff(diffText) : (commit.files || []);
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const [resCommit, resDiff] = await Promise.all([
@@ -3255,7 +3697,7 @@
                 <div class="commit-detail">
                     <div class="commit-detail-header">
                         <span class="commit-detail-sha">${shortSha}</span>
-                        <a class="commit-ext-link" href="${url}" target="_blank" rel="noopener">open on ${rv.provider === 'gh' ? 'GitHub' : 'GitLab'} <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                        <a class="commit-ext-link" href="${url}" target="_blank" rel="noopener">open on ${rv.provider === 'cb' ? 'Codeberg' : rv.provider === 'gh' ? 'GitHub' : 'GitLab'} <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.25 3.75h-2.5a4 4 0 0 0-4 4v8.5a4 4 0 0 0 4 4h8.5a4 4 0 0 0 4-4v-2.5m-6.5-10h5.5c.276 0 .526.112.707.293m.293 6.207v-5.5a1 1 0 0 0-.293-.707M12.75 11.25l6.5-6.5l.707-.707" />
                         </svg>
@@ -3470,6 +3912,8 @@
                     if (infoLang && d.language) infoLang.textContent = d.language;
                     if (infoDesc && d.description) infoDesc.textContent = d.description;
                     if (bar) bar.style.display = 'flex';
+                    rv.language = d.language || rv.language;
+                    rv.branch = d.default_branch || rv.branch;
 
                     // sidebar
                     const sbDesc = document.getElementById('sb-desc');
@@ -3489,6 +3933,7 @@
                     }
                     const sbStarCount = document.getElementById('sb-star-count');
                     if (sbStarCount) sbStarCount.textContent = d.stargazers_count ? d.stargazers_count.toLocaleString() : '';
+                    updateStatusbarPath();
 
                     // discussions nav — solo GitHub y si el repo lo tiene habilitado
                     const navDiscussions = document.getElementById('nav-discussions');
@@ -3503,7 +3948,7 @@
                     }
 
                     loadCommitCount();
-                } else {
+                } else if (rv.provider === 'gl') {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}`);
                     if (!res.ok) {
@@ -3520,6 +3965,7 @@
                     if (infoForks) infoForks.textContent = `⑂ ${d.forks_count || 0} forks`;
                     if (infoDesc && d.description) infoDesc.textContent = d.description;
                     if (bar) bar.style.display = 'flex';
+                    rv.branch = d.default_branch || rv.branch;
 
                     const sbDesc = document.getElementById('sb-desc');
                     if (sbDesc) sbDesc.textContent = d.description || '—';
@@ -3539,6 +3985,7 @@
                     }
                     const sbStarCount = document.getElementById('sb-star-count');
                     if (sbStarCount) sbStarCount.textContent = d.star_count ? d.star_count.toLocaleString() : '';
+                    updateStatusbarPath();
 
                     // wiki nav — GitLab: ocultar por defecto y mostrar solo si hay paginas reales
                     const navWiki = document.getElementById('nav-wiki');
@@ -3556,6 +4003,52 @@
                     }
 
                     loadCommitCount();
+                } else if (rv.provider === 'cb') {
+                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}`);
+                    if (!res.ok) {
+                        const sbDesc = document.getElementById('sb-desc');
+                        if (sbDesc) sbDesc.textContent = `codeberg API error ${res.status}`;
+                        return;
+                    }
+                    const d = await res.json();
+                    const bar       = document.getElementById('repo-info');
+                    const infoStars = document.getElementById('info-stars');
+                    const infoForks = document.getElementById('info-forks');
+                    const infoLang  = document.getElementById('info-lang');
+                    const infoDesc  = document.getElementById('info-desc');
+                    if (infoStars) infoStars.textContent = `★ ${d.stars_count?.toLocaleString() || 0}`;
+                    if (infoForks) infoForks.textContent = `⑂ ${d.forks_count || 0} forks`;
+                    if (infoLang && d.language) infoLang.textContent = d.language;
+                    if (infoDesc && d.description) infoDesc.textContent = d.description;
+                    if (bar) bar.style.display = 'flex';
+                    rv.language = d.language || rv.language;
+                    rv.branch = d.default_branch || rv.branch;
+
+                    const sbDesc = document.getElementById('sb-desc');
+                    if (sbDesc) sbDesc.textContent = d.description || '—';
+                    const sbTags = document.getElementById('sb-tags');
+                    if (sbTags && d.topics && d.topics.length > 0) {
+                        sbTags.innerHTML = d.topics.map(t => `<a class="sidebar-tag" href="/?tag=${encodeURIComponent(t)}" title="Search ${t}">${t}</a>`).join('');
+                    }
+                    const sbVis = document.getElementById('sb-vis');
+                    if (sbVis) {
+                        sbVis.textContent = d.private ? 'private' : 'public';
+                        sbVis.className = 'val ' + (d.private ? '' : 'pub');
+                    }
+                    const sbCreated = document.getElementById('sb-created');
+                    if (sbCreated && d.created_at) {
+                        sbCreated.textContent = new Date(d.created_at).toLocaleDateString('en', {year:'numeric', month:'short', day:'numeric'});
+                    }
+                    const sbStarCount = document.getElementById('sb-star-count');
+                    if (sbStarCount) sbStarCount.textContent = d.stars_count ? d.stars_count.toLocaleString() : '';
+                    updateStatusbarPath();
+
+                    const navWiki = document.getElementById('nav-wiki');
+                    if (navWiki && d.has_wiki) {
+                        navWiki.style.display = '';
+                    }
+
+                    loadCommitCount();
                 }
             } catch(e) {
                 const sbDesc = document.getElementById('sb-desc');
@@ -3567,12 +4060,24 @@
             const el = document.getElementById('sb-commits');
             if (!el) return;
             try {
+                const ref = currentBranch();
                 if (rv.provider === 'gh') {
-                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/commits?per_page=1&anon=true`);
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/commits?per_page=1&anon=true&sha=${encodeURIComponent(ref)}`);
                     if (!res.ok) { el.textContent = '?'; return; }
                     const link = res.headers.get('Link') || '';
                     const match = link.match(/&page=(\d+)>; rel="last"/);
                     el.textContent = match ? parseInt(match[1]).toLocaleString() : '?';
+                } else if (rv.provider === 'cb') {
+                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/commits?limit=1&sha=${encodeURIComponent(ref)}`);
+                    if (!res.ok) { el.textContent = '?'; return; }
+                    const total = res.headers.get('X-Total-Count') || res.headers.get('X-Total');
+                    if (total) {
+                        el.textContent = parseInt(total).toLocaleString();
+                    } else {
+                        const link = res.headers.get('Link') || '';
+                        const match = link.match(/[?&]page=(\d+)>; rel="last"/);
+                        el.textContent = match ? parseInt(match[1]).toLocaleString() : '?';
+                    }
                 } else {
                     const res = await fetch(`${API_BASE}/api/gl-commit-count/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}`);
                     if (res.ok) {
@@ -3619,7 +4124,7 @@
                         el.textContent = '';
                         if (section) section.style.display = 'none';
                     }
-                } else {
+                } else if (rv.provider === 'gl') {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/releases?per_page=1`);
                     if (res.ok) {
@@ -3646,6 +4151,29 @@
                     } else {
                         if (section) section.style.display = 'none';
                     }
+                } else if (rv.provider === 'cb') {
+                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/releases?limit=1`);
+                    if (!res.ok) { if (section) section.style.display = 'none'; return; }
+                    const data = await res.json();
+                    const latest = Array.isArray(data) ? data[0] : null;
+                    const total = res.headers.get('X-Total-Count');
+                    const count = total ? parseInt(total) : (Array.isArray(data) ? data.length : 0);
+                    if (count > 0 && latest) {
+                        el.textContent = count.toLocaleString();
+                        if (latestEl) {
+                            const tag = latest.tag_name || latest.tag || '';
+                            const name = latest.name || tag;
+                            const ago = timeAgo(latest.published_at || latest.created_at);
+                            latestEl.innerHTML = `<a href="#" onclick="showView('releases'); return false;" style="color:var(--fg);text-decoration:none;display:block;padding:0.3rem 0;">
+                                <div style="font-size:0.82rem;font-weight:500;line-height:1.3;">${escHtml(name)}  <span class="release-latest-badge">Latest</span></div>
+                                ${ago ? `<div style="font-size:0.7rem;color:var(--fg-muted);margin-top:0.15rem;">${ago}</div>` : ''}
+                            </a>`;
+                        }
+                        if (section) section.style.display = '';
+                    } else {
+                        el.textContent = '';
+                        if (section) section.style.display = 'none';
+                    }
                 }
             } catch(_) {}
         }
@@ -3655,6 +4183,11 @@
                 let entries = [];
                 if (rv.provider === 'gh') {
                     const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/languages`);
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    entries = Object.entries(data);
+                } else if (rv.provider === 'cb') {
+                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/languages`);
                     if (!res.ok) return;
                     const data = await res.json();
                     entries = Object.entries(data);
@@ -3689,7 +4222,7 @@
                 legend.innerHTML = '';
 
                 entries.forEach(([lang, value], i) => {
-                    const pct = rv.provider === 'gh' ? (value / total * 100).toFixed(1) : value.toFixed(1);
+                    const pct = (rv.provider === 'gh' || rv.provider === 'cb') ? (value / total * 100).toFixed(1) : value.toFixed(1);
                     const color = colors[i % colors.length];
                     const seg = document.createElement('div');
                     seg.className = 'lang-bar-seg';
@@ -3723,13 +4256,18 @@
 
         async function _fetchDirItems(pathParts) {
             const pathStr = pathParts.join('/');
+            const ref = currentBranch();
             if (rv.provider === 'gh') {
-                const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/contents/${pathStr}`);
+                const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/contents/${pathStr}?ref=${encodeURIComponent(ref)}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
+            } else if (rv.provider === 'cb') {
+                const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/contents/${pathStr}?ref=${encodeURIComponent(ref)}`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 return await res.json();
             } else {
                 const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
-                const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/tree?path=${encodeURIComponent(pathStr)}&per_page=100`);
+                const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/tree?path=${encodeURIComponent(pathStr)}&per_page=100&ref=${encodeURIComponent(ref)}`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const raw = await res.json();
                 return raw.map(i => ({ name: i.name, type: i.type === 'tree' ? 'dir' : 'file', path: i.path, download_url: null }));
@@ -3854,12 +4392,18 @@
                         const res = await fetch(item.url);
                         if (!res.ok) throw new Error(`HTTP ${res.status}`);
                         const data = await res.json();
-                        content = atob(data.content.replace(/\n/g, ''));
+                        content = decodeBase64Utf8(data.content);
                     }
+                } else if (rv.provider === 'cb') {
+                    const ref = currentBranch();
+                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/contents/${encodeURIComponent(item.path)}?ref=${encodeURIComponent(ref)}`);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const data = await res.json();
+                    content = decodeBase64Utf8(data.content);
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const fp  = encodeURIComponent(item.path || item.name);
-                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/files/${fp}/raw?ref=HEAD`);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/files/${fp}/raw?ref=${currentBranch()}`);
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     content = await res.text();
                 }
@@ -3868,13 +4412,15 @@
                 const ext = name.toLowerCase().split('.').pop();
                 const imageExts = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico', 'avif', 'apng'];
                 if (imageExts.includes(ext)) {
-                    const imgUrl = item.download_url || item.url || (rv.provider === 'gh' ? `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/HEAD/${item.path}` : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/HEAD/${item.path}`);
+                    let imgUrl = item.download_url || item.url || `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/${item.path}`;
+                    if (rv.provider === 'gh') imgUrl = `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/${currentBranch()}/${item.path}`;
+                    if (rv.provider === 'cb') imgUrl = `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${currentBranch()}/${item.path}`;
                     panel.innerHTML = `<div style="padding:1rem;text-align:center;"><img src="${imgUrl}" alt="${escHtml(name)}" style="max-width:100%;max-height:80vh;object-fit:contain;border-radius:4px;" /></div>`;
                 } else if (name.toLowerCase().endsWith('.md')) {
                     const dir = item.path ? item.path.substring(0, item.path.lastIndexOf('/') + 1) : '';
-                    const mdBaseUrl = (rv.provider === 'gh')
-                        ? `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/HEAD/${dir}`
-                        : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/HEAD/${dir}`;
+                    let mdBaseUrl = `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/${dir}`;
+                    if (rv.provider === 'gh') mdBaseUrl = `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/${currentBranch()}/${dir}`;
+                    if (rv.provider === 'cb') mdBaseUrl = `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${currentBranch()}/${dir}`;
                     panel.innerHTML = `<div class="readme">${renderMd(content, mdBaseUrl)}</div>`;
                 } else {
                     const lang = detectLang(name);
@@ -3917,7 +4463,8 @@
             if (!btn) return;
             const starred = _isStarred();
             btn.title = starred ? 'Remove from stars' : 'Add to stars';
-            btn.querySelector('span#sb-star-count').textContent = starred ? 'ed' : '';
+            const text = btn.querySelector('span#sb-star-text');
+            if (text) text.textContent = starred ? 'Starred' : 'Star';
             btn.style.opacity = starred ? '1' : '';
             // Cambiar icono a relleno si ya está starred
             const svg = btn.querySelector('svg path:last-child');
@@ -3934,6 +4481,7 @@
                     repo: rv.repo,
                     provider: rv.provider,
                     full_name: `${rv.owner}/${rv.repo}`,
+                    language: rv.language || '',
                     starred_at: new Date().toISOString()
                 }));
             }
@@ -3942,12 +4490,10 @@
 
         function doClone() {
             if (document.getElementById('clone-modal-overlay')) return;
-            const host = rv.provider === 'gh'
-                ? `gitgost.fly.dev/v1/gh/${rv.owner}/${rv.repo}`
-                : `gitgost.fly.dev/v1/gl/${rv.owner}/${rv.repo}`;
-            const githubBase = rv.provider === 'gh'
-                ? `https://github.com/${rv.owner}/${rv.repo}`
-                : `https://gitlab.com/${rv.owner}/${rv.repo}`;
+            const host = `gitgost.fly.dev/v1/${rv.provider}/${rv.owner}/${rv.repo}`;
+            let githubBase = `https://gitlab.com/${rv.owner}/${rv.repo}`;
+            if (rv.provider === 'gh') githubBase = `https://github.com/${rv.owner}/${rv.repo}`;
+            else if (rv.provider === 'cb') githubBase = `https://codeberg.org/${rv.owner}/${rv.repo}`;
             const options = [
                 { label: 'clone / push',  cmd: `git clone https://anon:@${host}` },
                 { label: 'push (update)', cmd: `git remote add gost https://${host}` },
@@ -3989,9 +4535,9 @@
         }
 
         function openOriginalRepo() {
-            const url = rv.provider === 'gh'
-                ? `https://github.com/${rv.owner}/${rv.repo}`
-                : `https://gitlab.com/${rv.owner}/${rv.repo}`;
+            let url = `https://gitlab.com/${rv.owner}/${rv.repo}`;
+            if (rv.provider === 'gh') url = `https://github.com/${rv.owner}/${rv.repo}`;
+            else if (rv.provider === 'cb') url = `https://codeberg.org/${rv.owner}/${rv.repo}`;
             window.open(url, '_blank', 'noopener,noreferrer');
         }
 
@@ -4011,6 +4557,15 @@
 
         function escHtml(s) {
             return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        function decodeBase64Utf8(base64) {
+            const binary = atob((base64 || '').replace(/\s/g, ''));
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return new TextDecoder('utf-8').decode(bytes);
         }
 
         function escAttr(s) {
@@ -4055,6 +4610,14 @@
                 e.preventDefault();
                 scrollToAnchor(anchor);
             }
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0 || bytes == null) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
         }
 
         function timeAgo(dateStr) {
@@ -4181,9 +4744,11 @@
                 src = src.replace(/#gh-(light|dark)-mode-only$/i, '');
                 if (src && !/^https?:\/\//i.test(src) && !/^data:/i.test(src)) {
                     const rawBase = baseUrl ||
-                        (rv.provider === 'gh'
-                            ? `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/HEAD/`
-                            : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/HEAD/`);
+                        (rv.provider === 'cb'
+                            ? `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${currentBranch()}/`
+                            : rv.provider === 'gh'
+                                ? `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/${currentBranch()}/`
+                                : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/`);
                     src = rawBase.replace(/\/$/, '') + '/' + src.replace(/^\.?\//, '');
                 }
                 return `<img src="${escAttr(src)}" alt="${escAttr(alt)}"${title ? ` title="${escAttr(title)}"` : ''} style="max-width:100%;border-radius:4px;" />`;
@@ -4196,9 +4761,11 @@
             let result = marked.parse(emojified, { renderer });
             // Post-procesar HTML <img> tags con rutas relativas (marked no los pasa por renderer.image)
             const rawBase = baseUrl ||
-                (rv.provider === 'gh'
-                    ? `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/HEAD/`
-                    : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/HEAD/`);
+                (rv.provider === 'cb'
+                    ? `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${currentBranch()}/`
+                    : rv.provider === 'gh'
+                        ? `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/${currentBranch()}/`
+                        : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/`);
             result = result.replace(/<img\s+[^>]*?src=("[^"]+"|'[^']+')([^>]*?)>/gi, (match, srcQuoted, rest) => {
                 const quote = srcQuoted[0];
                 const src = srcQuoted.slice(1, -1);

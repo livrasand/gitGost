@@ -1,7 +1,6 @@
 package http
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -45,53 +44,67 @@ func TestBasicAuth_EmptyPassword(t *testing.T) {
 	}
 }
 
-// TestUploadPackDiscoveryHandler_NoToken verifica rechazo sin GITHUB_TOKEN
+// TestUploadPackDiscoveryHandler_NoToken verifica que la petición anónima llegue al upstream.
 func TestUploadPackDiscoveryHandler_NoToken(t *testing.T) {
 	t.Setenv("GITHUB_TOKEN", "")
 
+	mockGitHub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "" {
+			t.Errorf("Expected no Authorization header, got %q", r.Header.Get("Authorization"))
+		}
+		w.WriteHeader(http.StatusOK)
+		io.WriteString(w, "advertisement")
+	}))
+	defer mockGitHub.Close()
+
+	origUploadPackClient := uploadPackClient
+	uploadPackClient = &http.Client{
+		Transport: &mockTransport{mockURL: mockGitHub.URL, base: mockGitHub.Client().Transport},
+	}
+	defer func() { uploadPackClient = origUploadPackClient }()
+
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	r.GET("/info/refs", UploadPackDiscoveryHandler)
+	r.GET("/:owner/:repo/info/refs", UploadPackDiscoveryHandler)
 
-	req, _ := http.NewRequest("GET", "/info/refs?service=git-upload-pack", nil)
+	req, _ := http.NewRequest("GET", "/owner/repo/info/refs?service=git-upload-pack", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
-	if w.Code != http.StatusInternalServerError {
-		t.Errorf("Expected 500 when GITHUB_TOKEN not set, got %d", w.Code)
-	}
-
-	var body map[string]string
-	if err := json.NewDecoder(w.Body).Decode(&body); err != nil {
-		t.Fatalf("Failed to decode response: %v", err)
-	}
-	if body["error"] != "GITHUB_TOKEN not set" {
-		t.Errorf("Expected error 'GITHUB_TOKEN not set', got %q", body["error"])
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected 200 without GITHUB_TOKEN, got %d", w.Code)
 	}
 }
 
-// TestUploadPackHandler_NoToken verifica rechazo sin GITHUB_TOKEN
+// TestUploadPackHandler_NoToken verifica que la petición anónima llegue al upstream.
 func TestUploadPackHandler_NoToken(t *testing.T) {
 	t.Setenv("GITHUB_TOKEN", "")
 
+	mockGitHub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "" {
+			t.Errorf("Expected no Authorization header, got %q", r.Header.Get("Authorization"))
+		}
+		w.WriteHeader(http.StatusOK)
+		io.WriteString(w, "pack")
+	}))
+	defer mockGitHub.Close()
+
+	origUploadPackClient := uploadPackClient
+	uploadPackClient = &http.Client{
+		Transport: &mockTransport{mockURL: mockGitHub.URL, base: mockGitHub.Client().Transport},
+	}
+	defer func() { uploadPackClient = origUploadPackClient }()
+
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	r.POST("/git-upload-pack", UploadPackHandler)
+	r.POST("/:owner/:repo/git-upload-pack", UploadPackHandler)
 
-	req, _ := http.NewRequest("POST", "/git-upload-pack", strings.NewReader(""))
+	req, _ := http.NewRequest("POST", "/owner/repo/git-upload-pack", strings.NewReader(""))
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
-	if w.Code != http.StatusInternalServerError {
-		t.Errorf("Expected 500 when GITHUB_TOKEN not set, got %d", w.Code)
-	}
-
-	var body map[string]string
-	if err := json.NewDecoder(w.Body).Decode(&body); err != nil {
-		t.Fatalf("Failed to decode response: %v", err)
-	}
-	if body["error"] != "GITHUB_TOKEN not set" {
-		t.Errorf("Expected error 'GITHUB_TOKEN not set', got %q", body["error"])
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected 200 without GITHUB_TOKEN, got %d", w.Code)
 	}
 }
 

@@ -26,6 +26,7 @@ import (
 	"github.com/livrasand/gitGost/internal/git"
 	"github.com/livrasand/gitGost/internal/github"
 	"github.com/livrasand/gitGost/internal/provider"
+	cbprovider "github.com/livrasand/gitGost/internal/provider/codeberg"
 	ghprovider "github.com/livrasand/gitGost/internal/provider/github"
 	glprovider "github.com/livrasand/gitGost/internal/provider/gitlab"
 	"github.com/livrasand/gitGost/internal/utils"
@@ -36,10 +37,13 @@ import (
 var uploadPackClient = &http.Client{Timeout: 30 * time.Second}
 
 // providerFromPath returns the appropriate Provider based on the URL path prefix.
-// /v1/gh/... → GitHub (default), /v1/gl/... → GitLab.
+// /v1/gh/... → GitHub (default), /v1/gl/... → GitLab, /v1/cb/... → Codeberg.
 func providerFromPath(path string) provider.Provider {
 	if strings.HasPrefix(path, "/v1/gl/") {
 		return glprovider.New()
+	}
+	if strings.HasPrefix(path, "/v1/cb/") {
+		return cbprovider.New()
 	}
 	return ghprovider.New()
 }
@@ -408,12 +412,19 @@ func ReceivePackHandler(c *gin.Context) {
 		provShort := "gh"
 		if strings.HasPrefix(c.Request.URL.Path, "/v1/gl/") {
 			provShort = "gl"
+		} else if strings.HasPrefix(c.Request.URL.Path, "/v1/cb/") {
+			provShort = "cb"
 		}
-		if provShort == "gl" {
+		switch provShort {
+		case "gl":
 			if num := glprovider.ExtractMRIID(prURL); num > 0 {
 				trackPR(outPRHash, owner, repo, num, prURL, provShort)
 			}
-		} else {
+		case "cb":
+			if num := cbprovider.ExtractPRNumber(prURL); num > 0 {
+				trackPR(outPRHash, owner, repo, num, prURL, provShort)
+			}
+		default:
 			if num := github.ExtractPRNumber(prURL); num > 0 {
 				trackPR(outPRHash, owner, repo, num, prURL, provShort)
 			}
@@ -464,6 +475,8 @@ func UploadPackDiscoveryHandler(c *gin.Context) {
 	repo := c.Param("repo")
 
 	prov := providerFromPath(c.Request.URL.Path)
+	token := os.Getenv(prov.TokenEnvVar())
+
 	remoteURL := prov.CloneURL(owner, repo) + "/info/refs?service=git-upload-pack"
 	req, err := http.NewRequest("GET", remoteURL, nil)
 	if err != nil {
@@ -471,6 +484,9 @@ func UploadPackDiscoveryHandler(c *gin.Context) {
 		return
 	}
 	req.Header.Set("User-Agent", "git/2.0")
+	if token != "" {
+		req.Header.Set("Authorization", "Basic "+basicAuth("x-access-token", token))
+	}
 
 	resp, err := uploadPackClient.Do(req)
 	if err != nil {
@@ -505,6 +521,8 @@ func UploadPackHandler(c *gin.Context) {
 	}
 
 	prov := providerFromPath(c.Request.URL.Path)
+	token := os.Getenv(prov.TokenEnvVar())
+
 	remoteURL := prov.CloneURL(owner, repo) + "/git-upload-pack"
 	req, err := http.NewRequest("POST", remoteURL, bytes.NewReader(body))
 	if err != nil {
@@ -514,6 +532,9 @@ func UploadPackHandler(c *gin.Context) {
 	req.Header.Set("Content-Type", "application/x-git-upload-pack-request")
 	req.Header.Set("Accept", "application/x-git-upload-pack-result")
 	req.Header.Set("User-Agent", "git/2.0")
+	if token != "" {
+		req.Header.Set("Authorization", "Basic "+basicAuth("x-access-token", token))
+	}
 
 	resp, err := uploadPackClient.Do(req)
 	if err != nil {
@@ -749,6 +770,8 @@ func providerFromName(name string) provider.Provider {
 	switch name {
 	case "gl":
 		return glprovider.New()
+	case "cb":
+		return cbprovider.New()
 	default:
 		return ghprovider.New()
 	}
@@ -1071,9 +1094,12 @@ func RollbackBurstHandler(c *gin.Context) {
 			closeConcurrency <- struct{}{}
 			defer func() { <-closeConcurrency }()
 			var closeErr error
-			if strings.Contains(u, "gitlab.com") {
+			switch {
+			case strings.Contains(u, "gitlab.com"):
 				closeErr = glprovider.New().CloseMRByURL(u)
-			} else {
+			case strings.Contains(u, "codeberg.org"):
+				closeErr = cbprovider.New().CloseMRByURL(u)
+			default:
 				closeErr = github.ClosePRByURL(u)
 			}
 			if err := closeErr; err != nil {
@@ -2827,6 +2853,73 @@ func BinaryHandler(c *gin.Context) {
 	io.Copy(c.Writer, f)
 }
 
+// CodebergProxyHandler reenvía peticiones GET a codeberg.org, evitando CORS en el navegador.
+func CodebergProxyHandler(c *gin.Context) {
+	if c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead {
+		c.AbortWithStatusJSON(http.StatusMethodNotAllowed, gin.H{"error": "only GET/HEAD allowed"})
+		return
+	}
+
+	path := strings.TrimPrefix(c.Request.URL.Path, "/api/cb-proxy/")
+	if path == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "missing path"})
+		return
+	}
+
+	allowedAPIPath := strings.HasPrefix(path, "api/v1/")
+	allowedRawPath := strings.Contains(path, "/raw/branch/")
+	if !allowedAPIPath && !allowedRawPath {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "path not allowed"})
+		return
+	}
+
+	target := "https://codeberg.org/" + path
+	if c.Request.URL.RawQuery != "" {
+		target += "?" + c.Request.URL.RawQuery
+	}
+
+	req, err := http.NewRequest(c.Request.Method, target, nil)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to build request"})
+		return
+	}
+
+	if allowedAPIPath {
+		if token := os.Getenv("CODEBERG_TOKEN"); token != "" {
+			req.Header.Set("Authorization", "token "+token)
+		} else if auth := c.GetHeader("Authorization"); auth != "" {
+			req.Header.Set("Authorization", auth)
+		}
+	}
+	req.Header.Set("User-Agent", "gitGost/1.0")
+	if accept := c.GetHeader("Accept"); accept != "" {
+		req.Header.Set("Accept", accept)
+	}
+
+	client := &http.Client{Timeout: 45 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.Log("Codeberg proxy error: %v", err)
+		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "failed to reach Codeberg"})
+		return
+	}
+	defer resp.Body.Close()
+
+	// Copiar cabeceras relevantes al cliente (incluyendo paginación de Gitea/Forgejo)
+	for _, h := range []string{"Content-Type", "Content-Length", "Cache-Control", "ETag", "Link", "X-Total-Count", "X-Total", "X-Page", "X-PerPage", "X-PageCount", "X-HasMore"} {
+		if v := resp.Header.Get(h); v != "" {
+			c.Writer.Header().Set(h, v)
+		}
+	}
+	if expose := resp.Header.Get("Access-Control-Expose-Headers"); expose != "" {
+		c.Writer.Header().Set("Access-Control-Expose-Headers", expose)
+	}
+	c.Writer.WriteHeader(resp.StatusCode)
+	if _, err := io.Copy(c.Writer, resp.Body); err != nil {
+		utils.Log("Codeberg proxy copy error: %v", err)
+	}
+}
+
 // SearchHandler busca repositorios en GitHub y GitLab
 func SearchHandler(c *gin.Context) {
 	query := c.Query("q")
@@ -2843,9 +2936,11 @@ func SearchHandler(c *gin.Context) {
 	// Si viene topic=, usar sintaxis topic: para GitHub y tag_list para GitLab
 	ghQuery := query
 	glQuery := query
+	cbQuery := query
 	if topicParam != "" {
 		ghQuery = "topic:" + topicParam
 		glQuery = topicParam
+		cbQuery = topicParam
 	}
 
 	// Buscar en GitHub si provider es "gh" o "all"
@@ -2858,6 +2953,12 @@ func SearchHandler(c *gin.Context) {
 	if provider == "gl" || provider == "all" || provider == "" {
 		glResults := searchGitLab(glQuery)
 		results = append(results, glResults...)
+	}
+
+	// Buscar en Codeberg si provider es "cb" o "all"
+	if provider == "cb" || provider == "all" || provider == "" {
+		cbResults := searchCodeberg(cbQuery, topicParam)
+		results = append(results, cbResults...)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -2902,6 +3003,7 @@ func searchGitHub(query string) []gin.H {
 			Description string   `json:"description"`
 			Stargazers  int      `json:"stargazers_count"`
 			Forks       int      `json:"forks_count"`
+			Language    string   `json:"language"`
 			Topics      []string `json:"topics"`
 		} `json:"items"`
 	}
@@ -2920,6 +3022,7 @@ func searchGitHub(query string) []gin.H {
 			"description": item.Description,
 			"stars":       item.Stargazers,
 			"forks":       item.Forks,
+			"language":    item.Language,
 			"topics":      item.Topics,
 			"url":         fmt.Sprintf("/gh/%s/%s", item.Owner.Login, item.Name),
 		})
@@ -2928,15 +3031,142 @@ func searchGitHub(query string) []gin.H {
 	return results
 }
 
+// searchCodeberg busca repositorios en Codeberg usando la API de Forgejo/Gitea.
+func searchCodeberg(query, topic string) []gin.H {
+	results := []gin.H{}
+
+	q := query
+	if q == "" && topic != "" {
+		q = topic
+	}
+
+	params := url.Values{}
+	params.Set("q", q)
+	params.Set("sort", "stars")
+	params.Set("order", "desc")
+	params.Set("limit", "100")
+	if topic != "" {
+		params.Set("topic", "true")
+	}
+
+	apiURL := "https://codeberg.org/api/v1/repos/search?" + params.Encode()
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return results
+	}
+	if token := os.Getenv("CODEBERG_TOKEN"); token != "" {
+		req.Header.Set("Authorization", "token "+token)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.Log("Codeberg search error: %v", err)
+		return results
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		utils.Log("Codeberg search returned status: %d", resp.StatusCode)
+		return results
+	}
+
+	var data struct {
+		Data []struct {
+			Name        string `json:"name"`
+			FullName    string `json:"full_name"`
+			Description string `json:"description"`
+			Stars       int    `json:"stars_count"`
+			Forks       int    `json:"forks_count"`
+			Language    string `json:"language"`
+			Owner       struct {
+				Login string `json:"login"`
+			} `json:"owner"`
+		} `json:"data"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		utils.Log("Codeberg search decode error: %v", err)
+		return results
+	}
+
+	for _, item := range data.Data {
+		owner := item.Owner.Login
+		if owner == "" {
+			parts := strings.Split(item.FullName, "/")
+			if len(parts) >= 2 {
+				owner = parts[0]
+			}
+		}
+		results = append(results, gin.H{
+			"provider":    "codeberg",
+			"name":        item.Name,
+			"full_name":   item.FullName,
+			"owner":       owner,
+			"description": item.Description,
+			"stars":       item.Stars,
+			"forks":       item.Forks,
+			"language":    item.Language,
+			"url":         fmt.Sprintf("/cb/%s/%s", owner, item.Name),
+		})
+	}
+
+	return results
+}
+
+func getGitLabPrimaryLanguage(projectID int, token string) string {
+	if projectID == 0 {
+		return ""
+	}
+	client := &http.Client{Timeout: 3 * time.Second}
+	url := fmt.Sprintf("https://gitlab.com/api/v4/projects/%d/languages", projectID)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return ""
+	}
+	if token != "" {
+		req.Header.Set("PRIVATE-TOKEN", token)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return ""
+	}
+	var langs map[string]float64
+	if err := json.NewDecoder(resp.Body).Decode(&langs); err != nil {
+		return ""
+	}
+	var primary string
+	var maxPct float64
+	for lang, pct := range langs {
+		if pct > maxPct {
+			maxPct = pct
+			primary = lang
+		}
+	}
+	return primary
+}
+
 // searchGitLab busca repositorios en GitLab usando la API pública
 func searchGitLab(query string) []gin.H {
 	results := []gin.H{}
 
-	// Usar la API pública de GitLab (sin autenticación)
-	url := fmt.Sprintf("https://gitlab.com/api/v4/projects?search=%s&order_by=star_count&sort=desc&per_page=100", query)
+	// Usar la API pública de GitLab
+	url := fmt.Sprintf("https://gitlab.com/api/v4/projects?search=%s&order_by=star_count&sort=desc&per_page=100", url.QueryEscape(query))
 
+	glToken := os.Getenv("GITLAB_TOKEN")
 	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return results
+	}
+	if glToken != "" {
+		req.Header.Set("PRIVATE-TOKEN", glToken)
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		utils.Log("GitLab search error: %v", err)
 		return results
@@ -2949,11 +3179,13 @@ func searchGitLab(query string) []gin.H {
 	}
 
 	var data []struct {
+		ID                int    `json:"id"`
 		Name              string `json:"name"`
 		PathWithNamespace string `json:"path_with_namespace"`
 		Description       string `json:"description"`
 		StarCount         int    `json:"star_count"`
 		ForksCount        int    `json:"forks_count"`
+		Language          string `json:"language"`
 		Namespace         struct {
 			Path string `json:"path"`
 		} `json:"namespace"`
@@ -2964,13 +3196,37 @@ func searchGitLab(query string) []gin.H {
 		return results
 	}
 
-	for _, item := range data {
+	const languageBackfillLimit = 10
+	langs := make([]string, len(data))
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, 10)
+	backfills := 0
+	for i, item := range data {
+		if item.Language != "" || backfills >= languageBackfillLimit {
+			continue
+		}
+		backfills++
+		wg.Add(1)
+		go func(idx, id int) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+			langs[idx] = getGitLabPrimaryLanguage(id, glToken)
+		}(i, item.ID)
+	}
+	wg.Wait()
+
+	for i, item := range data {
 		// Extraer owner/name de path_with_namespace (sin espacios)
 		parts := strings.Split(item.PathWithNamespace, "/")
 		if len(parts) < 2 {
 			continue
 		}
 		owner := parts[0]
+		language := item.Language
+		if language == "" {
+			language = langs[i]
+		}
 
 		results = append(results, gin.H{
 			"provider":    "gitlab",
@@ -2980,6 +3236,7 @@ func searchGitLab(query string) []gin.H {
 			"description": item.Description,
 			"stars":       item.StarCount,
 			"forks":       item.ForksCount,
+			"language":    language,
 			"url":         fmt.Sprintf("/gl/%s/%s", owner, item.Name),
 		})
 	}
@@ -3006,10 +3263,13 @@ func TrendingHandler(c *gin.Context) {
 		results = getTrendingGitHub(sort)
 	case "gl":
 		results = getTrendingGitLab(sort)
+	case "cb":
+		results = getTrendingCodeberg(sort)
 	case "all":
 		results = append(getTrendingGitHub(sort), getTrendingGitLab(sort)...)
+		results = append(results, getTrendingCodeberg(sort)...)
 	default:
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid provider, use 'gh', 'gl' or 'all'"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid provider, use 'gh', 'gl', 'cb' or 'all'"})
 		return
 	}
 
@@ -3068,6 +3328,7 @@ func getTrendingGitHub(sort string) []gin.H {
 			Description string `json:"description"`
 			Stargazers  int    `json:"stargazers_count"`
 			Forks       int    `json:"forks_count"`
+			Language    string `json:"language"`
 		} `json:"items"`
 	}
 
@@ -3085,6 +3346,7 @@ func getTrendingGitHub(sort string) []gin.H {
 			"description": item.Description,
 			"stars":       item.Stargazers,
 			"forks":       item.Forks,
+			"language":    item.Language,
 			"url":         fmt.Sprintf("/gh/%s/%s", item.Owner.Login, item.Name),
 		})
 	}
@@ -3103,8 +3365,16 @@ func getTrendingGitLab(sort string) []gin.H {
 		url = "https://gitlab.com/api/v4/projects?order_by=star_count&sort=desc&per_page=10"
 	}
 
+	glToken := os.Getenv("GITLAB_TOKEN")
 	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return results
+	}
+	if glToken != "" {
+		req.Header.Set("PRIVATE-TOKEN", glToken)
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		utils.Log("GitLab trending error: %v", err)
 		return results
@@ -3117,11 +3387,13 @@ func getTrendingGitLab(sort string) []gin.H {
 	}
 
 	var data []struct {
+		ID                int    `json:"id"`
 		Name              string `json:"name"`
 		PathWithNamespace string `json:"path_with_namespace"`
 		Description       string `json:"description"`
 		StarCount         int    `json:"star_count"`
 		ForksCount        int    `json:"forks_count"`
+		Language          string `json:"language"`
 		Namespace         struct {
 			Path string `json:"path"`
 		} `json:"namespace"`
@@ -3132,12 +3404,30 @@ func getTrendingGitLab(sort string) []gin.H {
 		return results
 	}
 
-	for _, item := range data {
+	langs := make([]string, len(data))
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, 10)
+	for i, item := range data {
+		wg.Add(1)
+		go func(idx, id int) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+			langs[idx] = getGitLabPrimaryLanguage(id, glToken)
+		}(i, item.ID)
+	}
+	wg.Wait()
+
+	for i, item := range data {
 		parts := strings.Split(item.PathWithNamespace, "/")
 		if len(parts) < 2 {
 			continue
 		}
 		owner := parts[0]
+		language := item.Language
+		if language == "" {
+			language = langs[i]
+		}
 
 		results = append(results, gin.H{
 			"provider":    "gitlab",
@@ -3147,7 +3437,87 @@ func getTrendingGitLab(sort string) []gin.H {
 			"description": item.Description,
 			"stars":       item.StarCount,
 			"forks":       item.ForksCount,
+			"language":    language,
 			"url":         fmt.Sprintf("/gl/%s/%s", owner, item.Name),
+		})
+	}
+
+	return results
+}
+
+// getTrendingCodeberg obtiene repos trending de Codeberg.
+func getTrendingCodeberg(sort string) []gin.H {
+	results := []gin.H{}
+
+	params := url.Values{}
+	params.Set("limit", "10")
+	if sort == "new" {
+		params.Set("sort", "created")
+		params.Set("order", "desc")
+	} else {
+		params.Set("sort", "stars")
+		params.Set("order", "desc")
+	}
+
+	apiURL := "https://codeberg.org/api/v1/repos/search?" + params.Encode()
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return results
+	}
+	if token := os.Getenv("CODEBERG_TOKEN"); token != "" {
+		req.Header.Set("Authorization", "token "+token)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.Log("Codeberg trending error: %v", err)
+		return results
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		utils.Log("Codeberg trending returned status: %d", resp.StatusCode)
+		return results
+	}
+
+	var data struct {
+		Data []struct {
+			Name        string `json:"name"`
+			FullName    string `json:"full_name"`
+			Description string `json:"description"`
+			Stars       int    `json:"stars_count"`
+			Forks       int    `json:"forks_count"`
+			Language    string `json:"language"`
+			Owner       struct {
+				Login string `json:"login"`
+			} `json:"owner"`
+		} `json:"data"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		utils.Log("Codeberg trending decode error: %v", err)
+		return results
+	}
+
+	for _, item := range data.Data {
+		owner := item.Owner.Login
+		if owner == "" {
+			parts := strings.Split(item.FullName, "/")
+			if len(parts) >= 2 {
+				owner = parts[0]
+			}
+		}
+		results = append(results, gin.H{
+			"provider":    "codeberg",
+			"name":        item.Name,
+			"full_name":   item.FullName,
+			"owner":       owner,
+			"description": item.Description,
+			"stars":       item.Stars,
+			"forks":       item.Forks,
+			"language":    item.Language,
+			"url":         fmt.Sprintf("/cb/%s/%s", owner, item.Name),
 		})
 	}
 

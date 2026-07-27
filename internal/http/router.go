@@ -57,7 +57,7 @@ func securityHeaders() gin.HandlerFunc {
 				"img-src 'self' data: blob: https://* http://*; "+
 				"object-src 'none'; "+
 				"frame-ancestors 'none'; "+
-				"connect-src 'self' http://localhost:* https://api.github.com https://raw.githubusercontent.com https://github.com https://gitlab.com https://en.wikipedia.org https://www.wikidata.org https://mentacaptchaeu.eu.pythonanywhere.com",
+				"connect-src 'self' http://localhost:* https://api.github.com https://raw.githubusercontent.com https://github.com https://gitlab.com https://codeberg.org https://en.wikipedia.org https://www.wikidata.org https://mentacaptchaeu.eu.pythonanywhere.com",
 		)
 		c.Next()
 	}
@@ -298,6 +298,17 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 			gl.POST("/:owner/:repo/issues/:number/comments/anonymous", CreateAnonymousCommentHandler)
 			gl.POST("/:owner/:repo/pulls/:number/comments/anonymous", CreateAnonymousPRCommentHandler)
 		}
+
+		// Codeberg provider — same routes under /cb/
+		cb := v1.Group("/cb")
+		{
+			cb.GET("/:owner/:repo/info/refs", refsHandler)
+			cb.POST("/:owner/:repo/git-receive-pack", ReceivePackHandler)
+			cb.POST("/:owner/:repo/git-upload-pack", UploadPackHandler)
+			cb.POST("/:owner/:repo/issues/anonymous", CreateAnonymousIssueHandler)
+			cb.POST("/:owner/:repo/issues/:number/comments/anonymous", CreateAnonymousCommentHandler)
+			cb.POST("/:owner/:repo/pulls/:number/comments/anonymous", CreateAnonymousPRCommentHandler)
+		}
 	}
 
 	// Reportes de hash (sin validación de owner/repo en path)
@@ -314,6 +325,8 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		// Search and trending
 		api.GET("/search", SearchHandler)
 		api.GET("/trending/:provider", TrendingHandler)
+		// Codeberg proxy — evita CORS en el navegador
+		api.GET("/cb-proxy/*path", prCheckLimiter(), CodebergProxyHandler)
 		// GitLab proxy — expone comentarios de issues sin requerir token del usuario
 		api.GET("/gl-notes/:owner/:repo/:number", GitLabIssueNotesProxyHandler)
 		api.GET("/gl-commit-count/:owner/:repo", GitLabCommitCountHandler)

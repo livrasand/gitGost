@@ -9,6 +9,17 @@
   Zero accounts • Zero tokens • Zero metadata • Designed for strong anonymity
 </div>
 
+---
+
+A community-led free and open-source Git collaboration platform built for privacy, transparency, and developer freedom. Contribute anonymously, manage repositories across multiple forges, and own your workflow without vendor lock-in.
+
+<!-- Screenshots -->
+<p align="center">
+  <img src="./web/assets/screenshots/home.png" width="180" />
+  <img src="./web/assets/screenshots/repo.png" width="180" />
+  <img src="./web/assets/screenshots/search.png" width="180" />
+ </p>
+
 ## One-liner demo
 
 ```bash
@@ -34,16 +45,16 @@ That’s it. No login, token, name, or email required — gitGost provides stron
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/livrasand?label=GitHub%20Sponsors)](https://github.com/sponsors/livrasand)
   <img
   src="https://img.shields.io/badge/GitHub-Available-brightgreen?logo=github"
-  alt="GitHub – Coming Soon"/>
+  alt="GitHub – Available"/>
 <img
   src="https://img.shields.io/badge/GitLab-Available-brightgreen?logo=gitlab&logoColor=white"
-  alt="GitLab – Coming Soon"/>
+  alt="GitLab – Available"/>
 <img
   src="https://img.shields.io/badge/Bitbucket-Coming%20Soon-lightgrey?logo=bitbucket"
   alt="Bitbucket – Coming Soon"/>
 <img
-  src="https://img.shields.io/badge/Codeberg-Coming%20Soon-lightgrey?logo=codeberg&logoColor=white"
-  alt="Codeberg – Coming Soon"/>
+  src="https://img.shields.io/badge/Codeberg-Available-brightgreen?logo=codeberg&logoColor=white"
+  alt="Codeberg – Available"/>
 <img
   src="https://img.shields.io/badge/Gitea-Coming%20Soon-lightgrey?logo=gitea&logoColor=white"
   alt="Gitea – Coming Soon"/>
@@ -63,7 +74,8 @@ That’s it. No login, token, name, or email required — gitGost provides stron
 | **One-Command Setup**       | Just `git remote add gost <url>` – no accounts, tokens, or browser extensions. |
 | **Battle-tested Security**  | Rate limiting, repository size caps, commit validation. Written in pure Go with minimal dependencies – fully auditable. |
 | **Works Everywhere**        | Terminal, CI/CD, Docker, scripts – any public GitHub repo, anywhere Git runs. |
-| **Issues, Discussions & Reviews** | Open anonymous issues and comment on issues, pull requests, and GitHub Discussions. |
+| **Anonymous Repo Browser**  | Browse code, files, branches, commits, releases, issues, pull requests, discussions and wikis across GitHub, GitLab and Codeberg — no account needed. |
+| **Anonymous Contributions** | Push code and open pull requests without exposing your identity; open anonymous issues and comment on issues, PRs and GitHub Discussions. |
 | **Open Source & AGPL**      | 100% transparent. Fork it, audit it, host it yourself.                     |
 
 ## Quick Start

@@ -13,7 +13,12 @@
 
 A community-led free and open-source Git collaboration platform built for privacy, transparency, and developer freedom. Contribute anonymously, manage repositories across multiple forges, and own your workflow without vendor lock-in.
 
-
+<!-- Screenshots -->
+<p align="center">
+  <img src="./web/assets/screenshots/home.png" width="180" />
+  <img src="./web/assets/screenshots/repo.png" width="180" />
+  <img src="./web/assets/screenshots/search.png" width="180" />
+ </p>
 
 ## One-liner demo
 

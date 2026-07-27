@@ -15,9 +15,7 @@ A community-led free and open-source Git collaboration platform built for privac
 
 <!-- Screenshots -->
 <p align="center">
-  <img src="./web/assets/screenshots/home.png" width="180" />
-  <img src="./web/assets/screenshots/repo.png" width="180" />
-  <img src="./web/assets/screenshots/search.png" width="180" />
+  <img src="./web/assets/screenshots/home.png" width="100%" />
  </p>
 
 ## One-liner demo

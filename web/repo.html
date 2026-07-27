@@ -1945,7 +1945,7 @@
             path:     [],
         };
 
-        function currentBranch() { return rv.branch || 'HEAD'; }
+        function currentBranch() { return rv.branch || ''; }
 
         const BRANCH_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8.25a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0v7.5m0-7.5c0 2.9 2.35 5.25 5.25 5.25h2M7 15.75a2.75 2.75 0 1 0 0 5.5a2.75 2.75 0 0 0 0-5.5m7.25-2.25a2.75 2.75 0 1 0 5.5 0a2.75 2.75 0 0 0-5.5 0"/></svg>`;
 
@@ -4396,7 +4396,8 @@
                     }
                 } else if (rv.provider === 'cb') {
                     const ref = currentBranch();
-                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/contents/${encodeURIComponent(item.path)}?ref=${encodeURIComponent(ref)}`);
+                    const contentPath = (item.path || '').split('/').map(encodeURIComponent).join('/');
+                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/contents/${contentPath}?ref=${encodeURIComponent(ref)}`);
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const data = await res.json();
                     content = decodeBase64Utf8(data.content);
@@ -4414,13 +4415,23 @@
                 if (imageExts.includes(ext)) {
                     let imgUrl = item.download_url || item.url || `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/${item.path}`;
                     if (rv.provider === 'gh') imgUrl = `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/${currentBranch()}/${item.path}`;
-                    if (rv.provider === 'cb') imgUrl = `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${currentBranch()}/${item.path}`;
+                    if (rv.provider === 'cb') {
+                        const branch = currentBranch();
+                        imgUrl = branch
+                            ? `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${branch}/${item.path}`
+                            : `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/${item.path}`;
+                    }
                     panel.innerHTML = `<div style="padding:1rem;text-align:center;"><img src="${imgUrl}" alt="${escHtml(name)}" style="max-width:100%;max-height:80vh;object-fit:contain;border-radius:4px;" /></div>`;
                 } else if (name.toLowerCase().endsWith('.md')) {
                     const dir = item.path ? item.path.substring(0, item.path.lastIndexOf('/') + 1) : '';
                     let mdBaseUrl = `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/${dir}`;
                     if (rv.provider === 'gh') mdBaseUrl = `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/${currentBranch()}/${dir}`;
-                    if (rv.provider === 'cb') mdBaseUrl = `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${currentBranch()}/${dir}`;
+                    if (rv.provider === 'cb') {
+                        const branch = currentBranch();
+                        mdBaseUrl = branch
+                            ? `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${branch}/${dir}`
+                            : `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/${dir}`;
+                    }
                     panel.innerHTML = `<div class="readme">${renderMd(content, mdBaseUrl)}</div>`;
                 } else {
                     const lang = detectLang(name);
@@ -4745,7 +4756,9 @@
                 if (src && !/^https?:\/\//i.test(src) && !/^data:/i.test(src)) {
                     const rawBase = baseUrl ||
                         (rv.provider === 'cb'
-                            ? `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${currentBranch()}/`
+                            ? (currentBranch()
+                                ? `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${currentBranch()}/`
+                                : `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/`)
                             : rv.provider === 'gh'
                                 ? `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/${currentBranch()}/`
                                 : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/`);
@@ -4762,7 +4775,9 @@
             // Post-procesar HTML <img> tags con rutas relativas (marked no los pasa por renderer.image)
             const rawBase = baseUrl ||
                 (rv.provider === 'cb'
-                    ? `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${currentBranch()}/`
+                    ? (currentBranch()
+                        ? `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${currentBranch()}/`
+                        : `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/`)
                     : rv.provider === 'gh'
                         ? `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/${currentBranch()}/`
                         : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/`);

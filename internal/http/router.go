@@ -326,7 +326,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/search", SearchHandler)
 		api.GET("/trending/:provider", TrendingHandler)
 		// Codeberg proxy — evita CORS en el navegador
-		api.GET("/cb-proxy/*path", CodebergProxyHandler)
+		api.GET("/cb-proxy/*path", prCheckLimiter(), CodebergProxyHandler)
 		// GitLab proxy — expone comentarios de issues sin requerir token del usuario
 		api.GET("/gl-notes/:owner/:repo/:number", GitLabIssueNotesProxyHandler)
 		api.GET("/gl-commit-count/:owner/:repo", GitLabCommitCountHandler)

@@ -1532,7 +1532,7 @@
                             color: var(--fg-muted);
                         "
                     >
-                        If useful, consider <a href="https://github.com/sponsors/livrasand" style="color:var(--accent);text-decoration:none;">donating</a> or <a href="https://github.com/livrasand/gitGost" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">forking</a>.
+                        If useful, consider <a href="https://github.com/sponsors/livrasand" style="color:var(--accent);text-decoration:none;">donating</a> or sponsoring us; you can also <a href="https://github.com/livrasand/gitGost" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">forking</a>.
                     </p>
                     <p
                         style="
@@ -2575,6 +2575,16 @@
         <script>
             const API_BASE = window.location.origin;
 
+            function escapeHtml(value) {
+                return String(value ?? '').replace(/[&<>'"]/g, char => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[char]));
+            }
+
             function forgeIconHtml(provider) {
                 return `<svg class="forge-icon" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="m12 5.25l6.777-1.649a2 2 0 0 1 2.473 1.944v12.91a2 2 0 0 1-2.473 1.944L12 18.75z"/><path stroke-dasharray="2.5 3" d="m9.5 19.358l-4.895 1.19a1.5 1.5 0 0 1-1.855-1.457V4.91a1.5 1.5 0 0 1 1.855-1.46L9.5 4.641"/></g></svg>`;
             }
@@ -2592,17 +2602,43 @@
             }
 
             let languageColors = {};
+            const LANGUAGE_COLORS_CACHE_KEY = 'gg_language_colors';
+            const LANGUAGE_COLORS_CACHE_TTL = 24 * 60 * 60 * 1000;
             async function loadLanguageColors() {
                 try {
-                    const res = await fetch('https://raw.githubusercontent.com/hiroppy/github-language-color-themes/master/languages.json');
-                    if (!res.ok) return;
+                    const cached = JSON.parse(localStorage.getItem(LANGUAGE_COLORS_CACHE_KEY) || 'null');
+                    if (cached && cached.data && Date.now() - cached.timestamp < LANGUAGE_COLORS_CACHE_TTL) {
+                        languageColors = cached.data;
+                        return true;
+                    }
+                } catch {}
+
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 3000);
+                try {
+                    const res = await fetch('https://raw.githubusercontent.com/hiroppy/github-language-color-themes/master/languages.json', { signal: controller.signal });
+                    if (!res.ok) return false;
                     const data = await res.json();
                     if (data && typeof data === 'object') {
                         languageColors = data;
+                        try { localStorage.setItem(LANGUAGE_COLORS_CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() })); } catch {}
+                        return true;
                     }
                 } catch (e) {
                     console.error('Failed to load language colors:', e);
+                } finally {
+                    clearTimeout(timeout);
                 }
+                return false;
+            }
+
+            function refreshLanguageBadges() {
+                document.querySelectorAll('.repo-item').forEach(item => {
+                    const badge = item.querySelector('.repo-lang');
+                    if (!badge) return;
+                    const lang = badge.getAttribute('title');
+                    if (lang) badge.outerHTML = languageBadgeHtml(lang);
+                });
             }
 
             function languageColor(lang) {
@@ -2943,6 +2979,8 @@
                     const parts = (repo.full_name || "").split("/");
                     const owner = parts[0] || repo.owner || "";
                     const name = parts[1] || repo.name || "";
+                    const ownerHtml = escapeHtml(owner);
+                    const nameHtml = escapeHtml(name);
                     const desc = repo.description
                         ? repo.description.slice(0, 120)
                         : "";
@@ -2962,7 +3000,7 @@
                     item.innerHTML = `
                         <div class="repo-item-left">
                             <div class="repo-item-name">
-                                ${forgeIcon}<span class="owner">${owner}</span><span class="slash">/</span><span class="name">${name}</span>
+                                ${forgeIcon}<span class="owner">${ownerHtml}</span><span class="slash">/</span><span class="name">${nameHtml}</span>
                             </div>
                             ${desc ? `<div class="repo-item-desc">${desc}</div>` : ""}
                         </div>
@@ -4007,7 +4045,7 @@
                     item.onclick = () => {
                         if (owner && name) window.location.href = `/repo.html?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(name)}&provider=${provider}`;
                     };
-                    const desc = repo.description ? repo.description.slice(0, 120) : '';
+                    const desc = repo.description ? escapeHtml(repo.description.slice(0, 120)) : '';
                     const stars = repo.stars > 0 ? `(${formatNumber(repo.stars)})` : '';
                     const langBadge = languageBadgeHtml(repo.language);
                     let providerLabel, providerColor;
@@ -4032,8 +4070,8 @@
             const _initParams = new URLSearchParams(window.location.search);
             const _initTag = _initParams.get('tag');
             const _initQ   = _initParams.get('q');
-            (async function init() {
-                await loadLanguageColors();
+            (function init() {
+                const colorsLoaded = loadLanguageColors();
                 if (_initTag) {
                     showTagPage(_initTag);
                 } else if (_initQ && searchInput) {
@@ -4044,6 +4082,9 @@
                 } else {
                     loadTrending();
                 }
+                colorsLoaded.then(loaded => {
+                    if (loaded) refreshLanguageBadges();
+                });
             })();
 
             // (form handlers moved to bindFormHandlers — called per page render)
@@ -4236,7 +4277,7 @@
                 const unit  = cbToken ? '1,000 / min' : '60 / min';
                 document.getElementById('cb-remaining').textContent = unit;
                 document.getElementById('cb-limit').textContent = '';
-                updateRateLimitRing('cb-bar', 100, '#20883d');
+                updateRateLimitRing('cb-bar', 100, '#2185D0');
                 document.getElementById('cb-reset').textContent = 'resets every minute';
                 const st = document.getElementById('cb-status');
                 st.textContent = cbToken ? 'authenticated' : '';

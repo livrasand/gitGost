@@ -491,7 +491,13 @@ func (p *CodebergProvider) CreateAnonymousIssue(owner, repo, title, body string,
 		"body":  body,
 	}
 	if len(labels) > 0 {
-		payload["labels"] = labels
+		labelIDs, err := p.getLabelIDs(owner, repo, labels)
+		if err != nil {
+			return "", 0, err
+		}
+		if len(labelIDs) > 0 {
+			payload["labels"] = labelIDs
+		}
 	}
 
 	jsonData, err := json.Marshal(payload)
@@ -524,6 +530,47 @@ func (p *CodebergProvider) CreateAnonymousIssue(owner, repo, title, body string,
 		return "", 0, err
 	}
 	return result.HTMLURL, result.Number, nil
+}
+
+func (p *CodebergProvider) getLabelIDs(owner, repo string, labels []string) ([]int64, error) {
+	req, err := http.NewRequest("GET", repoPath(owner, repo)+"/labels?limit=50", nil)
+	if err != nil {
+		return nil, err
+	}
+	authHeader(req)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get Codeberg issue labels: %s", resp.Status)
+	}
+
+	var available []struct {
+		ID   int64  `json:"id"`
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&available); err != nil {
+		return nil, err
+	}
+
+	ids := make([]int64, 0, len(labels))
+	for _, requested := range labels {
+		requested = strings.TrimSpace(requested)
+		if requested == "" {
+			continue
+		}
+		for _, label := range available {
+			if strings.EqualFold(label.Name, requested) {
+				ids = append(ids, label.ID)
+				break
+			}
+		}
+	}
+	return ids, nil
 }
 
 // CreateAnonymousComment posts a comment on an issue.
@@ -579,7 +626,7 @@ func (p *CodebergProvider) createIssueComment(owner, repo string, number int, bo
 
 // CreateAnonymousDiscussionComment is not supported on Codeberg.
 func (p *CodebergProvider) CreateAnonymousDiscussionComment(owner, repo string, number int, body string) (string, error) {
-	return "", fmt.Errorf("Codeberg does not support GitHub-style Discussions")
+	return "", fmt.Errorf("codeberg does not support GitHub-style Discussions")
 }
 
 // GetMRStatus returns the current status of a pull request, including comments as events.

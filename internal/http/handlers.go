@@ -476,10 +476,6 @@ func UploadPackDiscoveryHandler(c *gin.Context) {
 
 	prov := providerFromPath(c.Request.URL.Path)
 	token := os.Getenv(prov.TokenEnvVar())
-	if token == "" {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": prov.TokenEnvVar() + " not set"})
-		return
-	}
 
 	remoteURL := prov.CloneURL(owner, repo) + "/info/refs?service=git-upload-pack"
 	req, err := http.NewRequest("GET", remoteURL, nil)
@@ -488,7 +484,9 @@ func UploadPackDiscoveryHandler(c *gin.Context) {
 		return
 	}
 	req.Header.Set("User-Agent", "git/2.0")
-	req.Header.Set("Authorization", "Basic "+basicAuth("x-access-token", token))
+	if token != "" {
+		req.Header.Set("Authorization", "Basic "+basicAuth("x-access-token", token))
+	}
 
 	resp, err := uploadPackClient.Do(req)
 	if err != nil {
@@ -524,10 +522,6 @@ func UploadPackHandler(c *gin.Context) {
 
 	prov := providerFromPath(c.Request.URL.Path)
 	token := os.Getenv(prov.TokenEnvVar())
-	if token == "" {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": prov.TokenEnvVar() + " not set"})
-		return
-	}
 
 	remoteURL := prov.CloneURL(owner, repo) + "/git-upload-pack"
 	req, err := http.NewRequest("POST", remoteURL, bytes.NewReader(body))
@@ -538,7 +532,9 @@ func UploadPackHandler(c *gin.Context) {
 	req.Header.Set("Content-Type", "application/x-git-upload-pack-request")
 	req.Header.Set("Accept", "application/x-git-upload-pack-result")
 	req.Header.Set("User-Agent", "git/2.0")
-	req.Header.Set("Authorization", "Basic "+basicAuth("x-access-token", token))
+	if token != "" {
+		req.Header.Set("Authorization", "Basic "+basicAuth("x-access-token", token))
+	}
 
 	resp, err := uploadPackClient.Do(req)
 	if err != nil {
@@ -2870,6 +2866,13 @@ func CodebergProxyHandler(c *gin.Context) {
 		return
 	}
 
+	allowedAPIPath := strings.HasPrefix(path, "api/v1/")
+	allowedRawPath := strings.Contains(path, "/raw/branch/")
+	if !allowedAPIPath && !allowedRawPath {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "path not allowed"})
+		return
+	}
+
 	target := "https://codeberg.org/" + path
 	if c.Request.URL.RawQuery != "" {
 		target += "?" + c.Request.URL.RawQuery
@@ -2881,11 +2884,12 @@ func CodebergProxyHandler(c *gin.Context) {
 		return
 	}
 
-	// Preferir token enviado por el navegador; si no, usar el del servidor.
-	if auth := c.GetHeader("Authorization"); auth != "" {
-		req.Header.Set("Authorization", auth)
-	} else if token := os.Getenv("CODEBERG_TOKEN"); token != "" {
-		req.Header.Set("Authorization", "token "+token)
+	if allowedAPIPath {
+		if token := os.Getenv("CODEBERG_TOKEN"); token != "" {
+			req.Header.Set("Authorization", "token "+token)
+		} else if auth := c.GetHeader("Authorization"); auth != "" {
+			req.Header.Set("Authorization", auth)
+		}
 	}
 	req.Header.Set("User-Agent", "gitGost/1.0")
 	if accept := c.GetHeader("Accept"); accept != "" {
@@ -3151,7 +3155,7 @@ func searchGitLab(query string) []gin.H {
 	results := []gin.H{}
 
 	// Usar la API pública de GitLab
-	url := fmt.Sprintf("https://gitlab.com/api/v4/projects?search=%s&order_by=star_count&sort=desc&per_page=100", query)
+	url := fmt.Sprintf("https://gitlab.com/api/v4/projects?search=%s&order_by=star_count&sort=desc&per_page=100", url.QueryEscape(query))
 
 	glToken := os.Getenv("GITLAB_TOKEN")
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -3192,10 +3196,16 @@ func searchGitLab(query string) []gin.H {
 		return results
 	}
 
+	const languageBackfillLimit = 10
 	langs := make([]string, len(data))
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, 10)
+	backfills := 0
 	for i, item := range data {
+		if item.Language != "" || backfills >= languageBackfillLimit {
+			continue
+		}
+		backfills++
 		wg.Add(1)
 		go func(idx, id int) {
 			defer wg.Done()

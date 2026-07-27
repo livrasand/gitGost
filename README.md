@@ -11,7 +11,9 @@
 
 ---
 
-A community-led free & open source Git collaboration platform built for privacy, transparency, and developer freedom. Contribute anonymously, manage repositories across multiple forges, and own your workflow without vendor lock-in.
+A community-led free and open-source Git collaboration platform built for privacy, transparency, and developer freedom. Contribute anonymously, manage repositories across multiple forges, and own your workflow without vendor lock-in.
+
+
 
 ## One-liner demo
 

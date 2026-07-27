@@ -262,6 +262,45 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 	return anonymizedSHA, commitMessage, prHash, nil
 }
 
+func resolveBaseReference(r *git.Repository) *plumbing.Reference {
+	if ref, err := r.Reference(plumbing.NewRemoteReferenceName("origin", "HEAD"), true); err == nil {
+		return ref
+	}
+
+	if head, err := r.Reference(plumbing.HEAD, false); err == nil {
+		if head.Type() == plumbing.SymbolicReference {
+			target := head.Target()
+			if strings.HasPrefix(string(target), "refs/remotes/origin/") {
+				if ref, err := r.Reference(target, true); err == nil {
+					return ref
+				}
+			}
+			if strings.HasPrefix(string(target), "refs/heads/") {
+				if ref, err := r.Reference(target, true); err == nil {
+					return ref
+				}
+				branch := strings.TrimPrefix(string(target), "refs/heads/")
+				if ref, err := r.Reference(plumbing.NewRemoteReferenceName("origin", branch), true); err == nil {
+					return ref
+				}
+			}
+		}
+	}
+
+	if originHead, err := r.Reference(plumbing.ReferenceName("refs/remotes/origin/HEAD"), false); err == nil {
+		if originHead.Type() == plumbing.SymbolicReference {
+			if ref, err := r.Reference(originHead.Target(), true); err == nil {
+				return ref
+			}
+		}
+	}
+
+	if ref, err := r.Reference(plumbing.NewRemoteReferenceName("origin", "main"), true); err == nil {
+		return ref
+	}
+	return nil
+}
+
 // AnonymizeCommits reescribe solo los commits nuevos para anonimizar autor y committer
 func AnonymizeCommits(r *git.Repository, targetSHA string) (string, error) {
 	targetHash := plumbing.NewHash(targetSHA)
@@ -272,17 +311,11 @@ func AnonymizeCommits(r *git.Repository, targetSHA string) (string, error) {
 		return "", fmt.Errorf("failed to get target commit: %v", err)
 	}
 
-	// Obtener todos los commits que ya existen en la rama por defecto del remoto
+	// Obtener todos los commits que ya existen en la rama por defecto del remoto.
 	baseCommits := make(map[plumbing.Hash]bool)
-	baseRefName := plumbing.ReferenceName("refs/remotes/origin/HEAD")
-	originMain, err := r.Reference(baseRefName, true)
-	if err != nil {
-		// Fallback a origin/main si HEAD no está disponible
-		originMain, err = r.Reference(plumbing.NewRemoteReferenceName("origin", "main"), true)
-	}
-	if err == nil {
-		// Si existe origin/main, marcar todos sus commits como base
-		iter, err := r.Log(&git.LogOptions{From: originMain.Hash()})
+	baseRef := resolveBaseReference(r)
+	if baseRef != nil {
+		iter, err := r.Log(&git.LogOptions{From: baseRef.Hash()})
 		if err == nil {
 			iter.ForEach(func(c *object.Commit) error {
 				baseCommits[c.Hash] = true

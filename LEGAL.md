@@ -222,7 +222,7 @@ This project uses icons from the following icon sets:
   Un proyecto CC0 mantenido por los contribuidores de Simple Icons.
   Usa GitHub para solicitudes, correcciones y contribuciones.
   Amablemente apoyado por tus donaciones en Open Collective.
-- **github-language-color-themes**: los colores de los lenguajes de programación son obtenidos del repositorio [hiroppy/github-language-color-themes](https://github.com/hiroppy/github-language-color-themes), con referencia a [github/linguist](https://github.com/github/linguist).
+- **github-language-color-themes**: los colores de los lenguajes de programación son obtenidos del repositorio [hiroppy/github-language-color-themes](https://github.com/hiroppy/github-language-color-themes), con referencia a [GitHub Linguist](https://github.com/github/linguist).
 
 [Return to icon sets list](https://icon-sets.iconify.design/)
 

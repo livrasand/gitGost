@@ -532,6 +532,9 @@ func UploadPackHandler(c *gin.Context) {
 	req.Header.Set("Content-Type", "application/x-git-upload-pack-request")
 	req.Header.Set("Accept", "application/x-git-upload-pack-result")
 	req.Header.Set("User-Agent", "git/2.0")
+	if ce := c.Request.Header.Get("Content-Encoding"); ce != "" {
+		req.Header.Set("Content-Encoding", ce)
+	}
 	if token != "" {
 		req.Header.Set("Authorization", "Basic "+basicAuth("x-access-token", token))
 	}

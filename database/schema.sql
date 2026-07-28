@@ -89,3 +89,38 @@ CREATE POLICY "Allow anonymous insert comments" ON comments
 CREATE POLICY "Allow public read comments" ON comments
     FOR SELECT
     USING (true);
+
+-- EthicalMetrics pageviews (aggregated by minute, privacy-preserving)
+CREATE TABLE IF NOT EXISTS ethicalmetrics_pageviews (
+    site_key TEXT NOT NULL,
+    bucket TEXT NOT NULL,
+    pageviews BIGINT NOT NULL DEFAULT 1,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (site_key, bucket)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ethicalmetrics_pageviews_site_key ON ethicalmetrics_pageviews(site_key);
+
+ALTER TABLE ethicalmetrics_pageviews ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow anonymous upsert pageviews" ON ethicalmetrics_pageviews
+    FOR ALL
+    USING (true)
+    WITH CHECK (true);
+
+-- Atomic increment function for EthicalMetrics pageviews
+DROP FUNCTION IF EXISTS increment_pageviews(text, text);
+CREATE FUNCTION increment_pageviews(p_sitekey text, p_bucket text)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    INSERT INTO ethicalmetrics_pageviews (site_key, bucket, pageviews)
+    VALUES (p_sitekey, p_bucket, 1)
+    ON CONFLICT (site_key, bucket)
+    DO UPDATE SET pageviews = ethicalmetrics_pageviews.pageviews + 1;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION increment_pageviews(text, text) TO anon, authenticated, service_role;

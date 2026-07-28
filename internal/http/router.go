@@ -236,6 +236,13 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.GET("/VERIFY", VerifyHandler)
 	r.GET("/gitgost-bin", BinaryHandler)
 
+	// EthicalMetrics embebido: mide pageviews agregados, nunca personas.
+	r.POST("/v1/pageviews", EthicalMetricsPageviewHandler)
+	r.GET("/v1/sites/:site/metrics", EthicalMetricsMetricsHandler)
+	r.GET("/privacy", EthicalMetricsPrivacyHandler)
+	r.GET("/manifest", EthicalMetricsManifestHandler)
+	r.GET("/version", EthicalMetricsVersionHandler)
+
 	// Badges
 	r.GET("/badges/:badge", BadgeHandler)
 	r.GET("/badge/:owner/:repo", BadgePRCountHandler)
@@ -248,6 +255,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 
 	// Static assets
 	r.Static("/assets", "./web/assets")
+	r.StaticFile("/ethicalmetrics.js", "./web/ethicalmetrics.js")
 
 	// API routes - ANONIMAS para git operations
 	v1 := r.Group("/v1")

@@ -28,3 +28,6 @@ server
 *.log
 
 menta-account.txt
+# EthicalMetrics local environment
+.env.ethicalmetrics.local
+ethicalmetrics/.env

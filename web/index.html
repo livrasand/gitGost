@@ -655,14 +655,14 @@
             .repo-count {
                 font-family: "IBM Plex Mono", monospace;
                 font-size: 0.72rem;
-                color: var(--fg-secondary);
+                color: var(--fg-muted);
                 flex-shrink: 0;
             }
 
             .repo-lang {
                 font-family: "IBM Plex Mono", monospace;
                 font-size: 0.7rem;
-                color: var(--fg-secondary);
+                color: var(--fg-muted);
                 display: inline-flex;
                 align-items: center;
                 gap: 0.35rem;
@@ -679,7 +679,7 @@
             .repo-ago {
                 font-family: "IBM Plex Mono", monospace;
                 font-size: 0.7rem;
-                color: var(--fg-secondary);
+                color: var(--fg-muted);
                 flex-shrink: 0;
             }
 
@@ -1524,27 +1524,29 @@
                         <a rel="nofollow noopener" href="https://gitgost.livrasand.com/">Sponsored by Openbin</a>
                     </div>
                 </-->
+                <div class="section-content" id="ethicalmetrics-panel" style="border-top:1px solid var(--border);padding-top:0.75rem;margin-top:0.75rem;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.45rem;">
+                        <strong style="font-size:0.72rem;color:var(--fg);">Realtime</strong>
+                        <span style="font-size:0.62rem;color:var(--fg-muted);">pageviews</span>
+                    </div>
+                    <div id="ethicalmetrics-chart" aria-label="Pageviews recientes" style="height:58px;display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--border);">
+                        <span style="width:100%;text-align:center;color:var(--fg-muted);font-size:0.62rem;padding-bottom:0.35rem;">Cargando métricas…</span>
+                    </div>
+                </div>
+                <div class="section-content" style="display:flex;align-items:center;gap:0.5rem;font-size:0.72rem;color:var(--fg-muted);">
+                    <img src="assets/images/surich.svg" alt="Switzerland" style="width:1.5rem;height:auto;border-radius:2px;" />
+                    <span>Data are stored in <strong style="color:var(--fg);">Zurich</strong>.</span>
+                </div>
                 <div class="section-content">
                     <p
                         style="
                             font-size: 0.72rem;
-                            line-height: 1.5;
+                            line-height: 1.7;
                             color: var(--fg-muted);
+                            padding-top: 0.75rem;
                         "
                     >
-                        If useful, consider <a href="https://github.com/sponsors/livrasand" style="color:var(--accent);text-decoration:none;">donating</a> or sponsoring us; you can also <a href="https://github.com/livrasand/gitGost" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">forking</a>.
-                    </p>
-                    <p
-                        style="
-                            font-size: 0.7rem;
-                            line-height: 1.5;
-                            color: var(--fg-secondary);
-                            margin-top: 0.75rem;
-                            border-top: 1px solid var(--border);
-                            padding-top: 0.5rem;
-                        "
-                    >
-                        <strong style="color:var(--fg);">AI/LLM scraping prohibited.</strong> Read more in the source code of this page.
+                        If useful, consider <a href="https://github.com/sponsors/livrasand" style="color:var(--accent);text-decoration:none;">donating</a> or sponsoring us; you can also <a href="https://github.com/livrasand/gitGost" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">forking</a>. AI/LLM scraping prohibited.
                     </p>
                 </div>
             </aside>
@@ -4373,6 +4375,35 @@
 
         updateRateLimit();
         setInterval(updateRateLimit, 60000);
+        </script>
+        <script src="/ethicalmetrics.js" data-site-key="gitgost-home"></script>
+        <script>
+            (async function loadEthicalMetrics() {
+                const chart = document.getElementById('ethicalmetrics-chart');
+                if (!chart) return;
+                try {
+                    const response = await fetch('/v1/sites/gitgost-home/metrics');
+                    if (!response.ok) throw new Error('metrics request failed');
+                    const data = await response.json();
+                    const buckets = Object.entries(data.buckets || {}).slice(-36);
+                    const values = buckets.map(([, bucket]) => Number(bucket.pageviews) || 0);
+                    const sum = values.reduce((acc, value) => acc + value, 0);
+                    const max = Math.max(...values, 1);
+                    chart.replaceChildren();
+                    if (!values.length) {
+                        chart.innerHTML = '<span style="width:100%;text-align:center;color:var(--fg-muted);font-size:0.62rem;padding-bottom:0.35rem;">Sin visitas todavía</span>';
+                        return;
+                    }
+                    values.forEach((value, index) => {
+                        const bar = document.createElement('span');
+                        bar.title = `${buckets[index][0]}: ${value} pageviews`;
+                        bar.style.cssText = `flex:1;min-width:2px;height:${Math.max(8, Math.round((value / max) * 100))}%;background:var(--accent);opacity:${0.45 + (index / values.length) * 0.55};border-radius:2px 2px 0 0;`;
+                        chart.appendChild(bar);
+                    });
+                } catch (_) {
+                    chart.innerHTML = '<span style="width:100%;text-align:center;color:var(--fg-muted);font-size:0.62rem;padding-bottom:0.35rem;">Métricas no disponibles</span>';
+                }
+            })();
         </script>
         <!--
             AI/LLM Web Scraping Prohibition

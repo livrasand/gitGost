@@ -6,7 +6,9 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -16,6 +18,75 @@ type SupabaseClient struct {
 	URL        string
 	key        string
 	httpClient *http.Client
+}
+
+type EthicalPageviewRecord struct {
+	SiteKey   string `json:"site_key"`
+	Bucket    string `json:"bucket"`
+	Pageviews int64  `json:"pageviews"`
+}
+
+func (c *SupabaseClient) UpsertEthicalPageview(ctx context.Context, siteKey, bucket string) error {
+	params := map[string]string{"p_sitekey": siteKey, "p_bucket": bucket}
+	return c.postJSON(ctx, "/rest/v1/rpc/increment_pageviews", params, "")
+}
+
+func (c *SupabaseClient) GetEthicalPageviews(ctx context.Context, siteKey string) (map[string]int64, error) {
+	var rows []EthicalPageviewRecord
+	if err := c.getJSON(ctx, fmt.Sprintf("/rest/v1/ethicalmetrics_pageviews?site_key=eq.%s&select=bucket,pageviews", url.QueryEscape(siteKey)), &rows); err != nil {
+		return nil, err
+	}
+	result := make(map[string]int64, len(rows))
+	for _, row := range rows {
+		result[row.Bucket] += row.Pageviews
+	}
+	return result, nil
+}
+
+func (c *SupabaseClient) postJSON(ctx context.Context, path string, payload interface{}, prefer string) error {
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.URL+path, bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("apikey", c.key)
+	req.Header.Set("Authorization", "Bearer "+c.key)
+	req.Header.Set("Content-Type", "application/json")
+	if prefer != "" {
+		req.Header.Set("Prefer", prefer)
+	}
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		return fmt.Errorf("database request failed: status %d, body: %s", resp.StatusCode, string(respBody))
+	}
+	return nil
+}
+
+func (c *SupabaseClient) getJSON(ctx context.Context, path string, target interface{}) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.URL+path, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("apikey", c.key)
+	req.Header.Set("Authorization", "Bearer "+c.key)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("database request failed: status %d", resp.StatusCode)
+	}
+	return json.NewDecoder(resp.Body).Decode(target)
 }
 
 func (c *SupabaseClient) HasReportFromIP(ctx context.Context, hash, ip string) (bool, error) {

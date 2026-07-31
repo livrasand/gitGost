@@ -3972,10 +3972,20 @@
                 });
             });
 
+            function escapeHtml(value) {
+                return String(value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
             async function showTagPage(tag) {
                 const container = document.getElementById('repo-list');
                 const iconSlug = tag.toLowerCase().replace(/[^a-z0-9]/g, '');
                 const iconUrl  = `https://cdn.simpleicons.org/${iconSlug}/6b7280`;
+                const safeTag = escapeHtml(tag);
                 container.innerHTML = `
                     <div style="margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border);">
                         <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.5rem;">
@@ -3983,7 +3993,7 @@
                                 <img id="tag-icon-img" src="${iconUrl}" alt="" width="14" height="14" style="display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='';" />
                                 <span id="tag-icon-fallback" style="display:none;">#</span>
                             </span>
-                            <span style="font-family:'IBM Plex Mono',monospace;font-size:1.1rem;font-weight:600;color:var(--fg);">${tag}</span>
+                            <span style="font-family:'IBM Plex Mono',monospace;font-size:1.1rem;font-weight:600;color:var(--fg);">${safeTag}</span>
                         </div>
                         <div id="tag-wiki-desc" style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--fg-muted);line-height:1.6;margin-bottom:0.5rem;max-width:560px;"></div>
                         <div id="tag-wiki-links" style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;margin-bottom:0.6rem;"></div>

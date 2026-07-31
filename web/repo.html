@@ -2569,12 +2569,43 @@
                 renderDiscussionsView(discussions);
             } catch(e) {
                 const msg = e.message || 'unknown error';
-                panel.innerHTML = `<div style="padding:1rem;color:var(--fg-secondary);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;">
-                    error loading discussions: ${escHtml(msg)}
-                    <div style="margin-top:0.5rem;font-size:0.72rem;color:var(--fg-muted);">
-                        <a href="${rv.provider === 'gh' ? `https://github.com/${rv.owner}/${rv.repo}/discussions` : rv.provider === 'cb' ? `https://codeberg.org/${rv.owner}/${rv.repo}/issues` : `https://gitlab.com/${rv.owner}/${rv.repo}/-/issues`}" target="_blank" rel="noopener" style="color:var(--accent);" onclick="event.preventDefault(); window.open(this.href, '_blank', 'noopener');">Open on ${rv.provider === 'gh' ? 'GitHub' : rv.provider === 'cb' ? 'Codeberg' : 'GitLab'} ↗</a>
-                    </div>
-                </div>`;
+                const safeOwner = encodeURIComponent(rv.owner || '');
+                const safeRepo = encodeURIComponent(rv.repo || '');
+                const provider = rv.provider === 'gh' ? 'gh' : (rv.provider === 'cb' ? 'cb' : 'gl');
+                const openUrl = provider === 'gh'
+                    ? `https://github.com/${safeOwner}/${safeRepo}/discussions`
+                    : provider === 'cb'
+                        ? `https://codeberg.org/${safeOwner}/${safeRepo}/issues`
+                        : `https://gitlab.com/${safeOwner}/${safeRepo}/-/issues`;
+                const providerLabel = provider === 'gh' ? 'GitHub' : (provider === 'cb' ? 'Codeberg' : 'GitLab');
+
+                panel.innerHTML = '';
+                const wrap = document.createElement('div');
+                wrap.style.padding = '1rem';
+                wrap.style.color = 'var(--fg-secondary)';
+                wrap.style.fontFamily = "'IBM Plex Mono',monospace";
+                wrap.style.fontSize = '0.78rem';
+                wrap.appendChild(document.createTextNode(`error loading discussions: ${msg}`));
+
+                const sub = document.createElement('div');
+                sub.style.marginTop = '0.5rem';
+                sub.style.fontSize = '0.72rem';
+                sub.style.color = 'var(--fg-muted)';
+
+                const a = document.createElement('a');
+                a.href = openUrl;
+                a.target = '_blank';
+                a.rel = 'noopener';
+                a.style.color = 'var(--accent)';
+                a.textContent = `Open on ${providerLabel} ↗`;
+                a.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    window.open(a.href, '_blank', 'noopener');
+                });
+
+                sub.appendChild(a);
+                wrap.appendChild(sub);
+                panel.appendChild(wrap);
             }
         }
 

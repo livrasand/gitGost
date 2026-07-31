@@ -2958,10 +2958,24 @@
                             renderRepos(results);
                             updateStatusbar("search", query);
                         } else {
-                            if (container) container.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">No results for tag "' + query + '".</p>';
+                            if (container) {
+                                container.innerHTML = '';
+                                const p = document.createElement('p');
+                                p.style.color = 'var(--fg-secondary)';
+                                p.style.fontSize = '0.78rem';
+                                p.textContent = 'No results for tag "' + query + '".';
+                                container.appendChild(p);
+                            }
                         }
                     } else {
-                        if (container) container.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">No results for "' + query + '".</p>';
+                        if (container) {
+                            container.innerHTML = '';
+                            const p = document.createElement('p');
+                            p.style.color = 'var(--fg-secondary)';
+                            p.style.fontSize = '0.78rem';
+                            p.textContent = 'No results for "' + query + '".';
+                            container.appendChild(p);
+                        }
                     }
                 } catch (e) {
                     if (container) container.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">API not available.</p>';

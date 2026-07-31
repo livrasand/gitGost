@@ -4,8 +4,8 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -25,12 +25,31 @@ type ethicalBucket struct {
 	Pageviews int64 `json:"pageviews"`
 }
 
-type ethicalMetricsStore struct {
-	mu      sync.RWMutex
-	buckets map[string]map[string]int64
+const maxEthicalSiteKeyLen = 64
+
+var ethicalStore = newBoundedMap[int64](ethicalStoreMax, 24*time.Hour)
+
+func encodeEthicalKey(site, key string) string {
+	n := len(site)
+	return strconv.Itoa(n) + ":" + site + ":" + key
 }
 
-var ethicalStore = ethicalMetricsStore{buckets: make(map[string]map[string]int64)}
+func decodeEthicalKey(full string) (site, key string, ok bool) {
+	i := strings.IndexByte(full, ':')
+	if i <= 0 {
+		return
+	}
+	n, err := strconv.Atoi(full[:i])
+	if err != nil || n < 0 {
+		return
+	}
+	if i+1+n >= len(full) || full[i+1+n] != ':' {
+		return
+	}
+	site = full[i+1 : i+1+n]
+	key = full[i+1+n+1:]
+	return site, key, true
+}
 
 func EthicalMetricsPageviewHandler(c *gin.Context) {
 	if c.GetHeader("DNT") == "1" {
@@ -43,6 +62,11 @@ func EthicalMetricsPageviewHandler(c *gin.Context) {
 		return
 	}
 
+	siteKey := input.SiteKey
+	if len(siteKey) > maxEthicalSiteKeyLen {
+		siteKey = siteKey[:maxEthicalSiteKeyLen]
+	}
+
 	path := normalizeEthicalPath(input.Path)
 	browser := normalizeEthicalCategory(input.Browser, "Chrome", "Firefox", "Safari", "Edge")
 	osName := normalizeEthicalCategory(input.OS, "Windows", "macOS", "Linux", "Android", "iOS")
@@ -51,15 +75,11 @@ func EthicalMetricsPageviewHandler(c *gin.Context) {
 	bucket := time.Now().UTC().Truncate(time.Minute).Format(time.RFC3339)
 
 	key := strings.Join([]string{bucket, "page", path, browser, osName, device, country}, "|")
-	ethicalStore.mu.Lock()
-	if ethicalStore.buckets[input.SiteKey] == nil {
-		ethicalStore.buckets[input.SiteKey] = make(map[string]int64)
-	}
-	ethicalStore.buckets[input.SiteKey][key]++
-	ethicalStore.mu.Unlock()
+	fullKey := encodeEthicalKey(siteKey, key)
+	ethicalStore.Update(fullKey, func(v int64, ok bool) int64 { return v + 1 })
 	if dbClient != nil {
-		if err := dbClient.UpsertEthicalPageview(c.Request.Context(), input.SiteKey, bucket); err != nil {
-			utils.Log("Error upserting pageview for %s/%s: %v", input.SiteKey, bucket, err)
+		if err := dbClient.UpsertEthicalPageview(c.Request.Context(), siteKey, bucket); err != nil {
+			utils.Log("Error upserting pageview for %s/%s: %v", siteKey, bucket, err)
 		}
 	}
 	c.Status(http.StatusAccepted)
@@ -101,14 +121,18 @@ func EthicalMetricsMetricsHandler(c *gin.Context) {
 	}
 	if len(result) == 0 {
 		// Fallback a memoria si no hay DB o falló la lectura
-		ethicalStore.mu.RLock()
-		defer ethicalStore.mu.RUnlock()
-		for key, count := range ethicalStore.buckets[site] {
-			parts := strings.SplitN(key, "|", 2)
+		siteParam := site
+		ethicalStore.Range(func(fullKey string, count int64) bool {
+			s, inner, ok := decodeEthicalKey(fullKey)
+			if !ok || s != siteParam {
+				return true
+			}
+			parts := strings.SplitN(inner, "|", 2)
 			if len(parts) == 2 {
 				result[parts[0]] = ethicalBucket{Pageviews: result[parts[0]].Pageviews + count}
 			}
-		}
+			return true
+		})
 	}
 	c.JSON(http.StatusOK, gin.H{"site": site, "measurement": "pageviews", "buckets": result})
 }

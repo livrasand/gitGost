@@ -17,6 +17,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"></script>
     <script>if (typeof hljs !== 'undefined') hljs.configure({ ignoreUnescapedHTML: true });</script>
     <script src="https://cdn.jsdelivr.net/npm/marked@4/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
     <style>
         :root {
             --bg: #ffffff;
@@ -2067,7 +2068,10 @@
                     item = items.find(i => i.name.toLowerCase() === 'readme.md');
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
-                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/files/README.md/raw?ref=${currentBranch()}`);
+                    // Si la rama por defecto aún no se cargó, omitir ?ref= (ref vacío devuelve 400 en GitLab)
+                    const ref = currentBranch();
+                    const refQ = ref ? `?ref=${encodeURIComponent(ref)}` : '';
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/files/README.md/raw${refQ}`);
                     if (res.ok) {
                         let text = await res.text();
                         // Limpieza muy agresiva de cualquier patrón que cause undefined
@@ -3995,15 +3999,18 @@
                     const navWiki = document.getElementById('nav-wiki');
                     if (navWiki) {
                         navWiki.style.display = 'none';
-                        try {
-                            const wikiRes = await fetch(`https://gitlab.com/api/v4/projects/${enc}/wikis?per_page=1`);
-                            if (wikiRes.ok) {
-                                const wikiPages = await wikiRes.json();
-                                if (Array.isArray(wikiPages) && wikiPages.length > 0) {
-                                    navWiki.style.display = '';
+                        // Evitar el 403 de la API cuando el wiki está deshabilitado en el proyecto
+                        if (d.wiki_enabled !== false) {
+                            try {
+                                const wikiRes = await fetch(`https://gitlab.com/api/v4/projects/${enc}/wikis?per_page=1`);
+                                if (wikiRes.ok) {
+                                    const wikiPages = await wikiRes.json();
+                                    if (Array.isArray(wikiPages) && wikiPages.length > 0) {
+                                        navWiki.style.display = '';
+                                    }
                                 }
-                            }
-                        } catch(_) {}
+                            } catch(_) {}
+                        }
                     }
 
                     loadCommitCount();
@@ -4408,7 +4415,9 @@
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const fp  = encodeURIComponent(item.path || item.name);
-                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/files/${fp}/raw?ref=${currentBranch()}`);
+                    const ref = currentBranch();
+                    const refQ = ref ? `?ref=${encodeURIComponent(ref)}` : '';
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/files/${fp}/raw${refQ}`);
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     content = await res.text();
                 }
@@ -4736,6 +4745,10 @@
                         return `<a href="#" data-wiki="${escAttr(target)}"${t}>${text}</a>`;
                     }
                 }
+                const safeScheme = /^(?:https?|mailto|ftp|sftp|tel|sms):/i;
+                if (typeof href === 'string' && /^[a-z][a-z0-9+.-]*:/i.test(href) && !safeScheme.test(href)) {
+                    return `<a href="#"${t}>${text}</a>`;
+                }
                 return `<a href="${escAttr(href)}" target="_blank" rel="noopener"${t}>${text}</a>`;
             };
             // Bloques de código con hljs y sin word-wrap
@@ -4811,6 +4824,9 @@
                 }
                 return match;
             });
+            if (typeof DOMPurify !== 'undefined') {
+                result = DOMPurify.sanitize(result, { ALLOW_DATA_ATTR: true, ADD_ATTR: ['target','rel','data-anchor','data-wiki'] });
+            }
             return result;
         }
     </script>

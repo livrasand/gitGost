@@ -31,3 +31,5 @@ menta-account.txt
 # EthicalMetrics local environment
 .env.ethicalmetrics.local
 ethicalmetrics/.env
+
+/node_modules

@@ -16,6 +16,14 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
+var debugEnabled = os.Getenv("GITGOST_DEBUG") == "1"
+
+func debugf(format string, args ...interface{}) {
+	if debugEnabled {
+		fmt.Printf(format, args...)
+	}
+}
+
 func ParsePktLine(r io.Reader) ([]byte, error) {
 	lenBuf := make([]byte, 4)
 	_, err := io.ReadFull(r, lenBuf)
@@ -77,13 +85,13 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, string, error) {
 
 		// Las líneas de comando terminan con \n o \x00
 		lineStr := string(line)
-		fmt.Printf("DEBUG: Command line: %q\n", lineStr)
+		debugf("DEBUG: Command line: %q\n", lineStr)
 
 		// Parsear push-option: pr-hash=<value>
 		if strings.HasPrefix(lineStr, "push-option=pr-hash=") {
 			prHash = strings.TrimPrefix(lineStr, "push-option=pr-hash=")
 			prHash = strings.TrimRight(prHash, "\n")
-			fmt.Printf("DEBUG: Found pr-hash push-option: %s\n", prHash)
+			debugf("DEBUG: Found pr-hash push-option: %s\n", prHash)
 			continue
 		}
 
@@ -95,7 +103,7 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, string, error) {
 				NewSHA: parts[1],
 				Ref:    parts[2],
 			}
-			fmt.Printf("DEBUG: Parsed ref update: %s -> %s for %s\n", refUpdate.OldSHA, refUpdate.NewSHA, refUpdate.Ref)
+			debugf("DEBUG: Parsed ref update: %s -> %s for %s\n", refUpdate.OldSHA, refUpdate.NewSHA, refUpdate.Ref)
 		}
 
 		// Si encontramos "PACK", retrocedemos porque es el inicio del packfile
@@ -130,7 +138,7 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, string, error) {
 		packfile = body[packStart:]
 	}
 
-	fmt.Printf("DEBUG: Extracted packfile: %d bytes, starts with: %x\n",
+	debugf("DEBUG: Extracted packfile: %d bytes, starts with: %x\n",
 		len(packfile), packfile[:min(20, len(packfile))])
 
 	return packfile, refUpdate, prHash, nil
@@ -152,7 +160,7 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 	}
 
 	repoURL := cloneURL
-	fmt.Printf("DEBUG: Cloning %s/%s...\n", owner, repo)
+	debugf("DEBUG: Cloning %s/%s...\n", owner, repo)
 
 	_, err := git.PlainClone(tempDir, false, &git.CloneOptions{
 		URL: repoURL,
@@ -163,7 +171,7 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 	})
 	if err != nil {
 		// Si falla el clone (repo no existe o privado), inicializar vacío
-		fmt.Printf("DEBUG: Clone failed, initializing empty repo: %v\n", err)
+		debugf("DEBUG: Clone failed, initializing empty repo: %v\n", err)
 		_, err = git.PlainInit(tempDir, false)
 		if err != nil {
 			return "", "", "", fmt.Errorf("failed to init repo: %v", err)
@@ -181,8 +189,8 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 		return "", "", "", nil
 	}
 
-	fmt.Printf("DEBUG: Body length: %d bytes\n", len(body))
-	fmt.Printf("DEBUG: First 100 bytes: %x\n", body[:min(100, len(body))])
+	debugf("DEBUG: Body length: %d bytes\n", len(body))
+	debugf("DEBUG: First 100 bytes: %x\n", body[:min(100, len(body))])
 
 	// Extraer packfile del protocolo Git Smart HTTP
 	packfile, refUpdate, prHash, err := ExtractPackfile(body)
@@ -194,9 +202,9 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 		return "", "", "", fmt.Errorf("no ref update found in request")
 	}
 
-	fmt.Printf("DEBUG: Target SHA: %s\n", refUpdate.NewSHA)
+	debugf("DEBUG: Target SHA: %s\n", refUpdate.NewSHA)
 
-	fmt.Printf("DEBUG: Packfile size: %d bytes\n", len(packfile))
+	debugf("DEBUG: Packfile size: %d bytes\n", len(packfile))
 
 	// Guardar packfile temporalmente
 	packfilePath := tempDir + "/pack.tmp"
@@ -211,17 +219,17 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 	cmd.Stdin = bytes.NewReader(packfile)
 
 	output, err := cmd.CombinedOutput()
-	fmt.Printf("DEBUG: git index-pack output: %s\n", string(output))
+	debugf("DEBUG: git index-pack output: %s\n", string(output))
 
 	if err != nil {
 		// Si index-pack falla, intentar unpack-objects
-		fmt.Printf("DEBUG: index-pack failed, trying unpack-objects\n")
+		debugf("DEBUG: index-pack failed, trying unpack-objects\n")
 		cmd = exec.Command("git", "unpack-objects", "-r")
 		cmd.Dir = tempDir
 		cmd.Stdin = bytes.NewReader(packfile)
 
 		output, err = cmd.CombinedOutput()
-		fmt.Printf("DEBUG: git unpack-objects output: %s\n", string(output))
+		debugf("DEBUG: git unpack-objects output: %s\n", string(output))
 
 		if err != nil {
 			return "", "", "", fmt.Errorf("failed to unpack objects: %v\nOutput: %s", err, string(output))
@@ -242,7 +250,7 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 		return "", "", "", fmt.Errorf("failed to update HEAD: %v", err)
 	}
 
-	fmt.Printf("DEBUG: Updated HEAD to %s\n", refUpdate.NewSHA)
+	debugf("DEBUG: Updated HEAD to %s\n", refUpdate.NewSHA)
 
 	// Extraer el mensaje del commit original antes de anonimizar
 	originalCommit, err := r.CommitObject(newHash)
@@ -250,7 +258,7 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 		return "", "", "", fmt.Errorf("failed to get original commit: %v", err)
 	}
 	commitMessage := originalCommit.Message
-	fmt.Printf("DEBUG: Original commit message: %s\n", commitMessage)
+	debugf("DEBUG: Original commit message: %s\n", commitMessage)
 
 	// Reescribir commits para anonimizar
 	anonymizedSHA, err := AnonymizeCommits(r, refUpdate.NewSHA)
@@ -258,7 +266,7 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 		return "", "", "", fmt.Errorf("failed to anonymize commits: %v", err)
 	}
 
-	fmt.Printf("DEBUG: Anonymized commit: %s\n", anonymizedSHA)
+	debugf("DEBUG: Anonymized commit: %s\n", anonymizedSHA)
 	return anonymizedSHA, commitMessage, prHash, nil
 }
 
@@ -324,7 +332,7 @@ func AnonymizeCommits(r *git.Repository, targetSHA string) (string, error) {
 		}
 	}
 
-	fmt.Printf("DEBUG: Base commits count: %d\n", len(baseCommits))
+	debugf("DEBUG: Base commits count: %d\n", len(baseCommits))
 
 	// Mapeo de commits originales a anonimizados
 	commitMap := make(map[plumbing.Hash]plumbing.Hash)
@@ -354,7 +362,7 @@ func rewriteCommit(r *git.Repository, commit *object.Commit, commitMap map[plumb
 
 	// Si este commit ya existe en el repo base, no lo reescribimos
 	if baseCommits[commit.Hash] {
-		fmt.Printf("DEBUG: Skipping base commit %s\n", commit.Hash.String()[:8])
+		debugf("DEBUG: Skipping base commit %s\n", commit.Hash.String()[:8])
 		return commit.Hash, nil
 	}
 
@@ -405,6 +413,6 @@ func rewriteCommit(r *git.Repository, commit *object.Commit, commitMap map[plumb
 	// Guardar en el mapa
 	commitMap[commit.Hash] = newHash
 
-	fmt.Printf("DEBUG: Rewritten commit %s -> %s\n", commit.Hash.String()[:8], newHash.String()[:8])
+	debugf("DEBUG: Rewritten commit %s -> %s\n", commit.Hash.String()[:8], newHash.String()[:8])
 	return newHash, nil
 }

@@ -465,9 +465,7 @@ func AdminAppealResolveHandler(c *gin.Context) {
 	appealTicketsMu.Unlock()
 
 	if unbanned {
-		identityMu.Lock()
-		delete(blockedHashes, hash)
-		identityMu.Unlock()
+		blockedStore.Delete(hash)
 	}
 
 	// Send ntfy notification about resolution

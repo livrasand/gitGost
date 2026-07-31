@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/livrasand/gitGost/internal/config"
@@ -63,10 +62,14 @@ func securityHeaders() gin.HandlerFunc {
 	}
 }
 
+const (
+	adminLimiterStoreMax   = 10000
+	prCheckLimiterStoreMax = 10000
+)
+
 // adminLimiterState holds per-IP sliding-window counters for admin endpoints.
 var (
-	adminLimiterMu    sync.Mutex
-	adminLimiterStore = make(map[string][]time.Time)
+	adminLimiterStore = newBoundedMap[[]time.Time](adminLimiterStoreMax, adminLimiterWin)
 	adminLimiterMax   = 10
 	adminLimiterWin   = time.Minute
 )
@@ -75,21 +78,8 @@ var (
 func adminLimiter() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ip := c.ClientIP()
-		now := time.Now()
-		cutoff := now.Add(-adminLimiterWin)
-		adminLimiterMu.Lock()
-		times := adminLimiterStore[ip]
-		valid := times[:0]
-		for _, t := range times {
-			if t.After(cutoff) {
-				valid = append(valid, t)
-			}
-		}
-		valid = append(valid, now)
-		adminLimiterStore[ip] = valid
-		exceeded := len(valid) > adminLimiterMax
-		adminLimiterMu.Unlock()
-		if exceeded {
+		count := windowAdd(adminLimiterStore, ip, time.Now(), adminLimiterWin, adminLimiterMax)
+		if count > adminLimiterMax {
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "admin rate limit exceeded"})
 			return
 		}
@@ -99,8 +89,7 @@ func adminLimiter() gin.HandlerFunc {
 
 // prCheckLimiterState holds per-IP sliding-window counters for PR status endpoint.
 var (
-	prCheckLimiterMu    sync.Mutex
-	prCheckLimiterStore = make(map[string][]time.Time)
+	prCheckLimiterStore = newBoundedMap[[]time.Time](prCheckLimiterStoreMax, prCheckLimiterWin)
 	prCheckLimiterMax   = 30
 	prCheckLimiterWin   = time.Minute
 )
@@ -109,21 +98,8 @@ var (
 func prCheckLimiter() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ip := c.ClientIP()
-		now := time.Now()
-		cutoff := now.Add(-prCheckLimiterWin)
-		prCheckLimiterMu.Lock()
-		times := prCheckLimiterStore[ip]
-		valid := times[:0]
-		for _, t := range times {
-			if t.After(cutoff) {
-				valid = append(valid, t)
-			}
-		}
-		valid = append(valid, now)
-		prCheckLimiterStore[ip] = valid
-		exceeded := len(valid) > prCheckLimiterMax
-		prCheckLimiterMu.Unlock()
-		if exceeded {
+		count := windowAdd(prCheckLimiterStore, ip, time.Now(), prCheckLimiterWin, prCheckLimiterMax)
+		if count > prCheckLimiterMax {
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "PR check rate limit exceeded"})
 			return
 		}
@@ -141,6 +117,7 @@ func sizeLimitMiddleware() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusRequestEntityTooLarge, gin.H{"error": "Push too large"})
 			return
 		}
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxPushSize)
 		c.Next()
 	}
 }

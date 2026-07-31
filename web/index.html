@@ -396,6 +396,32 @@
                 font-weight: 600;
             }
 
+            .nav-links {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .nav-toggle {
+                display: none;
+                background: none;
+                border: none;
+                color: var(--fg-muted);
+                cursor: pointer;
+                padding: 0;
+                line-height: 1;
+            }
+            .nav-toggle:hover {
+                color: var(--fg);
+            }
+
+            .stats-note {
+                display: flex;
+            }
+
+            .mobile-stats-note {
+                display: none;
+            }
+
             /* Main Content */
             .main-content {
                 flex: 1;
@@ -1027,17 +1053,20 @@
                 .sidebar {
                     width: 100%;
                     flex-direction: row;
-                    flex-wrap: wrap;
+                    flex-wrap: nowrap;
+                    align-items: center;
                     gap: 0.15rem;
                     padding: 0.4rem 0.5rem;
+                    position: relative;
                     overflow-y: visible;
                     border-bottom: 1px solid var(--border);
                     margin-bottom: 0.35rem;
                 }
 
                 .sidebar .logo {
-                    width: 100%;
-                    margin-bottom: 0.15rem;
+                    width: auto;
+                    flex: 1;
+                    margin-bottom: 0;
                     font-size: 0.95rem;
                 }
 
@@ -1052,6 +1081,53 @@
                 .nav-link svg {
                     width: 0.85em;
                     height: 0.85em;
+                }
+
+                .nav-toggle {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-width: 2.5rem;
+                    min-height: 2.5rem;
+                    padding: 0.25rem;
+                }
+
+                .nav-links {
+                    display: none;
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                    width: 100%;
+                    background: var(--bg);
+                    border-bottom: 1px solid var(--border);
+                    padding: 0.5rem 0.75rem;
+                    flex-direction: column;
+                    gap: 0.25rem;
+                    z-index: 50;
+                }
+
+                .sidebar.open .nav-links {
+                    display: flex;
+                }
+
+                .nav-links .nav-link {
+                    display: flex;
+                    align-items: center;
+                    width: 100%;
+                    padding: 0.4rem 0;
+                    font-size: 0.78rem;
+                }
+
+                .nav-toggle[aria-expanded="true"] {
+                    color: var(--accent);
+                }
+
+                .stats-note {
+                    display: none;
+                }
+
+                .nav-links .mobile-stats-note {
+                    display: flex;
                 }
 
                 .sidebar > div:not(#rate-limit-section), 
@@ -1406,6 +1482,12 @@
             <!-- Left Sidebar -->
             <aside class="sidebar">
                 <a href="/" class="logo">gitGost</a>
+                <button type="button" class="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="nav-links" onclick="toggleMobileNav()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24" aria-hidden="true">
+                        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <nav class="nav-links" id="nav-links">
                 <a href="#" onclick="showPage('home'); return false;" class="nav-link active"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.25 4.75h.703a4 4 0 0 1 3.927 3.236l1.17 6.01M8.75 4.75h-.703A4 4 0 0 0 4.12 7.986l-1.17 6.01m7.674.256a4.002 4.002 0 0 0-7.673-.257m7.673.257q.124.48.126.998a4 4 0 1 1-7.8-1.255m7.674.257h2.752m0 0a4.002 4.002 0 0 1 7.673-.257m-7.673.257a4 4 0 1 0 7.674-.257" />
@@ -1465,6 +1547,19 @@
 		<circle cx="12" cy="7.5" r="0.5" fill="currentColor" />
 	</g>
 </svg> about</a>
+                <a href="#" onclick="showPage('stats'); return false;" class="nav-link"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+		<path d="M3 20h18" />
+		<path d="M6 20v-6" />
+		<path d="M12 20v-12" />
+		<path d="M18 20v-10" />
+	</g>
+</svg> stats</a>
+                <div class="mobile-stats-note" style="align-items:center;gap:0.5rem;font-size:0.72rem;color:var(--fg-muted);border-top:1px solid var(--border);padding-top:0.5rem;margin-top:0.25rem;">
+                    <span>Only anonymous pageview totals are counted. No IP, no fingerprint, no cookies, no personal data.</span>
+                </div>
+                </nav>
 
                 <div class="section-content" id="rate-limit-section">
                     <div class="rate-limit-providers" aria-label="API rate limits">
@@ -1533,9 +1628,8 @@
                         <span style="width:100%;text-align:center;color:var(--fg-muted);font-size:0.62rem;padding-bottom:0.35rem;">Cargando métricas…</span>
                     </div>
                 </div>
-                <div class="section-content" style="display:flex;align-items:center;gap:0.5rem;font-size:0.72rem;color:var(--fg-muted);">
-                    <img src="assets/images/surich.svg" alt="Switzerland" style="width:1.5rem;height:auto;border-radius:2px;" />
-                    <span>Data are stored in <strong style="color:var(--fg);">Zurich</strong>.</span>
+                <div class="section-content stats-note" style="align-items:center;gap:0.5rem;font-size:0.72rem;color:var(--fg-muted);">
+                    <span>Only anonymous pageview totals are counted. No IP, no fingerprint, no cookies, no personal data.</span>
                 </div>
                 <div class="section-content">
                     <p
@@ -2669,8 +2763,9 @@
 
             function languageBadgeHtml(lang) {
                 if (!lang) return '';
-                const color = languageColor(lang);
-                return `<span class="repo-lang" title="${lang}"><span class="repo-lang-dot" style="background:${color}"></span>${lang}</span>`;
+                const safeLang = escapeHtml(lang);
+                const safeColor = escapeHtml(languageColor(lang));
+                return `<span class="repo-lang" title="${safeLang}"><span class="repo-lang-dot" style="background:${safeColor}"></span>${safeLang}</span>`;
             }
 
             // Modal functions
@@ -2854,9 +2949,9 @@
                 }
                 if (!history.length) { dropdown.classList.remove('open'); return; }
                 dropdown.innerHTML = history.map(q => `
-                    <div class="search-history-item" data-query="${q.replace(/"/g,'&quot;')}">
-                        <span class="sh-query">${q}</span>
-                        <span class="sh-del" data-del="${q.replace(/"/g,'&quot;')}" title="Remove">✕</span>
+                    <div class="search-history-item" data-query="${escapeHtml(q)}">
+                        <span class="sh-query">${escapeHtml(q)}</span>
+                        <span class="sh-del" data-del="${escapeHtml(q)}" title="Remove">✕</span>
                     </div>`).join('');
                 dropdown.classList.add('open');
             }
@@ -3013,7 +3108,7 @@
                     const ownerHtml = escapeHtml(owner);
                     const nameHtml = escapeHtml(name);
                     const desc = repo.description
-                        ? repo.description.slice(0, 120)
+                        ? escapeHtml(repo.description.slice(0, 120))
                         : "";
                     const count =
                         repo.stars > 0 ? `(${formatNumber(repo.stars)})` : "";
@@ -3090,13 +3185,15 @@
                     const ago = timeAgo(repo.starred_at);
                     const forgeIcon = forgeIconHtml(repo.provider);
                     const langBadge = languageBadgeHtml(repo.language);
+                    const ownerHtml = escapeHtml(repo.owner || '');
+                    const repoHtml = escapeHtml(repo.repo || '');
                     let starBadgeColor, starBadgeBorder, starBadgeLabel;
                     if (provider === 'gl') { starBadgeColor = '#FC6D26'; starBadgeBorder = '#FC6D26'; starBadgeLabel = gitlabBadgeIcon(); }
                     else if (provider === 'cb') { starBadgeColor = '#2185D0'; starBadgeBorder = '#2185D0'; starBadgeLabel = codebergBadgeIcon(); }
                     else { starBadgeColor = '#181717'; starBadgeBorder = '#181717'; starBadgeLabel = githubBadgeIcon(); }
                     item.innerHTML = `
                         <div class="repo-item-left">
-                            <div class="repo-item-name">${forgeIcon}<span class="owner">${repo.owner}</span><span class="slash">/</span><span class="name">${repo.repo}</span></div>
+                            <div class="repo-item-name">${forgeIcon}<span class="owner">${ownerHtml}</span><span class="slash">/</span><span class="name">${repoHtml}</span></div>
                             ${ago ? `<div class="repo-item-desc" style="font-size:0.7rem;">starred ${ago}</div>` : ''}
                         </div>
                         <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
@@ -3768,6 +3865,27 @@
                                 <a href="https://github.com/livrasand/gitGost/blob/main/AI-POLICY.md" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">AI Policy</a>
                             </div>
                         </div>`
+                },
+                stats: {
+                    title: 'Stats',
+                    html: () => `
+                        <p style="color:var(--fg-secondary);margin-bottom:1rem;">How we count visits without counting people.</p>
+                        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;margin-bottom:1rem;">
+                            <h3 style="margin-top:0;color:var(--accent);">What we collect</h3>
+                            <p>Only pageviews. When a page loads, the embedded <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">ethicalmetrics.js</code> script sends the site key, path, referrer, and coarse browser/OS/device categories to <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">/v1/pageviews</code>. The server increments one counter for the current minute.</p>
+                            <p>The sidebar chart shows the latest 36 one-minute buckets. It is an activity pulse, not a user count.</p>
+                        </div>
+                        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;margin-bottom:1rem;">
+                            <h3 style="margin-top:0;color:var(--accent);">What we do NOT keep</h3>
+                            <ul style="margin:0.4rem 0 0 1.2rem;padding:0;">
+                                <li>IP addresses, cookies, localStorage, or session data.</li>
+                                <li>Browser fingerprints or unique identifiers.</li>
+                                <li>Query strings, events, or click streams.</li>
+                                <li>Names, emails, accounts, or any personal data.</li>
+                            </ul>
+                            <p style="margin-top:0.75rem;margin-bottom:1rem;">The IP is never stored; it is only used for a transient country lookup and then discarded. If your browser sends <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">DNT: 1</code>, the request is ignored.</p>
+                            <p>Read the full <a href="https://github.com/livrasand/gitGost/blob/main/Privacy%20Guarantees.md" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">Privacy Guarantees</a>.</p>
+                        </div>`
                 }
             };
 
@@ -3849,6 +3967,14 @@
 
                 // Re-bind form submit buttons
                 bindFormHandlers(pageContent);
+            }
+
+            function toggleMobileNav() {
+                const sidebar = document.querySelector('.sidebar');
+                const toggle = document.querySelector('.nav-toggle');
+                if (!sidebar) return;
+                const open = sidebar.classList.toggle('open');
+                if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
             }
 
             function bindFormHandlers(root) {
@@ -3969,6 +4095,10 @@
                         .querySelectorAll(".nav-link")
                         .forEach((l) => l.classList.remove("active"));
                     this.classList.add("active");
+                    const sidebar = document.querySelector('.sidebar');
+                    const toggle = document.querySelector('.nav-toggle');
+                    if (sidebar) sidebar.classList.remove('open');
+                    if (toggle) toggle.setAttribute('aria-expanded', 'false');
                 });
             });
 
@@ -4015,7 +4145,8 @@
                         if (linksEl) {
                             const wikiUrl = wiki.content_urls?.desktop?.page
                                 || `https://en.wikipedia.org/wiki/${encodeURIComponent(tag)}`;
-                            linksEl.innerHTML = `<a href="${wikiUrl}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">Wikipedia</a>`;
+                            const safeWikiUrl = escapeHtml(wikiUrl);
+                            linksEl.innerHTML = `<a href="${safeWikiUrl}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">Wikipedia</a>`;
                             if (wiki.wikibase_item) {
                                 fetch(`https://www.wikidata.org/wiki/Special:EntityData/${wiki.wikibase_item}.json`)
                                     .then(r => r.ok ? r.json() : null)
@@ -4024,8 +4155,9 @@
                                         const entity  = wd.entities?.[wiki.wikibase_item];
                                         const website = entity?.claims?.P856?.[0]?.mainsnak?.datavalue?.value;
                                         if (website && document.getElementById('tag-wiki-links')) {
+                                            const safeWebsite = escapeHtml(website);
                                             document.getElementById('tag-wiki-links').innerHTML +=
-                                                ` | <a href="${website}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">Website</a>`;
+                                                ` | <a href="${safeWebsite}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">Website</a>`;
                                         }
                                     }).catch(() => {});
                             }
@@ -4089,13 +4221,15 @@
                     const desc = repo.description ? escapeHtml(repo.description.slice(0, 120)) : '';
                     const stars = repo.stars > 0 ? `(${formatNumber(repo.stars)})` : '';
                     const langBadge = languageBadgeHtml(repo.language);
+                    const ownerHtml = escapeHtml(owner || '');
+                    const nameHtml = escapeHtml(name || '');
                     let providerLabel, providerColor;
                     if (repo.provider === 'gitlab') { providerLabel = gitlabBadgeIcon(); providerColor = '#FC6D26'; }
                     else if (repo.provider === 'codeberg') { providerLabel = codebergBadgeIcon(); providerColor = '#2185D0'; }
                     else { providerLabel = githubBadgeIcon(); providerColor = '#181717'; }
                     item.innerHTML = `
                         <div class="repo-item-left">
-                            <div class="repo-item-name"><span class="owner">${owner}</span><span class="slash">/</span><span class="name">${name}</span></div>
+                            <div class="repo-item-name"><span class="owner">${ownerHtml}</span><span class="slash">/</span><span class="name">${nameHtml}</span></div>
                             ${desc ? `<div class="repo-item-desc">${desc}</div>` : ''}
                         </div>
                         <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">

@@ -56,6 +56,9 @@ That’s it. No login, token, name, or email required — gitGost provides stron
 <img
   src="https://img.shields.io/badge/Gitea-Coming%20Soon-lightgrey?logo=gitea&logoColor=white"
   alt="Gitea – Coming Soon"/>
+<img
+  src="https://img.shields.io/badge/sourcehut-Coming%20Soon-lightgrey?logo=sourcehut&logoColor=white"
+  alt="sourcehut – Coming Soon"/>
 
 <br />
 
@@ -234,6 +237,14 @@ If you run a public instance, you must provide source code.
 → [LICENSE](LICENSE)
 
 ## Contributing
+
+### Deploying Your Own Instance
+
+I'd love it if you deployed your own version of this app! To do so currently will take some knowledge of how a webserver runs. This app is built with Go and there are a bunch of different ways to deploy. The official instance is on [https://gitgost.livrasand.com/](https://gitgost.livrasand.com/)
+
+Community instances are listed here. Submit a patchset to add your own self-hosted instance to that list.
+
+Hopefully a more comprehensive guide will be written at some point, but for now feel free to reach out to the [Issues](https://github.com/livrasand/gitGost/issues) if you have any questions.
 
 ### Contributing Anonymously
 
@@ -458,6 +469,9 @@ This closes up to 2 hours of recorded PRs in parallel via the GitHub API. PRs ol
 |---------|-------------|-------------|
 | **bug-bounties** | Anonymous bug bounty program submissions powered by gitGost. Uses a server-side proxy to create GitHub issues anonymously through gitGost. | https://github.com/Lissy93/bug-bounties |
 
+## Disclaimer
+
+_gitGost does not host any content. All content on gitGost is from GitHub, GitLab and Codeberg. GitHub is a trademark of GitHub, Inc. GitLab es a trademark of GitLab Inc. Codeberg is a trademark of Codeberg e.V._
 
 ---
 

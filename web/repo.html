@@ -3002,14 +3002,37 @@
 
                 if (anchor) scrollToAnchor(anchor);
             } catch(e) {
-                panel.innerHTML = `<div style="padding:1rem;color:var(--fg-secondary);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;">
-                    error loading wiki: ${escHtml(e.message)}
-                    <div style="margin-top:0.5rem;font-size:0.72rem;color:var(--fg-muted);">
-                        <a href="${rv.provider === 'cb' ? `https://codeberg.org/${rv.owner}/${rv.repo}/wiki` : rv.provider === 'gh' ? `https://github.com/${rv.owner}/${rv.repo}/wiki` : `https://gitlab.com/${rv.owner}/${rv.repo}/-/wikis`}" target="_blank" style="color:var(--accent);">
-                            Open on ${rv.provider === 'cb' ? 'Codeberg' : rv.provider === 'gh' ? 'GitHub' : 'GitLab'} ↗
-                        </a>
-                    </div>
-                </div>`;
+                panel.textContent = '';
+
+                const wrapper = document.createElement('div');
+                wrapper.style.padding = '1rem';
+                wrapper.style.color = 'var(--fg-secondary)';
+                wrapper.style.fontFamily = "'IBM Plex Mono',monospace";
+                wrapper.style.fontSize = '0.78rem';
+                wrapper.textContent = `error loading wiki: ${e && e.message ? e.message : 'unknown error'}`;
+
+                const sub = document.createElement('div');
+                sub.style.marginTop = '0.5rem';
+                sub.style.fontSize = '0.72rem';
+                sub.style.color = 'var(--fg-muted)';
+
+                const link = document.createElement('a');
+                const owner = encodeURIComponent(rv.owner || '');
+                const repo = encodeURIComponent(rv.repo || '');
+                const href = rv.provider === 'cb'
+                    ? `https://codeberg.org/${owner}/${repo}/wiki`
+                    : rv.provider === 'gh'
+                        ? `https://github.com/${owner}/${repo}/wiki`
+                        : `https://gitlab.com/${owner}/${repo}/-/wikis`;
+                link.href = href;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.style.color = 'var(--accent)';
+                link.textContent = `Open on ${rv.provider === 'cb' ? 'Codeberg' : rv.provider === 'gh' ? 'GitHub' : 'GitLab'} ↗`;
+
+                sub.appendChild(link);
+                wrapper.appendChild(sub);
+                panel.appendChild(wrapper);
                 _wikiCache = { slug: '', html: '' };
             }
         }

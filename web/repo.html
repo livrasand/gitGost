@@ -2329,6 +2329,21 @@
             const overlay = document.createElement('div');
             overlay.id = 'bug-modal-overlay';
             overlay.className = 'bug-modal-overlay';
+            const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => (
+                c === '&' ? '&amp;' :
+                c === '<' ? '&lt;'  :
+                c === '>' ? '&gt;'  :
+                c === '"' ? '&quot;': '&#39;'
+            ));
+            const safeOwner = escapeHtml(rv.owner || '');
+            const safeRepo = escapeHtml(rv.repo || '');
+            const repoBase = rv.provider === 'cb'
+                ? 'https://codeberg.org'
+                : rv.provider === 'gh'
+                    ? 'https://github.com'
+                    : 'https://gitlab.com';
+            const repoHref = `${repoBase}/${safeOwner}/${safeRepo}`;
+            const repoLabel = `${safeOwner}/${safeRepo}`;
             overlay.innerHTML = `
                 <div class="bug-modal">
                     <div>
@@ -2347,7 +2362,7 @@
                         <menta-widget id="menta-bug" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                     </div>
                     <div class="bug-modal-footer">
-                        <span class="note">Anonymous issue in <a href="${rv.provider === 'cb' ? `https://codeberg.org/${rv.owner}/${rv.repo}` : rv.provider === 'gh' ? `https://github.com/${rv.owner}/${rv.repo}` : `https://gitlab.com/${rv.owner}/${rv.repo}`}" target="_blank">${rv.owner}/${rv.repo}</a></span>
+                        <span class="note">Anonymous issue in <a href="${repoHref}" target="_blank">${repoLabel}</a></span>
                         <div class="bug-modal-actions">
                             <span id="bug-status" style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-muted);"></span>
                             <button class="bug-cancel-btn" onclick="closeBugModal()">Cancel</button>

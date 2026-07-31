@@ -229,6 +229,42 @@ For the full model, see [THREAT_MODEL.md](THREAT_MODEL.md). For more operational
 
 Everything is designed to prevent abuse while keeping you anonymous.
 
+## gitGost for Resilient Networking
+
+Git manages the repository. GREN manages the network. The GREN client pauses, resumes, queues and retries Git operations in the background — without replacing Git itself.
+
+The client is written in Go, with pre-compiled binaries available for Mac,
+Windows and Linux. Check out the [website](https://gitgost.livrasand.com/)
+for an overview of features.
+
+<a href="https://github.com/livrasand/gitGost/releases"><img src="https://raw.githubusercontent.com/rubenpgrady/get-it-on-github/refs/heads/main/get-it-on-github.png" alt="Get it on GitHub" height="96" />
+</a>
+
+
+### Using
+
+```shell
+# Clone runs like a download manager
+$ git gost clone https://github.com/openai/openai.git
+→ Job created. ID: 82 — Running in background...
+$ git gost watch 82
+→ 82   openai   74%   Downloading pack 18/35
+```
+
+### Getting started
+
+```shell
+# Download and install the Git command line extension. Run once per user account.
+$ ./git-gost-darwin-arm64 install
+→ git-gost instalado en ~/.local/bin/git-gost
+# There is no step three. Clone, fetch and push as you normally would:
+$ git gost clone https://github.com/openai/openai.git
+# Manage the queue while the download runs in the background
+$ git gost jobs
+$ git gost watch 82
+$ git gost pause 82   # or resume / cancel
+```
+
 ## License
 
 **AGPL-3.0** – Free forever, open source, and copyleft.  

@@ -347,7 +347,6 @@
                 flex: 1;
                 padding: 2rem 2rem 0rem 2rem;
                 gap: 2rem;
-                max-width: 1400px;
                 margin: 0 auto;
                 width: 100%;
                 min-height: 0;
@@ -1130,7 +1129,7 @@
                     display: flex;
                 }
 
-                .sidebar > div:not(#rate-limit-section), 
+                .sidebar > div:not(#rate-limit-section),
                 #rate-limit-section,
                 .sidebar .section-title {
                     display: none;
@@ -1499,6 +1498,13 @@
 		<path d="m7.25 9l3 3l-3 3m5.5 0h4" />
 	</g>
 </svg> cli</a>
+                <a href="#" onclick="showPage('git-extension'); return false;" class="nav-link"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+		<path d="M12 3v12m0 0l-4-4m4 4l4-4" />
+		<path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+	</g>
+</svg> git extension</a>
                 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin:1.5rem 0 0.5rem;">create a</div>
                 <a href="#" onclick="showPage('issue'); return false;" class="nav-link" style="padding-left:1rem;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
@@ -1637,10 +1643,9 @@
                             font-size: 0.72rem;
                             line-height: 1.7;
                             color: var(--fg-muted);
-                            padding-top: 0.75rem;
                         "
                     >
-                        If useful, consider <a href="https://github.com/sponsors/livrasand" style="color:var(--accent);text-decoration:none;">donating</a> or sponsoring us; you can also <a href="https://github.com/livrasand/gitGost" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">forking</a>. AI/LLM scraping prohibited.
+                        If useful, consider <a href="https://github.com/sponsors/livrasand" style="color:var(--accent);text-decoration:none;">donating</a> or sponsoring us; you can also <a href="https://github.com/livrasand/gitGost" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">forking</a>. AI/LLM scraping prohibited. Git is a trademark of the <a href="http://sfconservancy.org/" style="color:var(--accent);text-decoration:none;">Software Freedom Conservancy</a>.
                     </p>
                 </div>
             </aside>
@@ -3112,7 +3117,7 @@
                         : "";
                     const count =
                         repo.stars > 0 ? `(${formatNumber(repo.stars)})` : "";
-                    const dateStr = scrollState.tab === 'new' 
+                    const dateStr = scrollState.tab === 'new'
                         ? (repo.created_at || repo.updated_at || repo.pushed_at || '')
                         : (repo.pushed_at || repo.updated_at || repo.created_at || '');
                     const ago = scrollState.tab === 'new' ? timeAgo(dateStr) : '';
@@ -3570,6 +3575,129 @@
                                         </div>
                                     </div>
                                     <div id="ntfy-error" style="margin-top:0.5rem;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--accent);display:none;"></div>
+                                </div>
+                            </div>
+
+                        </div>`
+                },
+                'git-extension': {
+                    title: 'Git Extension',
+                    html: () => `
+                        <div style="display:flex;flex-direction:column;gap:2.5rem;">
+
+                            <!-- Hero -->
+                            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.5rem 1.6rem;">
+                                <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;">gitGost / git extension</div>
+                                <h3 style="margin:0 0 0.5rem;color:var(--fg);font-size:1.15rem;">An open source Git extension for resilient networking.</h3>
+                                <p style="font-size:0.85rem;color:var(--fg-muted);margin:0 0 1rem;max-width:660px;">Git manages the repository. gitGost manages the network. The <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">git-gost</code> client pauses, resumes, queues and retries Git operations in the background — without replacing Git itself.</p>
+                                <div class="terminal">
+                                    <div class="terminal-titlebar">
+                                        <span class="terminal-btn close"></span>
+                                        <span class="terminal-btn min"></span>
+                                        <span class="terminal-btn max"></span>
+                                    </div>
+                                    <div class="terminal-body"><span class="comment"># Clone runs like a download manager</span>
+<span class="prompt">$</span> git gost clone https://github.com/openai/openai.git
+<span class="success">→</span> Job created. ID: 82 — Running in background...
+<span class="prompt">$</span> git gost watch 82
+<span class="success">→</span> 82   openai   74%   Downloading pack 18/35</div>
+                                </div>
+                            </div>
+
+                            <!-- Downloads -->
+                            <div>
+                                <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Download git-gost</div>
+                                <p style="font-size:0.78rem;color:var(--fg-secondary);margin:0 0 1rem;max-width:660px;">Each release publishes a binary per platform with its SHA-256 and a Sigstore attestation. Download yours, verify the hash, and run the auto-installer.</p>
+                                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1rem;">
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.1rem 1.2rem;">
+                                        <div style="font-size:0.85rem;color:var(--fg);font-weight:600;margin-bottom:0.2rem;">macOS</div>
+                                        <div style="font-size:0.72rem;color:var(--fg-secondary);margin-bottom:0.7rem;">Apple Silicon</div>
+                                        <a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-darwin-arm64" class="btn primary" style="text-decoration:none;display:inline-block;font-size:0.78rem;">Download</a>
+                                        <div style="margin-top:0.5rem;font-size:0.68rem;"><a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-darwin-arm64.sha256" style="color:var(--accent);text-decoration:none;">SHA-256</a></div>
+                                    </div>
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.1rem 1.2rem;">
+                                        <div style="font-size:0.85rem;color:var(--fg);font-weight:600;margin-bottom:0.2rem;">macOS</div>
+                                        <div style="font-size:0.72rem;color:var(--fg-secondary);margin-bottom:0.7rem;">Intel</div>
+                                        <a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-darwin-amd64" class="btn" style="text-decoration:none;display:inline-block;font-size:0.78rem;">Download</a>
+                                        <div style="margin-top:0.5rem;font-size:0.68rem;"><a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-darwin-amd64.sha256" style="color:var(--accent);text-decoration:none;">SHA-256</a></div>
+                                    </div>
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.1rem 1.2rem;">
+                                        <div style="font-size:0.85rem;color:var(--fg);font-weight:600;margin-bottom:0.2rem;">Linux</div>
+                                        <div style="font-size:0.72rem;color:var(--fg-secondary);margin-bottom:0.7rem;">x86-64</div>
+                                        <a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-linux-amd64" class="btn" style="text-decoration:none;display:inline-block;font-size:0.78rem;">Download</a>
+                                        <div style="margin-top:0.5rem;font-size:0.68rem;"><a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-linux-amd64.sha256" style="color:var(--accent);text-decoration:none;">SHA-256</a></div>
+                                    </div>
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.1rem 1.2rem;">
+                                        <div style="font-size:0.85rem;color:var(--fg);font-weight:600;margin-bottom:0.2rem;">Linux</div>
+                                        <div style="font-size:0.72rem;color:var(--fg-secondary);margin-bottom:0.7rem;">ARM64</div>
+                                        <a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-linux-arm64" class="btn" style="text-decoration:none;display:inline-block;font-size:0.78rem;">Download</a>
+                                        <div style="margin-top:0.5rem;font-size:0.68rem;"><a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-linux-arm64.sha256" style="color:var(--accent);text-decoration:none;">SHA-256</a></div>
+                                    </div>
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.1rem 1.2rem;">
+                                        <div style="font-size:0.85rem;color:var(--fg);font-weight:600;margin-bottom:0.2rem;">Windows</div>
+                                        <div style="font-size:0.72rem;color:var(--fg-secondary);margin-bottom:0.7rem;">x86-64</div>
+                                        <a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-windows-amd64.exe" class="btn" style="text-decoration:none;display:inline-block;font-size:0.78rem;">Download</a>
+                                        <div style="margin-top:0.5rem;font-size:0.68rem;"><a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-windows-amd64.exe.sha256" style="color:var(--accent);text-decoration:none;">SHA-256</a></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Getting started -->
+                            <div>
+                                <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Getting started</div>
+                                <div class="terminal">
+                                    <div class="terminal-titlebar">
+                                        <span class="terminal-btn close"></span>
+                                        <span class="terminal-btn min"></span>
+                                        <span class="terminal-btn max"></span>
+                                    </div>
+                                    <div class="terminal-body"><span class="comment"># Download and install the Git command line extension. Run once per user account.</span>
+<span class="prompt">$</span> ./git-gost-darwin-arm64 install
+<span class="success">→</span> git-gost instalado en ~/.local/bin/git-gost
+<span class="comment"># There is no step three. Clone, fetch and push as you normally would:</span>
+<span class="prompt">$</span> git gost clone https://github.com/openai/openai.git
+<span class="comment"># Manage the queue while the download runs in the background</span>
+<span class="prompt">$</span> git gost jobs
+<span class="prompt">$</span> git gost watch 82
+<span class="prompt">$</span> git gost pause 82   <span class="comment"># or resume / cancel</span></div>
+                                </div>
+                                <p style="font-size:0.78rem;color:var(--fg-secondary);margin:0.75rem 0 0;">If the connection is lost, the job retries automatically and the download resumes from its last checkpoint — never from zero.</p>
+                            </div>
+
+                            <!-- Features -->
+                            <div>
+                                <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Features</div>
+                                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;">
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Pause &amp; resume</div>
+                                        <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Checkpoints per layer</h3>
+                                        <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Clones download in commit blocks; each completed block is a checkpoint. A dropped connection resumes from the last block, not from zero.</p>
+                                    </div>
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Background queue</div>
+                                        <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Keep working while it downloads</h3>
+                                        <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Each clone, fetch or push is a job in a local SQLite queue. Run them in the background and follow progress with <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">git gost watch</code>.</p>
+                                    </div>
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Automatic retries</div>
+                                        <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Retrying state with backoff</h3>
+                                        <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Network failures are detected and retried with exponential backoff. Pause, resume and cancel any job at any time.</p>
+                                    </div>
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Same Git workflow</div>
+                                        <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">No new commands to learn</h3>
+                                        <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);"><code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">git gost clone</code>, <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">fetch</code>, <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">pull</code> and <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">push</code> work like Git; <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">status</code>, <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">log</code> and <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">branch</code> pass through to Git.</p>
+                                    </div>
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Any repository</div>
+                                        <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Works with any Git remote</h3>
+                                        <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">No fork of Git required: the resulting repository is a normal Git repo whose <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">origin</code> points to the original URL.</p>
+                                    </div>
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Open source</div>
+                                        <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Auditable and verifiable</h3>
+                                        <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">AGPL-3.0 licensed. The job queue is local to your machine and every binary ships with SHA-256 and Sigstore attestation.</p>
+                                    </div>
                                 </div>
                             </div>
 

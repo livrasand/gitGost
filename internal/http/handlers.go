@@ -34,7 +34,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var uploadPackClient = &http.Client{Timeout: 30 * time.Second}
+// uploadPackClient proxifica las descargas de git-upload-pack. El timeout debe
+// ser amplio: GitHub puede tardar más de 30s en generar/transferir un pack de
+// un repo grande, y un corte aquí trunca la descarga del cliente.
+var uploadPackClient = &http.Client{Timeout: 10 * time.Minute}
 
 const (
 	karmaStoreMax           = 10000
@@ -657,7 +660,20 @@ func UploadPackDiscoveryHandler(c *gin.Context) {
 	prov := providerFromPath(c.Request.URL.Path)
 	token := os.Getenv(prov.TokenEnvVar())
 
-	remoteURL := prov.CloneURL(owner, repo) + "/info/refs?service=git-upload-pack"
+	// Reenviar los query params del cliente (protocol=v2 y otros) además del
+	// service: sin protocol=v2 el servidor remoto responde en protocolo v1 y
+	// git no puede usar filtros (partial clone) ni la negociación eficiente.
+	q := url.Values{}
+	q.Set("service", "git-upload-pack")
+	for k, vals := range c.Request.URL.Query() {
+		if k == "service" {
+			continue
+		}
+		for _, v := range vals {
+			q.Add(k, v)
+		}
+	}
+	remoteURL := prov.CloneURL(owner, repo) + "/info/refs?" + q.Encode()
 	req, err := http.NewRequest("GET", remoteURL, nil)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to build request"})
@@ -712,6 +728,10 @@ func UploadPackHandler(c *gin.Context) {
 	req.Header.Set("Content-Type", "application/x-git-upload-pack-request")
 	req.Header.Set("Accept", "application/x-git-upload-pack-result")
 	req.Header.Set("User-Agent", "git/2.0")
+	if gp := c.Request.Header.Get("Git-Protocol"); gp != "" {
+		// Reenviar la negociación de protocolo v2 del cliente al remoto.
+		req.Header.Set("Git-Protocol", gp)
+	}
 	if ce := c.Request.Header.Get("Content-Encoding"); ce != "" {
 		req.Header.Set("Content-Encoding", ce)
 	}

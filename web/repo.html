@@ -4450,7 +4450,8 @@
                     panel.innerHTML = `<pre class="hljs" style="margin:0;padding:1.25rem 1.5rem;font-size:0.78rem;font-family:'IBM Plex Mono',monospace;line-height:1.65;background:var(--code-bg);color:var(--fg);white-space:pre-wrap;word-break:break-all;"><code>${highlighted}</code></pre>`;
                 }
             } catch (e) {
-                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error al cargar: ${e.message}</div>`;
+                const safeErrorMessage = escHtml(e && e.message ? e.message : String(e));
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error al cargar: ${safeErrorMessage}</div>`;
             }
         }
 

@@ -2639,7 +2639,22 @@
                     const badge = item.querySelector('.repo-lang');
                     if (!badge) return;
                     const lang = badge.getAttribute('title');
-                    if (lang) badge.outerHTML = languageBadgeHtml(lang);
+                    if (!lang) return;
+
+                    badge.setAttribute('title', lang);
+
+                    let dot = badge.querySelector('.repo-lang-dot');
+                    if (!dot) {
+                        dot = document.createElement('span');
+                        dot.className = 'repo-lang-dot';
+                        badge.insertBefore(dot, badge.firstChild);
+                    }
+                    dot.style.background = languageColor(lang);
+
+                    Array.from(badge.childNodes).forEach(node => {
+                        if (node !== dot) badge.removeChild(node);
+                    });
+                    badge.appendChild(document.createTextNode(lang));
                 });
             }
 

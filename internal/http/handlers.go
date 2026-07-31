@@ -36,6 +36,185 @@ import (
 
 var uploadPackClient = &http.Client{Timeout: 30 * time.Second}
 
+const (
+	karmaStoreMax           = 10000
+	reportStoreMax          = 10000
+	blockedStoreMax         = 10000
+	flaggedStoreMax         = 10000
+	badgeCacheMax           = 10000
+	ethicalStoreMax         = 100000
+	rateLimitStoreMax       = 10000
+	reportRateLimitStoreMax = 10000
+	actionTokenMax          = 10000
+	reportTokenMax          = 10000
+)
+
+// boundedMap is a generic in-memory map with a max size and optional TTL.
+// Eviction is LRU-ish: when the map is full the entry with the oldest access
+// time is removed. Expired entries are dropped on Get/Peek/Update.
+type boundedEntry[V any] struct {
+	value V
+	at    time.Time
+}
+
+type boundedMap[V any] struct {
+	mu      sync.Mutex
+	data    map[string]boundedEntry[V]
+	maxSize int
+	ttl     time.Duration
+}
+
+func newBoundedMap[V any](maxSize int, ttl time.Duration) *boundedMap[V] {
+	return &boundedMap[V]{
+		data:    make(map[string]boundedEntry[V]),
+		maxSize: maxSize,
+		ttl:     ttl,
+	}
+}
+
+func (m *boundedMap[V]) Get(key string) (V, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	e, ok := m.data[key]
+	if !ok {
+		var zero V
+		return zero, false
+	}
+	if m.ttl > 0 && time.Since(e.at) > m.ttl {
+		delete(m.data, key)
+		var zero V
+		return zero, false
+	}
+	e.at = time.Now()
+	m.data[key] = e
+	return e.value, true
+}
+
+func (m *boundedMap[V]) Peek(key string) (V, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	e, ok := m.data[key]
+	if !ok {
+		var zero V
+		return zero, false
+	}
+	if m.ttl > 0 && time.Since(e.at) > m.ttl {
+		delete(m.data, key)
+		var zero V
+		return zero, false
+	}
+	return e.value, true
+}
+
+func (m *boundedMap[V]) Set(key string, value V) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	now := time.Now()
+	_, exists := m.data[key]
+	needed := 1
+	if exists {
+		needed = 0
+	}
+	m.evictOldestLocked(needed)
+	m.data[key] = boundedEntry[V]{value: value, at: now}
+}
+
+func (m *boundedMap[V]) Update(key string, fn func(V, bool) V) V {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	now := time.Now()
+	old, ok := m.data[key]
+	present := false
+	var oldVal V
+	if ok {
+		if m.ttl > 0 && now.Sub(old.at) > m.ttl {
+			delete(m.data, key)
+		} else {
+			present = true
+			oldVal = old.value
+		}
+	}
+	needed := 1
+	if present {
+		needed = 0
+	}
+	m.evictOldestLocked(needed)
+	newVal := fn(oldVal, present)
+	m.data[key] = boundedEntry[V]{value: newVal, at: now}
+	return newVal
+}
+
+func (m *boundedMap[V]) Delete(key string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.data, key)
+}
+
+func (m *boundedMap[V]) Range(fn func(key string, value V) bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for k, e := range m.data {
+		if m.ttl > 0 && time.Since(e.at) > m.ttl {
+			continue
+		}
+		if !fn(k, e.value) {
+			break
+		}
+	}
+}
+
+func (m *boundedMap[V]) evictOldestLocked(needed int) {
+	if m.maxSize <= 0 {
+		return
+	}
+	for len(m.data)+needed > m.maxSize {
+		var oldestKey string
+		var oldestAt time.Time
+		first := true
+		for k, e := range m.data {
+			if first || e.at.Before(oldestAt) {
+				oldestKey = k
+				oldestAt = e.at
+				first = false
+			}
+		}
+		if oldestKey == "" {
+			break
+		}
+		delete(m.data, oldestKey)
+	}
+}
+
+// windowAdd records a timestamp in a sliding-window rate limiter backed by a
+// bounded map. It returns the current count of events in the window. The stored
+// slice is capped at max+1 entries to keep per-key memory bounded.
+func windowAdd(store *boundedMap[[]time.Time], ip string, now time.Time, window time.Duration, max int) int {
+	count := store.Update(ip, func(times []time.Time, ok bool) []time.Time {
+		cutoff := now.Add(-window)
+		valid := make([]time.Time, 0, max+1)
+		for _, t := range times {
+			if t.After(cutoff) {
+				valid = append(valid, t)
+			}
+		}
+		valid = append(valid, now)
+		if len(valid) > max+1 {
+			n := max + 1
+			tmp := make([]time.Time, n)
+			copy(tmp, valid[len(valid)-n:])
+			valid = tmp
+		}
+		return valid
+	})
+	return len(count)
+}
+
+type reportState struct {
+	Count int
+	First time.Time
+	IPs   map[string]time.Time
+}
+
 // providerFromPath returns the appropriate Provider based on the URL path prefix.
 // /v1/gh/... → GitHub (default), /v1/gl/... → GitLab, /v1/cb/... → Codeberg.
 func providerFromPath(path string) provider.Provider {
@@ -220,6 +399,7 @@ func ReceivePackHandler(c *gin.Context) {
 	utils.Log("Content-Type: %s", c.GetHeader("Content-Type"))
 	utils.Log("Content-Length: %s", c.GetHeader("Content-Length"))
 
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxPushSize)
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		utils.Log("Error reading body: %v", err)
@@ -620,13 +800,11 @@ var (
 	secretKey  []byte
 	identityMu sync.Mutex
 	// karmaStore stores karma per hash (in-memory fallback)
-	karmaStore = make(map[string]int)
-	// reportCounts stores report counts per hash (in-memory fallback)
-	reportCounts      = make(map[string]int)
-	reportFirstAt     = make(map[string]time.Time)
-	reportIPs         = make(map[string]map[string]time.Time)
-	flaggedLastAction = make(map[string]time.Time)
-	blockedHashes     = make(map[string]bool)
+	karmaStore = newBoundedMap[int](karmaStoreMax, 24*time.Hour)
+	// reportStore holds per-hash report state (count, first report, IPs)
+	reportStore  = newBoundedMap[reportState](reportStoreMax, reportWindow)
+	flaggedStore = newBoundedMap[time.Time](flaggedStoreMax, flaggedCooldown)
+	blockedStore = newBoundedMap[bool](blockedStoreMax, 0)
 
 	// panicMode: service temporarily suspended
 	panicMode      bool
@@ -639,8 +817,7 @@ var (
 	mentaAPIKey      string
 
 	// rateLimitStore: PR counter per IP within a 1-hour window
-	rateLimitStore  = make(map[string][]time.Time)
-	rateLimitMu     sync.Mutex
+	rateLimitStore  = newBoundedMap[[]time.Time](rateLimitStoreMax, rateLimitWindow)
 	rateLimitWindow = time.Hour
 	rateLimitMaxPRs = 5
 
@@ -663,8 +840,7 @@ var (
 
 	// actionTokens: short-lived tokens used in ntfy action buttons instead of panicPassword.
 	// Each token is single-use and expires after actionTokenTTL.
-	actionTokensMu sync.Mutex
-	actionTokens   = make(map[string]time.Time) // token → expiry
+	actionTokens   = newBoundedMap[time.Time](actionTokenMax, actionTokenTTL)
 	actionTokenTTL = 10 * time.Minute
 
 	// adminRollbackLimit: simple rate limit for /admin/rollback (max 5 calls/min)
@@ -673,7 +849,16 @@ var (
 	rollbackLimitMax   = 5
 	rollbackLimitWin   = time.Minute
 
-	reportFormTmpl   = template.Must(template.New("reportForm").Parse(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><title>Report content · gitGost</title><style>body{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#0d1117;color:#c9d1d9;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:32px;} .shell{background:linear-gradient(145deg, rgba(255,166,87,0.16), rgba(255,107,107,0.14));border:1px solid rgba(255,166,87,0.45);border-radius:16px;padding:1.5px;box-shadow:0 16px 38px rgba(0,0,0,.42);max-width:620px;width:100%;} .card{background:#0d1117;border-radius:14px;padding:26px;border:1px solid rgba(255,255,255,0.05);} h1{margin:0 0 6px;font-size:24px;color:#ffa657;} .eyebrow{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .75rem;background:rgba(255,166,87,0.12);color:#ffa657;border:1px solid rgba(255,166,87,0.4);border-radius:999px;font-family:'IBM Plex Mono', monospace;font-size:.85rem;margin-bottom:5px;} .sub{margin:6px 0 14px;color:#9fb3ff;font-size:14px;} .policy{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:12px;padding:14px;margin:14px 0;font-size:13px;line-height:1.55;} .policy strong{color:#ffa657;} label{display:block;font-weight:700;margin:12px 0 6px;letter-spacing:.01em;} .readonly{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;color:#c9d1d9;font-family:'IBM Plex Mono', monospace;} button{margin-top:14px;width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,0.25);} .note{margin-top:10px;font-size:12px;color:#9fb3ff;} .error{color:#ffb4c4;font-size:13px;margin-top:10px;} .count{display:flex;gap:8px;align-items:center;margin:10px 0;font-family:'IBM Plex Mono', monospace;} .pill{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);} .pill strong{color:#ffa657;} .state{margin-left:auto;font-size:12px;color:#9fb3ff;} .legend{font-size:12px;color:#9fb3ff;margin-top:10px;} input[type=text]{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#c9d1d9;} form{margin-top:12px;} a{color:#9fb3ff;} .locked{opacity:.55;pointer-events:none;} </style></head><body><div class="shell"><div class="card"><div class="eyebrow">Anonymous moderation</div><h1>Report content</h1><div class="sub">Flag abuse from anonymous contributions.</div><div class="policy"><ul style="margin:0 0 6px 18px; padding:0 0 0 4px; line-height:1.6;">` + string(reportPolicyHTML) + `</ul><div class="note">Reports reset after 30 days.</div></div><form method="POST" action="/v1/moderation/report"><label for="hash">Hash</label><input type="text" id="hash" name="hash" value="{{.Hash}}" placeholder="goster-xxxxx" {{if eq .State "blocked"}}class="locked" readonly{{end}} /><div class="count"><div class="pill">Reports: <strong>{{.Reports}}</strong></div><div class="state">State: {{.State}}</div></div><button type="submit" {{if eq .State "blocked"}}disabled class="locked"{{end}}>Submit report</button></form><div class="legend">Hash identifies the anonymous submitter. No personal data is collected.</div>{{if .Error}}<div class="error">{{.Error}}</div>{{end}}</div></div></body></html>`))
+	// reportRateLimitStore: report counter per IP within reportRateLimitWindow.
+	reportRateLimitStore  = newBoundedMap[[]time.Time](reportRateLimitStoreMax, reportRateLimitWindow)
+	reportRateLimitWindow = time.Hour
+	reportRateLimitMax    = 5
+
+	// reportTokens: single-use tokens generated by GET /v1/moderation/report; valid for reportTokenTTL.
+	reportTokens   = newBoundedMap[time.Time](reportTokenMax, reportTokenTTL)
+	reportTokenTTL = 10 * time.Minute
+
+	reportFormTmpl   = template.Must(template.New("reportForm").Parse(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><script src="https://mentacaptchaeu.eu.pythonanywhere.com/menta-captcha.js"></script><title>Report content · gitGost</title><style>body{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#0d1117;color:#c9d1d9;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:32px;} .shell{background:linear-gradient(145deg, rgba(255,166,87,0.16), rgba(255,107,107,0.14));border:1px solid rgba(255,166,87,0.45);border-radius:16px;padding:1.5px;box-shadow:0 16px 38px rgba(0,0,0,.42);max-width:620px;width:100%;} .card{background:#0d1117;border-radius:14px;padding:26px;border:1px solid rgba(255,255,255,0.05);} h1{margin:0 0 6px;font-size:24px;color:#ffa657;} .eyebrow{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .75rem;background:rgba(255,166,87,0.12);color:#ffa657;border:1px solid rgba(255,166,87,0.4);border-radius:999px;font-family:'IBM Plex Mono', monospace;font-size:.85rem;margin-bottom:5px;} .sub{margin:6px 0 14px;color:#9fb3ff;font-size:14px;} .policy{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:12px;padding:14px;margin:14px 0;font-size:13px;line-height:1.55;} .policy strong{color:#ffa657;} label{display:block;font-weight:700;margin:12px 0 6px;letter-spacing:.01em;} .readonly{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;color:#c9d1d9;font-family:'IBM Plex Mono', monospace;} button{margin-top:14px;width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,0.25);} .note{margin-top:10px;font-size:12px;color:#9fb3ff;} .error{color:#ffb4c4;font-size:13px;margin-top:10px;} .count{display:flex;gap:8px;align-items:center;margin:10px 0;font-family:'IBM Plex Mono', monospace;} .pill{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);} .pill strong{color:#ffa657;} .state{margin-left:auto;font-size:12px;color:#9fb3ff;} .legend{font-size:12px;color:#9fb3ff;margin-top:10px;} input[type=text]{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#c9d1d9;} form{margin-top:12px;} a{color:#9fb3ff;} .locked{opacity:.55;pointer-events:none;} </style></head><body><div class="shell"><div class="card"><div class="eyebrow">Anonymous moderation</div><h1>Report content</h1><div class="sub">Flag abuse from anonymous contributions.</div><div class="policy"><ul style="margin:0 0 6px 18px; padding:0 0 0 4px; line-height:1.6;">` + string(reportPolicyHTML) + `</ul><div class="note">Reports reset after 30 days.</div></div><form method="POST" action="/v1/moderation/report" onsubmit="const t=document.getElementById('menta-report')?.token; document.getElementById('report-captcha-token').value=t||''"><label for="hash">Hash</label><input type="text" id="hash" name="hash" value="{{.Hash}}" placeholder="goster-xxxxx" {{if eq .State "blocked"}}class="locked" readonly{{end}} /><div class="count"><div class="pill">Reports: <strong>{{.Reports}}</strong></div><div class="state">State: {{.State}}</div></div><input type="hidden" name="report_token" value="{{.ReportToken}}" /><input type="hidden" name="captcha_token" id="report-captcha-token" /><div class="note">Please complete the CAPTCHA below.</div><menta-widget id="menta-report" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget><button type="submit" {{if eq .State "blocked"}}disabled class="locked"{{end}}>Submit report</button></form><div class="legend">Hash identifies the anonymous submitter. No personal data is collected.</div>{{if .Error}}<div class="error">{{.Error}}</div>{{end}}</div></div></body></html>`))
 	reportThanksTmpl = template.Must(template.New("reportThanks").Parse(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><title>Report received · gitGost</title><style>body{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#0d1117;color:#c9d1d9;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:32px;} .shell{background:linear-gradient(145deg, rgba(255,166,87,0.16), rgba(255,107,107,0.14));border:1px solid rgba(255,166,87,0.45);border-radius:16px;padding:1.5px;box-shadow:0 16px 38px rgba(0,0,0,.42);max-width:620px;width:100%;} .card{background:#0d1117;border-radius:14px;padding:26px;border:1px solid rgba(255,255,255,0.05);} h1{margin:0 0 10px;font-size:24px;color:#ffa657;} p{margin:6px 0 0;color:#9fb3ff;} .pill{display:inline-block;margin-top:12px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,0.04);color:#ffa657;font-weight:700;border:1px solid rgba(255,255,255,0.08);} .cta{margin-top:16px;display:inline-block;padding:12px 16px;border-radius:10px;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;text-decoration:none;box-shadow:0 10px 30px rgba(0,0,0,0.25);} .small{margin-top:12px;font-size:12px;color:#9fb3ff;} .state{margin-top:10px;font-size:14px;} </style></head><body><div class="shell"><div class="card"><h1>Report received</h1><p>Hash: <strong>{{.Hash}}</strong></p><span class="pill">Total reports: {{.Reports}}</span><div class="state">State: {{.State}}</div><p class="small">Thanks for helping moderate. Your identity stays anonymous.</p><a class="cta" href="https://gitgost.fly.dev/" target="_blank" rel="noreferrer">Explore gitGost</a></div></div></body></html>`))
 )
 
@@ -787,23 +972,18 @@ func newActionToken() string {
 		return ""
 	}
 	token := hex.EncodeToString(b)
-	expiry := time.Now().Add(actionTokenTTL)
-	actionTokensMu.Lock()
-	actionTokens[token] = expiry
-	actionTokensMu.Unlock()
+	actionTokens.Set(token, time.Now().Add(actionTokenTTL))
 	return token
 }
 
 // consumeActionToken validates and removes a single-use action token.
 // Returns true if the token was valid and not expired.
 func consumeActionToken(token string) bool {
-	actionTokensMu.Lock()
-	defer actionTokensMu.Unlock()
-	expiry, ok := actionTokens[token]
+	expiry, ok := actionTokens.Get(token)
 	if !ok {
 		return false
 	}
-	delete(actionTokens, token)
+	actionTokens.Delete(token)
 	return time.Now().Before(expiry)
 }
 
@@ -944,21 +1124,7 @@ func notifyAdminGlobalBurst(total, distinctIPs int) {
 // checkRateLimit checks if the IP has exceeded the PR rate limit per hour.
 // Returns true if the request should be blocked. Notifies admin via ntfy on first excess.
 func checkRateLimit(ip string) bool {
-	now := time.Now()
-	rateLimitMu.Lock()
-	times := rateLimitStore[ip]
-	// Keep only timestamps within the window
-	valid := times[:0]
-	for _, t := range times {
-		if now.Sub(t) < rateLimitWindow {
-			valid = append(valid, t)
-		}
-	}
-	valid = append(valid, now)
-	rateLimitStore[ip] = valid
-	count := len(valid)
-	rateLimitMu.Unlock()
-
+	count := windowAdd(rateLimitStore, ip, time.Now(), rateLimitWindow, rateLimitMaxPRs)
 	if count > rateLimitMaxPRs {
 		// Notify admin only once when the limit is first exceeded (at rateLimitMaxPRs+1)
 		if count == rateLimitMaxPRs+1 {
@@ -2115,34 +2281,93 @@ func CreateAnonymousDiscussionCommentHandler(c *gin.Context) {
 	})
 }
 
+func renderReportForm(c *gin.Context, hash string, reports int, state, err, reportToken string) {
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	_ = reportFormTmpl.Execute(c.Writer, gin.H{
+		"Hash":        hash,
+		"Reports":     reports,
+		"State":       state,
+		"Error":       err,
+		"PolicyHTML":  reportPolicyHTML,
+		"ReportToken": reportToken,
+	})
+}
+
+func checkReportRateLimit(ip string) bool {
+	count := windowAdd(reportRateLimitStore, ip, time.Now(), reportRateLimitWindow, reportRateLimitMax)
+	return count > reportRateLimitMax
+}
+
+func newReportToken() string {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return ""
+	}
+	token := hex.EncodeToString(b)
+	reportTokens.Set(token, time.Now().Add(reportTokenTTL))
+	return token
+}
+
+func consumeReportToken(token string) bool {
+	if strings.TrimSpace(token) == "" {
+		return false
+	}
+	expiry, ok := reportTokens.Get(token)
+	if !ok {
+		return false
+	}
+	reportTokens.Delete(token)
+	return time.Now().Before(expiry)
+}
+
 // ReportHashHandler permite reportar un hash
 func ReportHashHandler(c *gin.Context) {
 	if c.Request.Method == http.MethodGet {
 		hash := strings.TrimSpace(c.Query("hash"))
 		if hash == "" {
-			c.Header("Content-Type", "text/html; charset=utf-8")
-			_ = reportFormTmpl.Execute(c.Writer, gin.H{"Hash": "", "Reports": 0, "State": "sin datos", "Error": "El hash es obligatorio", "PolicyHTML": reportPolicyHTML})
+			renderReportForm(c, "", 0, "sin datos", "El hash es obligatorio", newReportToken())
 			return
 		}
 		if isBlockedHash(hash) {
-			c.Header("Content-Type", "text/html; charset=utf-8")
-			_ = reportFormTmpl.Execute(c.Writer, gin.H{"Hash": hash, "Reports": 6, "State": "bloqueado", "Error": "Este hash ya fue baneado/eliminado.", "PolicyHTML": reportPolicyHTML})
+			renderReportForm(c, hash, 6, "bloqueado", "Este hash ya fue baneado/eliminado.", newReportToken())
 			return
 		}
 		reports := getReportCountWithWindow(c.Request.Context(), hash)
-		c.Header("Content-Type", "text/html; charset=utf-8")
-		_ = reportFormTmpl.Execute(c.Writer, gin.H{"Hash": hash, "Reports": reports, "State": reportStateLabel(reports), "PolicyHTML": reportPolicyHTML})
+		renderReportForm(c, hash, reports, reportStateLabel(reports), "", newReportToken())
 		return
 	}
 
 	hash := strings.TrimSpace(c.PostForm("hash"))
 	if hash == "" {
-		c.Header("Content-Type", "text/html; charset=utf-8")
-		_ = reportFormTmpl.Execute(c.Writer, gin.H{"Hash": "", "Reports": 0, "State": "sin datos", "Error": "El hash es obligatorio.", "PolicyHTML": reportPolicyHTML})
+		renderReportForm(c, "", 0, "sin datos", "El hash es obligatorio.", newReportToken())
 		return
 	}
 
+	if isBlockedHash(hash) {
+		renderReportForm(c, hash, 6, "bloqueado", "Este hash ya fue baneado/eliminado.", newReportToken())
+		return
+	}
+
+	currentReports := getReportCountWithWindow(c.Request.Context(), hash)
+	currentState := reportStateLabel(currentReports)
 	ip := strings.TrimSpace(c.ClientIP())
+	if checkReportRateLimit(ip) {
+		renderReportForm(c, hash, currentReports, currentState, fmt.Sprintf("Rate limit exceeded: max %d reports per hour per IP.", reportRateLimitMax), newReportToken())
+		return
+	}
+
+	captchaToken := strings.TrimSpace(c.PostForm("captcha_token"))
+	if !verifyMentaCaptcha(captchaToken) {
+		renderReportForm(c, hash, currentReports, currentState, "CAPTCHA verification failed.", newReportToken())
+		return
+	}
+
+	reportToken := strings.TrimSpace(c.PostForm("report_token"))
+	if !consumeReportToken(reportToken) {
+		renderReportForm(c, hash, currentReports, currentState, "Invalid or expired report token. Please reload the page.", newReportToken())
+		return
+	}
+
 	reports := recordReport(c.Request.Context(), hash, ip)
 	if reports >= 6 {
 		setBlockedHash(hash)
@@ -2175,30 +2400,27 @@ func recordReport(ctx context.Context, hash, ip string) int {
 	}
 
 	if reports == 0 {
-		identityMu.Lock()
-		first, ok := reportFirstAt[hash]
-		if !ok || time.Since(first) > reportWindow {
-			reportCounts[hash] = 0
-			reportFirstAt[hash] = time.Now()
-			reportIPs[hash] = make(map[string]time.Time)
-		}
-		if ip != "" {
-			if ipTimes, ok := reportIPs[hash]; ok {
-				if t, ok := ipTimes[ip]; ok && time.Since(t) <= reportWindow {
-					reports = reportCounts[hash]
-					identityMu.Unlock()
-					return reports
+		now := time.Now()
+		state := reportStore.Update(hash, func(s reportState, ok bool) reportState {
+			if !ok || time.Since(s.First) > reportWindow {
+				if ip == "" {
+					return reportState{Count: 1, First: now}
 				}
-			} else {
-				reportIPs[hash] = make(map[string]time.Time)
+				return reportState{Count: 1, First: now, IPs: map[string]time.Time{ip: now}}
 			}
-		}
-		reportCounts[hash]++
-		reports = reportCounts[hash]
-		if ip != "" {
-			reportIPs[hash][ip] = time.Now()
-		}
-		identityMu.Unlock()
+			if ip != "" {
+				if s.IPs == nil {
+					s.IPs = make(map[string]time.Time)
+				}
+				if t, ok := s.IPs[ip]; ok && time.Since(t) <= reportWindow {
+					return s
+				}
+				s.IPs[ip] = now
+			}
+			s.Count++
+			return s
+		})
+		reports = state.Count
 	}
 
 	if reports >= 3 && reports <= 5 {
@@ -2219,29 +2441,17 @@ func getReportCountWithWindow(ctx context.Context, hash string) int {
 	if dbClient != nil {
 		_ = dbClient.DeleteOldReports(ctx, hash, time.Now().Add(-reportWindow))
 		if count, err := dbClient.GetReportCount(ctx, hash); err == nil {
-			identityMu.Lock()
-			first, ok := reportFirstAt[hash]
-			if !ok || time.Since(first) > reportWindow {
-				reportCounts[hash] = 0
-				reportFirstAt[hash] = time.Now()
-			}
-			memCount := reportCounts[hash]
-			identityMu.Unlock()
-			if memCount > count {
-				return memCount
+			if s, ok := reportStore.Get(hash); ok && s.Count > count {
+				return s.Count
 			}
 			return count
 		}
 	}
 
-	identityMu.Lock()
-	defer identityMu.Unlock()
-	first, ok := reportFirstAt[hash]
-	if !ok || time.Since(first) > reportWindow {
-		reportCounts[hash] = 0
-		reportFirstAt[hash] = time.Now()
+	if s, ok := reportStore.Get(hash); ok {
+		return s.Count
 	}
-	return reportCounts[hash]
+	return 0
 }
 
 func reportStateLabel(count int) string {
@@ -2259,25 +2469,22 @@ func setBlockedHash(hash string) {
 	if hash == "" {
 		return
 	}
-	identityMu.Lock()
-	blockedHashes[hash] = true
-	identityMu.Unlock()
+	blockedStore.Set(hash, true)
 }
 
 func isBlockedHash(hash string) bool {
 	if hash == "" {
 		return false
 	}
-	identityMu.Lock()
-	blocked := blockedHashes[hash]
-	identityMu.Unlock()
+	blocked, _ := blockedStore.Peek(hash)
 	return blocked
 }
 
 func isFlaggedCooldown(hash string) bool {
-	identityMu.Lock()
-	defer identityMu.Unlock()
-	last, ok := flaggedLastAction[hash]
+	if hash == "" {
+		return false
+	}
+	last, ok := flaggedStore.Peek(hash)
 	if !ok {
 		return false
 	}
@@ -2285,9 +2492,10 @@ func isFlaggedCooldown(hash string) bool {
 }
 
 func markFlaggedAction(hash string) {
-	identityMu.Lock()
-	flaggedLastAction[hash] = time.Now()
-	identityMu.Unlock()
+	if hash == "" {
+		return
+	}
+	flaggedStore.Set(hash, time.Now())
 }
 
 func getSecretKey() []byte {
@@ -2323,32 +2531,26 @@ func generateUserToken() string {
 }
 
 func getKarma(ctx context.Context, hash string) int {
-	identityMu.Lock()
-	if karma, ok := karmaStore[hash]; ok {
-		identityMu.Unlock()
+	if hash == "" {
+		return 0
+	}
+	if karma, ok := karmaStore.Get(hash); ok {
 		return karma
 	}
-	identityMu.Unlock()
 
 	if dbClient != nil {
 		if karma, err := dbClient.GetKarma(ctx, hash); err == nil {
-			identityMu.Lock()
-			karmaStore[hash] = karma
-			identityMu.Unlock()
+			karmaStore.Set(hash, karma)
 			return karma
 		}
 	}
 
-	identityMu.Lock()
-	karmaStore[hash] = 0
-	identityMu.Unlock()
+	karmaStore.Set(hash, 0)
 	return 0
 }
 
 func updateKarma(ctx context.Context, hash string, karma int) {
-	identityMu.Lock()
-	karmaStore[hash] = karma
-	identityMu.Unlock()
+	karmaStore.Set(hash, karma)
 	if dbClient != nil {
 		_ = dbClient.UpsertKarma(ctx, hash, karma)
 	}
@@ -2516,10 +2718,7 @@ func serveDeployedBadge(c *gin.Context) {
 
 // badgeCache almacena el conteo de PRs por "owner/repo" con TTL de 5 minutos
 var (
-	badgeCache    = make(map[string]int)
-	badgeCacheAt  = make(map[string]time.Time)
-	badgeCacheMu  sync.Mutex
-	badgeCacheTTL = 5 * time.Minute
+	badgeCache = newBoundedMap[int](badgeCacheMax, 5*time.Minute)
 )
 
 // BadgePRCountHandler sirve un badge SVG dinámico con el conteo de PRs anónimos para owner/repo.
@@ -2534,26 +2733,13 @@ func BadgePRCountHandler(c *gin.Context) {
 	}
 
 	cacheKey := owner + "/" + repo
-	badgeCacheMu.Lock()
-	count, ok := badgeCache[cacheKey]
-	cachedAt := badgeCacheAt[cacheKey]
-	badgeCacheMu.Unlock()
-
-	if !ok || time.Since(cachedAt) > badgeCacheTTL {
-		dbOk := false
+	count, ok := badgeCache.Get(cacheKey)
+	if !ok {
 		if dbClient != nil {
 			if n, err := dbClient.GetPRCountByRepo(c.Request.Context(), owner, repo); err == nil {
 				count = n
-				dbOk = true
+				badgeCache.Set(cacheKey, count)
 			}
-		}
-		// Solo actualizar el cache si la DB respondió correctamente,
-		// o si ya había un valor previo (refresco de TTL con valor conocido).
-		if dbOk || ok {
-			badgeCacheMu.Lock()
-			badgeCache[cacheKey] = count
-			badgeCacheAt[cacheKey] = time.Now()
-			badgeCacheMu.Unlock()
 		}
 	}
 

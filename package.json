@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@openai/codex-security": "^0.1.5"
+  }
+}

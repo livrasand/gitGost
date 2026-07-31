@@ -2090,7 +2090,10 @@
                     panel.innerHTML = '<div class="code-loading">no README</div>';
                 }
             } catch(e) {
-                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)"></div>`;
+                const errEl = panel.querySelector('.code-loading');
+                const msg = (e && typeof e.message === 'string') ? e.message : String(e);
+                errEl.textContent = `error: ${msg}`;
             }
         }
 

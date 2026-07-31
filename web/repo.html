@@ -2311,7 +2311,8 @@
                 }
                 list.querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
             } catch(e) {
-                if (list) list.innerHTML = `<li style="list-style:none;font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--accent);">error loading comments: ${e.message}</li>`;
+                const errMsg = escHtml((e && e.message) ? e.message : String(e));
+                if (list) list.innerHTML = `<li style="list-style:none;font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--accent);">error loading comments: ${errMsg}</li>`;
             }
         }
 

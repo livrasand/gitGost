@@ -14,10 +14,8 @@ import (
 	"github.com/livrasand/gitGost/internal/jobs"
 )
 
-// version del CLI; puede inyectarse con -ldflags en el build.
 var version = "0.1.0"
 
-// Run despacha el subcomando de `git gost ...`. Devuelve el código de salida.
 func Run(args []string) int {
 	if len(args) == 0 {
 		printUsage()
@@ -45,7 +43,7 @@ func Run(args []string) int {
 		return cmdResume(args[1:])
 	case "cancel":
 		return cmdCancel(args[1:])
-	case "run": // interno: ejecuta un job en background
+	case "run":
 		return cmdRun(args[1:])
 	case "help", "-h", "--help":
 		printUsage()
@@ -54,12 +52,10 @@ func Run(args []string) int {
 		fmt.Printf("git-gost %s\n", version)
 		return 0
 	default:
-		// Pass-through: cualquier comando Git sin lógica especial.
 		return passthrough(args)
 	}
 }
 
-// passthrough reenvía el comando a Git (status, log, branch, diff, ...).
 func passthrough(args []string) int {
 	cmd := exec.Command("git", args...)
 	cmd.Stdin = os.Stdin
@@ -75,7 +71,6 @@ func passthrough(args []string) int {
 	return 0
 }
 
-// dataDir devuelve el directorio de datos del cliente (env GITGOST_HOME o ~/.gitgost).
 func dataDir() string {
 	if v := os.Getenv("GITGOST_HOME"); v != "" {
 		return v
@@ -95,9 +90,6 @@ func openStore() (*jobs.Store, error) {
 	return jobs.Open(dbPath())
 }
 
-// cmdInstall prepara el entorno del cliente: crea la cola SQLite y, si el
-// binario no está disponible como 'git-gost' en el PATH, se auto-instala en
-// ~/.local/bin y añade ese directorio al PATH del shell.
 func cmdInstall() int {
 	s, err := openStore()
 	if err != nil {
@@ -116,9 +108,6 @@ func cmdInstall() int {
 	return 0
 }
 
-// selfInstall copia el binario en ejecución como 'git-gost' a ~/.local/bin y,
-// en Unix, añade ese directorio al PATH del shell si no está ya. No hace nada
-// si ya hay un 'git-gost' disponible en el PATH.
 func selfInstall() error {
 	if _, err := exec.LookPath("git-gost"); err == nil {
 		return nil
@@ -154,14 +143,12 @@ func selfInstall() error {
 	}
 
 	if runtime.GOOS == "windows" {
-		// En Windows no se editan rc files: se indica el directorio a añadir.
 		fmt.Printf("Añade %s a tu PATH para usar 'git gost ...'.\n", binDir)
 		return nil
 	}
 	return addToPath(binDir, home)
 }
 
-// addToPath añade dir al PATH del shell del usuario si no está ya referenciado.
 func addToPath(dir, home string) error {
 	shell := filepath.Base(os.Getenv("SHELL"))
 	var rc, line string
@@ -175,7 +162,7 @@ func addToPath(dir, home string) error {
 			rc = filepath.Join(home, ".bash_profile")
 		}
 		line = fmt.Sprintf(`export PATH=%q:$PATH`, dir)
-	default: // zsh y cualquier otro shell
+	default:
 		rc = filepath.Join(home, ".zshrc")
 		line = fmt.Sprintf(`export PATH=%q:$PATH`, dir)
 	}
@@ -185,7 +172,7 @@ func addToPath(dir, home string) error {
 		return err
 	}
 	if strings.Contains(string(data), dir) {
-		return nil // el directorio ya está en el PATH del shell
+		return nil
 	}
 
 	if err := os.MkdirAll(filepath.Dir(rc), 0o755); err != nil {
@@ -203,7 +190,6 @@ func addToPath(dir, home string) error {
 	return nil
 }
 
-// copyFile copia un archivo (los permisos se ajustan aparte).
 func copyFile(src, dst string) error {
 	in, err := os.Open(src)
 	if err != nil {
@@ -223,7 +209,6 @@ func copyFile(src, dst string) error {
 	return out.Close()
 }
 
-// cmdClone crea un job de clone. Por defecto corre en background; con -f/--foreground en primer plano.
 func cmdClone(args []string) int {
 	foreground, rest, err := parseFlags(args)
 	if err != nil {
@@ -276,8 +261,6 @@ func cmdClone(args []string) int {
 	return launchBackground(s, id)
 }
 
-// defaultCloneDir deriva el directorio destino de un clone a partir de la URL
-// original (basename del repo, sin .git), igual que hace `git clone`.
 func defaultCloneDir(raw string) string {
 	u, err := parseRepoURL(raw)
 	if err != nil {
@@ -290,7 +273,6 @@ func defaultCloneDir(raw string) string {
 	return strings.TrimSuffix(parts[len(parts)-1], ".git")
 }
 
-// cmdGitJob crea un job para fetch/pull/push en el repositorio actual.
 func cmdGitJob(op string, args []string) int {
 	foreground, rest, err := parseFlags(args)
 	if err != nil {
@@ -324,7 +306,6 @@ func cmdGitJob(op string, args []string) int {
 	return launchBackground(s, id)
 }
 
-// parseFlags extrae -f/--foreground del resto de argumentos.
 func parseFlags(args []string) (foreground bool, rest []string, err error) {
 	for _, a := range args {
 		switch a {
@@ -337,7 +318,6 @@ func parseFlags(args []string) (foreground bool, rest []string, err error) {
 	return foreground, rest, nil
 }
 
-// runForeground ejecuta el job en primer plano y muestra el resultado.
 func runForeground(s *jobs.Store, id int64) int {
 	if err := jobs.Run(s, id); err != nil {
 		job, gerr := s.Get(id)
@@ -352,7 +332,6 @@ func runForeground(s *jobs.Store, id int64) int {
 	return 0
 }
 
-// launchBackground lanza `git-gost run <id>` como proceso independiente.
 func launchBackground(s *jobs.Store, id int64) int {
 	pid, err := startBackground(id)
 	if err != nil {
@@ -366,7 +345,6 @@ func launchBackground(s *jobs.Store, id int64) int {
 	return 0
 }
 
-// cmdRun ejecuta un job de la cola (invocado como proceso hijo en background).
 func cmdRun(args []string) int {
 	if len(args) == 0 {
 		fmt.Fprintln(os.Stderr, "uso interno: git gost run <id>")
@@ -390,7 +368,6 @@ func cmdRun(args []string) int {
 	return 0
 }
 
-// cmdJobs lista los jobs recientes de la cola.
 func cmdJobs(args []string) int {
 	s, err := openStore()
 	if err != nil {
@@ -427,7 +404,6 @@ func cmdJobs(args []string) int {
 	return 0
 }
 
-// cmdWatch sigue el progreso de un job hasta que termina.
 func cmdWatch(args []string) int {
 	if len(args) == 0 {
 		fmt.Fprintln(os.Stderr, "uso: git gost watch <id>")
@@ -468,7 +444,6 @@ func cmdWatch(args []string) int {
 	}
 }
 
-// cmdPause pausa un job en cola o en ejecución.
 func cmdPause(args []string) int {
 	return signalCommand("pause", args, func(j *jobs.Job, s *jobs.Store) (int, error) {
 		switch j.State {
@@ -485,7 +460,6 @@ func cmdPause(args []string) int {
 	})
 }
 
-// cmdResume reanuda un job pausado.
 func cmdResume(args []string) int {
 	return signalCommand("resume", args, func(j *jobs.Job, s *jobs.Store) (int, error) {
 		if j.State != jobs.StatePaused {
@@ -497,7 +471,6 @@ func cmdResume(args []string) int {
 			}
 			return 0, s.SetState(j.ID, jobs.StateRunning)
 		}
-		// Pausado sin proceso (estaba en cola): relanzar en background.
 		pid, err := startBackground(j.ID)
 		if err != nil {
 			return 0, err
@@ -507,7 +480,6 @@ func cmdResume(args []string) int {
 	})
 }
 
-// cmdCancel cancela un job pendiente o en ejecución.
 func cmdCancel(args []string) int {
 	return signalCommand("cancel", args, func(j *jobs.Job, s *jobs.Store) (int, error) {
 		switch j.State {
@@ -524,7 +496,6 @@ func cmdCancel(args []string) int {
 	})
 }
 
-// signalCommand resuelve el id, aplica la acción y reporta el resultado.
 func signalCommand(name string, args []string, action func(*jobs.Job, *jobs.Store) (int, error)) int {
 	if len(args) == 0 {
 		fmt.Fprintf(os.Stderr, "uso: git gost %s <id>\n", name)

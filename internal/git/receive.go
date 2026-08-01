@@ -61,14 +61,11 @@ type RefUpdate struct {
 	Ref    string
 }
 
-// ExtractPackfile extrae el packfile y la información de actualización de refs.
-// También parsea push-options (e.g. pr-hash=a3f8c1d2) enviadas por el cliente.
 func ExtractPackfile(body []byte) ([]byte, *RefUpdate, string, error) {
 	reader := bytes.NewReader(body)
 	var refUpdate *RefUpdate
 	var prHash string
 
-	// Leer las líneas de comandos (actualizaciones de refs)
 	for {
 		line, err := ParsePktLine(reader)
 		if err != nil {
@@ -78,16 +75,13 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, string, error) {
 			return nil, nil, "", fmt.Errorf("error parsing pkt-line: %v", err)
 		}
 
-		// flush packet indica fin de comandos
 		if line == nil {
 			break
 		}
 
-		// Las líneas de comando terminan con \n o \x00
 		lineStr := string(line)
 		debugf("DEBUG: Command line: %q\n", lineStr)
 
-		// Parsear push-option: pr-hash=<value>
 		if strings.HasPrefix(lineStr, "push-option=pr-hash=") {
 			prHash = strings.TrimPrefix(lineStr, "push-option=pr-hash=")
 			prHash = strings.TrimRight(prHash, "\n")
@@ -95,7 +89,6 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, string, error) {
 			continue
 		}
 
-		// Parsear comando: old-sha new-sha ref\x00capabilities
 		parts := strings.Fields(lineStr)
 		if len(parts) >= 3 && refUpdate == nil {
 			refUpdate = &RefUpdate{
@@ -106,9 +99,7 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, string, error) {
 			debugf("DEBUG: Parsed ref update: %s -> %s for %s\n", refUpdate.OldSHA, refUpdate.NewSHA, refUpdate.Ref)
 		}
 
-		// Si encontramos "PACK", retrocedemos porque es el inicio del packfile
 		if strings.Contains(lineStr, "PACK") {
-			// Retroceder al inicio del PACK
 			currentPos, err := reader.Seek(0, io.SeekCurrent)
 			if err != nil {
 				return nil, nil, "", fmt.Errorf("failed to determine pack start: %v", err)
@@ -122,15 +113,12 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, string, error) {
 		}
 	}
 
-	// Ahora leer el resto como packfile
 	packfile, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, "", err
 	}
 
-	// Verificar que comience con "PACK"
 	if len(packfile) < 4 || !bytes.Equal(packfile[:4], []byte("PACK")) {
-		// Buscar PACK en todo el body como fallback
 		packStart := bytes.Index(body, []byte("PACK"))
 		if packStart == -1 {
 			return nil, nil, "", fmt.Errorf("no packfile found in body")
@@ -144,9 +132,6 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, string, error) {
 	return packfile, refUpdate, prHash, nil
 }
 
-// ReceivePack clona el repo remoto y aplica el packfile recibido, retorna el SHA del nuevo commit, el mensaje del commit y el pr-hash push-option (si fue enviado).
-// cloneURL es la URL HTTPS completa del repositorio; si está vacía se usa GitHub por defecto (compatibilidad).
-// tokenEnvVar es el nombre de la variable de entorno con el token de autenticación; si está vacío usa GITHUB_TOKEN.
 func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneURL string, tokenEnvVar string) (string, string, string, error) {
 	if cloneURL == "" {
 		cloneURL = fmt.Sprintf("https://github.com/%s/%s.git", owner, repo)
@@ -170,7 +155,6 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 		},
 	})
 	if err != nil {
-		// Si falla el clone (repo no existe o privado), inicializar vacío
 		debugf("DEBUG: Clone failed, initializing empty repo: %v\n", err)
 		_, err = git.PlainInit(tempDir, false)
 		if err != nil {
@@ -178,13 +162,11 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 		}
 	}
 
-	// Crear directorio pack (necesario para git index-pack)
 	packDir := tempDir + "/.git/objects/pack"
 	if err := os.MkdirAll(packDir, 0755); err != nil {
 		return "", "", "", fmt.Errorf("failed to create pack dir: %v", err)
 	}
 
-	// Si body está vacío, salir
 	if len(body) == 0 {
 		return "", "", "", nil
 	}
@@ -192,7 +174,6 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 	debugf("DEBUG: Body length: %d bytes\n", len(body))
 	debugf("DEBUG: First 100 bytes: %x\n", body[:min(100, len(body))])
 
-	// Extraer packfile del protocolo Git Smart HTTP
 	packfile, refUpdate, prHash, err := ExtractPackfile(body)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to extract packfile: %v", err)
@@ -206,14 +187,12 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 
 	debugf("DEBUG: Packfile size: %d bytes\n", len(packfile))
 
-	// Guardar packfile temporalmente
 	packfilePath := tempDir + "/pack.tmp"
 	err = os.WriteFile(packfilePath, packfile, 0644)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to write packfile: %v", err)
 	}
 
-	// Usar git index-pack en lugar de unpack-objects (más robusto)
 	cmd := exec.Command("git", "index-pack", "-v", "--stdin", "--fix-thin")
 	cmd.Dir = packDir
 	cmd.Stdin = bytes.NewReader(packfile)
@@ -222,7 +201,6 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 	debugf("DEBUG: git index-pack output: %s\n", string(output))
 
 	if err != nil {
-		// Si index-pack falla, intentar unpack-objects
 		debugf("DEBUG: index-pack failed, trying unpack-objects\n")
 		cmd = exec.Command("git", "unpack-objects", "-r")
 		cmd.Dir = tempDir
@@ -236,13 +214,11 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 		}
 	}
 
-	// Abrir repositorio
 	r, err := git.PlainOpen(tempDir)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to open repo: %v", err)
 	}
 
-	// Actualizar HEAD al nuevo commit
 	newHash := plumbing.NewHash(refUpdate.NewSHA)
 	ref := plumbing.NewHashReference(plumbing.HEAD, newHash)
 	err = r.Storer.SetReference(ref)
@@ -252,7 +228,6 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 
 	debugf("DEBUG: Updated HEAD to %s\n", refUpdate.NewSHA)
 
-	// Extraer el mensaje del commit original antes de anonimizar
 	originalCommit, err := r.CommitObject(newHash)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to get original commit: %v", err)
@@ -260,7 +235,6 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 	commitMessage := originalCommit.Message
 	debugf("DEBUG: Original commit message: %s\n", commitMessage)
 
-	// Reescribir commits para anonimizar
 	anonymizedSHA, err := AnonymizeCommits(r, refUpdate.NewSHA)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to anonymize commits: %v", err)
@@ -309,17 +283,14 @@ func resolveBaseReference(r *git.Repository) *plumbing.Reference {
 	return nil
 }
 
-// AnonymizeCommits reescribe solo los commits nuevos para anonimizar autor y committer
 func AnonymizeCommits(r *git.Repository, targetSHA string) (string, error) {
 	targetHash := plumbing.NewHash(targetSHA)
 
-	// Obtener el commit objetivo
 	targetCommit, err := r.CommitObject(targetHash)
 	if err != nil {
 		return "", fmt.Errorf("failed to get target commit: %v", err)
 	}
 
-	// Obtener todos los commits que ya existen en la rama por defecto del remoto.
 	baseCommits := make(map[plumbing.Hash]bool)
 	baseRef := resolveBaseReference(r)
 	if baseRef != nil {
@@ -334,16 +305,13 @@ func AnonymizeCommits(r *git.Repository, targetSHA string) (string, error) {
 
 	debugf("DEBUG: Base commits count: %d\n", len(baseCommits))
 
-	// Mapeo de commits originales a anonimizados
 	commitMap := make(map[plumbing.Hash]plumbing.Hash)
 
-	// Reescribir commits recursivamente (solo los nuevos)
 	newHash, err := rewriteCommit(r, targetCommit, commitMap, baseCommits)
 	if err != nil {
 		return "", err
 	}
 
-	// Actualizar HEAD al nuevo commit anonimizado
 	ref := plumbing.NewHashReference(plumbing.HEAD, newHash)
 	err = r.Storer.SetReference(ref)
 	if err != nil {
@@ -353,25 +321,20 @@ func AnonymizeCommits(r *git.Repository, targetSHA string) (string, error) {
 	return newHash.String(), nil
 }
 
-// rewriteCommit reescribe un commit y sus padres recursivamente
 func rewriteCommit(r *git.Repository, commit *object.Commit, commitMap map[plumbing.Hash]plumbing.Hash, baseCommits map[plumbing.Hash]bool) (plumbing.Hash, error) {
-	// Si ya reescribimos este commit, retornar el hash anonimizado
 	if newHash, exists := commitMap[commit.Hash]; exists {
 		return newHash, nil
 	}
 
-	// Si este commit ya existe en el repo base, no lo reescribimos
 	if baseCommits[commit.Hash] {
 		debugf("DEBUG: Skipping base commit %s\n", commit.Hash.String()[:8])
 		return commit.Hash, nil
 	}
 
-	// Reescribir padres primero
 	var newParents []plumbing.Hash
 	for _, parentHash := range commit.ParentHashes {
 		parentCommit, err := r.CommitObject(parentHash)
 		if err != nil {
-			// Si el padre no existe, usar el hash original
 			newParents = append(newParents, parentHash)
 			continue
 		}
@@ -383,7 +346,6 @@ func rewriteCommit(r *git.Repository, commit *object.Commit, commitMap map[plumb
 		newParents = append(newParents, newParentHash)
 	}
 
-	// Crear nuevo commit con información anonimizada
 	anonSignature := object.Signature{
 		Name:  "@gitgost-anonymous",
 		Email: "anonymous@gitgost.local",
@@ -398,7 +360,6 @@ func rewriteCommit(r *git.Repository, commit *object.Commit, commitMap map[plumb
 		ParentHashes: newParents,
 	}
 
-	// Codificar y guardar el nuevo commit
 	obj := r.Storer.NewEncodedObject()
 	err := newCommit.Encode(obj)
 	if err != nil {
@@ -410,7 +371,6 @@ func rewriteCommit(r *git.Repository, commit *object.Commit, commitMap map[plumb
 		return plumbing.ZeroHash, fmt.Errorf("failed to store commit: %v", err)
 	}
 
-	// Guardar en el mapa
 	commitMap[commit.Hash] = newHash
 
 	debugf("DEBUG: Rewritten commit %s -> %s\n", commit.Hash.String()[:8], newHash.String()[:8])

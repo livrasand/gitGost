@@ -1,7 +1,9 @@
 package git
 
 import (
+	"context"
 	"os"
+	"strings"
 	"testing"
 
 	goGit "github.com/go-git/go-git/v5"
@@ -108,5 +110,93 @@ func TestAnonymizeCommits_UsesLocalHEADBranch(t *testing.T) {
 	}
 	if len(anonymized.ParentHashes) != 1 || anonymized.ParentHashes[0] != baseHash {
 		t.Fatalf("expected base commit to remain unchanged, got parents %v", anonymized.ParentHashes)
+	}
+}
+
+func TestSafeCloneURL(t *testing.T) {
+	tests := []struct {
+		name    string
+		raw     string
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "github lowercases host",
+			raw:  "https://GITHUB.com/owner/repo",
+			want: "https://github.com/owner/repo",
+		},
+		{
+			name:    "missing scheme",
+			raw:     "github.com/owner/repo",
+			wantErr: true,
+		},
+		{
+			name:    "host not allowed",
+			raw:     "https://evil.com/owner/repo",
+			wantErr: true,
+		},
+		{
+			name:    "too many path segments",
+			raw:     "https://github.com/owner/repo/extra",
+			wantErr: true,
+		},
+		{
+			name:    "path traversal in owner",
+			raw:     "https://github.com/../repo",
+			wantErr: true,
+		},
+		{
+			name:    "path traversal in repo",
+			raw:     "https://github.com/owner/..",
+			wantErr: true,
+		},
+		{
+			name:    "injected option as url",
+			raw:     "https://github.com/owner/repo?--upload-pack=evil",
+			wantErr: true,
+		},
+		{
+			name:    "userinfo rejected",
+			raw:     "https://user:pass@github.com/owner/repo",
+			wantErr: true,
+		},
+		{
+			name:    "fragment rejected",
+			raw:     "https://github.com/owner/repo#fragment",
+			wantErr: true,
+		},
+		{
+			name: "port allowed",
+			raw:  "https://github.com:443/owner/repo",
+			want: "https://github.com/owner/repo",
+		},
+		{
+			name: "trailing slash allowed",
+			raw:  "https://github.com/owner/repo/",
+			want: "https://github.com/owner/repo",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := safeCloneURL(tt.raw)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("safeCloneURL(%q) error = %v, wantErr %v", tt.raw, err, tt.wantErr)
+			}
+			if !tt.wantErr && got != tt.want {
+				t.Fatalf("safeCloneURL(%q) = %q, want %q", tt.raw, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGitClone_InvalidURLRejected(t *testing.T) {
+	ctx := context.Background()
+	err := gitClone(ctx, "--upload-pack=evil", t.TempDir())
+	if err == nil {
+		t.Fatal("gitClone should reject an option-injection URL")
+	}
+	if !strings.Contains(err.Error(), "URL de repositorio inválida") {
+		t.Fatalf("expected URL validation error, got: %v", err)
 	}
 }

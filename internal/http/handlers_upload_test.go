@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// mockTransport redirige peticiones a github.com al mockURL dado.
 type mockTransport struct {
 	mockURL string
 	base    http.RoundTripper
@@ -27,10 +26,8 @@ func (t *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return t.base.RoundTrip(req)
 }
 
-// TestBasicAuth verifica que basicAuth codifique correctamente en base64
 func TestBasicAuth(t *testing.T) {
 	result := basicAuth("x-access-token", "mytoken")
-	// "x-access-token:mytoken" en base64 = "eC1hY2Nlc3MtdG9rZW46bXl0b2tlbg=="
 	expected := "eC1hY2Nlc3MtdG9rZW46bXl0b2tlbg=="
 	if result != expected {
 		t.Errorf("basicAuth() = %q; want %q", result, expected)
@@ -44,7 +41,6 @@ func TestBasicAuth_EmptyPassword(t *testing.T) {
 	}
 }
 
-// TestUploadPackDiscoveryHandler_NoToken verifica que la petición anónima llegue al upstream.
 func TestUploadPackDiscoveryHandler_NoToken(t *testing.T) {
 	t.Setenv("GITHUB_TOKEN", "")
 
@@ -76,7 +72,6 @@ func TestUploadPackDiscoveryHandler_NoToken(t *testing.T) {
 	}
 }
 
-// TestUploadPackHandler_NoToken verifica que la petición anónima llegue al upstream.
 func TestUploadPackHandler_NoToken(t *testing.T) {
 	t.Setenv("GITHUB_TOKEN", "")
 
@@ -108,18 +103,14 @@ func TestUploadPackHandler_NoToken(t *testing.T) {
 	}
 }
 
-// TestUploadPackDiscoveryHandler_ProxiesGitHub verifica que el handler haga proxy correcto
 func TestUploadPackDiscoveryHandler_ProxiesGitHub(t *testing.T) {
 	fakeAdvertisement := "001e# service=git-upload-pack\n00000032abc123 refs/heads/main\n0000"
 
-	// Mock del servidor de GitHub
 	mockGitHub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Verificar que llega con Authorization
 		auth := r.Header.Get("Authorization")
 		if !strings.HasPrefix(auth, "Basic ") {
 			t.Errorf("Expected Basic auth header, got %q", auth)
 		}
-		// Verificar User-Agent
 		if r.Header.Get("User-Agent") != "git/2.0" {
 			t.Errorf("Expected User-Agent git/2.0, got %q", r.Header.Get("User-Agent"))
 		}
@@ -131,7 +122,6 @@ func TestUploadPackDiscoveryHandler_ProxiesGitHub(t *testing.T) {
 
 	t.Setenv("GITHUB_TOKEN", "test-token-123")
 
-	// Swappear uploadPackClient para redirigir github.com al mock
 	origUploadPackClient := uploadPackClient
 	uploadPackClient = &http.Client{
 		Transport: &mockTransport{mockURL: mockGitHub.URL, base: mockGitHub.Client().Transport},
@@ -157,13 +147,11 @@ func TestUploadPackDiscoveryHandler_ProxiesGitHub(t *testing.T) {
 	}
 }
 
-// TestUploadPackHandler_ProxiesGitHub verifica que el POST /git-upload-pack haga proxy correcto
 func TestUploadPackHandler_ProxiesGitHub(t *testing.T) {
 	fakePackData := "0008NAK\n"
 	receivedBody := ""
 
 	mockGitHub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Verificar método y Content-Type
 		if r.Method != "POST" {
 			t.Errorf("Expected POST, got %s", r.Method)
 		}
@@ -181,7 +169,6 @@ func TestUploadPackHandler_ProxiesGitHub(t *testing.T) {
 
 	t.Setenv("GITHUB_TOKEN", "test-token-456")
 
-	// Swappear uploadPackClient para redirigir github.com al mock
 	origUploadPackClient := uploadPackClient
 	uploadPackClient = &http.Client{
 		Transport: &mockTransport{mockURL: mockGitHub.URL, base: mockGitHub.Client().Transport},
@@ -209,7 +196,6 @@ func TestUploadPackHandler_ProxiesGitHub(t *testing.T) {
 	}
 }
 
-// TestInfoRefsRouter_UploadPack verifica que el router enrute git-upload-pack correctamente
 func TestInfoRefsRouter_UploadPack(t *testing.T) {
 	t.Setenv("GITHUB_TOKEN", "")
 
@@ -220,14 +206,12 @@ func TestInfoRefsRouter_UploadPack(t *testing.T) {
 		if service == "git-receive-pack" {
 			c.String(http.StatusOK, "receive-pack")
 		} else if service == "git-upload-pack" {
-			// Sin token → 500, pero el routing llegó aquí
 			c.String(http.StatusInternalServerError, "upload-pack-reached")
 		} else {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Unsupported service"})
 		}
 	})
 
-	// git-upload-pack debe llegar al handler correcto
 	req, _ := http.NewRequest("GET", "/owner/repo/info/refs?service=git-upload-pack", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -235,7 +219,6 @@ func TestInfoRefsRouter_UploadPack(t *testing.T) {
 		t.Errorf("git-upload-pack should reach upload-pack handler, got %q", w.Body.String())
 	}
 
-	// git-receive-pack debe llegar al handler correcto
 	req, _ = http.NewRequest("GET", "/owner/repo/info/refs?service=git-receive-pack", nil)
 	w = httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -243,7 +226,6 @@ func TestInfoRefsRouter_UploadPack(t *testing.T) {
 		t.Errorf("git-receive-pack should reach receive-pack handler, got %q", w.Body.String())
 	}
 
-	// servicio desconocido debe retornar 400
 	req, _ = http.NewRequest("GET", "/owner/repo/info/refs?service=unknown", nil)
 	w = httptest.NewRecorder()
 	r.ServeHTTP(w, req)

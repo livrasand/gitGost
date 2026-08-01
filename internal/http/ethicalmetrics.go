@@ -120,7 +120,6 @@ func EthicalMetricsMetricsHandler(c *gin.Context) {
 		}
 	}
 	if len(result) == 0 {
-		// Fallback a memoria si no hay DB o falló la lectura
 		siteParam := site
 		ethicalStore.Range(func(fullKey string, count int64) bool {
 			s, inner, ok := decodeEthicalKey(fullKey)

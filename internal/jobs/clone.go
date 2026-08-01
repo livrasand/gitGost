@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -14,11 +15,25 @@ import (
 // Sobrescribible en tests para validar el resume con varias capas.
 var chunkSize = 500
 
-// runClone descarga un repositorio por capas: inicializa el repo, descarga la
-// historia en bloques de chunkSize commits (--depth/--deepen) y materializa la
-// rama por defecto. Cada bloque completado es un checkpoint: si la conexión se
-// pierde, al reanudar solo se descargan los bloques pendientes.
+// runClone decide el flujo de descarga: Fase 2 (bundle con Range Requests y
+// resume por bytes vía Openbin) si el servidor lo soporta; si no, Fase 1
+// (descarga por capas con resume entre bloques).
 func runClone(s *Store, job *Job) error {
+	if err := runCloneBundle(s, job); err != nil {
+		if errors.Is(err, errRemoteJobsUnsupported) {
+			_ = s.SetProgress(job.ID, "El servidor no soporta jobs remotos; usando descarga por capas...")
+			return runCloneLayered(s, job)
+		}
+		return err
+	}
+	return nil
+}
+
+// runCloneLayered (Fase 1) descarga un repositorio por capas: inicializa el
+// repo, descarga la historia en bloques de chunkSize commits (--depth/--deepen)
+// y materializa la rama por defecto. Cada bloque completado es un checkpoint:
+// si la conexión se pierde, al reanudar solo se descargan los bloques pendientes.
+func runCloneLayered(s *Store, job *Job) error {
 	dir := job.Target
 	if dir == "" {
 		return fmt.Errorf("job de clone sin directorio destino")
@@ -43,7 +58,9 @@ func runClone(s *Store, job *Job) error {
 	}
 
 	// Rama por defecto del remoto.
-	ls, err := gitOutputWithRetry(s, job, dir, "ls-remote", "--symref", job.URL, "HEAD")
+	// Los separadores -- evitan que job.URL se interprete como opción de git
+	// (defensa en profundidad: la URL ya pasa validación al reescribirse).
+	ls, err := gitOutputWithRetry(s, job, dir, "ls-remote", "--symref", "--", job.URL, "HEAD")
 	if err != nil {
 		return fmt.Errorf("descubrir rama por defecto: %w", err)
 	}
@@ -61,7 +78,7 @@ func runClone(s *Store, job *Job) error {
 	} else {
 		_ = s.SetProgress(job.ID, "Descargando primer bloque...")
 		if err := execGitWithRetry(s, job, dir,
-			"fetch", "--depth="+strconv.Itoa(chunkSize), "--filter=blob:none", job.URL, refspec); err != nil {
+			"fetch", "--depth="+strconv.Itoa(chunkSize), "--filter=blob:none", "--", job.URL, refspec); err != nil {
 			return err
 		}
 	}
@@ -75,7 +92,7 @@ func runClone(s *Store, job *Job) error {
 		prevShallow := shallowFile(dir)
 		prev := gitRevCount(dir)
 		if err := execGitWithRetry(s, job, dir,
-			"fetch", "--deepen="+strconv.Itoa(chunkSize), "--filter=blob:none", job.URL, refspec); err != nil {
+			"fetch", "--deepen="+strconv.Itoa(chunkSize), "--filter=blob:none", "--", job.URL, refspec); err != nil {
 			return err
 		}
 		count := gitRevCount(dir)
@@ -94,7 +111,7 @@ func runClone(s *Store, job *Job) error {
 	if repoShallow(dir) {
 		_ = s.SetProgress(job.ID, "Completando historia restante...")
 		if err := execGitWithRetry(s, job, dir,
-			"fetch", "--unshallow", "--filter=blob:none", job.URL, refspec); err != nil {
+			"fetch", "--unshallow", "--filter=blob:none", "--", job.URL, refspec); err != nil {
 			return err
 		}
 	}

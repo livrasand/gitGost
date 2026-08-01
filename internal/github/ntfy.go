@@ -10,12 +10,10 @@ import (
 
 var ntfyClient = &http.Client{Timeout: 10 * time.Second}
 
-// NtfyTopicForPR returns the ntfy topic for a given PR hash.
 func NtfyTopicForPR(prHash string) string {
 	return fmt.Sprintf("gitgost-%s", prHash)
 }
 
-// NtfyBaseURL returns the ntfy base URL (configurable via NTFY_BASE_URL, default ntfy.sh).
 func NtfyBaseURL() string {
 	if base := os.Getenv("NTFY_BASE_URL"); base != "" {
 		return base
@@ -23,8 +21,6 @@ func NtfyBaseURL() string {
 	return "https://ntfy.sh"
 }
 
-// NtfyServiceURL returns the public-facing service URL used in admin action buttons.
-// Configurable via SERVICE_URL env var; falls back to the default deployed URL.
 func NtfyServiceURL() string {
 	if u := os.Getenv("SERVICE_URL"); u != "" {
 		return u
@@ -32,9 +28,6 @@ func NtfyServiceURL() string {
 	return "https://gitgost.fly.dev"
 }
 
-// PublishNtfyEvent publishes an event to the ntfy topic corresponding to a PR hash.
-// actions: optional ntfy Actions header value (e.g. a button to check PR status).
-// Pass empty string to send without action buttons.
 func PublishNtfyEvent(prHash, title, message, actions string) error {
 	topic := NtfyTopicForPR(prHash)
 	url := fmt.Sprintf("%s/%s", NtfyBaseURL(), topic)
@@ -63,9 +56,6 @@ func PublishNtfyEvent(prHash, title, message, actions string) error {
 	return nil
 }
 
-// PublishNtfyAdmin publishes an admin alert with an optional ntfy action button.
-// actions: ntfy Actions header value (e.g. HTTP POST button to activate panic mode).
-// Pass empty string to send without action buttons.
 func PublishNtfyAdmin(topic, title, message, actions string) error {
 	url := fmt.Sprintf("%s/%s", NtfyBaseURL(), topic)
 

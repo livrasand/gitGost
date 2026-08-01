@@ -3311,9 +3311,12 @@ func getTrendingGitHub(sort string, perPage, page int) []gin.H {
 	}
 
 	var url string
-	if sort == "new" {
+	switch sort {
+	case "new":
 		url = fmt.Sprintf("https://api.github.com/search/repositories?q=created:>%s&sort=updated&order=desc&per_page=%d&page=%d", dateCutoff, perPage, page)
-	} else {
+	case "updated":
+		url = fmt.Sprintf("https://api.github.com/search/repositories?q=pushed:>%s&sort=updated&order=desc&per_page=%d&page=%d", dateCutoff, perPage, page)
+	default:
 		url = fmt.Sprintf("https://api.github.com/search/repositories?q=created:>%s&sort=stars&order=desc&per_page=%d&page=%d", dateCutoff, perPage, page)
 	}
 
@@ -3348,6 +3351,9 @@ func getTrendingGitHub(sort string, perPage, page int) []gin.H {
 			Stargazers  int    `json:"stargazers_count"`
 			Forks       int    `json:"forks_count"`
 			Language    string `json:"language"`
+			CreatedAt   string `json:"created_at"`
+			UpdatedAt   string `json:"updated_at"`
+			PushedAt    string `json:"pushed_at"`
 		} `json:"items"`
 	}
 
@@ -3366,6 +3372,9 @@ func getTrendingGitHub(sort string, perPage, page int) []gin.H {
 			"stars":       item.Stargazers,
 			"forks":       item.Forks,
 			"language":    item.Language,
+			"created_at":  item.CreatedAt,
+			"updated_at":  item.UpdatedAt,
+			"pushed_at":   item.PushedAt,
 			"url":         fmt.Sprintf("/gh/%s/%s", item.Owner.Login, item.Name),
 		})
 	}
@@ -3376,16 +3385,20 @@ func getTrendingGitHub(sort string, perPage, page int) []gin.H {
 func getTrendingGitLab(sort string, perPage, page int) []gin.H {
 	results := []gin.H{}
 
-	var url string
-	if sort == "new" {
-		url = fmt.Sprintf("https://gitlab.com/api/v4/projects?order_by=created_at&sort=desc&per_page=%d&page=%d", perPage, page)
-	} else {
-		url = fmt.Sprintf("https://gitlab.com/api/v4/projects?order_by=star_count&sort=desc&per_page=%d&page=%d", perPage, page)
+	var apiURL string
+	switch sort {
+	case "new":
+		apiURL = fmt.Sprintf("https://gitlab.com/api/v4/projects?order_by=created_at&sort=desc&per_page=%d&page=%d", perPage, page)
+	case "updated":
+		since := time.Now().UTC().AddDate(0, 0, -30).Format(time.RFC3339)
+		apiURL = fmt.Sprintf("https://gitlab.com/api/v4/projects?order_by=last_activity_at&sort=desc&last_activity_after=%s&per_page=%d&page=%d", url.QueryEscape(since), perPage, page)
+	default:
+		apiURL = fmt.Sprintf("https://gitlab.com/api/v4/projects?order_by=star_count&sort=desc&per_page=%d&page=%d", perPage, page)
 	}
 
 	glToken := os.Getenv("GITLAB_TOKEN")
 	client := &http.Client{Timeout: 10 * time.Second}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return results
 	}
@@ -3415,6 +3428,9 @@ func getTrendingGitLab(sort string, perPage, page int) []gin.H {
 		Namespace         struct {
 			Path string `json:"path"`
 		} `json:"namespace"`
+		CreatedAt      string `json:"created_at"`
+		UpdatedAt      string `json:"updated_at"`
+		LastActivityAt string `json:"last_activity_at"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
@@ -3447,6 +3463,10 @@ func getTrendingGitLab(sort string, perPage, page int) []gin.H {
 			language = langs[i]
 		}
 
+		updatedAt := item.UpdatedAt
+		if item.LastActivityAt != "" {
+			updatedAt = item.LastActivityAt
+		}
 		results = append(results, gin.H{
 			"provider":    "gitlab",
 			"name":        item.Name,
@@ -3456,6 +3476,8 @@ func getTrendingGitLab(sort string, perPage, page int) []gin.H {
 			"stars":       item.StarCount,
 			"forks":       item.ForksCount,
 			"language":    language,
+			"created_at":  item.CreatedAt,
+			"updated_at":  updatedAt,
 			"url":         fmt.Sprintf("/gl/%s/%s", owner, item.Name),
 		})
 	}
@@ -3471,10 +3493,14 @@ func getTrendingCodeberg(sort string, perPage, page int) []gin.H {
 	if page > 1 {
 		params.Set("page", strconv.Itoa(page))
 	}
-	if sort == "new" {
+	switch sort {
+	case "new":
 		params.Set("sort", "created")
 		params.Set("order", "desc")
-	} else {
+	case "updated":
+		params.Set("sort", "updated")
+		params.Set("order", "desc")
+	default:
 		params.Set("sort", "stars")
 		params.Set("order", "desc")
 	}
@@ -3512,6 +3538,8 @@ func getTrendingCodeberg(sort string, perPage, page int) []gin.H {
 			Owner       struct {
 				Login string `json:"login"`
 			} `json:"owner"`
+			CreatedAt string `json:"created_at"`
+			UpdatedAt string `json:"updated_at"`
 		} `json:"data"`
 	}
 
@@ -3537,6 +3565,8 @@ func getTrendingCodeberg(sort string, perPage, page int) []gin.H {
 			"stars":       item.Stars,
 			"forks":       item.Forks,
 			"language":    item.Language,
+			"created_at":  item.CreatedAt,
+			"updated_at":  item.UpdatedAt,
 			"url":         fmt.Sprintf("/cb/%s/%s", owner, item.Name),
 		})
 	}

@@ -241,9 +241,25 @@ The client is written in Go, with pre-compiled binaries available for Mac,
 Windows and Linux. Check out the [website](https://gitgost.livrasand.com/)
 for an overview of features.
 
+### From binary
+
 <a href="https://github.com/livrasand/gitGost/releases"><img src="https://raw.githubusercontent.com/rubenpgrady/get-it-on-github/refs/heads/main/get-it-on-github.png" alt="Get it on GitHub" height="96" />
 </a>
 
+### From Homebrew
+
+```bash
+brew tap livrasand/tap
+brew trust livrasand/tap
+brew install git-gost
+git gost install
+```
+
+### From curl
+
+```bash
+curl -fsSL https://gitgost.livrasand.com/install | bash
+```
 
 ### Using
 
@@ -258,10 +274,6 @@ $ git gost watch 82
 ### Getting started
 
 ```shell
-# Download and install the Git command line extension. Run once per user account.
-$ ./git-gost-darwin-arm64 install
-→ git-gost instalado en ~/.local/bin/git-gost
-# There is no step three. Clone, fetch and push as you normally would:
 $ git gost clone https://github.com/openai/openai.git
 # Manage the queue while the download runs in the background
 $ git gost jobs

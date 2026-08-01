@@ -966,28 +966,23 @@ func verifyMentaCaptcha(token string) bool {
 	return result.Valid
 }
 
-// isPanicMode returns whether the service is suspended
 func isPanicMode() bool {
 	panicMu.Lock()
 	defer panicMu.Unlock()
 	return panicMode
 }
 
-// isGlobalBurstAlertActive returns true when a global burst alert is currently active.
 func isGlobalBurstAlertActive() bool {
 	globalBurstMu.Lock()
 	defer globalBurstMu.Unlock()
 	return globalBurstAlerted
 }
 
-// recordGlobalBurst records a push attempt globally and notifies the admin if suspicious
-// activity is detected (too many pushes in a short window, possibly from multiple IPs).
 func recordGlobalBurst(ip string) {
 	now := time.Now()
 	globalBurstMu.Lock()
 	defer globalBurstMu.Unlock()
 
-	// Slide the window: discard entries older than globalBurstWindow
 	cutoff := now.Add(-globalBurstWindow)
 	newTimes := globalBurstTimes[:0]
 	newIPs := globalBurstIPs[:0]
@@ -1004,41 +999,35 @@ func recordGlobalBurst(ip string) {
 
 	total := len(globalBurstTimes)
 
-	// Count distinct IPs in window
 	seen := make(map[string]struct{}, total)
 	for _, bip := range globalBurstIPs {
 		seen[bip] = struct{}{}
 	}
 	distinctIPs := len(seen)
 
-	// Trigger alert if thresholds exceeded and not already alerted in this window
 	if !globalBurstAlerted && (total >= globalBurstMaxTotal || distinctIPs >= globalBurstMaxIPs) {
 		globalBurstAlerted = true
 		go notifyAdminGlobalBurst(total, distinctIPs)
 	}
 
-	// Reset alert flag once activity drops below half the threshold
 	if globalBurstAlerted && total < globalBurstMaxTotal/2 && distinctIPs < globalBurstMaxIPs/2 {
 		globalBurstAlerted = false
 	}
 }
 
-// notifyAdminGlobalBurst sends an ntfy alert about suspected botnet/script activity
 func notifyAdminGlobalBurst(total, distinctIPs int) {
 	if ntfyAdminTopic == "" {
 		return
 	}
 	serviceURL := github.NtfyServiceURL()
-	title := "🚨 Suspicious activity detected · gitGost"
+	title := "Suspicious activity detected · gitGost"
 	msg := fmt.Sprintf(
 		"%d push attempts from %d distinct IPs in the last %s. This may indicate bot, script, or coordinated abuse.",
 		total, distinctIPs, globalBurstWindow,
 	)
-	// Generate single-use tokens per action (expire in 10 min, never expose panicPassword)
 	tokActivate := newActionToken()
 	tokRollback := newActionToken()
 	tokDeactivate := newActionToken()
-	// ntfy action buttons: panic control + close burst PRs
 	actions := fmt.Sprintf(
 		`http, Activate Panic, %s/admin/panic, method=POST, body={"token":"%s","active":true}, clear=true; http, Close Burst PRs, %s/admin/rollback, method=POST, body={"token":"%s"}, clear=true; http, Deactivate Panic, %s/admin/panic, method=POST, body={"token":"%s","active":false}`,
 		serviceURL, tokActivate,
@@ -1050,12 +1039,9 @@ func notifyAdminGlobalBurst(total, distinctIPs int) {
 	}
 }
 
-// checkRateLimit checks if the IP has exceeded the PR rate limit per hour.
-// Returns true if the request should be blocked. Notifies admin via ntfy on first excess.
 func checkRateLimit(ip string) bool {
 	count := windowAdd(rateLimitStore, ip, time.Now(), rateLimitWindow, rateLimitMaxPRs)
 	if count > rateLimitMaxPRs {
-		// Notify admin only once when the limit is first exceeded (at rateLimitMaxPRs+1)
 		if count == rateLimitMaxPRs+1 {
 			go notifyAdminRateLimit(ip, count)
 		}
@@ -1064,19 +1050,16 @@ func checkRateLimit(ip string) bool {
 	return false
 }
 
-// notifyAdminRateLimit sends an ntfy alert to the admin when an IP exceeds the rate limit
 func notifyAdminRateLimit(ip string, count int) {
 	if ntfyAdminTopic == "" {
 		return
 	}
 	serviceURL := github.NtfyServiceURL()
-	title := "⚠️ Rate limit exceeded · gitGost"
+	title := "Rate limit exceeded · gitGost"
 	msg := fmt.Sprintf("IP %s exceeded the limit of %d PRs/hour (attempts: %d).", ip, rateLimitMaxPRs, count)
-	// Generate single-use tokens per action (expire in 10 min, never expose panicPassword)
 	tokActivate := newActionToken()
 	tokRollback := newActionToken()
 	tokDeactivate := newActionToken()
-	// ntfy action buttons: panic control + close burst PRs
 	actions := fmt.Sprintf(
 		`http, Activate Panic, %s/admin/panic, method=POST, body={"token":"%s","active":true}, clear=true; http, Close Burst PRs, %s/admin/rollback, method=POST, body={"token":"%s"}, clear=true; http, Deactivate Panic, %s/admin/panic, method=POST, body={"token":"%s","active":false}`,
 		serviceURL, tokActivate,
@@ -1088,10 +1071,6 @@ func notifyAdminRateLimit(ip string, count int) {
 	}
 }
 
-// PanicHandler activates or deactivates panic mode
-// POST /admin/panic  body: {"password": "...", "active": true|false}
-//
-//	or body: {"token": "<action-token>", "active": true|false}
 func PanicHandler(c *gin.Context) {
 	var req struct {
 		Password string `json:"password"`
@@ -1120,15 +1099,12 @@ func PanicHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"panic_mode": req.Active, "state": state})
 }
 
-// ServiceStatusHandler returns the current service status (used by the frontend)
 func ServiceStatusHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"panic_mode": isPanicMode(),
 	})
 }
 
-// RollbackBurstHandler closes all PRs registered during the current burst window.
-// POST /admin/rollback  body: {"password": "..."} or {"token": "<action-token>"}
 func RollbackBurstHandler(c *gin.Context) {
 	var req struct {
 		Password string `json:"password"`
@@ -1139,7 +1115,6 @@ func RollbackBurstHandler(c *gin.Context) {
 		return
 	}
 
-	// Accept either the static password or a valid single-use action token
 	authorized := (panicPassword != "" && req.Password == panicPassword) ||
 		(req.Token != "" && consumeActionToken(req.Token))
 	if !authorized {
@@ -1147,7 +1122,6 @@ func RollbackBurstHandler(c *gin.Context) {
 		return
 	}
 
-	// Rate limit: max rollbackLimitMax calls per rollbackLimitWin
 	now := time.Now()
 	rollbackLimitMu.Lock()
 	valid := rollbackLimitTimes[:0]
@@ -1223,14 +1197,12 @@ func RollbackBurstHandler(c *gin.Context) {
 	})
 }
 
-// InitDatabase inicializa el cliente de Supabase de forma thread-safe
 func InitDatabase(url, key string) {
 	dbOnce.Do(func() {
 		dbClient = database.NewSupabaseClient(url, key)
 	})
 }
 
-// RecordPR registra un nuevo PR anonimizado en Supabase
 func RecordPR(ctx context.Context, owner, repo, prURL string) error {
 	if dbClient == nil {
 		return fmt.Errorf("database client not initialized")
@@ -1238,7 +1210,6 @@ func RecordPR(ctx context.Context, owner, repo, prURL string) error {
 	return dbClient.InsertPR(ctx, owner, repo, prURL)
 }
 
-// StatsHandler maneja el endpoint de estadísticas
 func StatsHandler(c *gin.Context) {
 	if dbClient == nil {
 		c.JSON(http.StatusOK, gin.H{"total_prs": 0})
@@ -1270,7 +1241,6 @@ func StatsHandler(c *gin.Context) {
 		"total_comments": totalComments,
 	}
 
-	// Solo incluir last_updated si hay PRs
 	if lastUpdated != nil {
 		response["last_updated"] = lastUpdated
 	}
@@ -1278,7 +1248,6 @@ func StatsHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// RecentPRsHandler devuelve los PRs recientes
 func RecentPRsHandler(c *gin.Context) {
 	if dbClient == nil {
 		c.JSON(http.StatusOK, gin.H{"prs": []database.PRRecord{}, "total": 0})
@@ -1305,7 +1274,6 @@ func RecentPRsHandler(c *gin.Context) {
 	})
 }
 
-// CreateAnonymousIssueHandler crea una issue anónima con hash/karma/token
 func CreateAnonymousIssueHandler(c *gin.Context) {
 	var req anonymousIssueRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -1352,14 +1320,11 @@ func CreateAnonymousIssueHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// GitLabIssueNotesProxyHandler proxea los comentarios de una issue de GitLab usando el token del servidor,
-// permitiendo que usuarios anónimos sin cuenta vean los comentarios.
 func GitLabIssueNotesProxyHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
 	number := c.Param("number")
 
-	// Validar que number sea solo dígitos
 	for _, r := range number {
 		if r < '0' || r > '9' {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid issue number"})
@@ -1394,9 +1359,6 @@ func GitLabIssueNotesProxyHandler(c *gin.Context) {
 	c.Data(resp.StatusCode, "application/json", body)
 }
 
-// GitLabCommitCountHandler devuelve el numero total de commits de un proyecto GitLab.
-// Proxea la API de GitLab para leer la cabecera X-Total si esta disponible (autenticado).
-// Si X-Total no esta presente (acceso anonimo), cuenta commits via busqueda binaria.
 func GitLabCommitCountHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
@@ -1423,8 +1385,6 @@ func GitLabCommitCountHandler(c *gin.Context) {
 		}
 		defer resp.Body.Close()
 
-		// Si X-Total esta disponible en la pagina 1 (autenticado), devolverlo como valor negativo
-		// para indicar que es el total exacto.
 		if page == 1 {
 			if total := resp.Header.Get("X-Total"); total != "" {
 				count, err := strconv.Atoi(total)
@@ -1445,25 +1405,21 @@ func GitLabCommitCountHandler(c *gin.Context) {
 		return len(items), nil
 	}
 
-	// Pagina 1: ver si X-Total existe o contar items
 	n, err := glFetch(1)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"total": 0})
 		return
 	}
-	// Si n es negativo, es el total exacto de X-Total
 	if n < 0 {
 		c.JSON(http.StatusOK, gin.H{"total": -n})
 		return
 	}
 
-	// Si la pagina 1 tiene menos de 100 commits, ese es el total
 	if n < 100 {
 		c.JSON(http.StatusOK, gin.H{"total": n})
 		return
 	}
 
-	// Hay mas paginas. Usar crecimiento exponencial para encontrar un limite superior.
 	lo, hi := 2, 2
 	for {
 		n, err := glFetch(hi)
@@ -1471,19 +1427,17 @@ func GitLabCommitCountHandler(c *gin.Context) {
 			break
 		}
 		if n < 100 {
-			// Encontramos la ultima pagina exacta
 			total := (hi-1)*100 + n
 			c.JSON(http.StatusOK, gin.H{"total": total})
 			return
 		}
 		lo = hi + 1
 		hi *= 2
-		if hi > 10000 { // Safety cap: 1,000,000 commits max
+		if hi > 10000 {
 			break
 		}
 	}
 
-	// Busqueda binaria entre lo (no vacio) y hi (vacio)
 	lastNonEmpty := lo - 1
 	firstEmpty := hi
 
@@ -1496,7 +1450,6 @@ func GitLabCommitCountHandler(c *gin.Context) {
 		if n > 0 {
 			lastNonEmpty = mid
 			if n < 100 {
-				// Ultima pagina encontrada
 				total := (mid-1)*100 + n
 				c.JSON(http.StatusOK, gin.H{"total": total})
 				return
@@ -1507,7 +1460,6 @@ func GitLabCommitCountHandler(c *gin.Context) {
 		}
 	}
 
-	// Obtener el conteo exacto de la ultima pagina no vacia
 	n, err = glFetch(lastNonEmpty)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"total": (lastNonEmpty-1)*100 + 100})
@@ -1517,7 +1469,6 @@ func GitLabCommitCountHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"total": total})
 }
 
-// GitLabAvatarHandler busca un usuario de GitLab por email y devuelve su avatar_url.
 func GitLabAvatarHandler(c *gin.Context) {
 	email := c.Query("email")
 	if email == "" {
@@ -1549,7 +1500,6 @@ func GitLabAvatarHandler(c *gin.Context) {
 
 	body, _ := io.ReadAll(resp.Body)
 
-	// GitLab Users API returns an array - extract first match's avatar_url
 	var users []struct {
 		AvatarURL string `json:"avatar_url"`
 	}
@@ -1561,8 +1511,6 @@ func GitLabAvatarHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"avatar_url": users[0].AvatarURL})
 }
 
-// GitLabCommitsHandler proxies la lista de commits de un proyecto GitLab.
-// Evita problemas de CORS y permite autenticacion via GITLAB_TOKEN.
 func GitLabCommitsHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
@@ -1594,13 +1542,11 @@ func GitLabCommitsHandler(c *gin.Context) {
 	c.Data(resp.StatusCode, "application/json", body)
 }
 
-// GitLabCommitDetailHandler proxies el detalle de un commit individual (info + diff) de GitLab.
 func GitLabCommitDetailHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
 	sha := c.Param("sha")
 
-	// Validar que sha sea un hash hexadecimal valido
 	if len(sha) < 6 || len(sha) > 64 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid sha"})
 		return
@@ -1618,7 +1564,6 @@ func GitLabCommitDetailHandler(c *gin.Context) {
 
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	// Fetch commit info and diff in parallel
 	type commitResult struct {
 		data []byte
 		ok   bool
@@ -1661,14 +1606,12 @@ func GitLabCommitDetailHandler(c *gin.Context) {
 
 	diffRes := <-chDiff
 
-	// Parse commit JSON to merge with diff data
 	var commitData map[string]interface{}
 	if err := json.Unmarshal(commitRes.data, &commitData); err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{"error": "invalid commit data"})
 		return
 	}
 
-	// Add diff files to the response
 	if diffRes.ok && diffRes.data != nil {
 		var diffData []interface{}
 		if err := json.Unmarshal(diffRes.data, &diffData); err == nil {
@@ -1679,8 +1622,6 @@ func GitLabCommitDetailHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, commitData)
 }
 
-// GitHubDiscussionsProxyHandler consulta la GraphQL API de GitHub para discussions,
-// evitando problemas de CORS y scraping de HTML.
 func GitHubDiscussionsProxyHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
@@ -1730,7 +1671,6 @@ func GitHubDiscussionsProxyHandler(c *gin.Context) {
 
 	body, _ := io.ReadAll(resp.Body)
 
-	// Rate limit from GitHub GraphQL
 	if resp.StatusCode == 403 {
 		c.JSON(http.StatusTooManyRequests, gin.H{
 			"error":   "rate_limited",
@@ -1744,7 +1684,6 @@ func GitHubDiscussionsProxyHandler(c *gin.Context) {
 		return
 	}
 
-	// Parse GraphQL response
 	var ghResp struct {
 		Data struct {
 			Repository struct {
@@ -1790,8 +1729,6 @@ func GitHubDiscussionsProxyHandler(c *gin.Context) {
 	})
 }
 
-// GitHubDiscussionDetailProxyHandler consulta la GraphQL API de GitHub para una sola discusión,
-// incluyendo su cuerpo y comentarios, evitando problemas de CORS.
 func GitHubDiscussionDetailProxyHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
@@ -1921,8 +1858,6 @@ func GitHubDiscussionDetailProxyHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, disc)
 }
 
-// GitHubWikiProxyHandler proxea contenido de wiki de GitHub desde raw.githubusercontent.com,
-// evitando problemas de CORS y rate limiting desde el navegador.
 func GitHubWikiProxyHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
@@ -1931,7 +1866,6 @@ func GitHubWikiProxyHandler(c *gin.Context) {
 		page = "Home"
 	}
 
-	// intentar con .md primero, luego sin extension
 	pageURLs := []string{
 		fmt.Sprintf("https://raw.githubusercontent.com/wiki/%s/%s/%s.md", owner, repo, page),
 		fmt.Sprintf("https://raw.githubusercontent.com/wiki/%s/%s/%s", owner, repo, page),
@@ -1962,7 +1896,6 @@ func GitHubWikiProxyHandler(c *gin.Context) {
 	c.JSON(http.StatusNotFound, gin.H{"error": "wiki page not found"})
 }
 
-// CreateAnonymousCommentHandler publica comentario con hash/karma
 func CreateAnonymousCommentHandler(c *gin.Context) {
 	var req anonymousCommentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -2047,7 +1980,6 @@ func CreateAnonymousCommentHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// CreateAnonymousPRCommentHandler publica un comentario anónimo en un Pull Request
 func CreateAnonymousPRCommentHandler(c *gin.Context) {
 	var req anonymousCommentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -2130,7 +2062,6 @@ func CreateAnonymousPRCommentHandler(c *gin.Context) {
 	})
 }
 
-// CreateAnonymousDiscussionCommentHandler publica un comentario anónimo en una Discussion de GitHub
 func CreateAnonymousDiscussionCommentHandler(c *gin.Context) {
 	var req anonymousCommentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -2249,7 +2180,6 @@ func consumeReportToken(token string) bool {
 	return time.Now().Before(expiry)
 }
 
-// ReportHashHandler permite reportar un hash
 func ReportHashHandler(c *gin.Context) {
 	if c.Request.Method == http.MethodGet {
 		hash := strings.TrimSpace(c.Query("hash"))
@@ -2436,7 +2366,6 @@ func getSecretKey() []byte {
 	b := make([]byte, 32)
 	_, err := rand.Read(b)
 	if err != nil {
-		// fallback
 		b = []byte(time.Now().String())
 	}
 	secretKey = b
@@ -2495,14 +2424,12 @@ func getScheme(r *http.Request) string {
 	return "http"
 }
 
-// BadgeHandler serves various badges
 func BadgeHandler(c *gin.Context) {
 	badge := c.Param("badge")
 	switch badge {
 	case "anonymous-friendly.svg":
 		serveAnonymousFriendlyBadge(c)
 	case "deployed.svg":
-		// Si el servicio está suspendido, mostrar badge rojo
 		if isPanicMode() {
 			serveSuspendedBadge(c)
 			return
@@ -2575,9 +2502,9 @@ func serveAnonymousFriendlyBadge(c *gin.Context) {
 		}
 	}
 
-	fillColor := "#4CAF50" // green if static or verified
+	fillColor := "#4CAF50"
 	if repo != "" && !verified {
-		fillColor = "#9E9E9E" // gray if dynamic and not verified
+		fillColor = "#9E9E9E"
 	}
 
 	svg := fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="230" height="20.909" role="img" aria-label="Anonymous Contributor Friendly" viewBox="0 0 230 20.909"><title>Anonymous Contributor Friendly</title><path id="s" x2="0" y2="100%%" d=""><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></path><clipPath id="r"><path width="220" height="20" rx="3" fill="#fff" d="M3.136 0H226.864A3.136 3.136 0 0 1 230 3.136V17.773A3.136 3.136 0 0 1 226.864 20.909H3.136A3.136 3.136 0 0 1 0 17.773V3.136A3.136 3.136 0 0 1 3.136 0z"/></clipPath><a href="https://gitgost.fly.dev/" target="_blank" rel="noreferrer"><g clip-path="url(#r)"><path width="28" height="20" fill="black" d="M0 0H29.273V20.909H0V0z"/><path x="28" width="192" height="20" fill="%s" d="M29.273 0H230V20.909H29.273V0z"/><path width="220" height="20" fill="url(#s)" d="M0 0H230V20.909H0V0z"/></g><g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110"><g transform="matrix(.13 0 0 .13 8 3)"><path fill="#fff" d="M52.273 8.711c-19.219 0 -34.847 15.628 -34.847 34.851v43.558c0 4.786 3.925 8.715 8.711 8.715 3.582 0 6.534 -2.952 6.534 -6.534V84.943c0 -1.229 0.947 -2.177 2.177 -2.177s2.181 0.947 2.181 2.177v4.357c0 3.582 2.948 6.534 6.534 6.534 3.582 0 6.534 -2.952 6.534 -6.534V84.943c0 -1.229 0.947 -2.177 2.177 -2.177s2.177 0.947 2.177 2.177v4.357c0 3.582 2.952 6.534 6.534 6.534 3.586 0 6.534 -2.952 6.534 -6.534V84.943c0 -1.229 0.951 -2.177 2.181 -2.177s2.177 0.947 2.177 2.177v4.357c0 3.582 2.952 6.534 6.534 6.534 4.786 0 8.711 -3.929 8.711 -8.715V43.562c0 -19.223 -15.63 -34.851 -34.847 -34.851zM30.322 37.036c0.27 -0.024 0.539 0.008 0.801 0.086L52.273 43.468l21.142 -6.346a2.175 2.175 0 0 1 2.222 0.592c0.568 0.605 0.742 1.479 0.45 2.255l-6.534 17.426a2.175 2.175 0 0 1 -2.63 1.328L52.273 54.534l-14.649 4.186a2.175 2.175 0 0 1 -2.639 -1.328l-6.534 -17.425a2.17 2.17 0 0 1 1.871 -2.933z"/></g><text aria-hidden="true" x="1290" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="1900">Anonymous Contributor Friendly</text><text x="1290" y="140" transform="scale(.1)" fill="#fff" textLength="1900">Anonymous Contributor Friendly</text></g></a></svg>`, fillColor)

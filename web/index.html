@@ -94,7 +94,6 @@
             name="keywords"
             content="anonymous git contributions, git privacy, anonymous pr github, git open source, gitgost, anonymous coding, git no trace, anonymous git contributions, gitgost app"
         />
-        <!-- Open Graph / Facebook -->
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://gitgost.fly.dev" />
         <meta
@@ -109,7 +108,6 @@
             property="og:image"
             content="https://gitgost.fly.dev/assets/logos/gitgost-logo.svg"
         />
-        <!-- Twitter -->
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content="https://gitgost.fly.dev" />
         <meta
@@ -341,7 +339,6 @@
                 flex-direction: column;
             }
 
-            /* Main Layout */
             .app-container {
                 display: flex;
                 flex: 1;
@@ -353,7 +350,6 @@
                 overflow: hidden;
             }
 
-            /* Left Sidebar Navigation */
             .sidebar {
                 width: 150px;
                 flex-shrink: 0;
@@ -421,7 +417,6 @@
                 display: none;
             }
 
-            /* Main Content */
             .main-content {
                 flex: 1;
                 min-width: 0;
@@ -430,7 +425,6 @@
                 min-height: 0;
             }
 
-            /* Right Sidebar */
             .right-sidebar {
                 width: 220px;
                 flex-shrink: 0;
@@ -520,7 +514,6 @@
                 font-size: 0.75rem;
             }
 
-            /* Search history dropdown */
             .search-history-dropdown {
                 display: none;
                 position: absolute;
@@ -556,7 +549,6 @@
             }
             .search-history-item .sh-del:hover { opacity: 1; color: var(--accent); }
 
-            /* Content tabs */
             .content-tabs {
                 display: flex;
                 gap: 0.75rem;
@@ -585,7 +577,6 @@
                 font-weight: 600;
             }
 
-            /* Skeleton loader */
             @keyframes shimmer {
                 0%   { background-position: -400px 0; }
                 100% { background-position: 400px 0; }
@@ -605,7 +596,6 @@
                 animation: shimmer 1.2s ease-in-out infinite;
             }
 
-            /* Repository List */
             .repo-list {
                 display: flex;
                 flex-direction: column;
@@ -701,7 +691,6 @@
                 flex-shrink: 0;
             }
 
-            /* Status Bar */
             .statusbar {
                 background: var(--bg-secondary);
                 border-top: 1px solid var(--border);
@@ -740,7 +729,6 @@
                 text-decoration: underline;
             }
 
-            /* Modals */
             .modal-overlay {
                 display: none;
                 position: fixed;
@@ -834,7 +822,6 @@
                 padding: 1rem 1.25rem 1.25rem;
             }
 
-            /* Terminal Styles */
             .terminal {
                 background: #1a1b26;
                 border: 1px solid #2d2f3f;
@@ -926,7 +913,6 @@
                 border-color: #2d2f3f;
             }
 
-            /* Command Palette */
             .command-list {
                 display: flex;
                 flex-direction: column;
@@ -969,7 +955,6 @@
                 min-height: 0;
             }
 
-            /* Form styles for issues modal */
             .repo-input-group { display: flex; align-items: center; gap: 0.5rem; }
             .repo-separator { color: var(--fg-secondary); font-weight: 500; }
             .repo-input-group input { flex: 1; }
@@ -1004,7 +989,6 @@
             input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
             input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
 
-            /* Inline page styles */
             .page-header {
                 font-family: "IBM Plex Mono", monospace;
                 font-size: 0.72rem;
@@ -1325,7 +1309,6 @@
                     font-size: 0.7rem;
                 }
 
-                /* CLI section responsive overrides */
                 #page-content [style*="gap: 2.5rem"] {
                     gap: 1.25rem !important;
                 }
@@ -1379,7 +1362,6 @@
                     font-size: 0.62rem !important;
                 }
             }
-        /* Notifications section */
         .ntfy-lookup-row {
             flex-direction: column !important;
             align-items: stretch !important;
@@ -1402,7 +1384,6 @@
             box-sizing: border-box;
         }
 
-        /* Suspension Banner */
         .suspension-banner {
             display: none;
             background: #fff3cd;
@@ -1453,7 +1434,6 @@
         </style>
     </head>
     <body>
-        <!-- Suspension Banner -->
         <div id="suspension-banner" class="suspension-banner">
             <div class="suspension-banner-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
@@ -1471,7 +1451,6 @@
         </div>
 
         <div class="app-container">
-            <!-- Left Sidebar -->
             <aside class="sidebar">
                 <a href="/" class="logo">gitGost</a>
                 <button type="button" class="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="nav-links" onclick="toggleMobileNav()">
@@ -1517,27 +1496,13 @@
 		<path d="M18.5 15.75V8.5a3 3 0 0 0-3-3h-4.336M13.25 8l-1.793-1.793a1 1 0 0 1-.293-.707M13.25 3l-1.793 1.793a1 1 0 0 0-.293.707" />
 	</g>
 </svg> pr-comment</a>
-                <a href="#" onclick="showPage('faq'); return false;" class="nav-link"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                <a href="#" onclick="showPage('legal'); return false;" class="nav-link"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
 		<rect width="15" height="18.5" x="4.5" y="2.75" rx="3.5" />
 		<path d="M8.5 6.755h7m-7 4h7m-7 4H12" />
 	</g>
-</svg> approach</a>
-                <a href="#" onclick="showPage('guidelines'); return false;" class="nav-link"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-	<path d="M0 0h24v24H0z" fill="none" />
-	<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
-		<rect width="15" height="18.5" x="4.5" y="2.75" rx="3.5" />
-		<path d="M8.5 6.755h7m-7 4h7m-7 4H12" />
-	</g>
-</svg> guidelines</a>
-                <a href="#" onclick="showPage('karma'); return false;" class="nav-link"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-	<path d="M0 0h24v24H0z" fill="none" />
-	<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
-		<rect width="15" height="18.5" x="4.5" y="2.75" rx="3.5" />
-		<path d="M8.5 6.755h7m-7 4h7m-7 4H12" />
-	</g>
-</svg> karma</a>
+</svg> legal</a>
                 <a href="#" onclick="showPage('about'); return false;" class="nav-link"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
@@ -1615,7 +1580,6 @@
                 </div>
             </aside>
 
-            <!-- Main Content -->
             <main class="main-content">
                 <div class="content-tabs">
                     <button
@@ -1631,6 +1595,13 @@
                         onclick="switchTab('new', this)"
                     >
                         new
+                    </button>
+                    <button
+                        class="content-tab"
+                        data-tab="popular"
+                        onclick="switchTab('popular', this)"
+                    >
+                        popular
                     </button>
                     <button
                         class="content-tab"
@@ -1664,13 +1635,11 @@
                 </div>
 
                 <div class="repo-list" id="repo-list">
-                    <!-- Repos will be loaded here -->
                 </div>
                 <div id="page-content" style="display:none;"></div>
             </main>
         </div>
 
-        <!-- Command Modal -->
         <div
             class="modal-overlay"
             id="command-modal"
@@ -1750,7 +1719,6 @@
             </div>
         </div>
 
-        <!-- Push Modal -->
         <div
             class="modal-overlay"
             id="push-modal"
@@ -1919,7 +1887,6 @@
             </div>
         </div>
 
-        <!-- Update Modal -->
         <div class="modal-overlay" id="update-modal" onclick="closeModalOnOverlay(event, 'update-modal')">
             <div class="modal">
                 <div class="modal-header">
@@ -1946,7 +1913,6 @@
             </div>
         </div>
 
-        <!-- Fetch Modal -->
         <div
             class="modal-overlay"
             id="fetch-modal"
@@ -2075,7 +2041,6 @@
             </div>
         </div>
 
-        <!-- Tor Modal -->
         <div
             class="modal-overlay"
             id="tor-modal"
@@ -2123,7 +2088,6 @@
             </div>
         </div>
 
-        <!-- EXIF Modal -->
         <div
             class="modal-overlay"
             id="exif-modal"
@@ -2183,7 +2147,6 @@
             </div>
         </div>
 
-        <!-- Approach Modal -->
         <div
             class="modal-overlay"
             id="approach-modal"
@@ -2260,7 +2223,6 @@
             </div>
         </div>
 
-        <!-- Guidelines Modal -->
         <div
             class="modal-overlay"
             id="guidelines-modal"
@@ -2397,7 +2359,6 @@
             </div>
         </div>
 
-        <!-- Create Issue Modal -->
         <div class="modal-overlay" id="create-issue-modal" onclick="closeModalOnOverlay(event, 'create-issue-modal')">
             <div class="modal">
                 <div class="modal-header">
@@ -2442,7 +2403,6 @@
             </div>
         </div>
 
-        <!-- Comment Issue Modal -->
         <div class="modal-overlay" id="comment-issue-modal" onclick="closeModalOnOverlay(event, 'comment-issue-modal')">
             <div class="modal">
                 <div class="modal-header">
@@ -2487,7 +2447,6 @@
             </div>
         </div>
 
-        <!-- Comment PR Modal -->
         <div class="modal-overlay" id="comment-pr-modal" onclick="closeModalOnOverlay(event, 'comment-pr-modal')">
             <div class="modal">
                 <div class="modal-header">
@@ -2535,7 +2494,6 @@
             </div>
         </div>
 
-        <!-- Karma Modal -->
         <div
             class="modal-overlay"
             id="karma-modal"
@@ -2738,7 +2696,6 @@
                 return `<span class="repo-lang" title="${safeLang}"><span class="repo-lang-dot" style="background:${safeColor}"></span>${safeLang}</span>`;
             }
 
-            // Modal functions
             function openModal(modalId) {
                 const el = document.getElementById(modalId);
                 if (!el) return;
@@ -2757,7 +2714,6 @@
                 }
             }
 
-            // Theme toggle
             function toggleTheme() {
                 const html = document.documentElement;
                 const current = html.getAttribute("data-theme");
@@ -2766,7 +2722,6 @@
                 localStorage.setItem("theme", next);
             }
 
-            // Load saved theme
             (function () {
                 const saved = localStorage.getItem("theme");
                 if (saved) {
@@ -2774,7 +2729,6 @@
                 }
             })();
 
-            // Suspension banner functions
             async function checkServiceStatus() {
                 try {
                     const response = await fetch(`${API_BASE}/api/status`);
@@ -2796,17 +2750,13 @@
                 }
             }
 
-            // Check service status on page load
             checkServiceStatus();
 
-            // Keyboard shortcuts
             document.addEventListener("keydown", function (e) {
-                // Cmd+K or Ctrl+K to open command palette
                 if ((e.metaKey || e.ctrlKey) && e.key === "k") {
                     e.preventDefault();
                     openModal("command-modal");
                 }
-                // Escape to close modals
                 if (e.key === "Escape") {
                     document
                         .querySelectorAll(".modal-overlay.active")
@@ -2817,20 +2767,17 @@
                 }
             });
 
-            // Terminal tab switching
             document
                 .querySelectorAll(".terminal-tab[data-terminal]")
                 .forEach((tab) => {
                     tab.addEventListener("click", function () {
                         const terminal = this.dataset.terminal;
 
-                        // Update tabs
                         document
                             .querySelectorAll(".terminal-tab[data-terminal]")
                             .forEach((t) => t.classList.remove("active"));
                         this.classList.add("active");
 
-                        // Update terminal displays for tabs with inline terminal
                         document
                             .querySelectorAll('[id^="terminal-"]')
                             .forEach((t) => {
@@ -2843,14 +2790,12 @@
                     });
                 });
 
-            // Push provider switching
             document
                 .querySelectorAll(".terminal-tab[data-push-provider]")
                 .forEach((tab) => {
                     tab.addEventListener("click", function () {
                         const provider = this.dataset.pushProvider;
 
-                        // Update tabs
                         document
                             .querySelectorAll(
                                 ".terminal-tab[data-push-provider]",
@@ -2858,7 +2803,6 @@
                             .forEach((t) => t.classList.remove("active"));
                         this.classList.add("active");
 
-                        // Update body displays
                         ["gh", "gl", "cb"].forEach((p) => {
                             const el = document.getElementById("push-body-" + p);
                             if (el) el.style.display = p === provider ? "block" : "none";
@@ -2866,14 +2810,12 @@
                     });
                 });
 
-            // Fetch provider switching
             document
                 .querySelectorAll(".terminal-tab[data-fetch-provider]")
                 .forEach((tab) => {
                     tab.addEventListener("click", function () {
                         const provider = this.dataset.fetchProvider;
 
-                        // Update tabs
                         document
                             .querySelectorAll(
                                 ".terminal-tab[data-fetch-provider]",
@@ -2881,7 +2823,6 @@
                             .forEach((t) => t.classList.remove("active"));
                         this.classList.add("active");
 
-                        // Update body displays
                         ["gh", "gl", "cb"].forEach((p) => {
                             const el = document.getElementById("fetch-body-" + p);
                             if (el) el.style.display = p === provider ? "block" : "none";
@@ -2889,7 +2830,6 @@
                     });
                 });
 
-            // Search history helpers
             const SEARCH_HISTORY_KEY = 'gg_search_history';
             const SEARCH_HISTORY_MAX = 12;
 
@@ -2930,7 +2870,6 @@
                 if (dropdown) dropdown.classList.remove('open');
             }
 
-            // Search functionality
             const searchInput = document.getElementById("search-input");
             let searchTimeout;
 
@@ -2942,7 +2881,6 @@
                 searchInput.addEventListener("input", function () {
                     const query = this.value.trim();
                     renderSearchHistory(query);
-                    // No hacer búsqueda automática, solo actualizar historial
                 });
 
                 searchInput.addEventListener("keydown", function (e) {
@@ -2958,11 +2896,9 @@
                     }
                 });
 
-                // Delegate clicks inside dropdown
                 const dropdown = document.getElementById('search-history-dropdown');
                 if (dropdown) {
                     dropdown.addEventListener('mousedown', function (e) {
-                        // Prevent blur from firing before click
                         e.preventDefault();
                         const delEl = e.target.closest('[data-del]');
                         if (delEl) {
@@ -3011,7 +2947,6 @@
                     if (data.results && data.results.length > 0) {
                         addToSearchHistory(query);
                         let results = data.results;
-                        // Filtrar por tags si el query empieza con #
                         if (query.startsWith('#')) {
                             const tag = query.substring(1).toLowerCase();
                             results = results.filter(r => {
@@ -3052,7 +2987,6 @@
                 if (!append) {
                     container.innerHTML = "";
                 } else {
-                    // Remove append skeletons before adding real items
                     container.querySelectorAll('.scroll-skeleton').forEach(el => el.remove());
                 }
 
@@ -3125,6 +3059,8 @@
                     loadNew();
                 } else if (tab === "stars") {
                     loadStars();
+                } else if (tab === "popular") {
+                    loadPopular();
                 }
             }
 
@@ -3201,7 +3137,6 @@
                 return num.toString();
             }
 
-            // Infinite scroll state
             const scrollState = {
                 tab: 'trending',
                 page: 1,
@@ -3216,7 +3151,6 @@
                 scrollState.exhausted = false;
             }
 
-            // Load trending repos on page load
             function showSkeletons(count = 6) {
                 const container = document.getElementById('repo-list');
                 if (!container) return;
@@ -3240,6 +3174,7 @@
                     try { data = JSON.parse(text); } catch { scrollState.exhausted = true; removeSentinel(); return; }
                     const results = data.results || [];
                     if (results.length > 0) {
+                        shuffleArray(results);
                         renderRepos(results, append);
                         scrollState.page++;
                         ensureSentinel();
@@ -3291,10 +3226,54 @@
                 }
             }
 
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            async function loadPopular() {
+                scrollState.tab = 'popular';
+                scrollState.page = 1;
+                scrollState.exhausted = true;
+                scrollState.loading = true;
+                removeSentinel();
+                showSkeletons();
+                const container = document.getElementById('repo-list');
+                try {
+                    const response = await fetch(`${API_BASE}/api/trending/all?sort=stars&per_page=100`);
+                    if (!response.ok) {
+                        if (container) container.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">Could not load popular repos.</p>';
+                        return;
+                    }
+                    const text = await response.text();
+                    let data;
+                    try { data = JSON.parse(text); } catch {
+                        if (container) container.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">Unexpected server response.</p>';
+                        return;
+                    }
+                    let results = (data.results || [])
+                        .sort((a, b) => (b.stars || 0) - (a.stars || 0))
+                        .slice(0, 100);
+                    if (results.length === 0) {
+                        if (container) container.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">No popular repos available.</p>';
+                    } else {
+                        shuffleArray(results);
+                        renderRepos(results);
+                        updateStatusbar('popular');
+                    }
+                } catch {
+                    if (container) container.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">API not available.</p>';
+                } finally {
+                    scrollState.loading = false;
+                }
+            }
+
             function appendSkeletons(count = 3) {
                 const container = document.getElementById('repo-list');
                 if (!container) return;
-                // Remove existing sentinel before appending
                 const old = document.getElementById('scroll-sentinel');
                 if (old) old.remove();
                 const frag = document.createDocumentFragment();
@@ -3339,29 +3318,25 @@
                 if (s) s.remove();
             }
 
-            // Update status bar
             function updateStatusbar(section, value = "") {
                 const statusbarPath = document.getElementById("statusbar-path");
                 if (!statusbarPath) return;
                 statusbarPath.textContent = `home > ${section}${value ? " > " + value : ""}`;
             }
 
-            // SPA page router
             const PAGES = {
-                home: null, // special: shows repo list
+                home: null,
                 cli: {
                     title: 'CLI Reference',
                     html: () => `
                         <div style="display:flex;flex-direction:column;gap:2.5rem;">
 
-                            <!-- Base URL -->
                             <div>
                                 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Base URL</div>
                                 <code style="display:block;background:var(--code-bg);border:1px solid var(--border);border-radius:4px;padding:0.5rem 0.75rem;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;color:var(--fg);">https://gitgost.fly.dev/v1/{provider}/{owner}/{repo}</code>
                                 <p style="font-size:0.78rem;color:var(--fg-secondary);margin:0.5rem 0 0;"><code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">provider</code> is <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">gh</code> for GitHub, <code style="color:#fc6d26;background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">gl</code> for GitLab or <code style="color:#20883d;background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">cb</code> for Codeberg.</p>
                             </div>
 
-                            <!-- push -->
                             <div>
                                 <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;">
                                     <code style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;background:var(--accent);color:#fff;border-radius:3px;padding:0.15em 0.5em;">POST</code>
@@ -3407,7 +3382,6 @@
                                 </div>
                             </div>
 
-                            <!-- update -->
                             <div>
                                 <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;">
                                     <code style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;background:var(--accent);color:#fff;border-radius:3px;padding:0.15em 0.5em;">POST</code>
@@ -3428,7 +3402,6 @@
                                 </div>
                             </div>
 
-                            <!-- clone / fetch -->
                             <div>
                                 <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;">
                                     <code style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;background:#22c55e;color:#fff;border-radius:3px;padding:0.15em 0.5em;">GET</code>
@@ -3470,7 +3443,6 @@
                                 </div>
                             </div>
 
-                            <!-- tor -->
                             <div>
                                 <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;">
                                     <code style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;background:#6e40c9;color:#fff;border-radius:3px;padding:0.15em 0.5em;">OPT</code>
@@ -3492,7 +3464,6 @@
                                 </div>
                             </div>
 
-                            <!-- exif -->
                             <div>
                                 <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;">
                                     <code style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;background:#6b7280;color:#fff;border-radius:3px;padding:0.15em 0.5em;">OPT</code>
@@ -3515,7 +3486,6 @@
                                 </div>
                             </div>
 
-                            <!-- ntfy -->
                             <div>
                                 <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;">
                                     <code style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;background:var(--accent);color:#fff;border-radius:3px;padding:0.15em 0.5em;">GET</code>
@@ -3550,7 +3520,6 @@
                     html: () => `
                         <div style="display:flex;flex-direction:column;gap:2.5rem;">
 
-                            <!-- Hero -->
                             <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.5rem 1.6rem;">
                                 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;">gitGost / git extension</div>
                                 <h3 style="margin:0 0 0.5rem;color:var(--fg);font-size:1.15rem;">An open source Git extension for resilient networking.</h3>
@@ -3569,7 +3538,6 @@
                                 </div>
                             </div>
 
-                            <!-- Downloads -->
                             <div>
                                 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Download git-gost</div>
                                 <p style="font-size:0.78rem;color:var(--fg-secondary);margin:0 0 1rem;max-width:660px;">Each release publishes a binary per platform with its SHA-256 and a Sigstore attestation. Download yours, verify the hash, and run the auto-installer.</p>
@@ -3607,7 +3575,6 @@
                                 </div>
                             </div>
 
-                            <!-- Getting started -->
                             <div>
                                 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Getting started</div>
                                 <div class="terminal">
@@ -3629,7 +3596,6 @@
                                 <p style="font-size:0.78rem;color:var(--fg-secondary);margin:0.75rem 0 0;">If the connection is lost, the job retries automatically and the download resumes from its last checkpoint — never from zero.</p>
                             </div>
 
-                            <!-- Features -->
                             <div>
                                 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Features</div>
                                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;">
@@ -3855,6 +3821,16 @@
                             <p>We don't store personal data: only the anonymous hash, its karma and the relation to sent messages. We don't track IPs or link identities.</p>
                         </div>`
                 },
+                legal: {
+                    title: 'Legal',
+                    html: () => `
+                        <h3 style="color:var(--accent);margin-top:0;">Comment Approach</h3>
+                        ${PAGES.faq.html()}
+                        <h3 style="color:var(--accent);">Guidelines</h3>
+                        ${PAGES.guidelines.html()}
+                        <h3 style="color:var(--accent);">Karma</h3>
+                        ${PAGES.karma.html()}`
+                },
                 about: {
                     title: 'About',
                     html: () => `
@@ -3983,7 +3959,6 @@
             };
 
             function showPage(name) {
-                // Update active nav link
                 document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
                 document.querySelectorAll('.nav-link').forEach(l => {
                     if (l.getAttribute('onclick') && l.getAttribute('onclick').includes(`'${name}'`)) {
@@ -4023,7 +3998,6 @@
                 `;
                 updateStatusbar(name);
 
-                // Re-bind push provider tabs
                 pageContent.querySelectorAll('.terminal-tab[data-push-provider]').forEach(tab => {
                     tab.addEventListener('click', function() {
                         pageContent.querySelectorAll('.terminal-tab[data-push-provider]').forEach(t => t.classList.remove('active'));
@@ -4036,7 +4010,6 @@
                     });
                 });
 
-                // Re-bind fetch provider tabs
                 pageContent.querySelectorAll('.terminal-tab[data-fetch-provider]').forEach(tab => {
                     tab.addEventListener('click', function() {
                         pageContent.querySelectorAll('.terminal-tab[data-fetch-provider]').forEach(t => t.classList.remove('active'));
@@ -4049,7 +4022,6 @@
                     });
                 });
 
-                // Re-bind pr-provider label
                 const prProvider = pageContent.querySelector('#pr-provider');
                 if (prProvider) {
                     prProvider.addEventListener('change', () => {
@@ -4058,7 +4030,6 @@
                     });
                 }
 
-                // Re-bind form submit buttons
                 bindFormHandlers(pageContent);
             }
 
@@ -4071,7 +4042,6 @@
             }
 
             function bindFormHandlers(root) {
-                // Create issue
                 const issueSubmit = root.querySelector('#issue-submit');
                 if (issueSubmit) {
                     issueSubmit.addEventListener('click', async () => {
@@ -4107,7 +4077,6 @@
                     });
                 }
 
-                // Comment on issue
                 const commentSubmit = root.querySelector('#comment-submit');
                 if (commentSubmit) {
                     commentSubmit.addEventListener('click', async () => {
@@ -4143,7 +4112,6 @@
                     });
                 }
 
-                // Comment on PR
                 const prCommentSubmit = root.querySelector('#pr-comment-submit');
                 if (prCommentSubmit) {
                     prCommentSubmit.addEventListener('click', async () => {
@@ -4181,7 +4149,6 @@
                 }
             }
 
-            // Navigation click handlers
             document.querySelectorAll(".nav-link").forEach((link) => {
                 link.addEventListener("click", function (e) {
                     document
@@ -4224,7 +4191,6 @@
                     </div>
                     <div id="tag-repo-list"></div>`;
 
-                // Wikipedia + Wikidata en paralelo con la búsqueda
                 fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(tag)}`)
                     .then(r => r.ok ? r.json() : null)
                     .then(wiki => {
@@ -4334,7 +4300,6 @@
                 });
             }
 
-            // Load trending on page load, or search if ?q= param present, or show tag page if ?tag=
             const _initParams = new URLSearchParams(window.location.search);
             const _initTag = _initParams.get('tag');
             const _initQ   = _initParams.get('q');
@@ -4355,9 +4320,6 @@
                 });
             })();
 
-            // (form handlers moved to bindFormHandlers — called per page render)
-
-            // Create issue — kept for modal command palette fallback
             document.getElementById('issue-submit')?.addEventListener('click', async () => {
                 const provider = document.getElementById('issue-provider')?.value || 'gh';
                 const owner = document.getElementById('issue-owner')?.value.trim();
@@ -4399,7 +4361,6 @@
                 }
             });
 
-            // Comment on issue
             document.getElementById('comment-submit')?.addEventListener('click', async () => {
                 const provider = document.getElementById('comment-provider')?.value || 'gh';
                 const owner = document.getElementById('comment-owner')?.value.trim();
@@ -4442,7 +4403,6 @@
                 }
             });
 
-            // Comment on PR
             document.getElementById('pr-comment-submit')?.addEventListener('click', async () => {
                 const provider = document.getElementById('pr-provider')?.value || 'gh';
                 const owner = document.getElementById('pr-owner')?.value.trim();
@@ -4486,7 +4446,6 @@
                 }
             });
 
-        // Rate Limit display — GitHub + GitLab
         function rlColor(pct) {
             return pct > 50 ? 'var(--accent)' : pct > 20 ? '#f0a500' : '#da3737';
         }
@@ -4504,7 +4463,6 @@
         }
 
         async function updateRateLimit() {
-            // GitHub
             try {
                 const token = localStorage.getItem('gh_token');
                 const headers = token ? { 'Authorization': `token ${token}` } : {};
@@ -4522,8 +4480,6 @@
                 }
             } catch {}
 
-            // GitLab — RateLimit headers not accessible via CORS from browser
-            // Display documented limits: 300 req/min unauthenticated, 2000 req/min authenticated
             {
                 const glToken = localStorage.getItem('gl_token');
                 const limit = glToken ? 2000 : 300;
@@ -4537,8 +4493,6 @@
                 st.style.color = '#1a7f37';
             }
 
-            // Codeberg — RateLimit headers not accessible via CORS from browser
-            // Display documented limits: 60 req/min unauthenticated, 1000 req/min authenticated
             {
                 const cbToken = localStorage.getItem('cb_token');
                 const limit = cbToken ? 1000 : 60;
@@ -4553,7 +4507,6 @@
             }
         }
 
-            // ntfy topic lookup
             async function lookupNtfyTopic() {
                 const hash = document.getElementById("ntfy-hash-input")?.value.trim();
                 const resultEl = document.getElementById("ntfy-result");

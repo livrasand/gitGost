@@ -28,12 +28,10 @@ CREATE TABLE IF NOT EXISTS jobs (
     updated_at TEXT NOT NULL
 );`
 
-// Store es el acceso a la cola de jobs persistida en SQLite (local al cliente).
 type Store struct {
 	db *sql.DB
 }
 
-// Open abre (o crea) la base de datos de la cola en path.
 func Open(path string) (*Store, error) {
 	if dir := filepath.Dir(path); dir != "" {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -52,12 +50,10 @@ func Open(path string) (*Store, error) {
 	return &Store{db: db}, nil
 }
 
-// Close cierra la base de datos.
 func (s *Store) Close() error {
 	return s.db.Close()
 }
 
-// Create inserta un job en estado queued y devuelve su ID.
 func (s *Store) Create(j *Job) (int64, error) {
 	now := time.Now().UTC()
 	j.State = StateQueued
@@ -79,7 +75,6 @@ func (s *Store) Create(j *Job) (int64, error) {
 	return res.LastInsertId()
 }
 
-// Get devuelve un job por ID.
 func (s *Store) Get(id int64) (*Job, error) {
 	row := s.db.QueryRow(
 		`SELECT id, operation, url, origin, target, cwd, args, state, progress, error, pid, created_at, updated_at
@@ -87,7 +82,6 @@ func (s *Store) Get(id int64) (*Job, error) {
 	return scanJob(row)
 }
 
-// List devuelve los últimos limit jobs, del más reciente al más antiguo.
 func (s *Store) List(limit int) ([]Job, error) {
 	rows, err := s.db.Query(
 		`SELECT id, operation, url, origin, target, cwd, args, state, progress, error, pid, created_at, updated_at
@@ -108,22 +102,18 @@ func (s *Store) List(limit int) ([]Job, error) {
 	return out, rows.Err()
 }
 
-// SetState actualiza el estado de un job.
 func (s *Store) SetState(id int64, state string) error {
 	return s.touch(id, "state", state)
 }
 
-// SetProgress actualiza la última línea de progreso del job.
 func (s *Store) SetProgress(id int64, progress string) error {
 	return s.touch(id, "progress", progress)
 }
 
-// SetError registra el error de un job fallido.
 func (s *Store) SetError(id int64, errMsg string) error {
 	return s.touch(id, "error", errMsg)
 }
 
-// SetPID registra el PID del proceso en background del job.
 func (s *Store) SetPID(id int64, pid int) error {
 	if _, err := s.db.Exec(`UPDATE jobs SET pid = ?, updated_at = ? WHERE id = ?`,
 		pid, time.Now().UTC().Format(time.RFC3339Nano), id); err != nil {
@@ -132,7 +122,6 @@ func (s *Store) SetPID(id int64, pid int) error {
 	return nil
 }
 
-// Delete elimina un job de la cola.
 func (s *Store) Delete(id int64) error {
 	_, err := s.db.Exec(`DELETE FROM jobs WHERE id = ?`, id)
 	return err

@@ -10,7 +10,6 @@
         />
     <link rel="icon" href="assets/logos/gitgost-logo.svg" type="image/svg+xml" />
     <title>gitGost — repo</title>
-    <!-- Google Fonts removidas por content blocker; se usan system fonts como fallback -->
     <link id="hljs-theme-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github.min.css" />
     <link id="hljs-theme-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github-dark.min.css" disabled />
     <script src="https://mentacaptchaeu.eu.pythonanywhere.com/menta-captcha.js"></script>
@@ -61,7 +60,6 @@
             min-height: 100vh;
         }
 
-        /* Top bar */
         .topbar {
             display: flex;
             align-items: center;
@@ -109,7 +107,6 @@
         .rv-btn.star:disabled { opacity: 0.4; cursor: not-allowed; }
         .rv-btn.back { color: var(--fg-muted); }
 
-        /* Breadcrumb */
         .breadcrumb {
             font-family: "IBM Plex Mono", monospace;
             font-size: 0.75rem;
@@ -127,13 +124,11 @@
         .breadcrumb span.sep { color: var(--fg-secondary); }
         .breadcrumb span.current { color: var(--fg); }
 
-        /* Layout */
         .repo-layout {
             display: flex;
             height: calc(100vh - 80px);
         }
 
-        /* File tree */
         .file-tree {
             width: 200px;
             border-right: 1px solid var(--border);
@@ -197,7 +192,6 @@
             line-height: 1.6;
         }
 
-        /* Code panel */
         .code-panel {
             flex: 1;
             overflow: auto;
@@ -286,7 +280,6 @@
         .readme hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
         .readme input[type="checkbox"] { margin-right: 0.4rem; }
 
-        /* Repo info bar */
         .repo-info {
             padding: 0.5rem 1.25rem;
             border-bottom: 1px solid var(--border);
@@ -299,7 +292,6 @@
         .repo-info span { display: flex; align-items: center; gap: 0.3rem; }
         .repo-info .stars { color: var(--accent); }
 
-        /* Left nav */
         .left-nav {
             width: 300px;
             border-right: 1px solid var(--border);
@@ -320,7 +312,6 @@
         .left-nav a:hover { background: var(--bg-hover); color: var(--fg); }
         .left-nav a.active { border-left-color: var(--accent); color: var(--fg); background: var(--bg-hover); }
 
-        /* Right sidebar */
         .right-sidebar {
             width: 300px;
             border-left: 1px solid var(--border);
@@ -403,7 +394,6 @@
             opacity: 0.8;
         }
 
-        /* Languages bar */
         .lang-bar {
             display: flex;
             height: 6px;
@@ -436,7 +426,6 @@
         }
         .lang-name { color: var(--fg); font-weight: 500; }
 
-                /* Releases */
                 .release-list { display: flex; flex-direction: column; padding: 1rem 1.25rem; gap: 0; }
                 .release-item {
                     display: flex; gap: 0.75rem; padding: 0.6rem 0.75rem;
@@ -518,7 +507,6 @@
                 }
                 .release-detail-body th { background: var(--bg-secondary); font-weight: 600; }
 
-        /* Issues / PRs list */
         .issue-list { display: flex; flex-direction: column; padding: 1rem 1.25rem; }
         .issue-item {
             display: flex;
@@ -564,7 +552,6 @@
         }
         .issue-list-header span { color: var(--fg); font-weight: 600; }
 
-        /* Bugs toolbar */
         .bugs-toolbar {
             display: flex;
             align-items: center;
@@ -607,7 +594,6 @@
             color: var(--fg-muted);
         }
 
-        /* Discussions */
         .disc-category {
             display: inline-block;
             font-size: 0.65rem;
@@ -627,7 +613,6 @@
             margin-left: 0.3rem;
         }
 
-        /* Bug modal */
         .bug-modal-overlay {
             position: fixed;
             inset: 0;
@@ -704,7 +689,6 @@
         }
         .bug-submit-btn:disabled { opacity: 0.5; cursor: default; }
 
-        /* Issue detail panel */
         .issue-detail {
             display: flex;
             height: 100%;
@@ -818,7 +802,6 @@
         }
         .issue-ext-link:hover { text-decoration: underline; }
 
-        /* Reply box */
         .reply-section {
             margin-top: 1.5rem;
             border-top: 1px solid var(--border);
@@ -900,7 +883,6 @@
             color: var(--fg-muted);
         }
 
-        /* Inline comments */
         .comment-list {
             margin-top: 1rem;
             display: flex;
@@ -929,7 +911,6 @@
             margin-bottom: 0.25rem;
         }
 
-        /* Hash save modal */
         .hash-modal-overlay {
             position: fixed;
             inset: 0;
@@ -993,7 +974,6 @@
         }
         .hash-modal-btn:hover { opacity: 0.85; }
 
-        /* Clone modal */
         .clone-modal-overlay {
             position: fixed;
             inset: 0;
@@ -1075,7 +1055,6 @@
         }
         .clone-close-btn:hover { opacity: 0.75; }
 
-        /* Status Bar (Top Navigation) */
         .statusbar {
             position: sticky;
             top: 0;
@@ -1094,7 +1073,6 @@
         .statusbar a { color: var(--accent); text-decoration: none; }
         .statusbar a:hover { text-decoration: underline; }
 
-        /* Suspension Banner */
         .suspension-banner {
             display: none;
             background: #fff3cd;
@@ -1152,7 +1130,6 @@
                     }
                 }
 
-                /* Commits list */
                 .commit-list {
                     padding: 1rem 1.25rem;
                     flex: 1;
@@ -1238,7 +1215,6 @@
                     color: var(--fg-secondary);
                 }
 
-                /* Commit detail view */
                 .commit-detail {
                     padding: 1.25rem;
                     max-width: 100%;
@@ -1746,7 +1722,6 @@
             </style>
 </head>
 <body>
-    <!-- Suspension Banner -->
     <div id="suspension-banner" class="suspension-banner">
         <div class="suspension-banner-icon">⚠️</div>
         <div class="suspension-banner-content">
@@ -1755,7 +1730,6 @@
         </div>
     </div>
 
-    <!-- Status Bar (Top Navigation) -->
     <div class="statusbar">
         <div class="statusbar-left">
             <a href="/" style="color:var(--accent);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.78rem;">gitGost</a>
@@ -1852,7 +1826,6 @@
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.25 3.75h-2.5a4 4 0 0 0-4 4v8.5a4 4 0 0 0 4 4h8.5a4 4 0 0 0 4-4v-2.5m-6.5-10h5.5c.276 0 .526.112.707.293m.293 6.207v-5.5a1 1 0 0 0-.293-.707M12.75 11.25l6.5-6.5l.707-.707" />
 </svg> Open Original</button>
-                    <!--a class="sidebar-btn" id="sb-settings" href="#" target="_blank">⚙ Settings</a-->
                 </div>
             </div>
             <div class="sidebar-section" id="sb-releases-section" style="display:none">
@@ -1875,7 +1848,6 @@
     <script>
         const API_BASE = window.location.origin;
 
-        // Suspension banner functions
         async function checkServiceStatus() {
             try {
                 const response = await fetch(`${API_BASE}/api/status`);
@@ -1897,12 +1869,10 @@
             }
         }
 
-        // Check service status on page load
         checkServiceStatus();
 
         const CB_BASE = `${window.location.origin}/api/cb-proxy/api/v1`;
 
-        // GitHub fetch helper — usa token de localStorage si existe para evitar rate limiting
         function ghFetch(url, opts = {}) {
             const token = localStorage.getItem('gh_token');
             if (token) {
@@ -1919,7 +1889,6 @@
             });
         }
 
-        // Codeberg fetch helper — usa token de localStorage si existe para evitar rate limiting
         function cbFetch(url, opts = {}) {
             const token = localStorage.getItem('cb_token');
             if (token) {
@@ -1936,7 +1905,6 @@
             });
         }
 
-        // Parse URL params: /repo.html?owner=X&repo=Y&provider=gh
         const params = new URLSearchParams(window.location.search);
         const rv = {
             owner:    params.get('owner') || '',
@@ -1971,7 +1939,6 @@
             document.title = `${rv.owner}/${rv.repo} · gitGost`;
             updateStatusbarPath();
 
-            // fork link
             const forkLink = document.getElementById('fork-link');
             if (forkLink) {
                 if (rv.provider === 'gh') forkLink.href = `https://github.com/${rv.owner}/${rv.repo}/fork`;
@@ -1979,7 +1946,6 @@
                 else forkLink.href = `https://gitlab.com/${rv.owner}/${rv.repo}/-/forks/new`;
             }
 
-            // sidebar settings link
             const sbSettings = document.getElementById('sb-settings');
             if (sbSettings) {
                 if (rv.provider === 'gh') sbSettings.href = `https://github.com/${rv.owner}/${rv.repo}/settings`;
@@ -1990,25 +1956,21 @@
             const sbStarBtn = document.getElementById('sb-star-btn');
             if (sbStarBtn) sbStarBtn.disabled = false;
 
-            // load repo info
             loadRepoInfo();
             loadLanguages();
             _updateStarBtn();
-            // load commit count (independiente de loadRepoInfo para GitLab)
             loadCommitCount();
             loadReleaseCount();
             checkPackages();
-            // interceptar clics en enlaces wiki/anclas del panel
             const codePanel = document.getElementById('code-panel');
             if (codePanel) codePanel.addEventListener('click', handlePanelLinkClick);
-            // show home view by default (README)
             showView('home');
         }
 
         function showView(view) {
             const navLinks = document.querySelectorAll('.left-nav a');
             navLinks.forEach(a => a.classList.remove('active'));
-            const idx = ['home','files','commits','branches','packages','bugs','reviews','discussions','wiki'].indexOf(view); // bugs=issues, reviews=pull requests
+            const idx = ['home','files','commits','branches','packages','bugs','reviews','discussions','wiki'].indexOf(view);
             if (idx >= 0 && navLinks[idx]) navLinks[idx].classList.add('active');
 
             const fileTree = document.getElementById('file-tree');
@@ -2068,20 +2030,17 @@
                     item = items.find(i => i.name.toLowerCase() === 'readme.md');
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
-                    // Si la rama por defecto aún no se cargó, omitir ?ref= (ref vacío devuelve 400 en GitLab)
                     const ref = currentBranch();
                     const refQ = ref ? `?ref=${encodeURIComponent(ref)}` : '';
                     const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/files/README.md/raw${refQ}`);
                     if (res.ok) {
                         let text = await res.text();
-                        // Limpieza muy agresiva de cualquier patrón que cause undefined
-                        text = text.replace(/\$\{[^}]+\}/g, ''); // ${variable}
-                        text = text.replace(/\$\[.*?\]/g, ''); // $[variable]
-                        text = text.replace(/undefined/g, 'GitLab'); // undefined -> GitLab
-                        text = text.replace(/\[undefined\]/g, ''); // [undefined]
-                        text = text.replace(/is undefined/g, 'is hosted on GitLab.com'); // Frase específica
-                        text = text.replace(/located at undefined/g, 'located at https://gitlab.com/gitlab-org/gitlab-foss/'); // Frase específica
-                        // Eliminar cualquier línea que contenga undefined
+                        text = text.replace(/\$\{[^}]+\}/g, '');
+                        text = text.replace(/\$\[.*?\]/g, '');
+                        text = text.replace(/undefined/g, 'GitLab');
+                        text = text.replace(/\[undefined\]/g, '');
+                        text = text.replace(/is undefined/g, 'is hosted on GitLab.com');
+                        text = text.replace(/located at undefined/g, 'located at https://gitlab.com/gitlab-org/gitlab-foss/');
                         text = text.split('\n').filter(line => !line.includes('undefined')).join('\n');
                         panel.innerHTML = `<div class="readme">${renderMd(text)}</div>`;
                         panel.querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
@@ -2153,7 +2112,6 @@
             const panel = document.getElementById('code-panel');
             const open   = _bugsCache.open   || [];
             const closed = _bugsCache.closed || [];
-            // "pending" = open issues with no assignee
             const pending = open.filter(i => !(i.assignees?.length || i.assignee));
             const items = tab === 'open' ? open : tab === 'pending' ? pending : closed;
 
@@ -2276,7 +2234,6 @@
                     </div>
                 </div>`;
 
-            // Cargar comentarios de la API
             loadIssueComments(num, listId);
         }
 
@@ -2528,7 +2485,6 @@
             panel.innerHTML = toolbar + `<div class="issue-list">${list}</div>`;
         }
 
-        /* ── Discussions ── */
         let _discussionsCache = null;
 
         async function loadDiscussions() {
@@ -2552,7 +2508,6 @@
                     throw new Error(hint);
                 }
 
-                // data is { totalCount, nodes: [{ number, title, createdAt, author: {login}, category: {name, emoji}, comments: {totalCount} }] }
                 const discussions = {
                     totalCount: data.totalCount || 0,
                     nodes: (data.nodes || []).map(n => ({
@@ -2787,7 +2742,6 @@
                 if (textarea) textarea.value = '';
                 if (statusEl) statusEl.textContent = 'sent';
 
-                // Mostrar comentario inline
                 const list = textarea?.closest('.issue-detail-main')?.querySelector('.comment-list');
                 if (list) {
                     const li = document.createElement('li');
@@ -2814,7 +2768,6 @@
 
         let _wikiCache = { slug: '', html: '' };
 
-        /* ── Wiki ── */
         async function loadWiki(page) {
             const panel = document.getElementById('code-panel');
             if (!panel) return;
@@ -2824,7 +2777,6 @@
             const pageSlug = hashIdx >= 0 ? full.slice(0, hashIdx) : full;
             const anchor = hashIdx >= 0 ? full.slice(hashIdx + 1).toLowerCase().trim() : '';
 
-            // Si ya tenemos la misma página renderizada, solo reutilizamos y scroll
             if (_wikiCache.slug === pageSlug && _wikiCache.html) {
                 panel.innerHTML = _wikiCache.html;
                 if (anchor) scrollToAnchor(anchor);
@@ -2836,7 +2788,6 @@
 
             try {
                 if (rv.provider === 'gh') {
-                    // GitHub wiki: via server-side proxy to avoid CORS/rate-limit issues
                     async function fetchWikiRaw(name) {
                         const url = `${API_BASE}/api/gh-wiki/${rv.owner}/${rv.repo}/${encodeURIComponent(name)}`;
                         const r = await fetch(url);
@@ -2846,7 +2797,6 @@
 
                     let pageText = await fetchWikiRaw(pageSlug);
                     if (pageText === null && pageSlug === 'Home') {
-                        // La pagina Home no existe, puede que la wiki no tenga contenido
                         panel.innerHTML = `<div style="padding:1rem;color:var(--fg-secondary);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;">
                             This repository has no wiki content yet.
                             <div style="margin-top:0.5rem;font-size:0.72rem;color:var(--fg-muted);">
@@ -2858,12 +2808,10 @@
                     }
                     if (pageText === null) throw new Error(`wiki page not found`);
 
-                    // intentar obtener _Sidebar para navegacion
                     let navPages = [];
                     try {
                         const sbText = await fetchWikiRaw('_Sidebar');
                         if (sbText) {
-                            // extraer links [[Page]] o [[Page|Text]] o [[Page#anchor|Text]]
                             const wikiLinkRe = /\[\[([^|\]]+)(?:\|([^\]]+))?\]\]/g;
                             let m;
                             while ((m = wikiLinkRe.exec(sbText)) !== null) {
@@ -2879,7 +2827,6 @@
                                     navPages.push({ slug, title: label, anchor: a });
                                 }
                             }
-                            // tambien links markdown
                             const mdLinkRe = /\[([^\]]+)\]\(([^)]+)\)/g;
                             while ((m = mdLinkRe.exec(sbText)) !== null) {
                                 const href = m[2].trim();
@@ -2894,7 +2841,6 @@
                         }
                     } catch(_) { /* sidebar no disponible */ }
 
-                    // armar navegacion
                     let navHtml = '';
                     if (navPages.length > 0) {
                         navHtml = `<div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-family:'IBM Plex Mono',monospace;color:var(--fg-muted);display:flex;gap:0.5rem;flex-wrap:wrap;">
@@ -2914,7 +2860,6 @@
                     panel.innerHTML = navHtml + `<div class="readme">${renderMd(pageText, null, true)}</div>`;
                     _wikiCache = { slug: pageSlug, html: panel.innerHTML };
                 } else if (rv.provider === 'cb') {
-                    // Codeberg wiki: API REST Gitea/Forgejo
                     const listRes = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/wiki/pages?limit=100`);
                     if (!listRes.ok) throw new Error(`Codeberg wiki API error ${listRes.status}`);
                     const pages = await listRes.json();
@@ -2969,7 +2914,6 @@
                     panel.innerHTML = sidebar + `<div class="readme" style="padding-top:0;">${renderMd(content, null, true)}</div>`;
                     _wikiCache = { slug: targetSubUrl, html: panel.innerHTML };
                 } else if (rv.provider === 'gl') {
-                    // GitLab wiki: API REST
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/wikis?with_content=1`);
                     if (!res.ok) throw new Error(`GitLab wiki API error ${res.status}`);
@@ -2981,12 +2925,10 @@
                         return;
                     }
 
-                    // buscar la pagina solicitada o la primera
                     let wikiPage = pages.find(p => p.slug === pageSlug);
                     const targetSlug = wikiPage ? pageSlug : (pages[0]?.slug || '');
                     if (!wikiPage) wikiPage = pages[0];
 
-                    // sidebar con lista de paginas
                     const sidebar = `<div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-family:'IBM Plex Mono',monospace;color:var(--fg-muted);display:flex;gap:0.5rem;flex-wrap:wrap;">
                         ${pages.map(p => {
                             const active = p.slug === targetSlug;
@@ -3065,7 +3007,6 @@
                         commits = [];
                     }
                 }
-                // Pre-fetch GitLab avatars for unique commit author emails
                 const avatarMap = new Map();
                 if (rv.provider === 'gl' && commits.length) {
                     const emails = [...new Set(commits.map(c =>
@@ -3131,7 +3072,6 @@
             panel.innerHTML = `<div class="commit-list">${list}</div>`;
         }
 
-        /* ── Releases ── */
         let _releasesCache = null;
         let _currentReleaseView = 'list';
 
@@ -3139,7 +3079,6 @@
             if (!r) return r;
             const assets = r.assets || {};
             const glAssets = [];
-            // GitLab agrupa fuentes y enlaces bajo assets.{sources,links}
             if (assets.sources && Array.isArray(assets.sources)) {
                 assets.sources.forEach(s => {
                     glAssets.push({
@@ -3540,7 +3479,6 @@
                 </div>
             </div>`;
 
-            // Highlight code blocks in the rendered body
             panel.querySelectorAll('.release-detail-body pre code').forEach(b => {
                 try { hljs.highlightElement(b); } catch(_) {}
             });
@@ -3626,7 +3564,6 @@
                         patch: d.diff || ''
                     }));
                 }
-                // Pre-fetch GitLab avatar for the commit author
                 let glAvatarUrl = '';
                 if (rv.provider === 'gl') {
                     const email = commit.author_email || commit.commit?.author?.email || commit.committer_email || '';
@@ -3658,7 +3595,6 @@
 
         async function _getShiki() {
             if (_shikiHighlighter) return _shikiHighlighter;
-            // jsdelivr ya está en la CSP del servidor; esm.sh como alternativo
             const cdnUrls = [
                 'https://cdn.jsdelivr.net/npm/shiki@4.3.1/+esm',
                 'https://esm.sh/shiki@4.3.1'
@@ -3796,7 +3732,6 @@
                     ${diffsHtml}
                 </div>`;
 
-            // Realzar sintaxis con Shiki de forma asincrona
             _highlightDiffs(panel);
         }
 
@@ -3828,7 +3763,6 @@
                 if (textarea) textarea.value = '';
                 if (statusEl) statusEl.textContent = 'sent';
 
-                // Mostrar comentario inline
                 const list = document.getElementById(listId);
                 if (list) {
                     const li = document.createElement('li');
@@ -3843,7 +3777,6 @@
                     li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
 
-                // Modal para guardar hash
                 if (data.hash && !localStorage.getItem('comment_token')) {
                     showHashSaveModal(data.hash, data.user_token);
                 }
@@ -3994,7 +3927,6 @@
                     rv.language = d.language || rv.language;
                     rv.branch = d.default_branch || rv.branch;
 
-                    // sidebar
                     const sbDesc = document.getElementById('sb-desc');
                     if (sbDesc) sbDesc.textContent = d.description || '—';
                     const sbTags = document.getElementById('sb-tags');
@@ -4014,13 +3946,11 @@
                     if (sbStarCount) sbStarCount.textContent = d.stargazers_count ? d.stargazers_count.toLocaleString() : '';
                     updateStatusbarPath();
 
-                    // discussions nav — solo GitHub y si el repo lo tiene habilitado
                     const navDiscussions = document.getElementById('nav-discussions');
                     if (navDiscussions && d.has_discussions) {
                         navDiscussions.style.display = '';
                     }
 
-                    // wiki nav — GitHub
                     const navWiki = document.getElementById('nav-wiki');
                     if (navWiki && d.has_wiki) {
                         navWiki.style.display = '';
@@ -4066,11 +3996,9 @@
                     if (sbStarCount) sbStarCount.textContent = d.star_count ? d.star_count.toLocaleString() : '';
                     updateStatusbarPath();
 
-                    // wiki nav — GitLab: ocultar por defecto y mostrar solo si hay paginas reales
                     const navWiki = document.getElementById('nav-wiki');
                     if (navWiki) {
                         navWiki.style.display = 'none';
-                        // Evitar el 403 de la API cuando el wiki está deshabilitado en el proyecto
                         if (d.wiki_enabled !== false) {
                             try {
                                 const wikiRes = await fetch(`https://gitlab.com/api/v4/projects/${enc}/wikis?per_page=1`);
@@ -4447,7 +4375,6 @@
                     tree.appendChild(_buildTreeNode(item, pathParts, 0));
                 });
 
-                // auto-load README at root
                 if (pathParts.length === 0) {
                     const readme = items.find(i => i.name.toLowerCase() === 'readme.md');
                     if (readme) loadFile(readme);
@@ -4562,7 +4489,6 @@
             const text = btn.querySelector('span#sb-star-text');
             if (text) text.textContent = starred ? 'Starred' : 'Star';
             btn.style.opacity = starred ? '1' : '';
-            // Cambiar icono a relleno si ya está starred
             const svg = btn.querySelector('svg path:last-child');
             if (svg) svg.setAttribute('fill', starred ? 'currentColor' : 'none');
         }
@@ -4787,7 +4713,6 @@
             document.getElementById('hljs-theme-dark').disabled = !isDark;
         }
 
-        // Sync theme on load and on toggle
         syncHljsTheme();
         const _origToggle = window.toggleTheme;
         window.toggleTheme = function() {
@@ -4799,7 +4724,6 @@
             if (typeof marked === 'undefined') return `<pre>${escHtml(md)}</pre>`;
             marked.setOptions({ gfm: true, breaks: false, headerIds: true, headerPrefix: '' });
             const renderer = new marked.Renderer();
-            // marked v4: link token es un objeto {href, title, text}
             renderer.link = function(token) {
                 const href  = (token && token.href  != null) ? token.href  : (arguments[0] || '');
                 const title = (token && token.title != null) ? token.title : (arguments[1] || null);
@@ -4822,7 +4746,6 @@
                 }
                 return `<a href="${escAttr(href)}" target="_blank" rel="noopener"${t}>${text}</a>`;
             };
-            // Bloques de código con hljs y sin word-wrap
             renderer.code = function(token) {
                 const code = (token && token.text != null) ? token.text : (arguments[0] || '');
                 const lang = (token && token.lang != null) ? token.lang : (arguments[1] || '');
@@ -4835,17 +4758,14 @@
                 }
                 return `<pre style="white-space:pre;overflow-x:auto;"><code>${escHtml(code)}</code></pre>`;
             };
-            // Resolver URLs relativas de imágenes + soporte #gh-light-mode-only / #gh-dark-mode-only
             renderer.image = function(token) {
                 let src   = (token && token.href  != null) ? token.href  : (arguments[0] || '');
                 const alt   = (token && token.text  != null) ? token.text  : (arguments[1] || '');
                 const title = (token && token.title != null) ? token.title : (arguments[2] || null);
-                // Filtrar por tema: omitir imagen que no corresponde al tema actual
                 const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
                     (!document.documentElement.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
                 if (/#gh-light-mode-only$/i.test(src) && isDark)  return '';
                 if (/#gh-dark-mode-only$/i.test(src)  && !isDark) return '';
-                // Quitar el fragmento #gh-*-mode-only de la URL real
                 src = src.replace(/#gh-(light|dark)-mode-only$/i, '');
                 if (src && !/^https?:\/\//i.test(src) && !/^data:/i.test(src)) {
                     const rawBase = baseUrl ||
@@ -4860,13 +4780,11 @@
                 }
                 return `<img src="${escAttr(src)}" alt="${escAttr(alt)}"${title ? ` title="${escAttr(title)}"` : ''} style="max-width:100%;border-radius:4px;" />`;
             };
-            // Convertir :emoji_name: a emojis Unicode
             const emojified = md.replace(/:([a-z0-9_+-]+):/g, (match, name) => {
                 const map = { 'smile':'😄','grin':'😁','joy':'😂','heart_eyes':'😍','sunglasses':'😎','thumbsup':'👍','+1':'👍','thumbsdown':'👎','-1':'👎','clap':'👏','rocket':'🚀','fire':'🔥','star':'⭐','star2':'🌟','sparkles':'✨','warning':'⚠️','x':'❌','white_check_mark':'✅','heavy_check_mark':'✔️','exclamation':'❗','question':'❓','bulb':'💡','wrench':'🔧','hammer':'🔨','gear':'⚙️','lock':'🔒','unlock':'🔓','key':'🔑','mag':'🔍','bug':'🐛','tada':'🎉','construction':'🚧','memo':'📝','pencil':'📝','book':'📖','books':'📚','package':'📦','link':'🔗','computer':'💻','desktop_computer':'🖥️','iphone':'📱','email':'📧','mailbox':'📫','inbox_tray':'📥','outbox_tray':'📤','chart_with_upwards_trend':'📈','chart_with_downwards_trend':'📉','bar_chart':'📊','calendar':'📆','clock1':'🕐','hourglass':'⌛','zap':'⚡','umbrella':'☂️','sunny':'☀️','cloud':'☁️','snowflake':'❄️','rainbow':'🌈','earth_americas':'🌎','globe_with_meridians':'🌐','wave':'👋','eyes':'👀','100':'💯','speech_balloon':'💬','thought_balloon':'💭','zzz':'💤','muscle':'💪','pray':'🙏','point_right':'👉','point_left':'👈','point_up':'☝️','point_down':'👇','raised_hands':'🙌','ok_hand':'👌','v':'✌️','skull':'💀','ghost':'👻','robot':'🤖','alien':'👽','see_no_evil':'🙈','hear_no_evil':'🙉','speak_no_evil':'🙊','rotating_light':'🚨','no_entry':'⛔','stop_sign':'🛑','recycle':'♻️','heart':'❤️','broken_heart':'💔','blue_heart':'💙','green_heart':'💚','yellow_heart':'💛','purple_heart':'💜','orange_heart':'🧡','black_heart':'🖤','white_heart':'🤍','thinking':'🤔','facepalm':'🤦','shrug':'🤷','information_source':'ℹ️','new':'🆕','free':'🆓','cool':'🆒','ok':'🆗','sos':'🆘','up':'🆙','vs':'🆚','abc':'🔤','1234':'🔢','symbols':'🔣','arrow_right':'➡️','arrow_left':'⬅️','arrow_up':'⬆️','arrow_down':'⬇️','back':'🔙','end':'🔚','on':'🔛','soon':'🔜','top':'🔝','repeat':'🔁','fast_forward':'⏩','rewind':'⏪','twisted_rightwards_arrows':'🔀','loud_sound':'🔊','mute':'🔇','bell':'🔔','no_bell':'🔕','mega':'📣','loudspeaker':'📢','dart':'🎯','trophy':'🏆','medal_sports':'🏅','1st_place_medal':'🥇','2nd_place_medal':'🥈','3rd_place_medal':'🥉','video_game':'🎮','joystick':'🕹️','art':'🎨','musical_note':'🎵','notes':'🎶','microphone':'🎤','headphones':'🎧','guitar':'🎸','pizza':'🍕','hamburger':'🍔','coffee':'☕','beer':'🍺','cake':'🎂','birthday':'🎂','apple':'🍎','banana':'🍌','grapes':'🍇','strawberry':'🍓','dog':'🐶','cat':'🐱','mouse':'🐭','bear':'🐻','panda_face':'🐼','fox_face':'🦊','wolf':'🐺','lion':'🦁','tiger':'🐯','cow':'🐮','pig':'🐷','frog':'🐸','monkey_face':'🐵','chicken':'🐔','penguin':'🐧','bird':'🐦','fish':'🐟','whale':'🐳','dolphin':'🐬','turtle':'🐢','snake':'🐍','bug':'🐛','ant':'🐜','bee':'🐝','butterfly':'🦋','crab':'🦀','shark':'🦈','whale2':'🐋','elephant':'🐘','gorilla':'🦍','unicorn':'🦄','zebra':'🦓' };
                 return map[name] || match;
             });
             let result = marked.parse(emojified, { renderer });
-            // Post-procesar HTML <img> tags con rutas relativas (marked no los pasa por renderer.image)
             const rawBase = baseUrl ||
                 (rv.provider === 'cb'
                     ? (currentBranch()
@@ -4884,7 +4802,6 @@
                 }
                 return match;
             });
-            // Tambien procesar <a href> con rutas relativas en HTML directo
             result = result.replace(/<a\s+[^>]*?href=("[^"]+"|'[^']+')([^>]*?)>/gi, (match, hrefQuoted) => {
                 if (isWiki) return match;
                 const quote = hrefQuoted[0];

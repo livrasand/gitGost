@@ -7,7 +7,6 @@ import (
 	"testing"
 )
 
-// buildRepo crea un repositorio local con n commits en la rama main.
 func buildRepo(t *testing.T, n int) string {
 	t.Helper()
 	src := filepath.Join(t.TempDir(), "src")
@@ -32,8 +31,6 @@ func withChunk(t *testing.T, n int) {
 	t.Cleanup(func() { chunkSize = old })
 }
 
-// TestRunCloneSharded valida la descarga por capas: un repo de 250 commits con
-// bloques de 100 debe quedar completo y no shallow tras 2 profundizaciones.
 func TestRunCloneSharded(t *testing.T) {
 	src := buildRepo(t, 250)
 	withChunk(t, 100)
@@ -70,8 +67,6 @@ func TestRunCloneSharded(t *testing.T) {
 	}
 }
 
-// TestRunCloneResumesFromCheckpoint simula un clone interrumpido (primer bloque
-// ya descargado, repo shallow) y verifica que runClone reanuda hasta completar.
 func TestRunCloneResumesFromCheckpoint(t *testing.T) {
 	src := buildRepo(t, 250)
 	withChunk(t, 100)
@@ -115,7 +110,6 @@ func TestRunCloneResumesFromCheckpoint(t *testing.T) {
 	}
 }
 
-// TestRunCloneSingleBlock valida el caso de un repo pequeño: un solo bloque, sin shallow.
 func TestRunCloneSingleBlock(t *testing.T) {
 	src := buildRepo(t, 3)
 	withChunk(t, 500)

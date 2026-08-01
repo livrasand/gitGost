@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -83,36 +83,28 @@ func CreateBundle(ctx context.Context, url, workDir string) (bundlePath, default
 	return bundlePath, strings.TrimSpace(branch), nil
 }
 
+// repoURLPattern valida y captura una URL https de repositorio permitida:
+// host en {github.com, gitlab.com, codeberg.org} (case-insensitive), puerto
+// opcional, y exactamente dos segmentos de ruta owner/repo con caracteres
+// permitidos. El resultado reconstruido nunca incluye userinfo, query,
+// fragment ni segmentos extra.
+var repoURLPattern = regexp.MustCompile(`(?i)^https://(github\.com|gitlab\.com|codeberg\.org)(?::\d+)?/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)/?$`)
+
 // safeCloneURL valida la URL del usuario y devuelve su forma normalizada.
-// La URL que llega a git siempre se deriva de este parseo validado: el raw del
-// usuario nunca se usa como argumento de comando. internal/git no puede
-// importar internal/http (ciclo de dependencias), por lo que la validación se
-// mantiene en el paquete que ejecuta git.
+// La URL que llega a git se reconstruye exclusivamente desde los grupos
+// validados por la expresión regular; el raw del usuario nunca se usa
+// directamente como argumento de comando.
 func safeCloneURL(raw string) (string, error) {
-	u, err := url.Parse(raw)
-	if err != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil {
+	m := repoURLPattern.FindStringSubmatch(raw)
+	if m == nil {
 		return "", fmt.Errorf("URL de repositorio inválida: %q", raw)
 	}
-	switch u.Hostname() {
-	case "github.com", "gitlab.com", "codeberg.org":
-	default:
+	host := strings.ToLower(m[1])
+	owner, repo := m[2], m[3]
+	if strings.Contains(owner, "..") || strings.Contains(repo, "..") {
 		return "", fmt.Errorf("URL de repositorio inválida: %q", raw)
 	}
-	parts := strings.Split(strings.Trim(u.Path, "/"), "/")
-	if len(parts) != 2 {
-		return "", fmt.Errorf("URL de repositorio inválida: %q", raw)
-	}
-	for _, p := range parts {
-		if strings.Contains(p, "..") {
-			return "", fmt.Errorf("URL de repositorio inválida: %q", raw)
-		}
-		for _, r := range p {
-			if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' || r == '.') {
-				return "", fmt.Errorf("URL de repositorio inválida: %q", raw)
-			}
-		}
-	}
-	return u.String(), nil
+	return fmt.Sprintf("https://%s/%s/%s", host, owner, repo), nil
 }
 
 // shallowFile devuelve el contenido actual del marker de shallow, o vacío si el

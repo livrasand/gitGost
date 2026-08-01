@@ -19,7 +19,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Timeout mayor para evitar expiraciones en búsquedas lentas de GitHub.
 var httpClient = &http.Client{Timeout: 60 * time.Second}
 
 type Ref struct {
@@ -36,7 +35,6 @@ func isTimeout(err error) bool {
 	return false
 }
 
-// UpdateCommentsKarmaByHash actualiza el karma en los comentarios que contienen el hash, preservando el cuerpo.
 func UpdateCommentsKarmaByHash(hash string, karma int) error {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
@@ -173,7 +171,6 @@ func UpdateCommentsKarmaByHash(hash string, karma int) error {
 	return nil
 }
 
-// DeleteCommentsByHash busca y elimina comentarios que contengan el hash proporcionado
 func DeleteCommentsByHash(hash string) error {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
@@ -280,7 +277,6 @@ func DeleteCommentsByHash(hash string) error {
 	return nil
 }
 
-// CreateAnonymousIssue crea una issue usando el bot autenticado
 func CreateAnonymousIssue(owner, repo, title, body string, labels []string) (string, int, error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
@@ -333,7 +329,6 @@ func CreateAnonymousIssue(owner, repo, title, body string, labels []string) (str
 	return result.HTMLURL, result.Number, nil
 }
 
-// CreateAnonymousComment publica un comentario en la issue
 func CreateAnonymousComment(owner, repo string, number int, body string) (string, error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
@@ -378,14 +373,12 @@ func CreateAnonymousComment(owner, repo string, number int, body string) (string
 	return result.HTMLURL, nil
 }
 
-// CreateAnonymousPRComment publica un comentario general en un Pull Request
 func CreateAnonymousPRComment(owner, repo string, number int, body string) (string, error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
 
-	// PR comments use the same issues comments endpoint
 	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d/comments", owner, repo, number)
 
 	payload := map[string]string{"body": body}
@@ -426,15 +419,12 @@ func CreateAnonymousPRComment(owner, repo string, number int, body string) (stri
 	return result.HTMLURL, nil
 }
 
-// CreateAnonymousDiscussionComment publica un comentario en una Discussion de GitHub
-// mediante la API GraphQL (requiere node id de la discusión).
 func CreateAnonymousDiscussionComment(owner, repo string, number int, body string) (string, error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
 
-	// Resolver el node id de la discusión
 	idQuery := fmt.Sprintf(`{
 		repository(owner: %q, name: %q) {
 			discussion(number: %d) { id }
@@ -486,7 +476,6 @@ func CreateAnonymousDiscussionComment(owner, repo string, number int, body strin
 		return "", fmt.Errorf("discussion not found")
 	}
 
-	// Publicar comentario
 	mutation := fmt.Sprintf(`mutation {
 		addDiscussionComment(input: {discussionId: %q, body: %q}) {
 			comment { url }
@@ -537,19 +526,16 @@ func CreateAnonymousDiscussionComment(owner, repo string, number int, body strin
 	return mutResp.Data.AddDiscussionComment.Comment.URL, nil
 }
 
-// GetSha returns the SHA of the ref
 func (r *Ref) GetSha() string {
 	return r.Object.Sha
 }
 
-// ForkRepo creates a fork of the repository for the authenticated user
 func ForkRepo(owner, repo string) (string, error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
 
-	// Check if fork already exists
 	userURL := "https://api.github.com/user"
 	req, err := http.NewRequest("GET", userURL, nil)
 	if err != nil {
@@ -573,7 +559,6 @@ func ForkRepo(owner, repo string) (string, error) {
 		return "", fmt.Errorf("could not get user login")
 	}
 
-	// Check if fork already exists
 	forkURL := fmt.Sprintf("https://api.github.com/repos/%s/%s", forkOwner, repo)
 	req, err = http.NewRequest("GET", forkURL, nil)
 	if err != nil {
@@ -588,12 +573,10 @@ func ForkRepo(owner, repo string) (string, error) {
 	resp.Body.Close()
 
 	if resp.StatusCode == 200 {
-		// Fork already exists
 		fmt.Printf("DEBUG: Fork already exists: %s/%s\n", forkOwner, repo)
 		return forkOwner, nil
 	}
 
-	// Create fork
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/forks", owner, repo)
 	req, err = http.NewRequest("POST", url, nil)
 	if err != nil {
@@ -617,16 +600,12 @@ func ForkRepo(owner, repo string) (string, error) {
 	return forkOwner, nil
 }
 
-// ClosePRByURL closes an open PR given its GitHub html_url.
-// The URL format is: https://github.com/{owner}/{repo}/pull/{number}
 func ClosePRByURL(prURL string) error {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		return fmt.Errorf("GITHUB_TOKEN not set")
 	}
 
-	// Parse owner, repo, number from the PR URL
-	// Expected: https://github.com/<owner>/<repo>/pull/<number>
 	parts := strings.Split(strings.TrimPrefix(prURL, "https://github.com/"), "/")
 	if len(parts) < 4 || parts[2] != "pull" {
 		return fmt.Errorf("invalid PR URL: %s", prURL)
@@ -740,7 +719,6 @@ func GetRefs(owner, repo string) ([]Ref, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == 409 {
-		// Repository is empty, return empty refs
 		return []Ref{}, nil
 	}
 
@@ -757,13 +735,10 @@ func GetRefs(owner, repo string) ([]Ref, error) {
 	return refs, nil
 }
 
-// RepoPolicy contiene las directivas de configuración leídas desde .gitgost.yml del repositorio destino.
 type RepoPolicy struct {
 	DenyAll bool `yaml:"DENY_ALL"`
 }
 
-// GetRepoPolicy descarga .gitgost.yml desde el branch por defecto del repositorio y retorna la política.
-// Si el archivo no existe o no puede leerse, retorna una política permisiva (sin restricciones).
 func GetRepoPolicy(owner, repo string) (*RepoPolicy, error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/.gitgost.yml", owner, repo)
@@ -785,7 +760,6 @@ func GetRepoPolicy(owner, repo string) (*RepoPolicy, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		// Archivo no existe: política permisiva por defecto
 		return &RepoPolicy{}, nil
 	}
 
@@ -799,7 +773,6 @@ func GetRepoPolicy(owner, repo string) (*RepoPolicy, error) {
 
 	var raw []byte
 	if fileResp.Encoding == "base64" {
-		// GitHub devuelve el contenido en base64 con saltos de línea
 		cleaned := strings.ReplaceAll(fileResp.Content, "\n", "")
 		raw, err = base64.StdEncoding.DecodeString(cleaned)
 		if err != nil {
@@ -817,7 +790,6 @@ func GetRepoPolicy(owner, repo string) (*RepoPolicy, error) {
 	return &policy, nil
 }
 
-// IsRepoVerified checks if the repository has a .gitgost.yml file indicating support for anonymous contributions
 func IsRepoVerified(owner, repo string) bool {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/.gitgost.yml", owner, repo)
 	resp, err := http.Get(url)
@@ -828,16 +800,12 @@ func IsRepoVerified(owner, repo string) bool {
 	return resp.StatusCode == 200
 }
 
-// GeneratePRHash genera un hash deterministico de 8 caracteres basado en owner/repo/branch.
-// Esto permite que el mismo branch siempre produzca el mismo pr-hash, sin almacenar estado.
 func GeneratePRHash(owner, repo, branch string) string {
 	input := fmt.Sprintf("%s/%s/%s", owner, repo, branch)
 	sum := sha256.Sum256([]byte(input))
 	return hex.EncodeToString(sum[:])[:8]
 }
 
-// PRTimelineEvent representa un evento individual del timeline de un PR.
-// Solo contiene los campos que nos interesan.
 type PRTimelineEvent struct {
 	Event     string `json:"event"`
 	CreatedAt string `json:"created_at"`
@@ -851,8 +819,6 @@ type PRTimelineEvent struct {
 	} `json:"label,omitempty"`
 }
 
-// ExtractPRNumber extrae el numero de PR de una URL de GitHub.
-// Formato esperado: https://github.com/{owner}/{repo}/pull/{number}
 func ExtractPRNumber(prURL string) int {
 	parts := strings.Split(strings.TrimPrefix(prURL, "https://github.com/"), "/")
 	if len(parts) < 4 || parts[2] != "pull" {
@@ -865,7 +831,6 @@ func ExtractPRNumber(prURL string) int {
 	return n
 }
 
-// nextPageURL extrae la URL de la pagina siguiente del header Link de GitHub.
 func nextPageURL(linkHeader string) string {
 	if linkHeader == "" {
 		return ""
@@ -883,10 +848,6 @@ func nextPageURL(linkHeader string) string {
 	return ""
 }
 
-// FetchPRTimeline obtiene el timeline de un PR desde la API de GitHub.
-// Usa ETag/If-None-Match para evitar datos innecesarios.
-// Recorre todas las paginas via Link header.
-// Retorna los eventos, el nuevo ETag, si hubo cambios, o error.
 func FetchPRTimeline(owner, repo string, number int, etag string) (events []PRTimelineEvent, newETag string, changed bool, err error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
@@ -903,7 +864,6 @@ func FetchPRTimeline(owner, repo string, number int, etag string) (events []PRTi
 		req.Header.Set("Authorization", "token "+token)
 		req.Header.Set("Accept", "application/vnd.github+json")
 		req.Header.Set("User-Agent", "gitGost")
-		// Solo enviar ETag en la primera peticion (caching global)
 		if etag != "" && newETag == "" {
 			req.Header.Set("If-None-Match", etag)
 		}
@@ -913,7 +873,6 @@ func FetchPRTimeline(owner, repo string, number int, etag string) (events []PRTi
 			return nil, "", false, err
 		}
 
-		// Conservar el ETag de la primera respuesta
 		if newETag == "" {
 			newETag = resp.Header.Get("ETag")
 		}
@@ -942,7 +901,6 @@ func FetchPRTimeline(owner, repo string, number int, etag string) (events []PRTi
 		apiURL = nextPageURL(resp.Header.Get("Link"))
 	}
 
-	// GitHub puede devolver null en lugar de array
 	if events == nil {
 		events = []PRTimelineEvent{}
 	}
@@ -950,9 +908,6 @@ func FetchPRTimeline(owner, repo string, number int, etag string) (events []PRTi
 	return events, newETag, true, nil
 }
 
-// FetchPRInfo obtiene informacion basica del PR (state, title, comments count).
-// Usa el endpoint de pulls para obtener datos especificos de PR
-// (review_comments para el conteo de discusion, merged_at para estado merged).
 func FetchPRInfo(owner, repo string, number int) (state, title string, comments int, updatedAt string, err error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
@@ -999,15 +954,12 @@ func FetchPRInfo(owner, repo string, number int) (state, title string, comments 
 	return state, result.Title, result.ReviewComments, result.UpdatedAt, nil
 }
 
-// GetExistingPR busca si existe un PR abierto desde forkOwner:branchName hacia owner/repo.
-// Retorna la URL del PR, si la rama existe en el fork, y cualquier error.
 func GetExistingPR(owner, repo, forkOwner, branchName string) (string, bool, error) {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		return "", false, fmt.Errorf("GITHUB_TOKEN not set")
 	}
 
-	// Verificar si la rama existe en el fork
 	branchURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/branches/%s", forkOwner, repo, branchName)
 	req, err := http.NewRequest("GET", branchURL, nil)
 	if err != nil {
@@ -1024,11 +976,9 @@ func GetExistingPR(owner, repo, forkOwner, branchName string) (string, bool, err
 	resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		// La rama no existe en el fork
 		return "", false, nil
 	}
 
-	// La rama existe; buscar el PR abierto asociado
 	head := fmt.Sprintf("%s:%s", forkOwner, branchName)
 	prListURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls?state=open&head=%s&per_page=1",
 		owner, repo, url.QueryEscape(head))
@@ -1059,7 +1009,6 @@ func GetExistingPR(owner, repo, forkOwner, branchName string) (string, bool, err
 	}
 
 	if len(prs) == 0 {
-		// Rama existe pero el PR fue cerrado/mergeado; retornar rama existente sin URL de PR
 		return "", true, nil
 	}
 

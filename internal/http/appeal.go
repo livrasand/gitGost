@@ -17,9 +17,6 @@ import (
 	"github.com/livrasand/gitGost/internal/utils"
 )
 
-// --- Data structures ---
-
-// appealTicket stores an anonymous appeal ticket linked to a hash.
 type appealTicket struct {
 	Hash      string
 	Message   string
@@ -33,8 +30,6 @@ var (
 	appealTickets   = make(map[string]*appealTicket)
 	appealTicketTTL = 7 * 24 * time.Hour
 )
-
-// --- Template ---
 
 var appealStartTmpl = template.Must(template.New("appealStart").Parse(appealHTML))
 
@@ -101,10 +96,6 @@ textarea{width:100%;min-height:120px;padding:12px;border-radius:10px;border:1px 
 </body>
 </html>`
 
-// --- Token functions ---
-
-// generateAppealToken creates a deterministic token that proves ownership of a hash.
-// The token is HMAC("appeal:"+hash, serverSecretKey) — no storage needed.
 func generateAppealToken(hash string) string {
 	if hash == "" {
 		return ""
@@ -114,7 +105,6 @@ func generateAppealToken(hash string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-// verifyAppealToken checks whether a token is valid proof of ownership for the given hash.
 func verifyAppealToken(hash, token string) bool {
 	if hash == "" || token == "" {
 		return false
@@ -123,9 +113,6 @@ func verifyAppealToken(hash, token string) bool {
 	return hmac.Equal([]byte(expected), []byte(token))
 }
 
-// --- Handlers ---
-
-// AppealStartHandler maneja GET/POST /appeal para iniciar una apelacion.
 func AppealStartHandler(c *gin.Context) {
 	if c.Request.Method == http.MethodGet {
 		hash := strings.TrimSpace(c.Query("hash"))
@@ -155,7 +142,6 @@ func AppealStartHandler(c *gin.Context) {
 		return
 	}
 
-	// POST: verify appeal_token and create ticket
 	hash := strings.TrimSpace(c.PostForm("hash"))
 	token := strings.TrimSpace(c.PostForm("appeal_token"))
 
@@ -189,7 +175,6 @@ func AppealStartHandler(c *gin.Context) {
 		return
 	}
 
-	// Generate ticket
 	b := make([]byte, 20)
 	if _, err := rand.Read(b); err != nil {
 		c.String(http.StatusInternalServerError, "Error creating appeal")
@@ -215,13 +200,11 @@ func AppealStartHandler(c *gin.Context) {
 	})
 }
 
-// AppealViewHandler maneja GET/POST /appeal/:ticket para ver y enviar el mensaje de apelacion.
 func AppealViewHandler(c *gin.Context) {
 	ticketID := c.Param("ticket")
 
 	appealTicketsMu.Lock()
 	ticket, exists := appealTickets[ticketID]
-	// Snapshot mutable fields under lock to avoid races with admin/POST updates.
 	var (
 		hash      string
 		createdAt time.Time
@@ -262,7 +245,6 @@ func AppealViewHandler(c *gin.Context) {
 		}
 		appealTicketsMu.Unlock()
 
-		// Notify admin via ntfy if configured
 		if ntfyAdminTopic != "" {
 			go notifyAdminAppeal(ticketID, hash)
 		}
@@ -276,7 +258,6 @@ func AppealViewHandler(c *gin.Context) {
 		return
 	}
 
-	// GET: show the appeal form or status
 	if resolved {
 		var status string
 		if unbanned {
@@ -313,7 +294,6 @@ func AppealViewHandler(c *gin.Context) {
 	})
 }
 
-// notifyAdminAppeal sends a ntfy notification when a new appeal is filed.
 func notifyAdminAppeal(ticketID, hash string) {
 	if ntfyAdminTopic == "" {
 		return
@@ -328,7 +308,6 @@ func notifyAdminAppeal(ticketID, hash string) {
 	resp.Body.Close()
 }
 
-// AdminAppealsHandler lista las apelaciones abiertas (protegido por password).
 func AdminAppealsHandler(c *gin.Context) {
 	password := c.Query("password")
 	if password == "" {
@@ -395,7 +374,6 @@ button.dismiss{border-color:#f85149;color:#f85149;}
 			msgPreview = msgPreview[:60] + "..."
 		}
 		age := time.Since(v.CreatedAt).Round(time.Minute)
-		// Escape every dynamic value to prevent stored/reflected XSS.
 		ticketID := template.HTMLEscapeString(v.TicketID)
 		ticketShort := template.HTMLEscapeString(v.TicketID[:8])
 		hash := template.HTMLEscapeString(v.Hash)
@@ -433,7 +411,6 @@ button.dismiss{border-color:#f85149;color:#f85149;}
 	fmt.Fprintf(c.Writer, `</table></body></html>`)
 }
 
-// AdminAppealResolveHandler resuelve una apelacion (unban o dismiss).
 func AdminAppealResolveHandler(c *gin.Context) {
 	ticketID := c.Param("ticket")
 	password := c.PostForm("password")
@@ -468,7 +445,6 @@ func AdminAppealResolveHandler(c *gin.Context) {
 		blockedStore.Delete(hash)
 	}
 
-	// Send ntfy notification about resolution
 	if ntfyAdminTopic != "" && ticket.Message != "" {
 		go func() {
 			status := "upheld"

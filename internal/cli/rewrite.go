@@ -7,7 +7,6 @@ import (
 	"strings"
 )
 
-// ServerBase devuelve la URL base del servidor gitGost (env GITGOST_SERVER o default).
 func ServerBase() string {
 	if v := os.Getenv("GITGOST_SERVER"); v != "" {
 		return strings.TrimRight(v, "/")
@@ -15,16 +14,12 @@ func ServerBase() string {
 	return "https://gitgost.fly.dev"
 }
 
-// hostPrefix mapea el host del repositorio al prefijo de ruta del servidor gitGost.
 var hostPrefix = map[string]string{
 	"github.com":   "gh",
 	"gitlab.com":   "gl",
 	"codeberg.org": "cb",
 }
 
-// RewriteURL convierte una URL de repositorio (https o scp-like SSH) en la ruta
-// equivalente del servidor gitGost: /v1/<prefix>/owner/repo. Así el tráfico de
-// clone/fetch pasa por gitGost sin tocar la URL original del usuario.
 func RewriteURL(base, raw string) (string, error) {
 	base = strings.TrimRight(base, "/")
 	u, err := parseRepoURL(raw)
@@ -49,7 +44,6 @@ func RewriteURL(base, raw string) (string, error) {
 	return fmt.Sprintf("%s/v1/%s/%s/%s", base, prefix, owner, repo), nil
 }
 
-// parseRepoURL acepta URLs https://host/owner/repo y scp-like git@host:owner/repo.git.
 func parseRepoURL(raw string) (*url.URL, error) {
 	if strings.Contains(raw, "://") {
 		u, err := url.Parse(raw)
@@ -62,7 +56,6 @@ func parseRepoURL(raw string) (*url.URL, error) {
 		return u, nil
 	}
 
-	// scp-like: user@host:owner/repo(.git)
 	at := strings.LastIndex(raw, "@")
 	colon := strings.Index(raw, ":")
 	if at >= 0 && colon > at {
@@ -83,7 +76,6 @@ func splitPath(p string) []string {
 	return out
 }
 
-// validSegment valida un segmento owner/repo (alfanumérico, -, _, .).
 func validSegment(s string) bool {
 	if len(s) == 0 || len(s) > 100 {
 		return false

@@ -28,7 +28,6 @@ func TestRewriteURL(t *testing.T) {
 		})
 	}
 
-	// La base con slash final también debe funcionar.
 	if got, err := RewriteURL("https://gitgost.fly.dev/", "https://github.com/foo/bar"); err != nil || got != "https://gitgost.fly.dev/v1/gh/foo/bar" {
 		t.Errorf("base con slash final: got=%q err=%v", got, err)
 	}

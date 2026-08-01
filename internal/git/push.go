@@ -17,9 +17,6 @@ func min(a, b int) int {
 	return b
 }
 
-// PushToGitHub pushes to a fork repository.
-// pushURL is the full HTTPS URL of the fork; if empty, defaults to GitHub.
-// tokenEnvVar is the env var name for the auth token; if empty, defaults to GITHUB_TOKEN.
 func PushToGitHub(owner, repo, tempDir, forkOwner, targetBranch string, pushURL string, tokenEnvVar string) (string, error) {
 	if tokenEnvVar == "" {
 		tokenEnvVar = "GITHUB_TOKEN"

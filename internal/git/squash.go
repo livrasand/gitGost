@@ -14,7 +14,6 @@ func SquashCommits(tempDir string) (string, error) {
 		return "", err
 	}
 
-	// Get all references
 	refs, err := r.References()
 	if err != nil {
 		return "", err
@@ -23,12 +22,11 @@ func SquashCommits(tempDir string) (string, error) {
 	var latestCommit *object.Commit
 	var treeHash plumbing.Hash
 
-	// Find the latest commit from any branch
 	err = refs.ForEach(func(ref *plumbing.Reference) error {
 		if ref.Name().IsBranch() {
 			commit, err := r.CommitObject(ref.Hash())
 			if err != nil {
-				return nil // Skip invalid refs
+				return nil
 			}
 			if latestCommit == nil || commit.Committer.When.After(latestCommit.Committer.When) {
 				latestCommit = commit
@@ -42,9 +40,7 @@ func SquashCommits(tempDir string) (string, error) {
 		return "", err
 	}
 
-	// If no commits found, create initial commit with empty tree
 	if latestCommit == nil {
-		// Create empty tree
 		tree := &object.Tree{}
 		obj := r.Storer.NewEncodedObject()
 		err = tree.Encode(obj)
@@ -57,7 +53,6 @@ func SquashCommits(tempDir string) (string, error) {
 		}
 	}
 
-	// Create new anonymous commit
 	newCommit := &object.Commit{
 		Author: object.Signature{
 			Name:  "@gitgost-anonymous",
@@ -84,7 +79,6 @@ func SquashCommits(tempDir string) (string, error) {
 		return "", err
 	}
 
-	// Update HEAD
 	err = r.Storer.SetReference(plumbing.NewHashReference(plumbing.HEAD, hash))
 	if err != nil {
 		return "", err

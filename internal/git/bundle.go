@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,8 +22,15 @@ const bundleChunkSize = 500
 // acota la duración total de los subprocesos git (evita workers colgados).
 func CreateBundle(ctx context.Context, url, workDir string) (bundlePath, defaultBranch string, err error) {
 	repoDir := filepath.Join(workDir, "repo")
-	// El separador -- evita que la URL (controlada por el usuario) se interprete
-	// como opción de git (p. ej. --upload-pack=...) aunque no pase validación.
+	// La URL proviene de la API (entrada del usuario). Se revalida aquí, en el
+	// punto donde se convierte en argumento de git, para que ninguna ruta de
+	// llamada pueda inyectar opciones (p. ej. --upload-pack=...) aunque el
+	// separador -- dejara de estar presente.
+	if !validCloneURL(url) {
+		return "", "", fmt.Errorf("URL de repositorio inválida: %q", url)
+	}
+	// El separador -- evita que la URL se interprete como opción de git incluso
+	// si la validación superior cambiara.
 	if err := runGit(ctx, "", "clone", "--mirror", "--depth="+strconv.Itoa(bundleChunkSize), "--", url, repoDir); err != nil {
 		return "", "", fmt.Errorf("clonar %s: %w", url, err)
 	}
@@ -53,6 +61,13 @@ func CreateBundle(ctx context.Context, url, workDir string) (bundlePath, default
 		}
 	}
 
+	// En clones shallow git omite las tags que apuntan a commits fuera del rango
+	// vigente y no las vuelve a pedir al profundizar; sin este fetch explícito el
+	// bundle (--all) saldría sin esas tags para el cliente.
+	if err := runGit(ctx, repoDir, "fetch", "--tags", "origin"); err != nil {
+		return "", "", fmt.Errorf("traer tags de origin: %w", err)
+	}
+
 	// Rama por defecto: en un clon --mirror el HEAD local apunta a la ref remota.
 	branch, err := gitOutput(ctx, repoDir, "symbolic-ref", "--short", "HEAD")
 	if err != nil {
@@ -64,6 +79,37 @@ func CreateBundle(ctx context.Context, url, workDir string) (bundlePath, default
 		return "", "", fmt.Errorf("crear bundle: %w", err)
 	}
 	return bundlePath, strings.TrimSpace(branch), nil
+}
+
+// validCloneURL aplica la misma política que la API remota: solo https en los
+// hosts soportados, sin credenciales y con ruta de dos segmentos restringidos.
+// internal/git no puede importar internal/http (ciclo de dependencias), por lo
+// que la validación se mantiene en el paquete que ejecuta git.
+func validCloneURL(raw string) bool {
+	u, err := url.Parse(raw)
+	if err != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil {
+		return false
+	}
+	switch u.Hostname() {
+	case "github.com", "gitlab.com", "codeberg.org":
+	default:
+		return false
+	}
+	parts := strings.Split(strings.Trim(u.Path, "/"), "/")
+	if len(parts) != 2 {
+		return false
+	}
+	for _, p := range parts {
+		if strings.Contains(p, "..") {
+			return false
+		}
+		for _, r := range p {
+			if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' || r == '.') {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // shallowFile devuelve el contenido actual del marker de shallow, o vacío si el

@@ -15,6 +15,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/livrasand/gitGost/internal/git"
@@ -85,6 +86,10 @@ var remoteJobs = newBoundedMap[*remoteJob](remoteJobsMax, remoteJobsTTL)
 // pueden ejecutarse a la vez; el resto recibe 429 desde el handler.
 var remoteJobSlots = make(chan struct{}, remoteJobMaxConcurrent)
 
+// remoteJobCancels registra el context.CancelFunc de cada worker en curso
+// (clave: ID del job) para que DELETE pueda cancelar la operación en marcha.
+var remoteJobCancels sync.Map
+
 // openbinClient permite subir bundles grandes sin el timeout corto del proxy.
 var openbinClient = &http.Client{Timeout: 30 * time.Minute}
 
@@ -146,6 +151,13 @@ func DeleteRemoteJobHandler(c *gin.Context) {
 		next.Progress = "Cancelado"
 		remoteJobs.Set(id, &next)
 	}
+	// Cancelar el worker en curso si aún corre; LoadAndDelete lo retira del
+	// registro para que la cancelación ocurra una sola vez.
+	if v, ok := remoteJobCancels.LoadAndDelete(id); ok {
+		if cancel, ok := v.(context.CancelFunc); ok {
+			cancel()
+		}
+	}
 	c.Status(http.StatusNoContent)
 }
 
@@ -162,6 +174,15 @@ func runRemoteJob(job *remoteJob) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), remoteJobTimeout)
 	defer cancel()
+	// Exponer el cancel a DELETE; se retira al salir del worker.
+	remoteJobCancels.Store(job.ID, cancel)
+	defer remoteJobCancels.Delete(job.ID)
+
+	// DELETE pudo cancelar el job antes de que este worker se registrara: no
+	// iniciar trabajo pesado ni publicar estados si ya está cancelado.
+	if jobCancelled(job.ID) {
+		return
+	}
 
 	// dir se captura por referencia: cada publish propaga el TmpDir real.
 	dir := ""
@@ -187,7 +208,11 @@ func runRemoteJob(job *remoteJob) {
 	publish(rjRunning, "Descargando repositorio por capas...", "", nil)
 	bundlePath, defaultBranch, err := git.CreateBundle(ctx, job.URL, dir)
 	if err != nil {
-		publish(rjFailed, "", err.Error(), nil)
+		// Si DELETE canceló el job, no sobrescribir su estado con un fallo por
+		// context.Canceled: el estado cancelado queda hasta que el TTL lo evicte.
+		if !jobCancelled(job.ID) {
+			publish(rjFailed, "", err.Error(), nil)
+		}
 		return
 	}
 	if jobCancelled(job.ID) {
@@ -210,9 +235,11 @@ func runRemoteJob(job *remoteJob) {
 	}
 
 	publish(rjRunning, "Subiendo bundle a Openbin...", "", nil)
-	result, err := openbinUpload(bundlePath, bundleFilename(job.URL), size, hash)
+	result, err := openbinUpload(ctx, bundlePath, bundleFilename(job.URL), size, hash)
 	if err != nil {
-		publish(rjFailed, "", err.Error(), nil)
+		if !jobCancelled(job.ID) {
+			publish(rjFailed, "", err.Error(), nil)
+		}
 		return
 	}
 	if jobCancelled(job.ID) {
@@ -228,8 +255,9 @@ func runRemoteJob(job *remoteJob) {
 // 2) PUT del objeto directo a Filebase (streaming, sin pasar por Vercel)
 // 3) POST /api/upload/confirm → CID + bin con expiración
 // size y hash ya están calculados por el llamador (evita recalcular el SHA-256
-// de un archivo que puede pesar gigabytes).
-func openbinUpload(bundlePath, filename string, size int64, hash string) (*remoteJobResult, error) {
+// de un archivo que puede pesar gigabytes). El contexto permite cancelar la
+// subida si el job se borra o agota su timeout.
+func openbinUpload(ctx context.Context, bundlePath, filename string, size int64, hash string) (*remoteJobResult, error) {
 	base := strings.TrimRight(os.Getenv("OPENBIN_URL"), "/")
 	if base == "" {
 		base = "https://openbin.livrasand.com"
@@ -251,7 +279,7 @@ func openbinUpload(bundlePath, filename string, size int64, hash string) (*remot
 	_ = mw.Close()
 
 	var presign openbinBinResponse
-	if err := openbinPost(base+"/api/upload", mw.FormDataContentType(), &form, &presign); err != nil {
+	if err := openbinPost(ctx, base+"/api/upload", mw.FormDataContentType(), &form, &presign); err != nil {
 		return nil, fmt.Errorf("pedir subida a Openbin: %w", err)
 	}
 
@@ -276,7 +304,7 @@ func openbinUpload(bundlePath, filename string, size int64, hash string) (*remot
 	}
 
 	// 2) Subir el objeto directo a Filebase.
-	if err := openbinPut(presign.PresignedURL, bundlePath, size); err != nil {
+	if err := openbinPut(ctx, presign.PresignedURL, bundlePath, size); err != nil {
 		return nil, fmt.Errorf("subir bundle a Filebase: %w", err)
 	}
 
@@ -286,7 +314,7 @@ func openbinUpload(bundlePath, filename string, size int64, hash string) (*remot
 		"sha256":      hash,
 	})
 	var confirm openbinBinResponse
-	if err := openbinPost(base+"/api/upload/confirm", "application/json", bytes.NewReader(confirmBody), &confirm); err != nil {
+	if err := openbinPost(ctx, base+"/api/upload/confirm", "application/json", bytes.NewReader(confirmBody), &confirm); err != nil {
 		return nil, fmt.Errorf("confirmar subida en Openbin: %w", err)
 	}
 	if confirm.Slug == "" || confirm.Cid == "" || confirm.DownloadURL == "" {
@@ -323,8 +351,13 @@ type openbinBinResponse struct {
 }
 
 // openbinPost hace un POST a Openbin y decodifica la respuesta JSON.
-func openbinPost(rawURL, contentType string, body io.Reader, out any) error {
-	resp, err := openbinClient.Post(rawURL, contentType, body)
+func openbinPost(ctx context.Context, rawURL, contentType string, body io.Reader, out any) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, rawURL, body)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", contentType)
+	resp, err := openbinClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -342,14 +375,14 @@ func openbinPost(rawURL, contentType string, body io.Reader, out any) error {
 // openbinPut sube el bundle a la URL firmada de Filebase (streaming).
 // ContentLength evita el transfer-encoding chunked; el Content-Type coincide
 // con el mime declarado en el presign (Openbin firma ese header).
-func openbinPut(rawURL, path string, size int64) error {
+func openbinPut(ctx context.Context, rawURL, path string, size int64) error {
 	f, err := os.Open(path)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	req, err := http.NewRequest(http.MethodPut, rawURL, f)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, rawURL, f)
 	if err != nil {
 		return err
 	}

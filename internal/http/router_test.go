@@ -46,8 +46,7 @@ func TestSizeLimitMiddleware(t *testing.T) {
 		c.String(200, "ok")
 	})
 
-	// Small request should succeed
-	smallBody := make([]byte, 1024) // 1KB
+	smallBody := make([]byte, 1024)
 	req, _ := http.NewRequest("POST", "/test", nil)
 	req.Body = &mockReadCloser{data: smallBody}
 	req.ContentLength = int64(len(smallBody))
@@ -57,7 +56,6 @@ func TestSizeLimitMiddleware(t *testing.T) {
 		t.Errorf("Small request failed with status %d", w.Code)
 	}
 
-	// Large request should be rejected
 	largeBody := make([]byte, maxPushSize+1)
 	req, _ = http.NewRequest("POST", "/test", nil)
 	req.Body = &mockReadCloser{data: largeBody}
@@ -69,7 +67,6 @@ func TestSizeLimitMiddleware(t *testing.T) {
 	}
 }
 
-// mockReadCloser implements io.ReadCloser for testing
 type mockReadCloser struct {
 	data []byte
 	pos  int
@@ -91,7 +88,6 @@ func (m *mockReadCloser) Close() error {
 func TestAnonymousAuthMiddleware(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	// Test without API key set (should allow)
 	r := gin.New()
 	r.Use(anonymousAuthMiddleware(""))
 	r.GET("/test", func(c *gin.Context) {
@@ -105,14 +101,12 @@ func TestAnonymousAuthMiddleware(t *testing.T) {
 		t.Errorf("Request without API key should succeed when none is set, got status %d", w.Code)
 	}
 
-	// Test with API key set
 	r = gin.New()
 	r.Use(anonymousAuthMiddleware("test-key"))
 	r.GET("/test", func(c *gin.Context) {
 		c.String(200, "ok")
 	})
 
-	// No API key provided
 	req, _ = http.NewRequest("GET", "/test", nil)
 	w = httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -120,7 +114,6 @@ func TestAnonymousAuthMiddleware(t *testing.T) {
 		t.Errorf("Request without API key should fail when key is required, got status %d", w.Code)
 	}
 
-	// Wrong API key
 	req, _ = http.NewRequest("GET", "/test", nil)
 	req.Header.Set("X-Gitgost-Key", "wrong-key")
 	w = httptest.NewRecorder()
@@ -129,7 +122,6 @@ func TestAnonymousAuthMiddleware(t *testing.T) {
 		t.Errorf("Request with wrong API key should fail, got status %d", w.Code)
 	}
 
-	// Correct API key
 	req, _ = http.NewRequest("GET", "/test", nil)
 	req.Header.Set("X-Gitgost-Key", "test-key")
 	w = httptest.NewRecorder()
@@ -138,7 +130,6 @@ func TestAnonymousAuthMiddleware(t *testing.T) {
 		t.Errorf("Request with correct API key should succeed, got status %d", w.Code)
 	}
 
-	// Test Git routes allow anonymous access even with API key
 	r = gin.New()
 	r.Use(anonymousAuthMiddleware("test-key"))
 	r.GET("/v1/gh/:owner/:repo/info/refs", func(c *gin.Context) {
@@ -148,7 +139,6 @@ func TestAnonymousAuthMiddleware(t *testing.T) {
 		c.String(200, "ok")
 	})
 
-	// Git info/refs should work without auth
 	req, _ = http.NewRequest("GET", "/v1/gh/owner/repo/info/refs?service=git-receive-pack", nil)
 	w = httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -156,7 +146,6 @@ func TestAnonymousAuthMiddleware(t *testing.T) {
 		t.Errorf("Git info/refs should allow anonymous access, got status %d", w.Code)
 	}
 
-	// Git receive-pack should work without auth
 	req, _ = http.NewRequest("POST", "/v1/gh/owner/repo/git-receive-pack", nil)
 	w = httptest.NewRecorder()
 	r.ServeHTTP(w, req)

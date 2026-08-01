@@ -16,8 +16,6 @@ import (
 
 var httpClient = &http.Client{Timeout: 60 * time.Second}
 
-// ExtractMRIID extrae el IID de un MR de una URL de GitLab.
-// Formato: https://gitlab.com/{owner}/{repo}/-/merge_requests/{iid}
 func ExtractMRIID(mrURL string) int {
 	trimmed := strings.TrimPrefix(mrURL, "https://gitlab.com/")
 	parts := strings.Split(trimmed, "/-/merge_requests/")
@@ -31,7 +29,6 @@ func ExtractMRIID(mrURL string) int {
 	return n
 }
 
-// GitLabProvider implements provider.Provider for GitLab.
 type GitLabProvider struct{}
 
 func New() *GitLabProvider {
@@ -54,7 +51,6 @@ func (p *GitLabProvider) PushURL(forkOwner, repo string) string {
 	return "https://gitlab.com/" + forkOwner + "/" + repo + ".git"
 }
 
-// projectID returns the URL-encoded "namespace/project" identifier used by GitLab API.
 func projectID(owner, repo string) string {
 	return url.PathEscape(owner + "/" + repo)
 }
@@ -70,15 +66,12 @@ func authHeader(req *http.Request) {
 	}
 }
 
-// ForkRepo forks owner/repo into the authenticated user's namespace.
-// Returns the fork owner (username of the token holder).
 func (p *GitLabProvider) ForkRepo(owner, repo string) (string, error) {
 	t := token()
 	if t == "" {
 		return "", fmt.Errorf("GITLAB_TOKEN not set")
 	}
 
-	// Get current user login
 	userReq, err := http.NewRequest("GET", "https://gitlab.com/api/v4/user", nil)
 	if err != nil {
 		return "", err
@@ -102,7 +95,6 @@ func (p *GitLabProvider) ForkRepo(owner, repo string) (string, error) {
 
 	forkOwner := user.Username
 
-	// Check if fork already exists
 	checkURL := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s", projectID(forkOwner, repo))
 	checkReq, err := http.NewRequest("GET", checkURL, nil)
 	if err != nil {
@@ -118,7 +110,6 @@ func (p *GitLabProvider) ForkRepo(owner, repo string) (string, error) {
 		return forkOwner, nil
 	}
 
-	// Create fork
 	forkURL := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/fork", projectID(owner, repo))
 	forkReq, err := http.NewRequest("POST", forkURL, nil)
 	if err != nil {
@@ -140,7 +131,6 @@ func (p *GitLabProvider) ForkRepo(owner, repo string) (string, error) {
 	return forkOwner, nil
 }
 
-// CreateMR creates a Merge Request from forkOwner:branch → owner/repo:main.
 func (p *GitLabProvider) CreateMR(owner, repo, branch, forkOwner, commitMessage string) (string, error) {
 	t := token()
 	if t == "" {
@@ -194,8 +184,6 @@ func (p *GitLabProvider) CreateMR(owner, repo, branch, forkOwner, commitMessage 
 	return result.WebURL, nil
 }
 
-// GetRefs returns all branches for the given GitLab project.
-// Works without a token for public repos.
 func (p *GitLabProvider) GetRefs(owner, repo string) ([]provider.Ref, error) {
 	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/repository/branches", projectID(owner, repo))
 	req, err := http.NewRequest("GET", apiURL, nil)
@@ -234,14 +222,12 @@ func (p *GitLabProvider) GetRefs(owner, repo string) ([]provider.Ref, error) {
 	return refs, nil
 }
 
-// GetExistingMR checks if an open MR exists from forkOwner:branchName.
 func (p *GitLabProvider) GetExistingMR(owner, repo, forkOwner, branchName string) (string, bool, error) {
 	t := token()
 	if t == "" {
 		return "", false, fmt.Errorf("GITLAB_TOKEN not set")
 	}
 
-	// Check if branch exists in fork
 	branchURL := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/repository/branches/%s",
 		projectID(forkOwner, repo), url.PathEscape(branchName))
 	branchReq, err := http.NewRequest("GET", branchURL, nil)
@@ -260,7 +246,6 @@ func (p *GitLabProvider) GetExistingMR(owner, repo, forkOwner, branchName string
 		return "", false, nil
 	}
 
-	// Branch exists; search for open MR
 	mrListURL := fmt.Sprintf(
 		"https://gitlab.com/api/v4/projects/%s/merge_requests?state=opened&source_branch=%s&per_page=1",
 		projectID(owner, repo), url.QueryEscape(branchName),
@@ -294,15 +279,12 @@ func (p *GitLabProvider) GetExistingMR(owner, repo, forkOwner, branchName string
 	return mrs[0].WebURL, true, nil
 }
 
-// CloseMRByURL closes a GitLab MR given its web URL.
-// Expected format: https://gitlab.com/{owner}/{repo}/-/merge_requests/{iid}
 func (p *GitLabProvider) CloseMRByURL(mrURL string) error {
 	t := token()
 	if t == "" {
 		return fmt.Errorf("GITLAB_TOKEN not set")
 	}
 
-	// Parse: https://gitlab.com/<owner>/<repo>/-/merge_requests/<iid>
 	trimmed := strings.TrimPrefix(mrURL, "https://gitlab.com/")
 	parts := strings.Split(trimmed, "/-/merge_requests/")
 	if len(parts) != 2 {
@@ -338,7 +320,6 @@ func (p *GitLabProvider) CloseMRByURL(mrURL string) error {
 	return nil
 }
 
-// GetRepoPolicy reads .gitgost.yml from a GitLab repository.
 func (p *GitLabProvider) GetRepoPolicy(owner, repo string) (*provider.RepoPolicy, error) {
 	t := token()
 	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/repository/files/.gitgost.yml/raw",
@@ -362,19 +343,16 @@ func (p *GitLabProvider) GetRepoPolicy(owner, repo string) (*provider.RepoPolicy
 		return &provider.RepoPolicy{}, nil
 	}
 
-	// Parse DENY_ALL from raw YAML content
 	var buf bytes.Buffer
 	buf.ReadFrom(resp.Body)
 	content := buf.String()
 
-	// Simple check: avoid importing yaml just for one field
 	if strings.Contains(content, "DENY_ALL: true") {
 		return &provider.RepoPolicy{DenyAll: true}, nil
 	}
 	return &provider.RepoPolicy{}, nil
 }
 
-// CreateAnonymousIssue creates an issue on a GitLab project.
 func (p *GitLabProvider) CreateAnonymousIssue(owner, repo, title, body string, labels []string) (string, int, error) {
 	t := token()
 	if t == "" {
@@ -426,7 +404,6 @@ func (p *GitLabProvider) CreateAnonymousIssue(owner, repo, title, body string, l
 	return result.WebURL, result.IID, nil
 }
 
-// CreateAnonymousComment posts a note (comment) on a GitLab issue.
 func (p *GitLabProvider) CreateAnonymousComment(owner, repo string, number int, body string) (string, error) {
 	t := token()
 	if t == "" {
@@ -466,12 +443,10 @@ func (p *GitLabProvider) CreateAnonymousComment(owner, repo string, number int, 
 	return fmt.Sprintf("https://gitlab.com/%s/%s/-/issues/%d#note_%d", owner, repo, number, result.ID), nil
 }
 
-// CreateAnonymousDiscussionComment is not supported by GitLab; returns an error.
 func (p *GitLabProvider) CreateAnonymousDiscussionComment(owner, repo string, number int, body string) (string, error) {
 	return "", fmt.Errorf("GitLab does not support GitHub Discussions")
 }
 
-// CreateAnonymousPRComment posts a note (comment) on a GitLab merge request.
 func (p *GitLabProvider) CreateAnonymousPRComment(owner, repo string, number int, body string) (string, error) {
 	t := token()
 	if t == "" {
@@ -511,7 +486,6 @@ func (p *GitLabProvider) CreateAnonymousPRComment(owner, repo string, number int
 	return fmt.Sprintf("https://gitlab.com/%s/%s/-/merge_requests/%d#note_%d", owner, repo, number, result.ID), nil
 }
 
-// GetMRStatus obtiene el estado actual de un MR desde GitLab.
 func (p *GitLabProvider) GetMRStatus(owner, repo string, number int) (*provider.MRStatus, error) {
 	t := token()
 	if t == "" {
@@ -520,7 +494,6 @@ func (p *GitLabProvider) GetMRStatus(owner, repo string, number int) (*provider.
 
 	pid := projectID(owner, repo)
 
-	// Obtener info del MR
 	mrURL := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/merge_requests/%d", pid, number)
 	mrReq, _ := http.NewRequest("GET", mrURL, nil)
 	authHeader(mrReq)
@@ -543,7 +516,6 @@ func (p *GitLabProvider) GetMRStatus(owner, repo string, number int) (*provider.
 		return nil, err
 	}
 
-	// nextNotePageURL extrae la URL de la pagina siguiente del header Link de GitLab.
 	nextNotePageURL := func(linkHeader string) string {
 		if linkHeader == "" {
 			return ""
@@ -578,7 +550,6 @@ func (p *GitLabProvider) GetMRStatus(owner, repo string, number int) (*provider.
 		authHeader(notesReq)
 		notesResp, err := httpClient.Do(notesReq)
 		if err != nil {
-			// Si falla la primera pagina, retornar sin eventos
 			if len(allNotes) == 0 {
 				return &provider.MRStatus{
 					State: mr.State, Title: mr.Title, Number: number,
@@ -625,7 +596,6 @@ func (p *GitLabProvider) GetMRStatus(owner, repo string, number int) (*provider.
 	}, nil
 }
 
-// IsRepoVerified checks if the GitLab repo has a .gitgost.yml file.
 func (p *GitLabProvider) IsRepoVerified(owner, repo string) bool {
 	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/repository/files/.gitgost.yml/raw",
 		projectID(owner, repo))

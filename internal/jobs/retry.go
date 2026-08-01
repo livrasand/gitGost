@@ -8,15 +8,11 @@ import (
 	"time"
 )
 
-// Configuración de reintentos automáticos ante fallos de red.
 var (
 	retryMax  = 3
 	retryBase = 2 * time.Second
 )
 
-// isRetryable decide si un error de git merece reintento. Los errores
-// definitivos (repo inexistente, autenticación, destino ocupado) no se
-// reintentan; los de red/transporte sí.
 func isRetryable(err error) bool {
 	lower := strings.ToLower(err.Error())
 
@@ -72,8 +68,6 @@ func isRetryable(err error) bool {
 	return false
 }
 
-// execGitWithRetry ejecuta un comando git capturando su stderr (progreso) y lo
-// reintenta con backoff exponencial si el fallo es de red.
 func execGitWithRetry(s *Store, job *Job, dir string, args ...string) error {
 	var lastErr error
 	backoff := retryBase
@@ -96,9 +90,6 @@ func execGitWithRetry(s *Store, job *Job, dir string, args ...string) error {
 	return lastErr
 }
 
-// runGitCapture ejecuta git y entrega cada línea de stderr al callback de progreso.
-// Las barras de progreso usan \r, así que una "línea" puede ser enorme:
-// se entrega solo el final, que es el estado visible más reciente.
 func runGitCapture(dir string, progress func(string), args ...string) error {
 	cmd := exec.Command("git", args...)
 	cmd.Dir = dir
@@ -127,13 +118,10 @@ func runGitCapture(dir string, progress func(string), args ...string) error {
 	}
 
 	if err := scanner.Err(); err != nil {
-		// Si el stderr deja de leerse, git puede bloquearse en el pipe: se aborta.
 		_ = cmd.Process.Kill()
 		return err
 	}
 	if err := cmd.Wait(); err != nil {
-		// Incluir el último mensaje de git (p. ej. "unable to access") para que
-		// isRetryable clasifique el fallo; el error de Wait solo dice "exit 128".
 		if lastLine != "" {
 			return fmt.Errorf("%w: %s", err, lastLine)
 		}

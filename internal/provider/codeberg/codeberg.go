@@ -21,7 +21,6 @@ const (
 
 var httpClient = &http.Client{Timeout: 60 * time.Second}
 
-// CodebergProvider implements provider.Provider for Codeberg (Forgejo/Gitea).
 type CodebergProvider struct{}
 
 func New() *CodebergProvider {
@@ -125,14 +124,12 @@ func (p *CodebergProvider) getDefaultBranch(owner, repo string) (string, error) 
 	return r.DefaultBranch, nil
 }
 
-// ForkRepo forks owner/repo into the authenticated user's namespace.
 func (p *CodebergProvider) ForkRepo(owner, repo string) (string, error) {
 	forkOwner, err := p.currentUser()
 	if err != nil {
 		return "", err
 	}
 
-	// Check if fork already exists.
 	checkReq, err := http.NewRequest("GET", repoPath(forkOwner, repo), nil)
 	if err != nil {
 		return "", err
@@ -164,7 +161,6 @@ func (p *CodebergProvider) ForkRepo(owner, repo string) (string, error) {
 		return "", fmt.Errorf("failed to fork Codeberg repo: %s", forkResp.Status)
 	}
 
-	// If async, poll briefly until the fork is ready.
 	if forkResp.StatusCode == http.StatusAccepted {
 		deadline := time.Now().Add(30 * time.Second)
 		for time.Now().Before(deadline) {
@@ -185,7 +181,6 @@ func (p *CodebergProvider) ForkRepo(owner, repo string) (string, error) {
 	return forkOwner, nil
 }
 
-// CreateMR creates a pull request from forkOwner:branch → owner/repo:defaultBranch.
 func (p *CodebergProvider) CreateMR(owner, repo, branch, forkOwner, commitMessage string) (string, error) {
 	if codebergToken() == "" {
 		return "", fmt.Errorf("CODEBERG_TOKEN not set")
@@ -250,7 +245,6 @@ func (p *CodebergProvider) CreateMR(owner, repo, branch, forkOwner, commitMessag
 	return fmt.Sprintf("https://%s/%s/%s/pulls/%d", host, owner, repo, result.Number), nil
 }
 
-// GetRefs returns all refs (branches and tags) for the repository.
 func (p *CodebergProvider) GetRefs(owner, repo string) ([]provider.Ref, error) {
 	req, err := http.NewRequest("GET", repoPath(owner, repo)+"/git/refs", nil)
 	if err != nil {
@@ -285,13 +279,11 @@ func (p *CodebergProvider) GetRefs(owner, repo string) ([]provider.Ref, error) {
 	return out, nil
 }
 
-// GetExistingMR checks if an open pull request exists from forkOwner:branchName.
 func (p *CodebergProvider) GetExistingMR(owner, repo, forkOwner, branchName string) (string, bool, error) {
 	if codebergToken() == "" {
 		return "", false, fmt.Errorf("CODEBERG_TOKEN not set")
 	}
 
-	// Check whether the branch exists in the fork.
 	branchURL := repoPath(forkOwner, repo) + "/branches/" + url.PathEscape(branchName)
 	branchReq, err := http.NewRequest("GET", branchURL, nil)
 	if err != nil {
@@ -312,7 +304,6 @@ func (p *CodebergProvider) GetExistingMR(owner, repo, forkOwner, branchName stri
 		return "", true, err
 	}
 
-	// Try the base/head lookup endpoint first.
 	lookupURL := repoPath(owner, repo) + "/pulls/" + url.PathEscape(base) + "/" + url.PathEscape(forkOwner+":"+branchName)
 	lookupReq, err := http.NewRequest("GET", lookupURL, nil)
 	if err != nil {
@@ -339,7 +330,6 @@ func (p *CodebergProvider) GetExistingMR(owner, repo, forkOwner, branchName stri
 		return "", true, nil
 	}
 
-	// Fallback: list open pull requests and filter.
 	listURL := repoPath(owner, repo) + "/pulls?state=open&limit=100"
 	listReq, err := http.NewRequest("GET", listURL, nil)
 	if err != nil {
@@ -376,7 +366,6 @@ func (p *CodebergProvider) GetExistingMR(owner, repo, forkOwner, branchName stri
 	return "", true, nil
 }
 
-// CloseMRByURL closes an open pull request given its HTML URL.
 func (p *CodebergProvider) CloseMRByURL(mrURL string) error {
 	if codebergToken() == "" {
 		return fmt.Errorf("CODEBERG_TOKEN not set")
@@ -411,7 +400,6 @@ func (p *CodebergProvider) CloseMRByURL(mrURL string) error {
 	return nil
 }
 
-// ExtractPRNumber extrae el número de un PR de una URL de Codeberg.
 func ExtractPRNumber(mrURL string) int {
 	_, _, n, err := parsePullURL(mrURL)
 	if err != nil {
@@ -436,7 +424,6 @@ func parsePullURL(mrURL string) (owner, repo string, number int, err error) {
 	return parts[0], parts[1], n, nil
 }
 
-// GetRepoPolicy reads the .gitgost.yml policy file from the repository.
 func (p *CodebergProvider) GetRepoPolicy(owner, repo string) (*provider.RepoPolicy, error) {
 	req, err := http.NewRequest("GET", repoPath(owner, repo)+"/raw/.gitgost.yml", nil)
 	if err != nil {
@@ -464,7 +451,6 @@ func (p *CodebergProvider) GetRepoPolicy(owner, repo string) (*provider.RepoPoli
 	return &provider.RepoPolicy{}, nil
 }
 
-// IsRepoVerified checks if the repository has a .gitgost.yml file.
 func (p *CodebergProvider) IsRepoVerified(owner, repo string) bool {
 	req, err := http.NewRequest("GET", repoPath(owner, repo)+"/raw/.gitgost.yml", nil)
 	if err != nil {
@@ -480,7 +466,6 @@ func (p *CodebergProvider) IsRepoVerified(owner, repo string) bool {
 	return resp.StatusCode == http.StatusOK
 }
 
-// CreateAnonymousIssue creates an issue and returns its URL and number.
 func (p *CodebergProvider) CreateAnonymousIssue(owner, repo, title, body string, labels []string) (string, int, error) {
 	if codebergToken() == "" {
 		return "", 0, fmt.Errorf("CODEBERG_TOKEN not set")
@@ -573,12 +558,10 @@ func (p *CodebergProvider) getLabelIDs(owner, repo string, labels []string) ([]i
 	return ids, nil
 }
 
-// CreateAnonymousComment posts a comment on an issue.
 func (p *CodebergProvider) CreateAnonymousComment(owner, repo string, number int, body string) (string, error) {
 	return p.createIssueComment(owner, repo, number, body)
 }
 
-// CreateAnonymousPRComment posts a comment on a pull request.
 func (p *CodebergProvider) CreateAnonymousPRComment(owner, repo string, number int, body string) (string, error) {
 	return p.createIssueComment(owner, repo, number, body)
 }
@@ -624,12 +607,10 @@ func (p *CodebergProvider) createIssueComment(owner, repo string, number int, bo
 	return fmt.Sprintf("https://%s/%s/%s/issues/%d#issuecomment-%d", host, owner, repo, number, result.ID), nil
 }
 
-// CreateAnonymousDiscussionComment is not supported on Codeberg.
 func (p *CodebergProvider) CreateAnonymousDiscussionComment(owner, repo string, number int, body string) (string, error) {
 	return "", fmt.Errorf("codeberg does not support GitHub-style Discussions")
 }
 
-// GetMRStatus returns the current status of a pull request, including comments as events.
 func (p *CodebergProvider) GetMRStatus(owner, repo string, number int) (*provider.MRStatus, error) {
 	if codebergToken() == "" {
 		return nil, fmt.Errorf("CODEBERG_TOKEN not set")

@@ -5,8 +5,6 @@ import (
 	"github.com/livrasand/gitGost/internal/provider"
 )
 
-// GitHubProvider implements provider.Provider using the existing github package.
-// All real logic lives in internal/github/pr.go — this is a thin adapter.
 type GitHubProvider struct{}
 
 func New() *GitHubProvider {

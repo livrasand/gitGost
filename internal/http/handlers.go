@@ -757,24 +757,24 @@ func SetBuildInfo(hash, built, repo string) {
 }
 
 var (
-	startTime  = time.Now()
-	dbClient   *database.SupabaseClient
-	dbOnce     sync.Once
-	secretKey  []byte
-	identityMu sync.Mutex
-	karmaStore = newBoundedMap[int](karmaStoreMax, 24*time.Hour)
-	reportStore  = newBoundedMap[reportState](reportStoreMax, reportWindow)
-	flaggedStore = newBoundedMap[time.Time](flaggedStoreMax, flaggedCooldown)
-	blockedStore = newBoundedMap[bool](blockedStoreMax, 0)
-	panicMode      bool
-	panicMu        sync.Mutex
-	panicPassword  string
-	ntfyAdminTopic string
-	mentaAPIEndpoint string
-	mentaAPIKey      string
-	rateLimitStore  = newBoundedMap[[]time.Time](rateLimitStoreMax, rateLimitWindow)
-	rateLimitWindow = time.Hour
-	rateLimitMaxPRs = 5
+	startTime           = time.Now()
+	dbClient            *database.SupabaseClient
+	dbOnce              sync.Once
+	secretKey           []byte
+	identityMu          sync.Mutex
+	karmaStore          = newBoundedMap[int](karmaStoreMax, 24*time.Hour)
+	reportStore         = newBoundedMap[reportState](reportStoreMax, reportWindow)
+	flaggedStore        = newBoundedMap[time.Time](flaggedStoreMax, flaggedCooldown)
+	blockedStore        = newBoundedMap[bool](blockedStoreMax, 0)
+	panicMode           bool
+	panicMu             sync.Mutex
+	panicPassword       string
+	ntfyAdminTopic      string
+	mentaAPIEndpoint    string
+	mentaAPIKey         string
+	rateLimitStore      = newBoundedMap[[]time.Time](rateLimitStoreMax, rateLimitWindow)
+	rateLimitWindow     = time.Hour
+	rateLimitMaxPRs     = 5
 	globalBurstMu       sync.Mutex
 	globalBurstTimes    []time.Time
 	globalBurstIPs      []string
@@ -782,11 +782,10 @@ var (
 	globalBurstMaxTotal = 20
 	globalBurstMaxIPs   = 10
 	globalBurstAlerted  bool
-	recentBurstPRsMu  sync.Mutex
-	recentBurstPRs    []string
-	recentBurstPRsAt  []time.Time
-	recentBurstPRsTTL = 2 * time.Hour
-
+	recentBurstPRsMu    sync.Mutex
+	recentBurstPRs      []string
+	recentBurstPRsAt    []time.Time
+	recentBurstPRsTTL   = 2 * time.Hour
 
 	actionTokens   = newBoundedMap[time.Time](actionTokenMax, actionTokenTTL)
 	actionTokenTTL = 10 * time.Minute
@@ -2525,7 +2524,6 @@ func serveDeployedBadge(c *gin.Context) {
 	c.Header("Content-Type", "image/svg+xml")
 	c.Header("Cache-Control", "public, max-age=3600")
 
-	// Shields.io-compatible badge: label width ~72px, value width ~(len*7+10)px
 	label := "deployed"
 	labelW := 64
 	valueW := len(commit)*7 + 10
@@ -2572,13 +2570,10 @@ func serveDeployedBadge(c *gin.Context) {
 	c.String(http.StatusOK, svg)
 }
 
-// badgeCache almacena el conteo de PRs por "owner/repo" con TTL de 5 minutos
 var (
 	badgeCache = newBoundedMap[int](badgeCacheMax, 5*time.Minute)
 )
 
-// BadgePRCountHandler sirve un badge SVG dinámico con el conteo de PRs anónimos para owner/repo.
-// GET /badge/:owner/:repo
 func BadgePRCountHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
@@ -2601,8 +2596,6 @@ func BadgePRCountHandler(c *gin.Context) {
 
 	label := "Anonymous PRs"
 	value := fmt.Sprintf("%d", count)
-
-	// Ancho dinámico: label ~100px + value ~(len*7+16)px
 	valueWidth := len(value)*7 + 16
 	if valueWidth < 30 {
 		valueWidth = 30
@@ -2648,8 +2641,6 @@ func BadgePRCountHandler(c *gin.Context) {
 	c.String(http.StatusOK, svg)
 }
 
-// PRStatusHandler devuelve el topic ntfy y la URL de suscripción para un PR hash dado.
-// No almacena ni expone datos personales.
 func PRStatusHandler(c *gin.Context) {
 	hash := strings.TrimSpace(c.Param("hash"))
 	if hash == "" {
@@ -2667,10 +2658,6 @@ func PRStatusHandler(c *gin.Context) {
 	})
 }
 
-// PRCheckHandler devuelve el estado actual de un PR/MR consultando la API del proveedor.
-// Solo funciona para PRs creados a traves de gitGost (trackeados en memoria).
-// Usa ETag para cache eficiente: en cada respuesta devuelve el ETag actual.
-// El cliente puede enviarlo en el header If-None-Match en consultas posteriores.
 func PRCheckHandler(c *gin.Context) {
 	hash := strings.TrimSpace(c.Param("hash"))
 	if hash == "" {
@@ -2704,7 +2691,6 @@ func PRCheckHandler(c *gin.Context) {
 		return
 	}
 
-	// Limitar eventos a los ultimos 10
 	events := status.Events
 	if len(events) > 10 {
 		events = events[len(events)-10:]
@@ -2728,7 +2714,6 @@ func PRCheckHandler(c *gin.Context) {
 		response["events"] = events
 	}
 
-	// Actualizar LastETag para siguiente consulta si el proveedor lo devolvio
 	if status.ETag != "" && status.ETag != track.LastETag {
 		prTrackMu.Lock()
 		if t, ok := prTrackStore[hash]; ok {
@@ -2740,7 +2725,6 @@ func PRCheckHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// Solo expone commitHash y sourceRepo (datos públicos, sin variables de entorno ni secretos).
 func VerifyHandler(c *gin.Context) {
 	shortHash := commitHash
 	if len(shortHash) > 7 {
@@ -2749,7 +2733,6 @@ func VerifyHandler(c *gin.Context) {
 
 	baseURL := fmt.Sprintf("%s://%s", getScheme(c.Request), c.Request.Host)
 
-	// URLs de verificación externas — independientes del operador
 	repoSlug := strings.TrimPrefix(sourceRepo, "https://github.com/")
 	githubCommitURL := fmt.Sprintf("https://github.com/%s/commit/%s", repoSlug, commitHash)
 	githubAttestURL := fmt.Sprintf("https://github.com/%s/attestations", repoSlug)
@@ -2865,11 +2848,7 @@ It does not expose environment variables, tokens, keys, or internal configuratio
 	c.String(http.StatusOK, body)
 }
 
-// BinaryHandler sirve el binario compilado del servidor para verificación.
-// Usa /proc/self/exe para leer el ejecutable actual del proceso, sin depender
-// de rutas hardcodeadas ni almacenamiento externo (compatible con Leapcell).
 func BinaryHandler(c *gin.Context) {
-	// /proc/self/exe apunta al ejecutable en curso en cualquier Linux
 	exePath, err := os.Readlink("/proc/self/exe")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "binary not accessible on this platform"})
@@ -2898,7 +2877,6 @@ func BinaryHandler(c *gin.Context) {
 	io.Copy(c.Writer, f)
 }
 
-// CodebergProxyHandler reenvía peticiones GET a codeberg.org, evitando CORS en el navegador.
 func CodebergProxyHandler(c *gin.Context) {
 	if c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead {
 		c.AbortWithStatusJSON(http.StatusMethodNotAllowed, gin.H{"error": "only GET/HEAD allowed"})
@@ -2950,7 +2928,6 @@ func CodebergProxyHandler(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	// Copiar cabeceras relevantes al cliente (incluyendo paginación de Gitea/Forgejo)
 	for _, h := range []string{"Content-Type", "Content-Length", "Cache-Control", "ETag", "Link", "X-Total-Count", "X-Total", "X-Page", "X-PerPage", "X-PageCount", "X-HasMore"} {
 		if v := resp.Header.Get(h); v != "" {
 			c.Writer.Header().Set(h, v)
@@ -2965,7 +2942,6 @@ func CodebergProxyHandler(c *gin.Context) {
 	}
 }
 
-// SearchHandler busca repositorios en GitHub y GitLab
 func SearchHandler(c *gin.Context) {
 	query := c.Query("q")
 	provider := c.Query("provider")
@@ -2978,7 +2954,6 @@ func SearchHandler(c *gin.Context) {
 
 	results := []gin.H{}
 
-	// Si viene topic=, usar sintaxis topic: para GitHub y tag_list para GitLab
 	ghQuery := query
 	glQuery := query
 	cbQuery := query
@@ -2988,19 +2963,16 @@ func SearchHandler(c *gin.Context) {
 		cbQuery = topicParam
 	}
 
-	// Buscar en GitHub si provider es "gh" o "all"
 	if provider == "gh" || provider == "all" || provider == "" {
 		ghResults := searchGitHub(ghQuery)
 		results = append(results, ghResults...)
 	}
 
-	// Buscar en GitLab si provider es "gl" o "all"
 	if provider == "gl" || provider == "all" || provider == "" {
 		glResults := searchGitLab(glQuery)
 		results = append(results, glResults...)
 	}
 
-	// Buscar en Codeberg si provider es "cb" o "all"
 	if provider == "cb" || provider == "all" || provider == "" {
 		cbResults := searchCodeberg(cbQuery, topicParam)
 		results = append(results, cbResults...)
@@ -3012,7 +2984,6 @@ func SearchHandler(c *gin.Context) {
 	})
 }
 
-// searchGitHub busca repositorios en GitHub usando la API pública
 func searchGitHub(query string) []gin.H {
 	results := []gin.H{}
 
@@ -3076,7 +3047,6 @@ func searchGitHub(query string) []gin.H {
 	return results
 }
 
-// searchCodeberg busca repositorios en Codeberg usando la API de Forgejo/Gitea.
 func searchCodeberg(query, topic string) []gin.H {
 	results := []gin.H{}
 
@@ -3195,11 +3165,9 @@ func getGitLabPrimaryLanguage(projectID int, token string) string {
 	return primary
 }
 
-// searchGitLab busca repositorios en GitLab usando la API pública
 func searchGitLab(query string) []gin.H {
 	results := []gin.H{}
 
-	// Usar la API pública de GitLab
 	url := fmt.Sprintf("https://gitlab.com/api/v4/projects?search=%s&order_by=star_count&sort=desc&per_page=100", url.QueryEscape(query))
 
 	glToken := os.Getenv("GITLAB_TOKEN")
@@ -3262,7 +3230,6 @@ func searchGitLab(query string) []gin.H {
 	wg.Wait()
 
 	for i, item := range data {
-		// Extraer owner/name de path_with_namespace (sin espacios)
 		parts := strings.Split(item.PathWithNamespace, "/")
 		if len(parts) < 2 {
 			continue
@@ -3289,10 +3256,9 @@ func searchGitLab(query string) []gin.H {
 	return results
 }
 
-// TrendingHandler retorna repos trending de GitHub o GitLab
 func TrendingHandler(c *gin.Context) {
 	provider := c.Param("provider")
-	sort := c.Query("sort") // "trending" (default) o "new"
+	sort := c.Query("sort")
 
 	if provider == "" {
 		provider = "gh"
@@ -3301,18 +3267,27 @@ func TrendingHandler(c *gin.Context) {
 		sort = "trending"
 	}
 
+	perPage, err := strconv.Atoi(c.Query("per_page"))
+	if err != nil || perPage < 1 || perPage > 100 {
+		perPage = 10
+	}
+	page, err := strconv.Atoi(c.Query("page"))
+	if err != nil || page < 1 {
+		page = 1
+	}
+
 	var results []gin.H
 
 	switch provider {
 	case "gh":
-		results = getTrendingGitHub(sort)
+		results = getTrendingGitHub(sort, perPage, page)
 	case "gl":
-		results = getTrendingGitLab(sort)
+		results = getTrendingGitLab(sort, perPage, page)
 	case "cb":
-		results = getTrendingCodeberg(sort)
+		results = getTrendingCodeberg(sort, perPage, page)
 	case "all":
-		results = append(getTrendingGitHub(sort), getTrendingGitLab(sort)...)
-		results = append(results, getTrendingCodeberg(sort)...)
+		results = append(getTrendingGitHub(sort, perPage, page), getTrendingGitLab(sort, perPage, page)...)
+		results = append(results, getTrendingCodeberg(sort, perPage, page)...)
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid provider, use 'gh', 'gl', 'cb' or 'all'"})
 		return
@@ -3324,23 +3299,22 @@ func TrendingHandler(c *gin.Context) {
 	})
 }
 
-// getTrendingGitHub obtiene repos trending de GitHub
-func getTrendingGitHub(sort string) []gin.H {
+func getTrendingGitHub(sort string, perPage, page int) []gin.H {
 	results := []gin.H{}
 
 	now := time.Now()
 	var dateCutoff string
 	if sort == "new" {
-		dateCutoff = now.AddDate(0, 0, -7).Format("2006-01-02") // 7 días para "new"
+		dateCutoff = now.AddDate(0, 0, -7).Format("2006-01-02")
 	} else {
-		dateCutoff = now.AddDate(0, 0, -30).Format("2006-01-02") // 30 días para "trending"
+		dateCutoff = now.AddDate(0, 0, -30).Format("2006-01-02")
 	}
 
 	var url string
 	if sort == "new" {
-		url = fmt.Sprintf("https://api.github.com/search/repositories?q=created:>%s&sort=updated&order=desc&per_page=10", dateCutoff)
+		url = fmt.Sprintf("https://api.github.com/search/repositories?q=created:>%s&sort=updated&order=desc&per_page=%d&page=%d", dateCutoff, perPage, page)
 	} else {
-		url = fmt.Sprintf("https://api.github.com/search/repositories?q=created:>%s&sort=stars&order=desc&per_page=10", dateCutoff)
+		url = fmt.Sprintf("https://api.github.com/search/repositories?q=created:>%s&sort=stars&order=desc&per_page=%d&page=%d", dateCutoff, perPage, page)
 	}
 
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -3399,15 +3373,14 @@ func getTrendingGitHub(sort string) []gin.H {
 	return results
 }
 
-// getTrendingGitLab obtiene repos trending de GitLab
-func getTrendingGitLab(sort string) []gin.H {
+func getTrendingGitLab(sort string, perPage, page int) []gin.H {
 	results := []gin.H{}
 
 	var url string
 	if sort == "new" {
-		url = "https://gitlab.com/api/v4/projects?order_by=created_at&sort=desc&per_page=10"
+		url = fmt.Sprintf("https://gitlab.com/api/v4/projects?order_by=created_at&sort=desc&per_page=%d&page=%d", perPage, page)
 	} else {
-		url = "https://gitlab.com/api/v4/projects?order_by=star_count&sort=desc&per_page=10"
+		url = fmt.Sprintf("https://gitlab.com/api/v4/projects?order_by=star_count&sort=desc&per_page=%d&page=%d", perPage, page)
 	}
 
 	glToken := os.Getenv("GITLAB_TOKEN")
@@ -3490,12 +3463,14 @@ func getTrendingGitLab(sort string) []gin.H {
 	return results
 }
 
-// getTrendingCodeberg obtiene repos trending de Codeberg.
-func getTrendingCodeberg(sort string) []gin.H {
+func getTrendingCodeberg(sort string, perPage, page int) []gin.H {
 	results := []gin.H{}
 
 	params := url.Values{}
-	params.Set("limit", "10")
+	params.Set("limit", strconv.Itoa(perPage))
+	if page > 1 {
+		params.Set("page", strconv.Itoa(page))
+	}
 	if sort == "new" {
 		params.Set("sort", "created")
 		params.Set("order", "desc")

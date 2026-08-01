@@ -88,7 +88,6 @@ func TestTransitionsAndList(t *testing.T) {
 func TestRunFailingJob(t *testing.T) {
 	s := testStore(t)
 
-	// URL inexistente (local, determinista): el job debe pasar a failed sin reintentos.
 	id, err := s.Create(&Job{
 		Operation: "clone",
 		URL:       "file:///no/existe/repo",

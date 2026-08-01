@@ -26,12 +26,14 @@ func CreateBundle(ctx context.Context, url, workDir string) (bundlePath, default
 	// punto donde se convierte en argumento de git, para que ninguna ruta de
 	// llamada pueda inyectar opciones (p. ej. --upload-pack=...) aunque el
 	// separador -- dejara de estar presente.
-	if !validCloneURL(url) {
-		return "", "", fmt.Errorf("URL de repositorio inválida: %q", url)
+	safeURL, err := safeCloneURL(url)
+	if err != nil {
+		return "", "", err
 	}
 	// El separador -- evita que la URL se interprete como opción de git incluso
-	// si la validación superior cambiara.
-	if err := runGit(ctx, "", "clone", "--mirror", "--depth="+strconv.Itoa(bundleChunkSize), "--", url, repoDir); err != nil {
+	// si la validación superior cambiara; el argumento es la URL reconstruida
+	// del parseo validado, nunca el raw del usuario.
+	if err := runGit(ctx, "", "clone", "--mirror", "--depth="+strconv.Itoa(bundleChunkSize), "--", safeURL, repoDir); err != nil {
 		return "", "", fmt.Errorf("clonar %s: %w", url, err)
 	}
 
@@ -81,35 +83,36 @@ func CreateBundle(ctx context.Context, url, workDir string) (bundlePath, default
 	return bundlePath, strings.TrimSpace(branch), nil
 }
 
-// validCloneURL aplica la misma política que la API remota: solo https en los
-// hosts soportados, sin credenciales y con ruta de dos segmentos restringidos.
-// internal/git no puede importar internal/http (ciclo de dependencias), por lo
-// que la validación se mantiene en el paquete que ejecuta git.
-func validCloneURL(raw string) bool {
+// safeCloneURL valida la URL del usuario y devuelve su forma normalizada.
+// La URL que llega a git siempre se deriva de este parseo validado: el raw del
+// usuario nunca se usa como argumento de comando. internal/git no puede
+// importar internal/http (ciclo de dependencias), por lo que la validación se
+// mantiene en el paquete que ejecuta git.
+func safeCloneURL(raw string) (string, error) {
 	u, err := url.Parse(raw)
 	if err != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil {
-		return false
+		return "", fmt.Errorf("URL de repositorio inválida: %q", raw)
 	}
 	switch u.Hostname() {
 	case "github.com", "gitlab.com", "codeberg.org":
 	default:
-		return false
+		return "", fmt.Errorf("URL de repositorio inválida: %q", raw)
 	}
 	parts := strings.Split(strings.Trim(u.Path, "/"), "/")
 	if len(parts) != 2 {
-		return false
+		return "", fmt.Errorf("URL de repositorio inválida: %q", raw)
 	}
 	for _, p := range parts {
 		if strings.Contains(p, "..") {
-			return false
+			return "", fmt.Errorf("URL de repositorio inválida: %q", raw)
 		}
 		for _, r := range p {
 			if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' || r == '.') {
-				return false
+				return "", fmt.Errorf("URL de repositorio inválida: %q", raw)
 			}
 		}
 	}
-	return true
+	return u.String(), nil
 }
 
 // shallowFile devuelve el contenido actual del marker de shallow, o vacío si el

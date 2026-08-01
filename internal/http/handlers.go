@@ -34,9 +34,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// uploadPackClient proxifica las descargas de git-upload-pack. El timeout debe
-// ser amplio: GitHub puede tardar más de 30s en generar/transferir un pack de
-// un repo grande, y un corte aquí trunca la descarga del cliente.
 var uploadPackClient = &http.Client{Timeout: 10 * time.Minute}
 
 const (
@@ -52,9 +49,6 @@ const (
 	reportTokenMax          = 10000
 )
 
-// boundedMap is a generic in-memory map with a max size and optional TTL.
-// Eviction is LRU-ish: when the map is full the entry with the oldest access
-// time is removed. Expired entries are dropped on Get/Peek/Update.
 type boundedEntry[V any] struct {
 	value V
 	at    time.Time
@@ -188,9 +182,6 @@ func (m *boundedMap[V]) evictOldestLocked(needed int) {
 	}
 }
 
-// windowAdd records a timestamp in a sliding-window rate limiter backed by a
-// bounded map. It returns the current count of events in the window. The stored
-// slice is capped at max+1 entries to keep per-key memory bounded.
 func windowAdd(store *boundedMap[[]time.Time], ip string, now time.Time, window time.Duration, max int) int {
 	count := store.Update(ip, func(times []time.Time, ok bool) []time.Time {
 		cutoff := now.Add(-window)
@@ -218,8 +209,6 @@ type reportState struct {
 	IPs   map[string]time.Time
 }
 
-// providerFromPath returns the appropriate Provider based on the URL path prefix.
-// /v1/gh/... → GitHub (default), /v1/gl/... → GitLab, /v1/cb/... → Codeberg.
 func providerFromPath(path string) provider.Provider {
 	if strings.HasPrefix(path, "/v1/gl/") {
 		return glprovider.New()
@@ -242,7 +231,6 @@ func min(a, b int) int {
 	return b
 }
 
-// WritePktLine escribe una línea en formato pkt-line
 func WritePktLine(w io.Writer, data string) error {
 	if data == "" {
 		_, err := w.Write([]byte("0000"))
@@ -254,17 +242,14 @@ func WritePktLine(w io.Writer, data string) error {
 	return err
 }
 
-// WriteSidebandLine escribe una línea con prefijo de banda para side-band-64k
 func WriteSidebandLine(w io.Writer, band byte, message string) error {
 	if message == "" {
 		return nil
 	}
-	// Agregar newline si no existe
 	if !strings.HasSuffix(message, "\n") {
 		message += "\n"
 	}
 
-	// Formato: longitud(4 bytes hex) + banda(1 byte) + mensaje
 	data := append([]byte{band}, []byte(message)...)
 	length := len(data) + 4
 
@@ -288,18 +273,14 @@ func ReceivePackDiscoveryHandler(c *gin.Context) {
 		return
 	}
 
-	// Build advertisement
 	var advertisement bytes.Buffer
 
-	// Service line
 	serviceLine := "# service=git-receive-pack\n"
 	WritePktLine(&advertisement, serviceLine)
-	WritePktLine(&advertisement, "") // flush
+	WritePktLine(&advertisement, "")
 
-	// Capabilities
 	capabilities := "report-status delete-refs side-band-64k quiet ofs-delta push-options"
 
-	// Refs
 	first := true
 	for _, ref := range refs {
 		if strings.HasPrefix(ref.Ref, "refs/heads/") || strings.HasPrefix(ref.Ref, "refs/tags/") {
@@ -313,13 +294,11 @@ func ReceivePackDiscoveryHandler(c *gin.Context) {
 		}
 	}
 
-	// Si no hay refs, enviar capacidades de todos modos
 	if first {
 		line := fmt.Sprintf("0000000000000000000000000000000000000000 capabilities^{}\x00%s\n", capabilities)
 		WritePktLine(&advertisement, line)
 	}
 
-	// Flush final
 	WritePktLine(&advertisement, "")
 
 	c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-advertisement")
@@ -333,12 +312,10 @@ func ReceivePackHandler(c *gin.Context) {
 
 	fmt.Printf("DEBUG: ReceivePackHandler called for %s/%s\n", owner, repo)
 
-	// Handle 100 Continue
 	if c.GetHeader("Expect") == "100-continue" {
 		c.Writer.WriteHeader(http.StatusContinue)
 	}
 
-	// Check panic mode
 	if isPanicMode() {
 		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
 		c.Writer.WriteHeader(http.StatusOK)
@@ -356,7 +333,6 @@ func ReceivePackHandler(c *gin.Context) {
 		return
 	}
 
-	// Check rate limit per IP (5 PRs/IP/hour)
 	ip := c.ClientIP()
 	if checkRateLimit(ip) {
 		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
@@ -372,13 +348,10 @@ func ReceivePackHandler(c *gin.Context) {
 		return
 	}
 
-	// Record push globally to detect botnet/script patterns across IPs
 	go recordGlobalBurst(ip)
 
-	// Detect provider from request path
 	prov := providerFromPath(c.Request.URL.Path)
 
-	// Check repository opt-out policy (.gitgost.yml DENY_ALL)
 	policy, err := prov.GetRepoPolicy(owner, repo)
 	if err == nil && policy != nil && policy.DenyAll {
 		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
@@ -396,9 +369,6 @@ func ReceivePackHandler(c *gin.Context) {
 		return
 	}
 
-	// Track PR URL for potential rollback (registered after PR is created below)
-
-	// Read full body
 	utils.Log("Content-Type: %s", c.GetHeader("Content-Type"))
 	utils.Log("Content-Length: %s", c.GetHeader("Content-Length"))
 
@@ -412,7 +382,6 @@ func ReceivePackHandler(c *gin.Context) {
 
 	utils.Log("Received push for %s/%s, size: %d bytes", owner, repo, len(body))
 
-	// Create temporary repository
 	tempDir, err := utils.CreateTempDir()
 	if err != nil {
 		utils.Log("Error creating temp dir: %v", err)
@@ -421,16 +390,13 @@ func ReceivePackHandler(c *gin.Context) {
 	}
 	defer utils.CleanupTempDir(tempDir)
 
-	// Set headers before writing anything
 	c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
 	c.Writer.WriteHeader(http.StatusOK)
 
 	var response bytes.Buffer
 
-	// Initial progress message
 	WriteSidebandLine(&response, 2, "remote: gitGost: Processing your anonymous contribution...")
 
-	// Process the packfile
 	newSHA, commitMessage, receivedPRHash, err := git.ReceivePack(tempDir, body, owner, repo, prov.CloneURL(owner, repo), prov.TokenEnvVar())
 	if err != nil {
 		utils.Log("Error receiving pack: %v", err)
@@ -443,7 +409,6 @@ func ReceivePackHandler(c *gin.Context) {
 	utils.Log("Commits received successfully, HEAD at: %s", newSHA)
 	WriteSidebandLine(&response, 2, "remote: gitGost: Commits anonymized successfully")
 
-	// Create a fork of the repository
 	WriteSidebandLine(&response, 2, "remote: gitGost: Creating fork...")
 	forkOwner, err := prov.ForkRepo(owner, repo)
 	if err != nil {
@@ -462,7 +427,6 @@ func ReceivePackHandler(c *gin.Context) {
 	isUpdate := false
 
 	if receivedPRHash != "" {
-		// Update mode: the client sent an existing pr-hash
 		branchFromHash := fmt.Sprintf("gitgost-%s", receivedPRHash)
 		WriteSidebandLine(&response, 2, fmt.Sprintf("remote: gitGost: Updating existing PR (hash: %s)...", receivedPRHash))
 
@@ -472,7 +436,6 @@ func ReceivePackHandler(c *gin.Context) {
 		}
 
 		if branchExists {
-			// Push to the fork in the existing branch (force)
 			WriteSidebandLine(&response, 2, "remote: gitGost: Pushing update to existing branch...")
 			branch, err = git.PushToGitHub(owner, repo, tempDir, forkOwner, branchFromHash, prov.PushURL(forkOwner, repo), prov.TokenEnvVar())
 			if err != nil {
@@ -484,12 +447,10 @@ func ReceivePackHandler(c *gin.Context) {
 				return
 			}
 			if existingPRURL != "" {
-				// PR found: update successful
 				prURL = existingPRURL
 				isUpdate = true
 				utils.Log("Updated existing branch: %s, PR: %s", branch, prURL)
 			} else {
-				// Branch exists but PR was closed/merged: create new PR
 				WriteSidebandLine(&response, 2, "remote: gitGost: PR was closed, creating new PR on existing branch...")
 				prURL, err = prov.CreateMR(owner, repo, branch, forkOwner, commitMessage)
 				if err != nil {
@@ -507,14 +468,12 @@ func ReceivePackHandler(c *gin.Context) {
 				}
 			}
 		} else {
-			// The hash does not correspond to an existing branch: create new PR
 			utils.Log("PR hash not found, creating new PR")
 			WriteSidebandLine(&response, 2, "remote: gitGost: Hash not found, creating new PR...")
 		}
 	}
 
 	if !isUpdate {
-		// Normal flow: push to new branch and create PR
 		WriteSidebandLine(&response, 2, "remote: gitGost: Pushing to fork...")
 		branch, err = git.PushToGitHub(owner, repo, tempDir, forkOwner, "", prov.PushURL(forkOwner, repo), prov.TokenEnvVar())
 		if err != nil {
@@ -529,7 +488,6 @@ func ReceivePackHandler(c *gin.Context) {
 		utils.Log("Pushed to fork branch: %s", branch)
 		WriteSidebandLine(&response, 2, fmt.Sprintf("remote: gitGost: Branch '%s' created", branch))
 
-		// Create PR from the fork to the original repository
 		WriteSidebandLine(&response, 2, "remote: gitGost: Creating pull request...")
 		prURL, err = prov.CreateMR(owner, repo, branch, forkOwner, commitMessage)
 		if err != nil {
@@ -543,14 +501,11 @@ func ReceivePackHandler(c *gin.Context) {
 
 		utils.Log("Created PR: %s", prURL)
 
-		// Record statistics
 		if err := RecordPR(c.Request.Context(), owner, repo, prURL); err != nil {
 			utils.Log("Error recording stats: %v", err)
 		}
 	}
 
-	// Register PR URL for potential burst rollback only while a burst alert is active;
-	// prune entries older than TTL regardless.
 	if isGlobalBurstAlertActive() {
 		nowPR := time.Now()
 		recentBurstPRsMu.Lock()
@@ -570,10 +525,8 @@ func ReceivePackHandler(c *gin.Context) {
 		recentBurstPRsMu.Unlock()
 	}
 
-	// Generate pr-hash for this branch (deterministic: owner/repo/branch)
 	outPRHash := github.GeneratePRHash(owner, repo, branch)
 
-	// Publish ntfy event in background (does not block the Git response)
 	go func() {
 		ntfyTopic := github.NtfyTopicForPR(outPRHash)
 		var ntfyTitle, ntfyMsg string
@@ -590,7 +543,6 @@ func ReceivePackHandler(c *gin.Context) {
 		}
 	}()
 
-	// Track PR for on-demand status checking
 	if prURL != "" {
 		provShort := "gh"
 		if strings.HasPrefix(c.Request.URL.Path, "/v1/gl/") {
@@ -614,7 +566,6 @@ func ReceivePackHandler(c *gin.Context) {
 		}
 	}
 
-	// CLEAR SUCCESS MESSAGES
 	WriteSidebandLine(&response, 2, "remote: ")
 	WriteSidebandLine(&response, 2, "remote: ========================================")
 	if isUpdate {
@@ -641,15 +592,13 @@ func ReceivePackHandler(c *gin.Context) {
 	WriteSidebandLine(&response, 2, "remote: ========================================")
 	WriteSidebandLine(&response, 2, "remote: ")
 
-	// Standard Git response (sideband 1 = protocol data)
 	WriteSidebandLine(&response, 1, "unpack ok\n")
 	WriteSidebandLine(&response, 1, "ok refs/heads/main\n")
-	WritePktLine(&response, "") // final flush
+	WritePktLine(&response, "")
 
 	c.Writer.Write(response.Bytes())
 	c.Writer.Flush()
 
-	// Small delay to allow Git to process the response and close its side first
 	time.Sleep(100 * time.Millisecond)
 }
 
@@ -660,9 +609,6 @@ func UploadPackDiscoveryHandler(c *gin.Context) {
 	prov := providerFromPath(c.Request.URL.Path)
 	token := os.Getenv(prov.TokenEnvVar())
 
-	// Reenviar los query params del cliente (protocol=v2 y otros) además del
-	// service: sin protocol=v2 el servidor remoto responde en protocolo v1 y
-	// git no puede usar filtros (partial clone) ni la negociación eficiente.
 	q := url.Values{}
 	q.Set("service", "git-upload-pack")
 	for k, vals := range c.Request.URL.Query() {
@@ -704,7 +650,7 @@ func UploadPackHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
 
-	const maxUploadBytes = 50 * 1024 * 1024 // 50 MB
+	const maxUploadBytes = 50 * 1024 * 1024
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxUploadBytes)
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
@@ -729,7 +675,6 @@ func UploadPackHandler(c *gin.Context) {
 	req.Header.Set("Accept", "application/x-git-upload-pack-result")
 	req.Header.Set("User-Agent", "git/2.0")
 	if gp := c.Request.Header.Get("Git-Protocol"); gp != "" {
-		// Reenviar la negociación de protocolo v2 del cliente al remoto.
 		req.Header.Set("Git-Protocol", gp)
 	}
 	if ce := c.Request.Header.Get("Content-Encoding"); ce != "" {
@@ -759,7 +704,6 @@ func basicAuth(username, password string) string {
 	return base64.StdEncoding.EncodeToString([]byte(credentials))
 }
 
-// sendErrorResponse sends an error response in Git protocol format
 func sendErrorResponse(c *gin.Context, errorMsg string) {
 	c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
 	c.Writer.WriteHeader(http.StatusOK)
@@ -806,7 +750,6 @@ var (
 	sourceRepo = "https://github.com/livrasand/gitGost"
 )
 
-// SetBuildInfo allows main to inject compiled values with -ldflags
 func SetBuildInfo(hash, built, repo string) {
 	commitHash = hash
 	buildTime = built
@@ -819,62 +762,44 @@ var (
 	dbOnce     sync.Once
 	secretKey  []byte
 	identityMu sync.Mutex
-	// karmaStore stores karma per hash (in-memory fallback)
 	karmaStore = newBoundedMap[int](karmaStoreMax, 24*time.Hour)
-	// reportStore holds per-hash report state (count, first report, IPs)
 	reportStore  = newBoundedMap[reportState](reportStoreMax, reportWindow)
 	flaggedStore = newBoundedMap[time.Time](flaggedStoreMax, flaggedCooldown)
 	blockedStore = newBoundedMap[bool](blockedStoreMax, 0)
-
-	// panicMode: service temporarily suspended
 	panicMode      bool
 	panicMu        sync.Mutex
 	panicPassword  string
 	ntfyAdminTopic string
-
-	// mentaAPIEndpoint/mentaAPIKey: Menta CAPTCHA verification config (empty = captcha disabled)
 	mentaAPIEndpoint string
 	mentaAPIKey      string
-
-	// rateLimitStore: PR counter per IP within a 1-hour window
 	rateLimitStore  = newBoundedMap[[]time.Time](rateLimitStoreMax, rateLimitWindow)
 	rateLimitWindow = time.Hour
 	rateLimitMaxPRs = 5
-
-	// globalBurst: tracks all push attempts globally to detect botnet/script activity
-	// across multiple IPs in a short time window
 	globalBurstMu       sync.Mutex
-	globalBurstTimes    []time.Time        // timestamps of all pushes
-	globalBurstIPs      []string           // IPs corresponding to each push
-	globalBurstWindow   = 60 * time.Second // sliding window
-	globalBurstMaxTotal = 20               // max pushes globally in the window
-	globalBurstMaxIPs   = 10               // max distinct IPs in the window
-	globalBurstAlerted  bool               // avoid repeated alerts
-
-	// recentBurstPRs: PR URLs created during the current burst window, for rollback.
-	// Entries older than recentBurstPRsTTL are pruned on each registration.
+	globalBurstTimes    []time.Time
+	globalBurstIPs      []string
+	globalBurstWindow   = 60 * time.Second
+	globalBurstMaxTotal = 20
+	globalBurstMaxIPs   = 10
+	globalBurstAlerted  bool
 	recentBurstPRsMu  sync.Mutex
 	recentBurstPRs    []string
-	recentBurstPRsAt  []time.Time     // creation time per PR URL
-	recentBurstPRsTTL = 2 * time.Hour // keep burst PRs for 2 hours max
+	recentBurstPRsAt  []time.Time
+	recentBurstPRsTTL = 2 * time.Hour
 
-	// actionTokens: short-lived tokens used in ntfy action buttons instead of panicPassword.
-	// Each token is single-use and expires after actionTokenTTL.
+
 	actionTokens   = newBoundedMap[time.Time](actionTokenMax, actionTokenTTL)
 	actionTokenTTL = 10 * time.Minute
 
-	// adminRollbackLimit: simple rate limit for /admin/rollback (max 5 calls/min)
 	rollbackLimitMu    sync.Mutex
 	rollbackLimitTimes []time.Time
 	rollbackLimitMax   = 5
 	rollbackLimitWin   = time.Minute
 
-	// reportRateLimitStore: report counter per IP within reportRateLimitWindow.
 	reportRateLimitStore  = newBoundedMap[[]time.Time](reportRateLimitStoreMax, reportRateLimitWindow)
 	reportRateLimitWindow = time.Hour
 	reportRateLimitMax    = 5
 
-	// reportTokens: single-use tokens generated by GET /v1/moderation/report; valid for reportTokenTTL.
 	reportTokens   = newBoundedMap[time.Time](reportTokenMax, reportTokenTTL)
 	reportTokenTTL = 10 * time.Minute
 
@@ -883,7 +808,6 @@ var (
 )
 
 type anonymousIssueRequest struct {
-	// ...
 	Title        string   `json:"title"`
 	Body         string   `json:"body"`
 	Labels       []string `json:"labels"`
@@ -903,13 +827,12 @@ const (
 
 var reportPolicyHTML = template.HTML(`<li><strong>0–2 reports:</strong> internal log only.</li><li><strong>3–5 reports:</strong> hash flagged, 6h cooldown, karma reset.</li><li><strong>6+ reports:</strong> hash blocked; we attempt to remove its comments.</li>`)
 
-// PR tracking store for on-demand status checking via /api/pr/:hash/status
 type prTrack struct {
 	Owner    string
 	Repo     string
 	Number   int
 	PRURL    string
-	Provider string // "gh" or "gl"
+	Provider string
 	LastETag string
 	AddedAt  time.Time
 }
@@ -921,7 +844,6 @@ var (
 	prTrackEvictionOnce sync.Once
 )
 
-// startPRTrackEviction inicia un goroutine que limpia entradas expiradas cada 10 min.
 func startPRTrackEviction() {
 	prTrackEvictionOnce.Do(func() {
 		go func() {
@@ -940,7 +862,6 @@ func startPRTrackEviction() {
 	})
 }
 
-// trackPR almacena metadatos de un PR para consultas de estado posteriores.
 func trackPR(prHash, owner, repo string, number int, prURL, provider string) {
 	startPRTrackEviction()
 	prTrackMu.Lock()
@@ -955,10 +876,6 @@ func trackPR(prHash, owner, repo string, number int, prURL, provider string) {
 	}
 }
 
-// getPRTrack obtiene los metadatos de un PR por su hash.
-// Retorna una copia (value) obtenida bajo el lock, incluyendo LastETag,
-// para que el llamador pueda usarla sin condiciones de carrera.
-// Elimina entradas expiradas para evitar acumulacion de stale data.
 func getPRTrack(prHash string) (prTrack, bool) {
 	prTrackMu.Lock()
 	defer prTrackMu.Unlock()
@@ -973,7 +890,6 @@ func getPRTrack(prHash string) (prTrack, bool) {
 	return *t, true
 }
 
-// providerFromName devuelve el provider adecuado segun el nombre corto.
 func providerFromName(name string) provider.Provider {
 	switch name {
 	case "gl":
@@ -985,7 +901,6 @@ func providerFromName(name string) provider.Provider {
 	}
 }
 
-// newActionToken generates a single-use token valid for actionTokenTTL and stores it.
 func newActionToken() string {
 	b := make([]byte, 16)
 	if _, err := rand.Read(b); err != nil {
@@ -996,8 +911,6 @@ func newActionToken() string {
 	return token
 }
 
-// consumeActionToken validates and removes a single-use action token.
-// Returns true if the token was valid and not expired.
 func consumeActionToken(token string) bool {
 	expiry, ok := actionTokens.Get(token)
 	if !ok {
@@ -1007,20 +920,16 @@ func consumeActionToken(token string) bool {
 	return time.Now().Before(expiry)
 }
 
-// InitPanicConfig initializes the panic button password and ntfy admin topic
 func InitPanicConfig(password, adminTopic string) {
 	panicPassword = password
 	ntfyAdminTopic = adminTopic
 }
 
-// InitMentaConfig initializes the Menta CAPTCHA verification endpoint and tenant API key.
 func InitMentaConfig(apiEndpoint, apiKey string) {
 	mentaAPIEndpoint = strings.TrimRight(apiEndpoint, "/")
 	mentaAPIKey = apiKey
 }
 
-// verifyMentaCaptcha valida un token de Menta contra el endpoint /verify configurado.
-// Si MENTA_API_ENDPOINT no está configurado, no se exige captcha (comportamiento actual sin cambios).
 func verifyMentaCaptcha(token string) bool {
 	if mentaAPIEndpoint == "" {
 		return true

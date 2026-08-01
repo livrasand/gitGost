@@ -22,18 +22,10 @@ const bundleChunkSize = 500
 // acota la duración total de los subprocesos git (evita workers colgados).
 func CreateBundle(ctx context.Context, url, workDir string) (bundlePath, defaultBranch string, err error) {
 	repoDir := filepath.Join(workDir, "repo")
-	// La URL proviene de la API (entrada del usuario). Se revalida aquí, en el
-	// punto donde se convierte en argumento de git, para que ninguna ruta de
-	// llamada pueda inyectar opciones (p. ej. --upload-pack=...) aunque el
-	// separador -- dejara de estar presente.
-	safeURL, err := safeCloneURL(url)
-	if err != nil {
-		return "", "", err
-	}
-	// El separador -- evita que la URL se interprete como opción de git incluso
-	// si la validación superior cambiara; el argumento es la URL reconstruida
-	// del parseo validado, nunca el raw del usuario.
-	if err := runGit(ctx, "", "clone", "--mirror", "--depth="+strconv.Itoa(bundleChunkSize), "--", safeURL, repoDir); err != nil {
+	// gitClone valida la URL en el punto exacto donde se convierte en
+	// argumento de git, evitando que ninguna ruta de llamada inyecte opciones
+	// (p. ej. --upload-pack=...) aunque el separador -- dejara de estar presente.
+	if err := gitClone(ctx, url, repoDir); err != nil {
 		return "", "", fmt.Errorf("clonar %s: %w", url, err)
 	}
 
@@ -95,6 +87,12 @@ var repoURLPattern = regexp.MustCompile(`(?i)^https://(github\.com|gitlab\.com|c
 // validados por la expresión regular; el raw del usuario nunca se usa
 // directamente como argumento de comando.
 func safeCloneURL(raw string) (string, error) {
+	// Barrera explícita para análisis estático: la URL debe coincidir con la
+	// expresión regular permitida antes de ser reconstruida. Los grupos
+	// capturados contienen solo los caracteres permitidos por el patrón.
+	if !repoURLPattern.MatchString(raw) {
+		return "", fmt.Errorf("URL de repositorio inválida: %q", raw)
+	}
 	m := repoURLPattern.FindStringSubmatch(raw)
 	if m == nil {
 		return "", fmt.Errorf("URL de repositorio inválida: %q", raw)
@@ -140,8 +138,37 @@ func revCount(ctx context.Context, dir string) int {
 	return n
 }
 
+// gitClone clona rawURL validada en dest con --mirror y shallow depth fijo.
+// Es el único comando git que recibe input directo del usuario; por eso se
+// aísla, valida la URL con safeCloneURL y construye exec.CommandContext con
+// argumentos explícitos en lugar de un variádico genérico.
+func gitClone(ctx context.Context, rawURL, dest string) error {
+	safeURL, err := safeCloneURL(rawURL)
+	if err != nil {
+		return err
+	}
+	cmd := exec.CommandContext(ctx, "git",
+		"clone",
+		"--mirror",
+		"--depth="+strconv.Itoa(bundleChunkSize),
+		"--",
+		safeURL,
+		dest,
+	)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		if msg := strings.TrimSpace(string(out)); msg != "" {
+			return fmt.Errorf("%w: %s", err, msg)
+		}
+		return err
+	}
+	return nil
+}
+
 // runGit ejecuta git; si falla, el error incluye el mensaje real de stderr.
 // El contexto permite matar el subproceso si el job remoto excede su timeout.
+// Ningún caller pasa input de usuario a través de args; todos los argumentos
+// son literales o paths derivados de workDir creado por os.MkdirTemp.
 func runGit(ctx context.Context, dir string, args ...string) error {
 	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Dir = dir

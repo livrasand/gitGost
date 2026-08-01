@@ -2848,6 +2848,12 @@ It does not expose environment variables, tokens, keys, or internal configuratio
 	c.String(http.StatusOK, body)
 }
 
+func InstallScriptHandler(c *gin.Context) {
+	c.Header("Content-Type", "text/x-shellscript; charset=utf-8")
+	c.Header("Content-Disposition", "inline; filename=\"install.sh\"")
+	c.File("./web/install.sh")
+}
+
 func BinaryHandler(c *gin.Context) {
 	exePath, err := os.Readlink("/proc/self/exe")
 	if err != nil {

@@ -207,6 +207,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.GET("/version", EthicalMetricsVersionHandler)
 	r.GET("/badges/:badge", BadgeHandler)
 	r.GET("/badge/:owner/:repo", BadgePRCountHandler)
+	r.GET("/install", InstallScriptHandler)
 	r.StaticFile("/repo.html", "./web/repo.html")
 	r.StaticFile("/.well-known/security.txt", "./web/.well-known/security.txt")
 	r.Static("/assets", "./web/assets")

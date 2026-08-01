@@ -230,6 +230,11 @@ Everything is designed to prevent abuse while keeping you anonymous.
 
 ## gitGost for Resilient Networking
 
+> [!WARNING]
+> **Alpha software**
+>
+> GREN is currently in **Alpha**. It is under active development and **has not yet been thoroughly tested**. Expect bugs, incomplete features, and breaking changes. Do not rely on it for production or critical workflows.
+
 Git manages the repository. GREN manages the network. The GREN client pauses, resumes, queues and retries Git operations in the background — without replacing Git itself.
 
 The client is written in Go, with pre-compiled binaries available for Mac,

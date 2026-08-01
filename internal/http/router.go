@@ -300,6 +300,16 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.GET("/v1/moderation/report", ReportHashHandler)
 	r.POST("/v1/moderation/report", ReportHashHandler)
 
+	// Fase 2: jobs remotos de descarga (bundle + Range Requests server-side).
+	// La API key se aplica si está configurada (como el resto de endpoints no-git).
+	v2 := r.Group("/v2")
+	v2.Use(anonymousAuthMiddleware(cfg.APIKey))
+	{
+		v2.POST("/jobs", CreateRemoteJobHandler)
+		v2.GET("/jobs/:id", GetRemoteJobHandler)
+		v2.DELETE("/jobs/:id", DeleteRemoteJobHandler)
+	}
+
 	// API routes - Public stats
 	api := r.Group("/api")
 	{

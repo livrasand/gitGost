@@ -453,7 +453,6 @@
             }
 
             .mt-5.loaded.raised {
-                width: min(182px, 100%);
                 margin: 0 auto 1.5rem;
                 padding: 0.45rem 0.45rem 0.65rem;
                 border: 1px solid var(--border);
@@ -507,12 +506,6 @@
             .mt-5.loaded.raised .ea-callout a {
                 color: var(--fg-muted);
                 text-decoration: none;
-            }
-
-            @media (max-width: 700px) {
-                .mt-5.loaded.raised {
-                    width: min(182px, calc(100vw - 2rem));
-                }
             }
 
             .section-content p {
@@ -1609,34 +1602,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- div class="mt-5 loaded raised" data-ea-type="image" data-ea-publisher="unknown">
-                    <div class="ea-content">
-                        <a href="https://openbin.livrasand.com/?ref=gitgost" rel="nofollow noopener" target="_blank">
-                            <img src="assets/sponsors/openbin.livrasand.com.png" alt="Openbin">
-                        </a>
-                        <div class="ea-text">
-                            <a href="https://openbin.livrasand.com/?ref=gitgost" rel="nofollow noopener" target="_blank">
-                                <strong>Openbin:</strong>
-                                <span> Your lightweight, privacy-first file CDN. Powered by IPFS, built for developers. </span>
-                            </a>
-                        </div>
-                    </div>
-                    <div class="ea-callout">
-                        <a rel="nofollow noopener" href="https://gitgost.livrasand.com/">Sponsored by Openbin</a>
-                    </div>
-                </-->
-                <div class="section-content" id="ethicalmetrics-panel" style="border-top:1px solid var(--border);padding-top:0.75rem;margin-top:0.75rem;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.45rem;">
-                        <strong style="font-size:0.72rem;color:var(--fg);">Realtime</strong>
-                        <span style="font-size:0.62rem;color:var(--fg-muted);">pageviews</span>
-                    </div>
-                    <div id="ethicalmetrics-chart" aria-label="Pageviews recientes" style="height:58px;display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--border);">
-                        <span style="width:100%;text-align:center;color:var(--fg-muted);font-size:0.62rem;padding-bottom:0.35rem;">Cargando métricas…</span>
-                    </div>
-                </div>
-                <div class="section-content stats-note" style="align-items:center;gap:0.5rem;font-size:0.72rem;color:var(--fg-muted);">
-                    <span>Only anonymous pageview totals are counted. No IP, no fingerprint, no cookies, no personal data.</span>
-                </div>
                 <div class="section-content">
                     <p
                         style="
@@ -1703,6 +1668,38 @@
                 </div>
                 <div id="page-content" style="display:none;"></div>
             </main>
+
+            <!-- Right Sidebar -->
+            <aside class="right-sidebar">
+                <div class="section-content" id="ethicalmetrics-panel" style="padding-top:0.75rem;margin-top:0.75rem;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.45rem;">
+                        <strong style="font-size:0.72rem;color:var(--fg);">Realtime</strong>
+                        <span style="font-size:0.62rem;color:var(--fg-muted);">pageviews</span>
+                    </div>
+                    <div id="ethicalmetrics-chart" aria-label="Pageviews recientes" style="height:58px;display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--border);">
+                        <span style="width:100%;text-align:center;color:var(--fg-muted);font-size:0.62rem;padding-bottom:0.35rem;">Cargando métricas…</span>
+                    </div>
+                </div>
+                <div class="section-content stats-note" style="border-bottom:1px solid var(--border);padding-bottom:1.5rem;align-items:center;gap:0.5rem;font-size:0.72rem;color:var(--fg-muted);">
+                    <span>Only anonymous pageview totals are counted. No IP, no fingerprint, no cookies, no personal data. <img src="assets/images/surich.svg" width="12px"> Data are storage in Zurich.</span>
+                </div>
+                <div class="mt-5 loaded raised" data-ea-type="image" data-ea-publisher="unknown">
+                    <div class="ea-content">
+                        <a href="https://openbin.livrasand.com/?ref=gitgost" rel="nofollow noopener" target="_blank">
+                            <img src="assets/sponsors/openbin.livrasand.com.png" alt="Openbin">
+                        </a>
+                        <div class="ea-text">
+                            <a href="https://openbin.livrasand.com/?ref=gitgost" rel="nofollow noopener" target="_blank">
+                                <strong>Openbin:</strong>
+                                <span> Your lightweight, privacy-first file CDN. Powered by IPFS, built for developers. </span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="ea-callout">
+                        <a rel="nofollow noopener" href="https://gitgost.livrasand.com/">Openbin is a companion project of gitGost.</a>
+                    </div>
+                </div>
+            </aside>
         </div>
 
         <!-- Command Modal -->

@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -14,11 +15,25 @@ import (
 // Sobrescribible en tests para validar el resume con varias capas.
 var chunkSize = 500
 
-// runClone descarga un repositorio por capas: inicializa el repo, descarga la
-// historia en bloques de chunkSize commits (--depth/--deepen) y materializa la
-// rama por defecto. Cada bloque completado es un checkpoint: si la conexión se
-// pierde, al reanudar solo se descargan los bloques pendientes.
+// runClone decide el flujo de descarga: Fase 2 (bundle con Range Requests y
+// resume por bytes vía Openbin) si el servidor lo soporta; si no, Fase 1
+// (descarga por capas con resume entre bloques).
 func runClone(s *Store, job *Job) error {
+	if err := runCloneBundle(s, job); err != nil {
+		if errors.Is(err, errRemoteJobsUnsupported) {
+			_ = s.SetProgress(job.ID, "El servidor no soporta jobs remotos; usando descarga por capas...")
+			return runCloneLayered(s, job)
+		}
+		return err
+	}
+	return nil
+}
+
+// runCloneLayered (Fase 1) descarga un repositorio por capas: inicializa el
+// repo, descarga la historia en bloques de chunkSize commits (--depth/--deepen)
+// y materializa la rama por defecto. Cada bloque completado es un checkpoint:
+// si la conexión se pierde, al reanudar solo se descargan los bloques pendientes.
+func runCloneLayered(s *Store, job *Job) error {
 	dir := job.Target
 	if dir == "" {
 		return fmt.Errorf("job de clone sin directorio destino")

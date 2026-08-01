@@ -264,6 +264,43 @@ $ git gost watch 82
 $ git gost pause 82   # or resume / cancel
 ```
 
+# Why GREN Exists
+
+Git was designed for reliable networks. Many developers don't have that luxury.
+
+Around the world, developers work with unstable, slow or expensive Internet connections. A dropped Wi-Fi signal, a temporary mobile connection or an overloaded network can interrupt a clone, fetch or push at the worst possible moment.
+
+GREN (gitGost for Resilient Networking) was created to make Git operations more resilient in these environments.
+
+Instead of replacing Git, GREN sits alongside it, running network operations in the background. Downloads and uploads can be paused, resumed, queued and retried automatically, allowing developers to continue working while GREN takes care of unreliable connectivity.
+
+Whether you're working from a rural community, using mobile data, travelling, or simply dealing with an unstable network, GREN helps Git become more tolerant of interruptions.
+
+Because access to open source software shouldn't depend on having perfect Internet.
+
+## Who is GREN for?
+
+GREN is especially useful for developers who:
+
+* live in regions with slow or unreliable Internet
+* rely on mobile or metered connections
+* frequently experience connection interruptions
+* work remotely while travelling
+* clone or push very large repositories
+* want long-running Git operations to continue in the background
+
+## Who may not benefit as much?
+
+If you have a stable high-speed Internet connection and rarely experience interrupted Git operations, GREN may provide only a small convenience.
+
+Git already works well under ideal network conditions.
+
+## My goal
+
+My goal isn't to change how Git works.
+
+My goal is to make Git more resilient when the network isn't.
+
 ## License
 
 **AGPL-3.0** – Free forever, open source, and copyleft.  

@@ -107,6 +107,26 @@ func prCheckLimiter() gin.HandlerFunc {
 	}
 }
 
+// v2LimiterState holds per-IP sliding-window counters for the v2 job endpoints.
+var (
+	v2LimiterStore = newBoundedMap[[]time.Time](prCheckLimiterStoreMax, v2LimiterWin)
+	v2LimiterMax   = 30
+	v2LimiterWin   = time.Minute
+)
+
+// v2Limiter enforces a per-IP rate limit on the Fase 2 job endpoints.
+func v2Limiter() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ip := c.ClientIP()
+		count := windowAdd(v2LimiterStore, ip, time.Now(), v2LimiterWin, v2LimiterMax)
+		if count > v2LimiterMax {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "v2 rate limit exceeded"})
+			return
+		}
+		c.Next()
+	}
+}
+
 // maxPushSize is the maximum allowed push size
 const maxPushSize = 100 * 1024 * 1024 // 100MB
 
@@ -301,9 +321,10 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.POST("/v1/moderation/report", ReportHashHandler)
 
 	// Fase 2: jobs remotos de descarga (bundle + Range Requests server-side).
-	// La API key se aplica si está configurada (como el resto de endpoints no-git).
+	// La API key se aplica si está configurada (como el resto de endpoints no-git);
+	// el límite de tamaño y el limiter per-IP evitan abuso de creación de jobs.
 	v2 := r.Group("/v2")
-	v2.Use(anonymousAuthMiddleware(cfg.APIKey))
+	v2.Use(sizeLimitMiddleware(), v2Limiter(), anonymousAuthMiddleware(cfg.APIKey))
 	{
 		v2.POST("/jobs", CreateRemoteJobHandler)
 		v2.GET("/jobs/:id", GetRemoteJobHandler)

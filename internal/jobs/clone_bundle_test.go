@@ -15,8 +15,9 @@ import (
 
 // fakeBundleServer simula el servidor gitGost de Fase 2: acepta la creación
 // del job remoto, reporta el bundle listo y sirve el bundle con soporte de
-// Range (registrando los headers Range recibidos).
-func fakeBundleServer(t *testing.T, bundlePath string) (*httptest.Server, *[]string) {
+// Range. Devuelve un accessor que devuelve una copia sincronizada de los
+// headers Range recibidos.
+func fakeBundleServer(t *testing.T, bundlePath string) (*httptest.Server, func() []string) {
 	t.Helper()
 	data, err := os.ReadFile(bundlePath)
 	if err != nil {
@@ -29,6 +30,13 @@ func fakeBundleServer(t *testing.T, bundlePath string) (*httptest.Server, *[]str
 
 	var mu sync.Mutex
 	var ranges []string
+	snapshot := func() []string {
+		mu.Lock()
+		defer mu.Unlock()
+		out := make([]string, len(ranges))
+		copy(out, ranges)
+		return out
+	}
 	var srv *httptest.Server
 	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
@@ -38,9 +46,10 @@ func fakeBundleServer(t *testing.T, bundlePath string) (*httptest.Server, *[]str
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"status": "ready",
 				"result": map[string]any{
-					"downloadUrl": srv.URL + "/bundle",
-					"size":        int64(len(data)),
-					"sha256":      hash,
+					"downloadUrl":   srv.URL + "/bundle",
+					"size":          int64(len(data)),
+					"sha256":        hash,
+					"defaultBranch": "main",
 				},
 			})
 		case r.Method == http.MethodGet && r.URL.Path == "/bundle":
@@ -51,7 +60,14 @@ func fakeBundleServer(t *testing.T, bundlePath string) (*httptest.Server, *[]str
 			}
 			mu.Unlock()
 			if strings.HasPrefix(rng, "bytes=") {
-				n, _ := strconv.ParseInt(strings.TrimPrefix(rng, "bytes="), 10, 64)
+				// El rango llega como "bytes=N-": quitar el sufijo "-" antes de parsear.
+				spec := strings.TrimSuffix(strings.TrimPrefix(rng, "bytes="), "-")
+				n, err := strconv.ParseInt(spec, 10, 64)
+				if err != nil || n < 0 || n >= int64(len(data)) {
+					t.Errorf("Range inválido en el fake server: %q", rng)
+					http.Error(w, "invalid range", http.StatusRequestedRangeNotSatisfiable)
+					return
+				}
 				w.Header().Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", n, int64(len(data))-1, int64(len(data))))
 				w.WriteHeader(http.StatusPartialContent)
 				_, _ = w.Write(data[n:])
@@ -63,7 +79,7 @@ func fakeBundleServer(t *testing.T, bundlePath string) (*httptest.Server, *[]str
 		}
 	}))
 	t.Cleanup(srv.Close)
-	return srv, &ranges
+	return srv, snapshot
 }
 
 // withServerURL fija GITGOST_SERVER para que serverBase() apunte al fake.
@@ -147,8 +163,8 @@ func TestRunCloneBundleFull(t *testing.T) {
 		t.Errorf("rama actual = %q, se esperaba main", out)
 	}
 	origin, _ := gitOutput(dest, "remote", "get-url", "origin")
-	if strings.TrimSpace(origin) != "https://github.com/acme/widgets.git" {
-		t.Errorf("origin = %q, se esperaba la URL original https", origin)
+	if strings.TrimSpace(origin) != "git@github.com:acme/widgets.git" {
+		t.Errorf("origin = %q, se esperaba la URL original del usuario", origin)
 	}
 }
 
@@ -199,12 +215,13 @@ func TestDownloadBundleResumes(t *testing.T) {
 	if got != hash {
 		t.Error("el archivo final no coincide con el bundle original")
 	}
-	if len(*ranges) == 0 {
+	rngs := ranges()
+	if len(rngs) == 0 {
 		t.Fatal("no se envió ninguna petición Range")
 	}
 	want := fmt.Sprintf("bytes=%d-", half)
-	if (*ranges)[0] != want {
-		t.Errorf("Range = %q, se esperaba %q", (*ranges)[0], want)
+	if rngs[0] != want {
+		t.Errorf("Range = %q, se esperaba %q", rngs[0], want)
 	}
 }
 

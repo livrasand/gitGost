@@ -30,6 +30,16 @@ var errRemoteJobsUnsupported = errors.New("remote jobs unsupported")
 // remotePollInterval es la espera entre consultas de estado del job remoto.
 var remotePollInterval = 2 * time.Second
 
+// remotePollTimeout acota la espera total del bundle; maxPollErrors tolera
+// fallos transitorios del GET de estado antes de fallar el job.
+var (
+	remotePollTimeout = 30 * time.Minute
+	maxPollErrors     = 3
+)
+
+// jobHTTPClient evita que el cliente se cuelgue si el servidor no responde.
+var jobHTTPClient = &http.Client{Timeout: 60 * time.Second}
+
 // prefixHost mapea el prefijo de ruta del servidor gitGost al host del repo.
 var prefixHost = map[string]string{
 	"gh": "github.com",
@@ -48,13 +58,14 @@ type remoteJobState struct {
 
 // remoteJobBundleInfo es el artefacto final del job remoto (bundle en Openbin).
 type remoteJobBundleInfo struct {
-	Slug        string `json:"slug"`
-	Cid         string `json:"cid"`
-	Size        int64  `json:"size"`
-	Sha256      string `json:"sha256"`
-	DownloadURL string `json:"downloadUrl"`
-	DirectURL   string `json:"directUrl"`
-	Filename    string `json:"filename"`
+	Slug          string `json:"slug"`
+	Cid           string `json:"cid"`
+	Size          int64  `json:"size"`
+	Sha256        string `json:"sha256"`
+	DownloadURL   string `json:"downloadUrl"`
+	DirectURL     string `json:"directUrl"`
+	Filename      string `json:"filename"`
+	DefaultBranch string `json:"defaultBranch"`
 }
 
 // serverBase devuelve la URL base del servidor gitGost (env GITGOST_SERVER o default).
@@ -105,11 +116,24 @@ func runCloneBundle(s *Store, job *Job) error {
 		return fmt.Errorf("descargar bundle: %w", err)
 	}
 
-	if err := materializeClone(cacheFile, job.Target, originalURL); err != nil {
+	if err := materializeClone(cacheFile, job.Target, originForJob(job, originalURL), result.DefaultBranch); err != nil {
 		return err
+	}
+	// El bundle ya se materializó: liberar el cache (puede pesar gigabytes).
+	if err := os.Remove(cacheFile); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("eliminar bundle del cache: %w", err)
 	}
 	_ = s.SetProgress(job.ID, "Clone completado")
 	return nil
+}
+
+// originForJob devuelve la URL del remote origin del repo resultante: la
+// original del usuario cuando existe, o la reconstruida (igual que la Fase 1).
+func originForJob(job *Job, fallback string) string {
+	if job.Origin != "" {
+		return job.Origin
+	}
+	return fallback
 }
 
 // originalRepoURL reconstruye la URL https original a partir de la URL
@@ -131,14 +155,27 @@ func originalRepoURL(rewritten string) (string, error) {
 }
 
 // createRemoteJob crea un job de descarga en el servidor y devuelve su ID.
+// Envía la API key (X-Gitgost-Key) si GITGOST_API_KEY está configurada.
 func createRemoteJob(repoURL string) (string, error) {
 	body, _ := json.Marshal(map[string]string{"url": repoURL})
-	resp, err := http.Post(serverBase()+"/v2/jobs", "application/json", bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPost, serverBase()+"/v2/jobs", bytes.NewReader(body))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if key := os.Getenv("GITGOST_API_KEY"); key != "" {
+		req.Header.Set("X-Gitgost-Key", key)
+	}
+
+	resp, err := jobHTTPClient.Do(req)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNotFound {
+	switch resp.StatusCode {
+	case http.StatusNotFound, http.StatusUnauthorized, http.StatusForbidden:
+		// Sin /v2 o sin permisos: el servidor no soporta jobs remotos para este
+		// cliente; el llamador hace fallback a la descarga por capas.
 		return "", errRemoteJobsUnsupported
 	}
 	if resp.StatusCode >= 300 {
@@ -158,13 +195,26 @@ func createRemoteJob(repoURL string) (string, error) {
 }
 
 // waitRemoteJob consulta el estado del job remoto hasta que el bundle esté
-// listo (ready) o el servidor reporte un fallo (failed).
+// listo (ready) o el servidor reporte un fallo (failed). Tolera un número
+// acotado de errores transitorios del GET y falla con timeout si el servidor
+// no termina el bundle dentro de remotePollTimeout.
 func waitRemoteJob(s *Store, job *Job, id string) (*remoteJobBundleInfo, error) {
+	deadline := time.Now().Add(remotePollTimeout)
+	consecutiveErrors := 0
 	for {
 		st, err := getRemoteJob(id)
 		if err != nil {
-			return nil, err
+			consecutiveErrors++
+			if consecutiveErrors >= maxPollErrors {
+				return nil, fmt.Errorf("el servidor no responde al consultar el job %s: %w", id, err)
+			}
+			_ = s.SetProgress(job.ID, fmt.Sprintf(
+				"Servidor no responde (intento %d/%d), reintentando...", consecutiveErrors, maxPollErrors))
+			time.Sleep(remotePollInterval)
+			continue
 		}
+		consecutiveErrors = 0
+
 		switch st.Status {
 		case "ready":
 			if st.Result == nil {
@@ -177,7 +227,13 @@ func waitRemoteJob(s *Store, job *Job, id string) (*remoteJobBundleInfo, error) 
 				msg += ": " + st.Error
 			}
 			return nil, errors.New(msg)
+		case "cancelled":
+			return nil, fmt.Errorf("el job remoto %s fue cancelado", id)
 		default: // queued | running
+			if time.Now().After(deadline) {
+				return nil, fmt.Errorf(
+					"timeout esperando el bundle del job %s (más de %s)", id, remotePollTimeout)
+			}
 			msg := fmt.Sprintf("Servidor: %s", st.Status)
 			if st.Progress != "" {
 				msg += " — " + st.Progress
@@ -188,9 +244,18 @@ func waitRemoteJob(s *Store, job *Job, id string) (*remoteJobBundleInfo, error) 
 	}
 }
 
-// getRemoteJob consulta el estado de un job remoto.
+// getRemoteJob consulta el estado de un job remoto (con la API key si está
+// configurada y un timeout finito).
 func getRemoteJob(id string) (*remoteJobState, error) {
-	resp, err := http.Get(serverBase() + "/v2/jobs/" + id)
+	req, err := http.NewRequest(http.MethodGet, serverBase()+"/v2/jobs/"+id, nil)
+	if err != nil {
+		return nil, err
+	}
+	if key := os.Getenv("GITGOST_API_KEY"); key != "" {
+		req.Header.Set("X-Gitgost-Key", key)
+	}
+
+	resp, err := jobHTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -219,6 +284,9 @@ func downloadBundle(s *Store, job *Job, downloadURL, dest string, size int64, sh
 			_ = s.SetProgress(job.ID, "Bundle ya descargado en cache")
 			return nil
 		}
+		// Archivo completo pero corrupto: descartarlo antes de re-descargar para
+		// que downloadRange no pida un Range inválido (bytes=<size>-).
+		_ = os.Remove(dest)
 	}
 
 	if err := downloadWithRetry(s, job, downloadURL, dest, size); err != nil {
@@ -279,6 +347,11 @@ func downloadRange(rawURL, dest string, size int64, progress func(string)) error
 	partial := int64(0)
 	if st, err := os.Stat(dest); err == nil {
 		partial = st.Size()
+	}
+	// Un parcial igual o mayor que el tamaño total no se puede reanudar con
+	// Range: reiniciar desde cero (descarga completa) para recuperarse solo.
+	if size > 0 && partial >= size {
+		partial = 0
 	}
 
 	req, err := http.NewRequest(http.MethodGet, rawURL, nil)
@@ -355,11 +428,20 @@ func downloadRange(rawURL, dest string, size int64, progress func(string)) error
 
 // materializeClone crea el repo destino desde el bundle y fija el remote
 // origin a la URL original del usuario. Si el destino ya tiene .git (resume
-// tras una materialización completada), solo se reajusta el origin.
-func materializeClone(bundlePath, target, originURL string) error {
+// tras una materialización completada), solo se reajusta el origin. Cuando el
+// servidor reportó la rama por defecto, se asegura el checkout de esa rama.
+func materializeClone(bundlePath, target, originURL, defaultBranch string) error {
 	if _, err := os.Stat(filepath.Join(target, ".git")); os.IsNotExist(err) {
 		if err := runGit("", "clone", bundlePath, target); err != nil {
 			return fmt.Errorf("materializar repo desde bundle: %w", err)
+		}
+	}
+	if defaultBranch != "" {
+		cur, _ := gitOutput(target, "branch", "--show-current")
+		if strings.TrimSpace(cur) != defaultBranch {
+			if err := runGit(target, "checkout", defaultBranch); err != nil {
+				return fmt.Errorf("cambiar a la rama por defecto %s: %w", defaultBranch, err)
+			}
 		}
 	}
 	_ = runGit(target, "remote", "remove", "origin")

@@ -2706,7 +2706,8 @@
                     try { hljs.highlightElement(b); } catch(_) {}
                 });
             } catch(e) {
-                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+                const safeMsg = escHtml((e && e.message != null) ? String(e.message) : String(e));
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${safeMsg}</div>`;
             }
         }
 

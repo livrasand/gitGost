@@ -2842,6 +2842,8 @@
                         }
                     } catch(_) { /* sidebar no disponible */ }
 
+                    const safeOwner = encodeURIComponent(rv.owner || '');
+                    const safeRepo = encodeURIComponent(rv.repo || '');
                     let navHtml = '';
                     if (navPages.length > 0) {
                         navHtml = `<div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-family:'IBM Plex Mono',monospace;color:var(--fg-muted);display:flex;gap:0.5rem;flex-wrap:wrap;">
@@ -2850,11 +2852,11 @@
                                 const target = p.slug + (p.anchor ? '#' + p.anchor : '');
                                 return `<a href="#" data-wiki="${escAttr(target)}" style="color:${active ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${active ? 'var(--accent)' : 'var(--border)'};border-radius:3px;">${escHtml(p.title)}</a>`;
                             }).join('')}
-                            <a href="https://github.com/${rv.owner}/${rv.repo}/wiki" target="_blank" style="color:var(--accent);text-decoration:none;padding:0.15rem 0.4rem;">Open on GitHub ↗</a>
+                            <a href="https://github.com/${safeOwner}/${safeRepo}/wiki" target="_blank" style="color:var(--accent);text-decoration:none;padding:0.15rem 0.4rem;">Open on GitHub ↗</a>
                         </div>`;
                     } else {
                         navHtml = `<div style="padding:0.5rem 1.25rem 1rem;font-size:0.72rem;font-family:'IBM Plex Mono',monospace;color:var(--fg-muted);">
-                            <a href="https://github.com/${rv.owner}/${rv.repo}/wiki" target="_blank" style="color:var(--accent);">Open wiki on GitHub ↗</a>
+                            <a href="https://github.com/${safeOwner}/${safeRepo}/wiki" target="_blank" style="color:var(--accent);">Open wiki on GitHub ↗</a>
                         </div>`;
                     }
 

@@ -18,10 +18,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        uses: actions/checkout@v4
 
       - name: Set up Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
@@ -33,28 +33,14 @@ jobs:
         run: npx cap sync
 
       - name: Set up JDK
-        uses: actions/setup-java@d7793b545071e98d581d3bf084a51c3213318a07
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
           cache: gradle
 
-      - name: Install Android SDK
-        run: |
-          set -e
-          SDK_DIR="$HOME/android-sdk"
-          mkdir -p "$SDK_DIR/cmdline-tools"
-          cd "$SDK_DIR"
-          curl -sSL -o cmdline-tools.zip "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
-          unzip -q cmdline-tools.zip -d "$SDK_DIR/cmdline-tools"
-          mv "$SDK_DIR/cmdline-tools/cmdline-tools" "$SDK_DIR/cmdline-tools/latest"
-          export ANDROID_HOME="$SDK_DIR"
-          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
-          yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
-          echo "ANDROID_HOME=$SDK_DIR" >> "$GITHUB_ENV"
-          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
-          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Make gradlew executable
         run: chmod +x ./android/gradlew
@@ -62,8 +48,6 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assembleDebug
         working-directory: ./android
-        env:
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
 
       - name: Prepare artifact
         run: |
@@ -73,7 +57,7 @@ jobs:
           sha256sum gitgost-android-debug.apk > gitgost-android-debug.apk.sha256
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@v4
         with:
           name: gitgost-android-debug
           path: ./out/*
@@ -81,6 +65,6 @@ jobs:
 
       - name: Attach APK to release
         if: startsWith(github.ref, 'refs/tags/android/v')
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
+        uses: softprops/action-gh-release@v2
         with:
           files: ./out/*

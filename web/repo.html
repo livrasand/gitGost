@@ -1720,6 +1720,13 @@
                     .release-detail-body { font-size: 0.82rem; }
                 }
             </style>
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", function () {
+                navigator.serviceWorker.register("/sw.js").catch(function () {});
+            });
+        }
+    </script>
 </head>
 <body>
     <div id="suspension-banner" class="suspension-banner">
@@ -1846,7 +1853,17 @@
     </div>
 
     <script>
-        const API_BASE = window.location.origin;
+        function getApiBase() {
+            if (
+                typeof window.Capacitor !== 'undefined' &&
+                window.Capacitor.isNativePlatform &&
+                window.Capacitor.isNativePlatform()
+            ) {
+                return 'https://gitgost.livrasand.com';
+            }
+            return window.location.origin;
+        }
+        const API_BASE = getApiBase();
 
         async function checkServiceStatus() {
             try {
@@ -1871,7 +1888,7 @@
 
         checkServiceStatus();
 
-        const CB_BASE = `${window.location.origin}/api/cb-proxy/api/v1`;
+        const CB_BASE = `${getApiBase()}/api/cb-proxy/api/v1`;
 
         function ghFetch(url, opts = {}) {
             const token = localStorage.getItem('gh_token');
@@ -4432,8 +4449,8 @@
                     if (rv.provider === 'cb') {
                         const branch = currentBranch();
                         imgUrl = branch
-                            ? `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${branch}/${item.path}`
-                            : `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/${item.path}`;
+                            ? `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${branch}/${item.path}`
+                            : `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/${item.path}`;
                     }
                     panel.innerHTML = `<div style="padding:1rem;text-align:center;"><img src="${imgUrl}" alt="${escHtml(name)}" style="max-width:100%;max-height:80vh;object-fit:contain;border-radius:4px;" /></div>`;
                 } else if (name.toLowerCase().endsWith('.md')) {
@@ -4443,8 +4460,8 @@
                     if (rv.provider === 'cb') {
                         const branch = currentBranch();
                         mdBaseUrl = branch
-                            ? `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${branch}/${dir}`
-                            : `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/${dir}`;
+                            ? `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${branch}/${dir}`
+                            : `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/${dir}`;
                     }
                     panel.innerHTML = `<div class="readme">${renderMd(content, mdBaseUrl)}</div>`;
                 } else {
@@ -4774,8 +4791,8 @@
                     const rawBase = baseUrl ||
                         (rv.provider === 'cb'
                             ? (currentBranch()
-                                ? `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${currentBranch()}/`
-                                : `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/`)
+                                ? `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${currentBranch()}/`
+                                : `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/`)
                             : rv.provider === 'gh'
                                 ? `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/${currentBranch()}/`
                                 : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/`);
@@ -4791,8 +4808,8 @@
             const rawBase = baseUrl ||
                 (rv.provider === 'cb'
                     ? (currentBranch()
-                        ? `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${currentBranch()}/`
-                        : `${window.location.origin}/api/cb-proxy/${rv.owner}/${rv.repo}/`)
+                        ? `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${currentBranch()}/`
+                        : `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/`)
                     : rv.provider === 'gh'
                         ? `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/${currentBranch()}/`
                         : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/`);

@@ -99,6 +99,30 @@ Done. The PR appears instantly from `@gitgost-anonymous` with your commit messag
 
 **Pro tip:** Write detailed commit messages! Your commit message becomes the PR description, allowing you to provide context while staying anonymous.
 
+## PWA & Android app
+
+The repository includes a Capacitor project that turns the web UI into a Progressive Web App (installable from the browser) and an Android project ready to build.
+
+- `capacitor.config.json` points the Android app to `https://gitgost.livrasand.com`.
+- `web/assets/logos/manifest.json` has been extended with PWA fields (`display`, `start_url`, `theme_color`, etc.).
+- `web/sw.js` caches the core assets so the PWA works offline after the first visit.
+- `web/index.html` and `web/repo.html` register the service worker and detect Capacitor so the app calls the remote backend when running as a native app.
+
+### Commands
+
+```bash
+# Install Capacitor dependencies (already done via package.json)
+npm install
+
+# Re-sync web assets into the Android project
+npx cap sync
+
+# Open the Android project in Android Studio
+npx cap open android
+```
+
+The generated Android project is in `android/`. Build the APK/AAB from Android Studio or from a machine with the Android SDK installed.
+
 ## Why developers love gitGost
 
 > “Your commit history shouldn’t be an HR liability forever.”

@@ -1,0 +1,12 @@
+{
+  "appId": "com.livrasand.gitgost",
+  "appName": "gitGost",
+  "webDir": "web",
+  "server": {
+    "url": "https://gitgost.livrasand.com",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

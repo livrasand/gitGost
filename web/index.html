@@ -86,6 +86,13 @@
             content="assets/logos/ms-icon-144x144.png"
         />
         <meta name="theme-color" content="#d16014" />
+        <script>
+            if ("serviceWorker" in navigator) {
+                window.addEventListener("load", function () {
+                    navigator.serviceWorker.register("/sw.js").catch(function () {});
+                });
+            }
+        </script>
         <meta
             name="description"
             content="Contribute to any GitHub, GitLab or Codeberg repository without leaving a trace. Anonymous Git contributions with gitGost — privacy first, no accounts, open source. Defend your identity in open source."
@@ -2604,7 +2611,17 @@
         </div>
 
         <script>
-            const API_BASE = window.location.origin;
+            function getApiBase() {
+                if (
+                    typeof window.Capacitor !== 'undefined' &&
+                    window.Capacitor.isNativePlatform &&
+                    window.Capacitor.isNativePlatform()
+                ) {
+                    return 'https://gitgost.livrasand.com';
+                }
+                return window.location.origin;
+            }
+            const API_BASE = getApiBase();
 
             function escapeHtml(value) {
                 return String(value ?? '').replace(/[&<>'"]/g, char => ({

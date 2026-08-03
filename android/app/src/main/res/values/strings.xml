@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">gitGost</string>
+    <string name="title_activity_main">gitGost</string>
+    <string name="package_name">com.livrasand.gitgost</string>
+    <string name="custom_url_scheme">com.livrasand.gitgost</string>
+</resources>

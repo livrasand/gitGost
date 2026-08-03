@@ -46,7 +46,9 @@ jobs:
         run: chmod +x ./android/gradlew
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug
+        run: |
+          unset ANDROID_SDK_ROOT
+          ./gradlew assembleDebug
         working-directory: ./android
 
       - name: Prepare artifact

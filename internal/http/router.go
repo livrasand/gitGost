@@ -53,7 +53,7 @@ func securityHeaders() gin.HandlerFunc {
 				"img-src 'self' data: blob: https://* http://*; "+
 				"object-src 'none'; "+
 				"frame-ancestors 'none'; "+
-				"connect-src 'self' http://localhost:* https://api.github.com https://raw.githubusercontent.com https://github.com https://gitlab.com https://codeberg.org https://en.wikipedia.org https://www.wikidata.org https://mentacaptchaeu.eu.pythonanywhere.com",
+				"connect-src 'self' capacitor://localhost http://localhost:* https://localhost https://gitgost.livrasand.com https://api.github.com https://raw.githubusercontent.com https://github.com https://gitlab.com https://codeberg.org https://en.wikipedia.org https://www.wikidata.org https://mentacaptchaeu.eu.pythonanywhere.com",
 		)
 		c.Next()
 	}
@@ -209,6 +209,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.GET("/badge/:owner/:repo", BadgePRCountHandler)
 	r.GET("/install", InstallScriptHandler)
 	r.StaticFile("/repo.html", "./web/repo.html")
+	r.StaticFile("/sw.js", "./web/sw.js")
 	r.StaticFile("/.well-known/security.txt", "./web/.well-known/security.txt")
 	r.Static("/assets", "./web/assets")
 	r.StaticFile("/ethicalmetrics.js", "./web/ethicalmetrics.js")

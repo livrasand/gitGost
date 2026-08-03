@@ -2,10 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main]
     tags: ["android/v*"]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -36,7 +33,7 @@ jobs:
         uses: actions/setup-java@d7793b545071e98d581d3bf084a51c3213318a07
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
           cache: gradle
 
       - name: Make gradlew executable

@@ -99,29 +99,27 @@ Done. The PR appears instantly from `@gitgost-anonymous` with your commit messag
 
 **Pro tip:** Write detailed commit messages! Your commit message becomes the PR description, allowing you to provide context while staying anonymous.
 
-## PWA & Android app
+## Download Android app
 
-The repository includes a Capacitor project that turns the web UI into a Progressive Web App (installable from the browser) and an Android project ready to build.
+> [!Warning]
+> **Free and Open-Source Android is under threat.**
+>
+> Google will turn Android into a locked-down platform, restricting your essential freedom to install apps of your choice. Make your voice heard
+>
+> [**Keep Android Open**](https://keepandroidopen.org/).
 
-- `capacitor.config.json` points the Android app to `https://gitgost.livrasand.com`.
-- `web/assets/logos/manifest.json` has been extended with PWA fields (`display`, `start_url`, `theme_color`, etc.).
-- `web/sw.js` caches the core assets so the PWA works offline after the first visit.
-- `web/index.html` and `web/repo.html` register the service worker and detect Capacitor so the app calls the remote backend when running as a native app.
+You can download the app from GitHub's [Releases](https://github.com/livrasand/gitGost/releases/) page or install it from the [livrasand F-Droid Repo](https://fdroid.livrasand.com/).
 
-### Commands
 
-```bash
-# Install Capacitor dependencies (already done via package.json)
-npm install
-
-# Re-sync web assets into the Android project
-npx cap sync
-
-# Open the Android project in Android Studio
-npx cap open android
-```
-
-The generated Android project is in `android/`. Build the APK/AAB from Android Studio or from a machine with the Android SDK installed.
+[<img src="./web/assets/app-stores/get-it-on-github.png"
+    alt="Get it on GitHub"
+    height="80">](https://github.com/livrasand/gitGost/releases/)
+[<img src="./web/assets/app-stores/get-it-on-fdroid.svg"
+    alt="Get it on F-Droid"
+    height="80">](fdroidrepos://fdroid.livrasand.com/repo?fingerprint=4fc12351f04fb991cd68a681a1595627adabfa02119aaa3606deaba1dab13ad2)
+[<img src="./web/assets/app-stores/get-it-on-obtainium.png"
+    alt="Get it on Obtainium"
+    height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/livrasand/gitGost)
 
 ## Why developers love gitGost
 

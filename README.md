@@ -38,8 +38,11 @@ That’s it. No login, token, name, or email required — gitGost provides stron
 [![Legal Notice](https://img.shields.io/badge/Legal-Notice%20%26%20CLA-red)](LEGAL.md)
 [![Powered by Go](https://img.shields.io/badge/Powered%20by-Go-00ADD8.svg?logo=go)](https://go.dev)
 [![Privacy First](https://img.shields.io/badge/Privacy-First-59316b)](https://github.com/livrasand/gitGost)
-[![GitHub repo size](https://img.shields.io/github/repo-size/livrasand/gitGost)](https://github.com/EduardaSRBastos/my-essential-toolbox)
+[![GitHub repo size](https://img.shields.io/github/repo-size/livrasand/gitGost)](https://github.com/livrasand/gitGost)
+[![Coffee Drunk](https://img.shields.io/badge/coffee%20drunk-1%20cup&#47;d-6F4E37)](https://github.com/livrasand/gitGost)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/livrasand?label=GitHub%20Sponsors)](https://github.com/sponsors/livrasand)
+<a href="https://github.com/badges/shields/pulse" alt="Activity">
+        <img src="https://img.shields.io/github/commit-activity/m/livrasand/gitGost" /></a>
   <img
   src="https://img.shields.io/badge/GitHub-Available-brightgreen?logo=github"
   alt="GitHub – Available"/>

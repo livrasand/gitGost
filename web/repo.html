@@ -4970,7 +4970,8 @@
                             ? `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${branch}/${item.path}`
                             : `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/${item.path}`;
                     }
-                    _renderFilePanel(name, { content, size: fileSize, imgUrl, isImage: true, previewHtml: `<div style="padding:1rem;text-align:center;"><img src="${imgUrl}" alt="${escHtml(name)}" style="max-width:100%;max-height:80vh;object-fit:contain;border-radius:4px;" /></div>` });
+                    const safeImgUrl = sanitizeHttpUrl(imgUrl);
+                    _renderFilePanel(name, { content, size: fileSize, imgUrl: safeImgUrl, isImage: true, previewHtml: `<div style="padding:1rem;text-align:center;"><img src="${escHtml(safeImgUrl)}" alt="${escHtml(name)}" style="max-width:100%;max-height:80vh;object-fit:contain;border-radius:4px;" /></div>` });
                 } else if (name.toLowerCase().endsWith('.md')) {
                     const dir = item.path ? item.path.substring(0, item.path.lastIndexOf('/') + 1) : '';
                     let mdBaseUrl = `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/${dir}`;
@@ -5045,6 +5046,16 @@
                     </svg></button>` +
                 `</div>` +
                 `<div class="file-body" id="file-body">${f.previewHtml}</div>`;
+        }
+
+        function sanitizeHttpUrl(url) {
+            try {
+                const parsed = new URL(String(url || ''), window.location.origin);
+                if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+                    return parsed.href;
+                }
+            } catch (e) {}
+            return '';
         }
 
         function _buildCodeHtml(text, name) {

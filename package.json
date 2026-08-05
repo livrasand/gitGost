@@ -5,7 +5,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.0",
-    "@openai/codex-security": "^0.1.5"
+    "@openai/codex-security": "^0.1.6"
   },
   "scripts": {
     "cap:sync": "npx cap sync",

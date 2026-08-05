@@ -5082,7 +5082,7 @@
                     body.innerHTML = _buildCodeHtml(f.content, f.name);
                 }
             } else {
-                body.innerHTML = f.previewHtml;
+                body.innerHTML = DOMPurify.sanitize(f.previewHtml, { USE_PROFILES: { html: true } });
             }
             const pv = document.getElementById('ft-preview-btn');
             const cv = document.getElementById('ft-code-btn');

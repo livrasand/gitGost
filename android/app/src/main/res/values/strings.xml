@@ -4,7 +4,7 @@
     <string name="title_activity_main">gitGost</string>
     <string name="package_name">com.livrasand.gitgost</string>
     <string name="custom_url_scheme">com.livrasand.gitgost</string>
-    <string name="offline_title">Sin conexión a Internet</string>
-    <string name="offline_subtitle">Conéctate a una red Wi-Fi o de datos para continuar</string>
-    <string name="offline_retry">Reintentar</string>
+    <string name="offline_title">No Internet Connection</string>
+    <string name="offline_subtitle">Connect to a Wi-Fi or data network to continue</string>
+    <string name="offline_retry">Retry</string>
 </resources>

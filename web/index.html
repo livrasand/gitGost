@@ -135,6 +135,9 @@
             rel="stylesheet"
         />
         <script src="https://cdn.jsdelivr.net/npm/marked@4/marked.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jdenticon@3.3.0/dist/jdenticon.min.js" async
+                integrity="sha384-LfouGM03m83ArVtne1JPk926e3SGD0Tz8XHtW2OKGsgeBU/UfR0Fa8eX+UlwSSAZ" crossorigin="anonymous">
+        </script>
         <script type="application/ld+json">
             {
                 "@context": "https://schema.org",
@@ -1600,9 +1603,6 @@
 		<path d="M18 20v-10" />
 	</g>
 </svg> stats</a>
-                <div class="mobile-stats-note" style="align-items:center;gap:0.5rem;font-size:0.72rem;color:var(--fg-muted);border-top:1px solid var(--border);padding-top:0.5rem;margin-top:0.25rem;">
-                    <span>Only anonymous pageview totals are counted. No IP, no fingerprint, no cookies, no personal data.</span>
-                </div>
                 </nav>
 
                 <div class="section-content" id="rate-limit-section">
@@ -3027,6 +3027,46 @@
                 }
             });
 
+            // Normaliza y fusiona topics/tags/tag_list de cualquier provider en un array unico de tags en minusculas.
+            function repoTagList(repo) {
+                const tags = [];
+                const add = (source) => {
+                    if (!Array.isArray(source)) return;
+                    for (const t of source) {
+                        const tag = String(t).toLowerCase();
+                        if (tag && !tags.includes(tag)) tags.push(tag);
+                    }
+                };
+                add(repo.topics);
+                add(repo.tags);
+                add(repo.tag_list);
+                return tags;
+            }
+
+            function searchMatchScore(repo, query) {
+                let term = query.trim();
+                if (term.startsWith('#')) term = term.substring(1);
+                else if (term.startsWith('topic:')) term = term.substring(6);
+                term = term.toLowerCase();
+                if (!term) return 0;
+
+                const name = (repo.name || '').toLowerCase();
+                const fullName = (repo.full_name || '').toLowerCase();
+                const owner = (repo.owner || '').toLowerCase();
+                const desc = (repo.description || '').toLowerCase();
+                const topics = repoTagList(repo);
+
+                let score = 0;
+                if (name === term) score += 100;
+                else if (name.startsWith(term)) score += 80;
+                else if (name.includes(term)) score += 50;
+
+                if (fullName.includes(term) || owner.includes(term)) score += 30;
+                if (topics.includes(term)) score += 25;
+                if (desc.includes(term)) score += 10;
+                return score;
+            }
+
             async function performSearch(query) {
                 const container = document.getElementById("repo-list");
                 if (container) container.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">Searching...</p>';
@@ -3052,11 +3092,13 @@
                         if (query.startsWith('#')) {
                             const tag = query.substring(1).toLowerCase();
                             results = results.filter(r => {
-                                const tags = (r.topics || r.tags || []).map(t => t.toLowerCase());
+                                const tags = repoTagList(r);
                                 return tags.includes(tag);
                             });
                         }
                         if (results.length > 0) {
+                            // Mostrar primero los repos con mejor match a la query
+                            results.sort((a, b) => searchMatchScore(b, query) - searchMatchScore(a, query));
                             renderRepos(results);
                             updateStatusbar("search", query);
                         } else {
@@ -3221,6 +3263,9 @@
 
                     container.appendChild(item);
                 });
+                if (window.jdenticon) {
+                    try { window.jdenticon(); } catch {}
+                }
             }
 
             function switchTab(tab, el) {
@@ -4406,7 +4451,7 @@
                             </span>
                             <span style="font-family:'IBM Plex Mono',monospace;font-size:1.1rem;font-weight:600;color:var(--fg);">${safeTag}</span>
                         </div>
-                        <div id="tag-wiki-desc" style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--fg-muted);line-height:1.6;margin-bottom:0.5rem;max-width:560px;"></div>
+                        <div id="tag-wiki-desc" style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--fg-muted);line-height:1.6;margin-bottom:0.5rem;"></div>
                         <div id="tag-wiki-links" style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;margin-bottom:0.6rem;"></div>
                         <div id="tag-repo-count" style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--fg-muted);">searching repositories…</div>
                     </div>
@@ -4466,12 +4511,13 @@
                     if (!res.ok) { window.tagState.exhausted = true; return; }
                     const data = await res.json();
                     const results = data.results || [];
-                    if (results.length === 0) {
-                        if (!append) listEl.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">No repositories found for this topic.</p>';
-                        window.tagState.exhausted = true;
-                        return;
-                    }
-                    renderTagRepos(results, append);
+                    					if (results.length === 0) {
+                    						if (!append) listEl.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">No repositories found for this topic.</p>';
+                    						window.tagState.exhausted = true;
+                    						return;
+                    					}
+                    					shuffleArray(results);
+                    					renderTagRepos(results, append);
                     window.tagState.page++;
                 } catch (e) {
                     window.tagState.exhausted = true;
@@ -4500,19 +4546,22 @@
                     };
                     const desc = repo.description ? escapeHtml(repo.description.slice(0, 120)) : '';
                     const stars = repo.stars > 0 ? `(${formatNumber(repo.stars)})` : '';
-                    const langBadge = languageBadgeHtml(repo.language);
-                    const ownerHtml = escapeHtml(owner || '');
-                    const nameHtml = escapeHtml(name || '');
-                    let providerLabel, providerColor;
+                    					const langBadge = languageBadgeHtml(repo.language);
+                    					const ownerHtml = escapeHtml(owner || '');
+                    					const nameHtml = escapeHtml(name || '');
+                    					const forgeIcon = forgeIconHtml(repo.provider);
+                    					let providerLabel, providerColor;
                     if (repo.provider === 'gitlab') { providerLabel = gitlabBadgeIcon(); providerColor = '#FC6D26'; }
                     else if (repo.provider === 'codeberg') { providerLabel = codebergBadgeIcon(); providerColor = '#2185D0'; }
                     else { providerLabel = githubBadgeIcon(); providerColor = '#181717'; }
                     item.innerHTML = `
-                        <div class="repo-item-normal">
-                            <div class="repo-item-left">
-                                <div class="repo-item-name"><span class="owner">${ownerHtml}</span><span class="slash">/</span><span class="name">${nameHtml}</span></div>
-                                ${desc ? `<div class="repo-item-desc">${desc}</div>` : ''}
-                            </div>
+                        						<div class="repo-item-normal">
+                        							<div class="repo-item-left">
+                        								<div class="repo-item-name">
+                        									${forgeIcon}<span class="owner">${ownerHtml}</span><span class="slash">/</span><span class="name">${nameHtml}</span>
+                        								</div>
+                        								${desc ? `<div class="repo-item-desc">${desc}</div>` : ''}
+                        							</div>
                             <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
                                 ${stars ? `<span class="repo-count">${stars}</span>` : ''}
                                 ${langBadge}
@@ -4851,16 +4900,23 @@
 
             const avatarHref = provider === 'gh' ? `https://github.com/${encodeURIComponent(owner)}.png?size=240` : '';
             const clipId = `mrc-clip-${++_repoCardIdCounter}`;
-            const defs = avatarHref ? `<defs><clipPath id="${clipId}"><rect width="120" height="120" rx="12"/></clipPath></defs>` : '';
+            const defs = `<defs><clipPath id="${clipId}"><rect width="120" height="120" rx="12"/></clipPath></defs>`;
             const avatarImage = avatarHref ? `<image href="${avatarHref}" x="0" y="0" width="120" height="120" preserveAspectRatio="xMidYMid slice" clip-path="url(#${clipId})"/>` : '';
 
-            function forgeCardIconHtml(provider) {
-                const icon = provider === 'gl' ? gitlabBadgeIcon() : provider === 'cb' ? codebergBadgeIcon() : githubBadgeIcon();
-                return icon
-                    .replace('width="1em"', 'width="16"')
-                    .replace('height="1em"', 'height="16"')
-                    .replace('style="display:block;fill:', 'x="0" y="-8" style="display:block;fill:');
+            let identiconSvg = '';
+            if (window.jdenticon && typeof window.jdenticon.toSvg === 'function') {
+                const rawSvg = window.jdenticon.toSvg(owner || 'user', 120);
+                identiconSvg = rawSvg.replace('<svg ', `<svg x="0" y="0" clip-path="url(#${clipId})" `);
+            } else {
+                identiconSvg = `
+                    <svg x="0" y="0" width="120" height="120" data-jdenticon-value="${safeOwner}" clip-path="url(#${clipId})">
+                        <circle cx="60" cy="44" r="22" fill="var(--fg-secondary)"/>
+                        <path d="M24 112 C28 78 42 68 60 68 C78 68 92 78 96 112 Z" fill="var(--fg-secondary)"/>
+                    </svg>
+                `;
             }
+
+            const forgeMapIcon = `<svg x="0" y="-8" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--fg-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="none" stroke="none"/><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="m12 5.25l6.777-1.649a2 2 0 0 1 2.473 1.944v12.91a2 2 0 0 1-2.473 1.944L12 18.75z"/><path stroke-dasharray="2.5 3" d="m9.5 19.358l-4.895 1.19a1.5 1.5 0 0 1-1.855-1.457V4.91a1.5 1.5 0 0 1 1.855-1.46L9.5 4.641"/></g></svg>`;
 
             const langColor = escapeHtml(languageColor(lang));
             const langGroup = lang ? `
@@ -4868,7 +4924,6 @@
                     <circle cx="8" cy="0" r="4" fill="${langColor}" class="repo-card-lang-dot" data-language="${lang}"/>
                     <text x="18" y="0" dominant-baseline="middle">${lang}</text>
                 </g>` : '';
-            const providerIcon = forgeCardIconHtml(provider);
             const providerX = lang ? 260 : 120;
 
             return `
@@ -4886,9 +4941,7 @@
                     </text>
                     <g transform="translate(456, 15)">
                         <rect width="120" height="120" rx="12" fill="var(--bg-secondary)" stroke="var(--border)" stroke-width="1"/>
-                        <circle cx="60" cy="44" r="22" fill="var(--fg-secondary)"/>
-                        <path d="M24 112 C28 78 42 68 60 68 C78 68 92 78 96 112 Z" fill="var(--fg-secondary)"/>
-                        ${avatarImage}
+                        ${avatarHref ? avatarImage : identiconSvg}
                     </g>
                     <g transform="translate(24, 125)" fill="var(--fg-muted)" font-family="IBM Plex Mono, monospace" font-size="14">
                         <g>
@@ -4899,7 +4952,7 @@
                         </g>
                         ${langGroup}
                         <g transform="translate(${providerX}, 0)">
-                            ${providerIcon}
+                            ${forgeMapIcon}
                             <text x="20" y="0" dominant-baseline="middle">${safeProvider}</text>
                         </g>
                     </g>

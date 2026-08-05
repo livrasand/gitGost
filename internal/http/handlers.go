@@ -1895,6 +1895,51 @@ func GitHubWikiProxyHandler(c *gin.Context) {
 	c.JSON(http.StatusNotFound, gin.H{"error": "wiki page not found"})
 }
 
+func GitLabWikiProxyHandler(c *gin.Context) {
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+
+	projectID := url.PathEscape(owner + "/" + repo)
+	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/wikis", projectID)
+	if c.Query("with_content") == "1" {
+		apiURL += "?with_content=1"
+	}
+
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "proxy error"})
+		return
+	}
+	if token := os.Getenv("GITLAB_TOKEN"); token != "" {
+		req.Header.Set("PRIVATE-TOKEN", token)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", "gitGost/1.0")
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.Log("GitLab wiki proxy error: %v", err)
+		c.JSON(http.StatusBadGateway, gin.H{"error": "gitlab unreachable"})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		// Wiki no accesible (proyecto privado o deshabilitada): normalizar a 200
+		// con lista vacía para que el frontend muestre el estado sin errores de red.
+		c.JSON(http.StatusOK, []gin.H{})
+		return
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"error": "failed to read response"})
+		return
+	}
+	c.Data(http.StatusOK, resp.Header.Get("Content-Type"), body)
+}
+
 func CreateAnonymousCommentHandler(c *gin.Context) {
 	var req anonymousCommentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -2928,6 +2973,11 @@ func CodebergProxyHandler(c *gin.Context) {
 	client := &http.Client{Timeout: 45 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
+		// Codeberg sufre timeouts puntuales: reintentar una vez antes de devolver 502.
+		time.Sleep(500 * time.Millisecond)
+		resp, err = client.Do(req)
+	}
+	if err != nil {
 		utils.Log("Codeberg proxy error: %v", err)
 		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "failed to reach Codeberg"})
 		return
@@ -2959,6 +3009,12 @@ func SearchHandler(c *gin.Context) {
 	}
 
 	results := []gin.H{}
+
+	// Support GitHub-style `topic:<name>` queries: use the topic for every provider
+	// so GitLab/Codeberg don't receive the literal "topic:" prefix.
+	if topicParam == "" && strings.HasPrefix(query, "topic:") {
+		topicParam = strings.TrimPrefix(query, "topic:")
+	}
 
 	ghQuery := query
 	glQuery := query
@@ -3057,7 +3113,7 @@ func searchCodeberg(query, topic string) []gin.H {
 	results := []gin.H{}
 
 	q := query
-	if q == "" && topic != "" {
+	if topic != "" {
 		q = topic
 	}
 

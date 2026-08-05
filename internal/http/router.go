@@ -290,6 +290,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/gh-discussions/:owner/:repo", GitHubDiscussionsProxyHandler)
 		api.GET("/gh-discussion/:owner/:repo/:number", GitHubDiscussionDetailProxyHandler)
 		api.GET("/gh-wiki/:owner/:repo/:page", GitHubWikiProxyHandler)
+		api.GET("/gl-wiki/:owner/:repo", GitLabWikiProxyHandler)
 	}
 
 	r.GET("/appeal", AppealStartHandler)

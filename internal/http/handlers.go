@@ -1925,9 +1925,12 @@ func GitLabWikiProxyHandler(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		// Wiki no accesible (proyecto privado o deshabilitada): normalizar a 200
-		// con lista vacía para que el frontend muestre el estado sin errores de red.
+	// Solo los estados que indican wiki inaccesible o no disponible (proyecto
+	// privado, sin permisos o wiki deshabilitada) se normalizan a 200 con lista
+	// vacía para que el frontend muestre el estado sin errores de red.
+	if resp.StatusCode == http.StatusUnauthorized ||
+		resp.StatusCode == http.StatusForbidden ||
+		resp.StatusCode == http.StatusNotFound {
 		c.JSON(http.StatusOK, []gin.H{})
 		return
 	}
@@ -1937,6 +1940,13 @@ func GitLabWikiProxyHandler(c *gin.Context) {
 		c.JSON(http.StatusBadGateway, gin.H{"error": "failed to read response"})
 		return
 	}
+
+	// Propagar el resto de respuestas no-200 del upstream (p. ej. 429 o 5xx).
+	if resp.StatusCode != http.StatusOK {
+		c.Data(resp.StatusCode, "application/json", body)
+		return
+	}
+
 	c.Data(http.StatusOK, resp.Header.Get("Content-Type"), body)
 }
 
@@ -3013,7 +3023,9 @@ func SearchHandler(c *gin.Context) {
 	// Support GitHub-style `topic:<name>` queries: use the topic for every provider
 	// so GitLab/Codeberg don't receive the literal "topic:" prefix.
 	if topicParam == "" && strings.HasPrefix(query, "topic:") {
-		topicParam = strings.TrimPrefix(query, "topic:")
+		if topic := strings.TrimSpace(strings.TrimPrefix(query, "topic:")); topic != "" {
+			topicParam = topic
+		}
 	}
 
 	ghQuery := query

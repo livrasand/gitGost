@@ -4282,8 +4282,17 @@
             if (!text) return null;
             const t = String(text).slice(0, 6000);
             if (/\bGNU AFFERO GENERAL PUBLIC LICENSE\b/i.test(t)) return 'GNU AGPLv3';
-            if (/\bGNU LESSER GENERAL PUBLIC LICENSE\b/i.test(t)) return 'GNU LGPLv3';
-            if (/\bGNU GENERAL PUBLIC LICENSE\b/i.test(t)) return 'GNU GPLv3';
+            if (/\bGNU LESSER GENERAL PUBLIC LICENSE\b/i.test(t)) {
+                if (/Version\s+2\.1\b/i.test(t)) return 'GNU LGPLv2.1';
+                if (/Version\s+3\b/i.test(t)) return 'GNU LGPLv3';
+                return 'GNU LGPL';
+            }
+            if (/\bGNU GENERAL PUBLIC LICENSE\b/i.test(t)) {
+                // Version 2 sin sufijo (2.1) para no capturar referencias a LGPLv2.1.
+                if (/Version\s+2(?!\.\d)/i.test(t)) return 'GNU GPLv2';
+                if (/Version\s+3\b/i.test(t)) return 'GNU GPLv3';
+                return 'GNU GPL';
+            }
             if (/\bMozilla Public License\b/i.test(t)) return 'Mozilla Public License 2.0';
             if (/\bApache License\b/i.test(t) && /Version 2\.0/i.test(t)) return 'Apache License 2.0';
             if (/\bBoost Software License\b/i.test(t)) return 'Boost Software License 1.0';

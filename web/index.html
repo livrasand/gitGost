@@ -3027,6 +3027,22 @@
                 }
             });
 
+            // Normaliza y fusiona topics/tags/tag_list de cualquier provider en un array unico de tags en minusculas.
+            function repoTagList(repo) {
+                const tags = [];
+                const add = (source) => {
+                    if (!Array.isArray(source)) return;
+                    for (const t of source) {
+                        const tag = String(t).toLowerCase();
+                        if (tag && !tags.includes(tag)) tags.push(tag);
+                    }
+                };
+                add(repo.topics);
+                add(repo.tags);
+                add(repo.tag_list);
+                return tags;
+            }
+
             function searchMatchScore(repo, query) {
                 let term = query.trim();
                 if (term.startsWith('#')) term = term.substring(1);
@@ -3038,7 +3054,7 @@
                 const fullName = (repo.full_name || '').toLowerCase();
                 const owner = (repo.owner || '').toLowerCase();
                 const desc = (repo.description || '').toLowerCase();
-                const topics = (repo.topics || repo.tags || []).map(t => String(t).toLowerCase());
+                const topics = repoTagList(repo);
 
                 let score = 0;
                 if (name === term) score += 100;
@@ -3076,7 +3092,7 @@
                         if (query.startsWith('#')) {
                             const tag = query.substring(1).toLowerCase();
                             results = results.filter(r => {
-                                const tags = (r.topics || r.tags || []).map(t => t.toLowerCase());
+                                const tags = repoTagList(r);
                                 return tags.includes(tag);
                             });
                         }

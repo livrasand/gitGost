@@ -2225,6 +2225,15 @@
         }
 
         const params = new URLSearchParams(window.location.search);
+        function escJsStr(s) {
+            return String(s)
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/\r/g, '\\r')
+                .replace(/\n/g, '\\n')
+                .replace(/\u2028/g, '\\u2028')
+                .replace(/\u2029/g, '\\u2029');
+        }
         const rv = {
             owner:    params.get('owner') || '',
             repo:     params.get('repo')  || '',
@@ -3009,7 +3018,7 @@
                                         <div class="reply-footer">
                                             <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                             <span class="reply-status" id="${statusId}"></span>
-                                            <button class="reply-send-btn" onclick="submitDiscussionComment('${rv.owner}','${rv.repo}',${num},'${replyId}','${tokenId}','${statusId}','${captchaId}')" title="Send">
+                                            <button class="reply-send-btn" onclick="submitDiscussionComment('${escJsStr(rv.owner)}','${escJsStr(rv.repo)}',${num},'${replyId}','${tokenId}','${statusId}','${captchaId}')" title="Send">
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                                             </button>
                                         </div>

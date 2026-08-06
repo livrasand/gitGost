@@ -650,6 +650,10 @@
                 text-decoration: none;
             }
 
+            .repo-item-name .owner:hover {
+                text-decoration: underline;
+            }
+
             .repo-item-name .slash {
                 color: var(--fg-muted);
             }
@@ -675,6 +679,9 @@
                 font-size: 0.72rem;
                 color: var(--fg-muted);
                 flex-shrink: 0;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.2em;
             }
 
             .repo-lang {
@@ -731,6 +738,117 @@
                 height: 1em;
                 flex-shrink: 0;
             }
+
+            .user-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.5rem;
+                padding: 0.5rem 0;
+                border-bottom: 1px solid var(--border);
+                cursor: pointer;
+            }
+            .user-item-left {
+                display: flex;
+                align-items: center;
+                gap: 0.6rem;
+                min-width: 0;
+            }
+            .user-avatar {
+                width: 2.2rem;
+                height: 2.2rem;
+                border-radius: 50%;
+                flex-shrink: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: "IBM Plex Mono", monospace;
+                font-size: 0.9rem;
+                color: var(--fg);
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+            }
+            .user-info { min-width: 0; }
+            .user-name {
+                font-size: 0.82rem;
+                font-weight: 600;
+                color: var(--fg);
+                line-height: 1.3;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .user-username {
+                font-family: "IBM Plex Mono", monospace;
+                font-size: 0.7rem;
+                color: var(--fg-muted);
+            }
+            .user-profile-header {
+                display: flex;
+                align-items: center;
+                gap: 0.9rem;
+                margin-bottom: 0.75rem;
+            }
+            .user-profile-avatar {
+                width: 3.5rem;
+                height: 3.5rem;
+                border-radius: 50%;
+                border: 1px solid var(--border);
+            }
+            .user-profile-name {
+                font-size: 1rem;
+                font-weight: 600;
+                color: var(--fg);
+            }
+            .user-profile-username {
+                font-family: "IBM Plex Mono", monospace;
+                font-size: 0.75rem;
+                color: var(--fg-muted);
+                margin-bottom: 0.35rem;
+            }
+            .user-profile-bio {
+                font-size: 0.78rem;
+                color: var(--fg);
+                line-height: 1.5;
+                margin: 0 0 0.5rem;
+            }
+            .user-profile-location {
+                font-size: 0.75rem;
+                color: var(--fg-muted);
+                margin: 0 0 0.75rem;
+            }
+            .user-profile-stats {
+                display: flex;
+                gap: 0.75rem;
+                flex-wrap: wrap;
+                margin-bottom: 0.75rem;
+            }
+            .user-stat {
+                display: flex;
+                flex-direction: column;
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                border-radius: 3px;
+                padding: 0.4rem 0.7rem;
+            }
+            .user-stat-value {
+                font-family: "IBM Plex Mono", monospace;
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: var(--fg);
+            }
+            .user-stat-label {
+                font-size: 0.65rem;
+                color: var(--fg-muted);
+            }
+            .user-profile-link {
+                display: inline-block;
+                font-family: "IBM Plex Mono", monospace;
+                font-size: 0.72rem;
+                color: var(--accent);
+                text-decoration: none;
+            }
+            .user-profile-link:hover { text-decoration: underline; }
 
             .statusbar {
                 background: var(--bg-secondary);
@@ -1692,6 +1810,13 @@
                     </button>
                     <button
                         class="content-tab"
+                        data-tab="users"
+                        onclick="switchTab('users', this)"
+                    >
+                        users
+                    </button>
+                    <button
+                        class="content-tab"
                         data-tab="stars"
                         onclick="switchTab('stars', this)"
                     >
@@ -1802,6 +1927,27 @@
                             <span class="command-shortcut">D</span>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div
+            class="modal-overlay"
+            id="user-profile-modal"
+            onclick="closeModalOnOverlay(event, 'user-profile-modal')"
+        >
+            <div class="modal">
+                <div class="modal-header">
+                    <h2 class="modal-title">User Profile</h2>
+                    <button
+                        class="modal-close"
+                        onclick="closeModal('user-profile-modal')"
+                    >
+                        &times;
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="user-profile-content"></div>
                 </div>
             </div>
         </div>
@@ -2722,6 +2868,8 @@
                 return `<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" style="display:block;fill:#2185D0;"><title>Codeberg</title><path d="M11.955.49A12 12 0 0 0 0 12.49a12 12 0 0 0 1.832 6.373L11.838 5.928a.187.14 0 0 1 .324 0l10.006 12.935A12 12 0 0 0 24 12.49a12 12 0 0 0-12-12 12 12 0 0 0-.045 0zm.375 6.467l4.416 16.553a12 12 0 0 0 5.137-4.213z"/></svg>`;
             }
 
+            const STAR_ICON_HTML = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.704 4.325a1.5 1.5 0 0 1 2.592 0l1.818 3.12a1.5 1.5 0 0 0 .978.712l3.53.764a1.5 1.5 0 0 1 .8 2.465l-2.405 2.693a1.5 1.5 0 0 0-.374 1.15l.363 3.593a1.5 1.5 0 0 1-2.097 1.524l-3.304-1.456a1.5 1.5 0 0 0-1.21 0l-3.304 1.456a1.5 1.5 0 0 1-2.097-1.524l.363-3.593a1.5 1.5 0 0 0-.373-1.15l-2.406-2.693a1.5 1.5 0 0 1 .8-2.465l3.53-.764a1.5 1.5 0 0 0 .979-.711z"/></svg>`;
+
             let languageColors = {};
             const LANGUAGE_COLORS_CACHE_KEY = 'gg_language_colors';
             const LANGUAGE_COLORS_CACHE_TTL = 24 * 60 * 60 * 1000;
@@ -2993,7 +3141,11 @@
                             closeSearchHistory();
                             removeSentinel();
                             scrollState.exhausted = true;
-                            performSearch(query);
+                            if (scrollState.tab === 'users') {
+                                searchUsers(query);
+                            } else {
+                                performSearch(query);
+                            }
                         }
                     }
                 });
@@ -3015,7 +3167,11 @@
                             closeSearchHistory();
                             removeSentinel();
                             scrollState.exhausted = true;
-                            performSearch(q);
+                            if (scrollState.tab === 'users') {
+                                searchUsers(q);
+                            } else {
+                                performSearch(q);
+                            }
                         }
                     });
                 }
@@ -3229,7 +3385,7 @@
                         ? escapeHtml(repo.description.slice(0, 120))
                         : "";
                     const count =
-                        repo.stars > 0 ? `(${formatNumber(repo.stars)})` : "";
+                        repo.stars > 0 ? `(${STAR_ICON_HTML}${formatNumber(repo.stars)})` : "";
                     const isDateTab = scrollState.tab === 'new' || scrollState.tab === 'updated';
                     const dateStr = scrollState.tab === 'new'
                         ? (repo.created_at || repo.updated_at || repo.pushed_at || '')
@@ -3246,7 +3402,7 @@
                         <div class="repo-item-normal">
                             <div class="repo-item-left">
                                 <div class="repo-item-name">
-                                    ${forgeIcon}<span class="owner">${ownerHtml}</span><span class="slash">/</span><span class="name">${nameHtml}</span>
+                                    ${forgeIcon}<a class="owner" href="/${provider}/${encodeURIComponent(owner)}" onclick="event.stopPropagation();">${ownerHtml}</a><span class="slash">/</span><span class="name">${nameHtml}</span>
                                 </div>
                                 ${desc ? `<div class="repo-item-desc">${desc}</div>` : ""}
                             </div>
@@ -3268,6 +3424,167 @@
                 }
             }
 
+            function loadUsersTab() {
+                const container = document.getElementById('repo-list');
+                if (container) {
+                    container.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">search for users from github, gitlab and codeberg — type a query and press Enter.</p>';
+                }
+            }
+
+            async function searchUsers(query) {
+                const container = document.getElementById("repo-list");
+                if (container) container.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">Searching...</p>';
+                let anyFailed = false;
+                try {
+                    const [gh, gl, cb] = await Promise.all([
+                        searchGitHubUsers(query).catch(() => { anyFailed = true; return []; }),
+                        searchGitLabUsers(query).catch(() => { anyFailed = true; return []; }),
+                        searchCodebergUsers(query).catch(() => { anyFailed = true; return []; }),
+                    ]);
+                    const results = [...gh, ...gl, ...cb];
+                    if (results.length > 0) {
+                        addToSearchHistory(query);
+                        renderUsers(results);
+                        updateStatusbar("users", query);
+                    } else if (anyFailed) {
+                        if (container) container.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">API not available.</p>';
+                    } else {
+                        if (container) {
+                            container.innerHTML = '';
+                            const p = document.createElement('p');
+                            p.style.color = 'var(--fg-secondary)';
+                            p.style.fontSize = '0.78rem';
+                            p.textContent = `No users found for "${query}".`;
+                            container.appendChild(p);
+                        }
+                    }
+                } catch {
+                    if (container) container.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">API not available.</p>';
+                }
+            }
+
+            async function searchGitHubUsers(query) {
+                const token = localStorage.getItem('gh_token');
+                const headers = token ? { 'Authorization': `token ${token}` } : {};
+                // Siempre por el backend: usa el token del servidor (y el local como respaldo), evitando 403 del navegador.
+                const res = await fetch(`${API_BASE}/api/users/search?q=${encodeURIComponent(query)}&provider=gh`, { headers });
+                if (!res.ok) return [];
+                const data = await res.json();
+                return data.results || [];
+            }
+
+            async function searchGitLabUsers(query) {
+                const token = localStorage.getItem('gl_token');
+                const headers = token ? { 'Authorization': `token ${token}` } : {};
+                // Siempre por el backend: usa el token del servidor (y el local como respaldo), evitando 403 del navegador.
+                const res = await fetch(`${API_BASE}/api/users/search?q=${encodeURIComponent(query)}&provider=gl`, { headers });
+                if (!res.ok) return [];
+                const data = await res.json();
+                return data.results || [];
+            }
+
+            async function searchCodebergUsers(query) {
+                const token = localStorage.getItem('cb_token');
+                const headers = token ? { 'Authorization': `token ${token}` } : {};
+                // Siempre por el backend: usa el token del servidor (y el local como respaldo), evitando 403 del navegador.
+                const res = await fetch(`${API_BASE}/api/users/search?q=${encodeURIComponent(query)}&provider=cb`, { headers });
+                if (!res.ok) return [];
+                const data = await res.json();
+                return data.results || [];
+            }
+
+            function renderUsers(users) {
+                const container = document.getElementById("repo-list");
+                if (!container) return;
+                container.innerHTML = '';
+                users.forEach((user) => {
+                    const item = document.createElement("div");
+                    item.className = "user-item";
+                    const safeUsername = escapeHtml(user.username || '');
+                    const safeName = escapeHtml(user.name || '');
+                    const safeAvatar = escapeHtml(user.avatar_url || '');
+                    const badgeColor = user.provider === 'gitlab' ? '#FC6D26' : user.provider === 'codeberg' ? '#2185D0' : '#181717';
+                    let providerLabel;
+                    if (user.provider === 'gitlab') providerLabel = gitlabBadgeIcon();
+                    else if (user.provider === 'codeberg') providerLabel = codebergBadgeIcon();
+                    else providerLabel = githubBadgeIcon();
+                    item.onclick = () => {
+                        const p = user.provider === 'gitlab' ? 'gl' : user.provider === 'codeberg' ? 'cb' : 'gh';
+                        window.location.href = `/${p}/${encodeURIComponent(user.username || '')}`;
+                    };
+                    item.innerHTML = `
+                        <div class="user-item-left">
+                            ${safeAvatar ? `<img class="user-avatar" src="${safeAvatar}" alt="" loading="lazy"/>` : `<span class="user-avatar">${safeUsername.slice(0, 1).toUpperCase()}</span>`}
+                            <div class="user-info">
+                                <div class="user-name">${safeName || safeUsername}</div>
+                                <div class="user-username">${safeUsername}</div>
+                            </div>
+                        </div>
+                        <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:${badgeColor};border:1px solid ${badgeColor};border-radius:3px;padding:0.1em 0.4em;opacity:0.8;flex-shrink:0;display:inline-flex;align-items:center;">${providerLabel}</span>
+                    `;
+                    container.appendChild(item);
+                });
+            }
+
+            async function openUserProfile(user) {
+                const content = document.getElementById('user-profile-content');
+                if (content) content.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">Loading profile...</p>';
+                openModal('user-profile-modal');
+                try {
+                    const p = await fetchUserProfile(user);
+                    if (content) content.innerHTML = p ? userProfileHtml(p) : '<p style="color:var(--fg-secondary);font-size:0.78rem;">Could not load profile.</p>';
+                } catch {
+                    if (content) content.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">Could not load profile.</p>';
+                }
+            }
+
+            async function fetchUserProfile(user) {
+                const token = user.provider === 'gitlab' ? localStorage.getItem('gl_token')
+                    : user.provider === 'codeberg' ? localStorage.getItem('cb_token')
+                    : localStorage.getItem('gh_token');
+                const headers = token ? { 'Authorization': `token ${token}` } : {};
+                const provider = user.provider === 'gitlab' ? 'gl' : user.provider === 'codeberg' ? 'cb' : 'gh';
+                // Siempre por el backend: usa el token del servidor (y el local como respaldo), evitando 403 del navegador.
+                const res = await fetch(`${API_BASE}/api/users/profile?provider=${provider}&user=${encodeURIComponent(user.username)}`, { headers });
+                if (!res.ok) return null;
+                return await res.json();
+            }
+
+            function userProfileHtml(p) {
+                const safeUsername = escapeHtml(p.username || '');
+                const safeName = escapeHtml(p.name || '');
+                const safeAvatar = escapeHtml(p.avatar_url || '');
+                const safeBio = escapeHtml(p.bio || '');
+                const safeLocation = escapeHtml(p.location || '');
+                const safeUrl = escapeHtml(p.url || '');
+                const badgeColor = p.provider === 'gitlab' ? '#FC6D26' : p.provider === 'codeberg' ? '#2185D0' : '#181717';
+                let providerLabel;
+                if (p.provider === 'gitlab') providerLabel = gitlabBadgeIcon();
+                else if (p.provider === 'codeberg') providerLabel = codebergBadgeIcon();
+                else providerLabel = githubBadgeIcon();
+                const providerName = p.provider === 'gitlab' ? 'gitlab' : p.provider === 'codeberg' ? 'codeberg' : 'github';
+                const stats = [];
+                if (p.followers !== undefined && p.followers !== null) stats.push(`<div class="user-stat"><span class="user-stat-value">${formatNumber(p.followers)}</span><span class="user-stat-label">followers</span></div>`);
+                if (p.following !== undefined && p.following !== null) stats.push(`<div class="user-stat"><span class="user-stat-value">${formatNumber(p.following)}</span><span class="user-stat-label">following</span></div>`);
+                if (p.public_repos !== undefined && p.public_repos !== null) stats.push(`<div class="user-stat"><span class="user-stat-value">${formatNumber(p.public_repos)}</span><span class="user-stat-label">public repos</span></div>`);
+                return `
+                    <div class="user-profile">
+                        <div class="user-profile-header">
+                            ${safeAvatar ? `<img class="user-profile-avatar" src="${safeAvatar}" alt=""/>` : ''}
+                            <div class="user-profile-id">
+                                <div class="user-profile-name">${safeName || safeUsername}</div>
+                                <div class="user-profile-username">${safeUsername}</div>
+                                <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:${badgeColor};border:1px solid ${badgeColor};border-radius:3px;padding:0.1em 0.4em;opacity:0.8;display:inline-flex;align-items:center;">${providerLabel}</span>
+                            </div>
+                        </div>
+                        ${safeBio ? `<p class="user-profile-bio">${safeBio}</p>` : ''}
+                        ${safeLocation ? `<p class="user-profile-location">location: ${safeLocation}</p>` : ''}
+                        ${stats.length ? `<div class="user-profile-stats">${stats.join('')}</div>` : ''}
+                        ${safeUsername ? `<a class="user-profile-link" href="/${p.provider === 'gitlab' ? 'gl' : p.provider === 'codeberg' ? 'cb' : 'gh'}/${encodeURIComponent(p.username || '')}">open profile in gitGost</a>` : ''}
+                    </div>
+                `;
+            }
+
             function switchTab(tab, el) {
                 document
                     .querySelectorAll(".content-tab")
@@ -3285,6 +3602,8 @@
                     loadStars();
                 } else if (tab === "popular") {
                     loadPopular();
+                } else if (tab === "users") {
+                    loadUsersTab();
                 }
             }
 
@@ -3322,14 +3641,16 @@
                     else if (provider === 'cb') { starBadgeColor = '#2185D0'; starBadgeBorder = '#2185D0'; starBadgeLabel = codebergBadgeIcon(); }
                     else { starBadgeColor = '#181717'; starBadgeBorder = '#181717'; starBadgeLabel = githubBadgeIcon(); }
                     const starCount = repo.stars > 0 ? repo.stars : 0;
+                    const starCountLabel = repo.stars > 0 ? `(${STAR_ICON_HTML}${formatNumber(repo.stars)})` : '';
                     const cardRepo = { description: repo.description, stars: starCount, language: repo.language };
                     item.innerHTML = `
                         <div class="repo-item-normal">
                             <div class="repo-item-left">
-                                <div class="repo-item-name">${forgeIcon}<span class="owner">${ownerHtml}</span><span class="slash">/</span><span class="name">${repoHtml}</span></div>
+                                <div class="repo-item-name">${forgeIcon}<a class="owner" href="/${provider}/${encodeURIComponent(repo.owner || '')}" onclick="event.stopPropagation();">${ownerHtml}</a><span class="slash">/</span><span class="name">${repoHtml}</span></div>
                                 ${ago ? `<div class="repo-item-desc" style="font-size:0.7rem;">starred ${ago}</div>` : ''}
                             </div>
                             <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
+                                ${starCountLabel ? `<span class="repo-count">${starCountLabel}</span>` : ''}
                                 ${langBadge}
                                 <span style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:${starBadgeColor};border:1px solid ${starBadgeBorder};border-radius:3px;padding:0.1em 0.35em;display:inline-flex;align-items:center;">${starBadgeLabel}</span>
                             </div>
@@ -4524,6 +4845,9 @@
                     if (!append && listEl) listEl.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">Error loading repositories.</p>';
                 } finally {
                     window.tagState.loading = false;
+                    // Carga terminada: ocultar el indicador "searching repositories…"
+                    const countEl = document.getElementById('tag-repo-count');
+                    if (countEl) countEl.style.display = 'none';
                 }
             }
 
@@ -4545,7 +4869,7 @@
                         if (owner && name) window.location.href = `/repo.html?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(name)}&provider=${provider}`;
                     };
                     const desc = repo.description ? escapeHtml(repo.description.slice(0, 120)) : '';
-                    const stars = repo.stars > 0 ? `(${formatNumber(repo.stars)})` : '';
+                    const stars = repo.stars > 0 ? `(${STAR_ICON_HTML}${formatNumber(repo.stars)})` : '';
                     					const langBadge = languageBadgeHtml(repo.language);
                     					const ownerHtml = escapeHtml(owner || '');
                     					const nameHtml = escapeHtml(name || '');
@@ -4558,7 +4882,7 @@
                         						<div class="repo-item-normal">
                         							<div class="repo-item-left">
                         								<div class="repo-item-name">
-                        									${forgeIcon}<span class="owner">${ownerHtml}</span><span class="slash">/</span><span class="name">${nameHtml}</span>
+                                ${forgeIcon}<a class="owner" href="/${provider}/${encodeURIComponent(owner)}" onclick="event.stopPropagation();">${ownerHtml}</a><span class="slash">/</span><span class="name">${nameHtml}</span>
                         								</div>
                         								${desc ? `<div class="repo-item-desc">${desc}</div>` : ''}
                         							</div>
@@ -4737,23 +5061,32 @@
         }
 
         async function updateRateLimit() {
-            try {
-                const token = localStorage.getItem('gh_token');
-                const headers = token ? { 'Authorization': `token ${token}` } : {};
-                const res = await fetch('https://api.github.com/rate_limit', { headers });
-                if (res.ok) {
-                    const core = (await res.json()).rate;
-                    const pct  = core.limit > 0 ? Math.round((core.remaining / core.limit) * 100) : 0;
-                    document.getElementById('rl-remaining').textContent = core.remaining.toLocaleString() + ' remaining';
-                    document.getElementById('rl-limit').textContent = '/ ' + core.limit.toLocaleString();
-                    updateRateLimitRing('rl-bar', pct, rlColor(pct));
-                    document.getElementById('rl-reset').textContent = rlResetText(core.reset);
-                    const st = document.getElementById('rl-status');
-                    st.textContent = token ? 'authenticated' : '';
-                    st.style.color = '#1a7f37';
-                }
-            } catch {}
-
+            const token = localStorage.getItem('gh_token');
+            if (token) {
+                try {
+                    const res = await fetch('https://api.github.com/rate_limit', { headers: { 'Authorization': `token ${token}` } });
+                    if (res.ok) {
+                        const core = (await res.json()).rate;
+                        const pct  = core.limit > 0 ? Math.round((core.remaining / core.limit) * 100) : 0;
+                        document.getElementById('rl-remaining').textContent = core.remaining.toLocaleString() + ' remaining';
+                        document.getElementById('rl-limit').textContent = '/ ' + core.limit.toLocaleString();
+                        updateRateLimitRing('rl-bar', pct, rlColor(pct));
+                        document.getElementById('rl-reset').textContent = rlResetText(core.reset);
+                        const st = document.getElementById('rl-status');
+                        st.textContent = 'authenticated';
+                        st.style.color = '#1a7f37';
+                    }
+                } catch {}
+            } else {
+                // Sin token: mostrar el límite no autenticado sin llamar a la API (evita el 403 de GitHub).
+                document.getElementById('rl-remaining').textContent = '60 / hour';
+                document.getElementById('rl-limit').textContent = '';
+                updateRateLimitRing('rl-bar', 100, 'var(--accent)');
+                document.getElementById('rl-reset').textContent = 'resets every hour';
+                const st = document.getElementById('rl-status');
+                st.textContent = '';
+                st.style.color = '#1a7f37';
+            }
             {
                 const glToken = localStorage.getItem('gl_token');
                 const limit = glToken ? 2000 : 300;
@@ -4945,8 +5278,9 @@
                     </g>
                     <g transform="translate(24, 125)" fill="var(--fg-muted)" font-family="IBM Plex Mono, monospace" font-size="14">
                         <g>
-                            <svg x="0" y="-8" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--fg-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                            <svg x="0" y="-8" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--fg-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
+                                <path d="M10.704 4.325a1.5 1.5 0 0 1 2.592 0l1.818 3.12a1.5 1.5 0 0 0 .978.712l3.53.764a1.5 1.5 0 0 1 .8 2.465l-2.405 2.693a1.5 1.5 0 0 0-.374 1.15l.363 3.593a1.5 1.5 0 0 1-2.097 1.524l-3.304-1.456a1.5 1.5 0 0 0-1.21 0l-3.304 1.456a1.5 1.5 0 0 1-2.097-1.524l.363-3.593a1.5 1.5 0 0 0-.373-1.15l-2.406-2.693a1.5 1.5 0 0 1 .8-2.465l3.53-.764a1.5 1.5 0 0 0 .979-.711z"/>
                             </svg>
                             <text x="20" y="0" dominant-baseline="middle">${starText}</text>
                         </g>

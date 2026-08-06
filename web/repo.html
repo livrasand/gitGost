@@ -17,6 +17,7 @@
     <script>if (typeof hljs !== 'undefined') hljs.configure({ ignoreUnescapedHTML: true });</script>
     <script src="https://cdn.jsdelivr.net/npm/marked@4/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
     <style>
         :root {
             --bg: #ffffff;
@@ -156,6 +157,42 @@
             background: var(--bg);
             padding: 0.4rem 0;
         }
+        .repo-search {
+            padding: 0.45rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .repo-search-input {
+            width: 100%;
+            padding: 0.38rem 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg-secondary);
+            color: var(--fg);
+            font: 0.75rem "IBM Plex Mono", monospace;
+        }
+        .repo-search-input:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+        .repo-search-actions { display: flex; gap: 0.3rem; margin-top: 0.35rem; }
+        .repo-search-btn {
+            flex: 1;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            background: transparent;
+            color: var(--fg-muted);
+            cursor: pointer;
+            padding: 0.25rem;
+            font: 0.67rem "IBM Plex Mono", monospace;
+        }
+        .repo-search-btn:hover { color: var(--accent); border-color: var(--accent); }
+        .search-results { padding: 0.9rem 1.25rem; }
+        .search-results h2 { margin: 0 0 0.7rem; font: 600 0.88rem "IBM Plex Mono", monospace; }
+        .search-result { display: block; width: 100%; text-align: left; padding: 0.55rem 0.65rem; margin: 0; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--fg); cursor: pointer; font: 0.76rem "IBM Plex Mono", monospace; }
+        .search-result:hover { background: var(--bg-hover); }
+        .search-result-path { color: var(--accent); display: block; }
+        .search-result-note { color: var(--fg-muted); font-size: 0.68rem; margin-top: 0.2rem; display: block; }
         .tree-item {
             display: flex;
             align-items: center;
@@ -226,6 +263,68 @@
             white-space: pre-wrap;
             word-break: break-all;
         }
+        /* Último commit del archivo: fila informativa sobre el toolbar del archivo. */
+        .file-last-commit {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.45rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            font-size: 0.72rem;
+            font-family: "IBM Plex Mono", monospace;
+            color: var(--fg-secondary);
+            min-height: 2.1rem;
+        }
+        .file-last-commit .flc-avatar {
+            flex: none;
+            width: 1.35rem;
+            height: 1.35rem;
+            border-radius: 50%;
+            object-fit: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent);
+            color: var(--bg);
+            font-size: 0.66rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .file-last-commit .flc-main {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .file-last-commit .flc-msg {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--fg);
+        }
+        .file-last-commit .flc-meta {
+            flex: none;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            color: var(--fg-secondary);
+        }
+        .file-last-commit .flc-meta > * + *::before {
+            content: "·";
+            margin: 0 0.45rem;
+            color: var(--fg-secondary);
+        }
+        .file-last-commit .flc-author { color: var(--fg-muted); }
+        .profile-link { color: inherit; text-decoration: none; }
+        .profile-link:hover { color: var(--accent); text-decoration: underline; }
+        .file-last-commit .flc-sha {
+            color: var(--accent);
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .file-last-commit .flc-sha:hover { text-decoration: underline; }
         .file-toolbar {
             position: sticky;
             top: 0;
@@ -312,6 +411,19 @@
             white-space: pre;
         }
         .readme pre code { background: none; padding: 0; border: none; font-size: 0.82rem; }
+        /* Diagramas Mermaid: el bloque sin renderizar se muestra como código y el gráfico ya renderizado permite scroll horizontal. */
+        .mermaid {
+            white-space: pre;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.82rem;
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        .mermaid-graph { margin: 1rem 0; overflow-x: auto; }
         .readme a { color: var(--accent); text-decoration: none; }
         .readme a:hover { text-decoration: underline; }
         .readme blockquote {
@@ -476,6 +588,82 @@
             border-radius: 3px;
             padding: 0.1em 0.45em;
             opacity: 0.8;
+        }
+
+        .sb-contributors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }
+        .sb-contributor {
+            width: 1.8rem;
+            height: 1.8rem;
+            border-radius: 50%;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent);
+            text-decoration: none;
+        }
+        .sb-contributor img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .sb-home-row {
+            display: flex;
+            align-items: center;
+            padding: 0.2rem 0;
+        }
+        .sb-home-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            min-width: 0;
+            color: var(--accent);
+            text-decoration: none;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.72rem;
+        }
+        .sb-home-link svg { flex: none; }
+        .sb-home-link span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .sb-deploy { padding: 0.3rem 0; border-bottom: 1px solid var(--border); }
+        .sb-deploy:last-child { border-bottom: none; }
+        .sb-deploy-head { display: flex; justify-content: space-between; align-items: center; gap: 0.4rem; }
+        .sb-deploy-env {
+            flex: 1 1 auto;
+            min-width: 0;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.72rem;
+            color: var(--fg);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .sb-deploy-status {
+            flex: none;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.62rem;
+            text-transform: uppercase;
+        }
+        .sb-deploy-status.success { color: #22c55e; }
+        .sb-deploy-status.failed { color: #ef4444; }
+        .sb-deploy-status.running { color: #f59e0b; }
+        .sb-deploy-status.pending { color: var(--fg-muted); }
+        .sb-deploy-meta {
+            font-size: 0.68rem;
+            color: var(--fg-muted);
+            margin-top: 0.15rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .lang-bar {
@@ -1690,6 +1878,10 @@
                         flex-basis: 100%;
                         max-width: 100%;
                     }
+                    .file-last-commit {
+                        flex-wrap: wrap;
+                        gap: 0.3rem;
+                    }
 
                     .readme {
                         padding: 1rem 1.25rem;
@@ -2059,6 +2251,13 @@
                     </nav>
 
         <div class="file-tree" id="file-tree" style="display:none;">
+            <div class="repo-search">
+                <input class="repo-search-input" id="repo-search-input" type="search" placeholder="search files or code" aria-label="Search repository" autocomplete="off" onkeydown="if(event.key==='Enter') searchRepository('files')">
+                <div class="repo-search-actions">
+                    <button class="repo-search-btn" type="button" onclick="searchRepository('files')">Files</button>
+                    <button class="repo-search-btn" type="button" onclick="searchRepository('code')">Code</button>
+                </div>
+            </div>
             <div class="tree-loading">loading...</div>
         </div>
         <div class="code-panel" id="code-panel">
@@ -2077,18 +2276,58 @@
                     <div class="msb-tags" id="msb-tags"></div>
                 </div>
                 <div class="msb-section">
+                    <div class="msb-row" id="msb-home-row" style="display:none">
+                        <a class="sb-home-link" id="msb-home-link" href="#" target="_blank" rel="noopener">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                                <path d="M0 0h24v24H0z" fill="none" />
+                                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.621 7.5H7.25a4.5 4.5 0 0 0-4.5 4.5v0a4.5 4.5 0 0 0 4.5 4.5h2.371m4.758-9h2.371a4.5 4.5 0 0 1 4.5 4.5v0a4.5 4.5 0 0 1-4.5 4.5h-2.371M7.243 12h9.514" />
+                            </svg>
+                            <span></span>
+                        </a>
+                    </div>
                     <div class="msb-row"><span>created</span><span class="val" id="msb-created">—</span></div>
+                    <div class="msb-row"><span>forks</span><span class="val" id="msb-forks">—</span></div>
+                    <div class="msb-row"><span>watching</span><span class="val" id="msb-watching">—</span></div>
                     <div class="msb-row"><span>type</span><span class="val mirror" id="msb-status">public proxy</span></div>
                     <div class="msb-row"><span>license</span><span class="val" id="msb-license">—</span></div>
+                    <div class="msb-row"><span>size</span><span class="val" id="msb-size">—</span></div>
+                    <div class="msb-row"><span>lfs</span><span class="val" id="msb-lfs">—</span></div>
                 </div>
                 <div class="msb-section">
                     <div class="msb-label" id="msb-rel-label" style="display:none">Latest Release</div>
                     <div id="msb-latest-release"></div>
                 </div>
+                <div class="msb-section full" id="msb-tags-section" style="display:none">
+                    <div class="msb-label">Tags</div>
+                    <div id="msb-tags-list"></div>
+                    <div style="padding:0.2rem 0 0;">
+                        <a href="#" onclick="closeMobileSidebar(); showView('tags'); return false;" style="color:var(--fg-muted);text-decoration:none;font-size:0.75rem;">
+                            View all <span id="msb-tags-count"></span> tags
+                        </a>
+                    </div>
+                </div>
                 <div class="msb-section full" id="msb-langs-section" style="display:none">
                     <div class="msb-label">Languages</div>
                     <div class="lang-bar" id="msb-lang-bar"></div>
                     <div class="lang-legend" id="msb-lang-legend"></div>
+                </div>
+                <div class="msb-section full" id="msb-contributors-section" style="display:none">
+                    <div class="msb-label">Contributors</div>
+                    <div class="sb-contributors" id="msb-contributors"></div>
+                    <div style="padding:0.2rem 0 0;">
+                        <a href="#" onclick="closeMobileSidebar(); showView('contributors'); return false;" style="color:var(--fg-muted);text-decoration:none;font-size:0.75rem;">
+                            View all <span id="msb-contributors-count"></span> contributors
+                        </a>
+                    </div>
+                </div>
+                <div class="msb-section full" id="msb-deployments-section" style="display:none">
+                    <div class="msb-label">Deployments</div>
+                    <div id="msb-deployments"></div>
+                    <div style="padding:0.2rem 0 0;">
+                        <a href="#" onclick="closeMobileSidebar(); showView('deployments'); return false;" style="color:var(--fg-muted);text-decoration:none;font-size:0.75rem;">
+                            View all <span id="msb-deployments-count"></span> deployments
+                        </a>
+                    </div>
                 </div>
                 <div class="msb-section full">
                     <div class="msb-actions">
@@ -2117,12 +2356,30 @@
                 <div class="sidebar-tags" id="sb-tags"></div>
             </div>
             <div class="sidebar-section">
+                <div class="sb-home-row" id="sb-home-row" style="display:none">
+                    <a class="sb-home-link" id="sb-home-link" href="#" target="_blank" rel="noopener">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                            <path d="M0 0h24v24H0z" fill="none" />
+                            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.621 7.5H7.25a4.5 4.5 0 0 0-4.5 4.5v0a4.5 4.5 0 0 0 4.5 4.5h2.371m4.758-9h2.371a4.5 4.5 0 0 1 4.5 4.5v0a4.5 4.5 0 0 1-4.5 4.5h-2.371M7.243 12h9.514" />
+                        </svg>
+                        <span></span>
+                    </a>
+                </div>
                 <div class="sidebar-row"><span>created</span><span class="val" id="sb-created">—</span></div>
+                <div class="sidebar-row"><span>forks</span><span class="val" id="sb-forks">—</span></div>
+                <div class="sidebar-row"><span>watching</span><span class="val" id="sb-watching">—</span></div>
 <div class="sidebar-row"><span>type</span><span class="val mirror" id="sb-status">public proxy</span></div>
 <div class="sidebar-row"><span>license</span><span class="val" id="sb-license">—</span></div>
+                <div class="sidebar-row"><span>size</span><span class="val" id="sb-size">—</span></div>
+                <div class="sidebar-row"><span>lfs</span><span class="val" id="sb-lfs">—</span></div>
             </div>
             <div class="sidebar-section">
                 <div class="sidebar-actions">
+                    <button class="sidebar-btn" id="sb-security-btn" style="display:none" onclick="openSecurityPolicy()" title="View security policy"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3.25l7 2.9v5.4c0 4.6-2.9 7.9-7 9.2c-4.1-1.3-7-4.6-7-9.2v-5.4z" />
+	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.8 11.6l2.2 2.2l4.2-4.2" />
+</svg> Security Policy</button>
                     <button class="sidebar-btn" id="sb-star-btn" onclick="doStar()" title="Solo funciona en localhost"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.704 4.325a1.5 1.5 0 0 1 2.592 0l1.818 3.12a1.5 1.5 0 0 0 .978.712l3.53.764a1.5 1.5 0 0 1 .8 2.465l-2.405 2.693a1.5 1.5 0 0 0-.374 1.15l.363 3.593a1.5 1.5 0 0 1-2.097 1.524l-3.304-1.456a1.5 1.5 0 0 0-1.21 0l-3.304 1.456a1.5 1.5 0 0 1-2.097-1.524l.363-3.593a1.5 1.5 0 0 0-.373-1.15l-2.406-2.693a1.5 1.5 0 0 1 .8-2.465l3.53-.764a1.5 1.5 0 0 0 .979-.711z" />
@@ -2143,6 +2400,33 @@
                 <div style="padding:0.2rem 0 0;">
                     <a href="#" onclick="showView('releases'); return false;" style="color:var(--fg-muted);text-decoration:none;font-size:0.75rem;">
                         View all <span id="sb-releases"></span> releases
+                    </a>
+                </div>
+            </div>
+            <div class="sidebar-section" id="sb-tags-section" style="display:none">
+                <div class="sidebar-label">Tags</div>
+                <div id="sb-tags-list"></div>
+                <div style="padding:0.2rem 0 0;">
+                    <a href="#" onclick="showView('tags'); return false;" style="color:var(--fg-muted);text-decoration:none;font-size:0.75rem;">
+                        View all <span id="sb-tags-count"></span> tags
+                    </a>
+                </div>
+            </div>
+            <div class="sidebar-section" id="sb-deployments-section" style="display:none">
+                <div class="sidebar-label">Deployments</div>
+                <div id="sb-deployments"></div>
+                <div style="padding:0.2rem 0 0;">
+                    <a href="#" onclick="showView('deployments'); return false;" style="color:var(--fg-muted);text-decoration:none;font-size:0.75rem;">
+                        View all <span id="sb-deployments-count"></span> deployments
+                    </a>
+                </div>
+            </div>
+            <div class="sidebar-section" id="sb-contributors-section" style="display:none">
+                <div class="sidebar-label">Contributors</div>
+                <div class="sb-contributors" id="sb-contributors"></div>
+                <div style="padding:0.2rem 0 0;">
+                    <a href="#" onclick="showView('contributors'); return false;" style="color:var(--fg-muted);text-decoration:none;font-size:0.75rem;">
+                        View all <span id="sb-contributors-count"></span> contributors
                     </a>
                 </div>
             </div>
@@ -2247,6 +2531,13 @@
         else if (rv.provider === 'gitlab') rv.provider = 'gl';
         else if (rv.provider === 'codeberg') rv.provider = 'cb';
 
+        function profileLink(username, label, className = '') {
+            const name = String(username || '').trim();
+            if (!name) return escHtml(label || '');
+            const classes = `profile-link${className ? ` ${className}` : ''}`;
+            return `<a class="${classes}" href="/${rv.provider}/${encodeURIComponent(name)}" onclick="event.stopPropagation();">${escHtml(label || name)}</a>`;
+        }
+
         function currentBranch() { return rv.branch || ''; }
 
         const BRANCH_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8.25a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0v7.5m0-7.5c0 2.9 2.35 5.25 5.25 5.25h2M7 15.75a2.75 2.75 0 1 0 0 5.5a2.75 2.75 0 0 0 0-5.5m7.25-2.25a2.75 2.75 0 1 0 5.5 0a2.75 2.75 0 0 0-5.5 0"/></svg>`;
@@ -2256,7 +2547,7 @@
             if (!el) return;
             const branchName = rv.branch ? escHtml(rv.branch) : '';
             el.innerHTML =
-                `<a href="/?q=${encodeURIComponent(rv.owner)}" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.owner)}</a>`+
+                `<a href="/${rv.provider}/${encodeURIComponent(rv.owner)}" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.owner)}</a>`+
                 `<span style="color:var(--fg-muted);">/</span>`+
                 `<a href="#" onclick="showView('home');return false;" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.repo)}</a>`+
                 (branchName ? `<span style="color:var(--fg-muted);">/</span><span style="color:var(--fg-muted);display:inline-flex;align-items:center;gap:0.25rem;">${BRANCH_SVG}${branchName}</span>` : '');
@@ -2294,6 +2585,7 @@
             _updateStarBtn();
             loadCommitCount();
             loadReleaseCount();
+            loadTagCount();
             checkPackages();
             const codePanel = document.getElementById('code-panel');
             if (codePanel) codePanel.addEventListener('click', handlePanelLinkClick);
@@ -2340,6 +2632,15 @@
             } else if (view === 'releases') {
                 fileTree.style.display = 'none';
                 loadReleases();
+            } else if (view === 'tags') {
+                fileTree.style.display = 'none';
+                loadTags();
+            } else if (view === 'deployments') {
+                fileTree.style.display = 'none';
+                loadDeploymentsView();
+            } else if (view === 'contributors') {
+                fileTree.style.display = 'none';
+                loadContributorsView();
             } else {
                 fileTree.style.display = 'none';
                 codePanel.innerHTML = `<div class="code-loading" style="color:var(--fg-secondary)">/${view} &mdash; coming soon</div>`;
@@ -2348,6 +2649,26 @@
 
         async function loadReadme() {
             const panel = document.getElementById('code-panel');
+            // La URL del repo puede llegar sin ?branch= (index.html no la incluye) y loadRepoInfo
+            // corre en paralelo; sin la rama por defecto, las imágenes relativas del README se
+            // resuelven a una ruta sin /raw/branch/, que el proxy cb rechaza con 403.
+            if (!currentBranch()) {
+                try {
+                    let d = null;
+                    if (rv.provider === 'cb') {
+                        const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}`);
+                        if (res.ok) d = await res.json();
+                    } else if (rv.provider === 'gh') {
+                        const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}`);
+                        if (res.ok) d = await res.json();
+                    } else {
+                        const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                        const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}`);
+                        if (res.ok) d = await res.json();
+                    }
+                    if (d && d.default_branch) rv.branch = d.default_branch;
+                } catch (e) { /* sin rama, se continúa igual */ }
+            }
             try {
                 let item = null;
                 const ref = currentBranch();
@@ -2376,13 +2697,13 @@
                         text = text.replace(/is undefined/g, 'is hosted on GitLab.com');
                         text = text.replace(/located at undefined/g, 'located at https://gitlab.com/gitlab-org/gitlab-foss/');
                         text = text.split('\n').filter(line => !line.includes('undefined')).join('\n');
-                        _renderFilePanel('README.md', { content: text, size: readmeSize, isMd: true, previewHtml: `<div class="readme">${renderMd(text)}</div>` });
+                        _renderFilePanel('README.md', { path: 'README.md', lastCommitScope: 'repo', content: text, size: readmeSize, isMd: true, previewHtml: `<div class="readme">${renderMd(text)}</div>` });
                         panel.querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
                         return;
                     }
                 }
                 if (item) {
-                    await loadFile(item);
+                    await loadFile(item, { lastCommitScope: 'repo' });
                 } else {
                     panel.innerHTML = '<div class="code-loading">no README</div>';
                 }
@@ -2478,7 +2799,7 @@
                 return `<div class="issue-item" style="cursor:pointer;" onclick="showIssueDetail(${num})">
                     <span class="issue-num">#${num}</span>
                     <span class="issue-title">${escHtml(i.title)}${labels}</span>
-                    <span class="issue-meta">${assignee ? assignee + ' · ' : ''}${user} · ${date}</span>
+                    <span class="issue-meta">${assignee ? profileLink(assignee) + ' · ' : ''}${profileLink(user)} · ${date}</span>
                 </div>`;
             }).join('');
 
@@ -2521,7 +2842,7 @@
                         ${labels ? `<div style="margin-bottom:0.75rem;display:flex;gap:0.3rem;flex-wrap:wrap;">${labels}</div>` : ''}
                         <div class="issue-detail-meta">
                             ${avatar ? `<img class="issue-detail-avatar" src="${avatar}" alt="${user}" />` : ''}
-                            <strong style="color:var(--fg);">${escHtml(user)}</strong>
+                            <strong style="color:var(--fg);">${profileLink(user)}</strong>
                             <span>opened ${created}</span>
                             <span style="margin-left:auto;"><a class="issue-ext-link" href="${url}" target="_blank" rel="noopener">${safeOwner}/${safeRepo}#${num} <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
@@ -2601,7 +2922,7 @@
                             ? `<img src="${cAvatar}" style="width:26px;height:26px;border-radius:50%;flex-shrink:0;border:1px solid var(--border);" />`
                             : `<div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>`}
                         <div class="comment-bubble">
-                            <div class="comment-meta"><strong style="color:var(--fg);">${escHtml(cUser)}</strong> &middot; ${cDate}</div>
+                            <div class="comment-meta"><strong style="color:var(--fg);">${profileLink(cUser)}</strong> &middot; ${cDate}</div>
                             <div class="readme" style="font-size:0.8rem;">${renderMd(cBody)}</div>
                         </div>`;
                     list.appendChild(li);
@@ -2822,7 +3143,7 @@
                     </span>
                     <span class="issue-meta" style="display:flex;flex-direction:column;align-items:flex-end;gap:0.2rem;flex-shrink:0;">
                         ${reviewState}
-                        <span>${user} · ${date}</span>
+                        <span>${profileLink(user)} · ${date}</span>
                     </span>
                 </div>`;
             }).join('');
@@ -2939,7 +3260,7 @@
                     <span class="issue-num">#${num}</span>
                     <span class="issue-title">${escHtml(title)}${cat}${comments}</span>
                     <span class="issue-meta" style="display:flex;flex-direction:column;align-items:flex-end;gap:0.2rem;flex-shrink:0;">
-                        <span>${escHtml(user)}${date ? ' · ' + date : ''}</span>
+                        <span>${profileLink(user)}${date ? ' · ' + date : ''}</span>
                     </span>
                 </div>`;
             }).join('');
@@ -2984,7 +3305,7 @@
                     return `<li class="comment-item">
                         <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                         <div class="comment-bubble">
-                            <div class="comment-meta"><strong style="color:var(--fg);">${escHtml(cUser)}</strong> ${answerBadge} · ${cDate}</div>
+                            <div class="comment-meta"><strong style="color:var(--fg);">${profileLink(cUser)}</strong> ${answerBadge} · ${cDate}</div>
                             <div class="readme" style="font-size:0.8rem;">${renderMd(cBody)}</div>
                         </div>
                     </li>`;
@@ -2999,7 +3320,7 @@
                             </div>
                             <div style="margin-bottom:0.75rem;display:flex;gap:0.3rem;flex-wrap:wrap;">${cat}${answered}</div>
                             <div class="issue-detail-meta">
-                                <strong style="color:var(--fg);">${escHtml(user)}</strong>
+                                <strong style="color:var(--fg);">${profileLink(user)}</strong>
                                 <span>opened ${created}</span>
                                 <span style="margin-left:auto;"><a class="issue-ext-link" href="${url}" target="_blank" rel="noopener">${escHtml(rv.owner)}/${escHtml(rv.repo)}#${num} <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
@@ -3388,6 +3709,7 @@
                 const msg = c.commit?.message || c.message || c.title || '';
                 const firstLine = msg.split('\n')[0];
                 const author = c.commit?.author?.name || c.author_name || c.author?.login || '';
+                const authorUsername = c.author?.login || c.author?.username || '';
                 const date = new Date(c.commit?.author?.date || c.authored_date || c.created_at)
                     .toLocaleDateString('en', {month:'short', day:'numeric', year:'numeric'});
                 const time = new Date(c.commit?.author?.date || c.authored_date || c.created_at)
@@ -3410,7 +3732,7 @@
                         <div class="commit-msg">${escHtml(firstLine)}</div>
                         <div class="commit-meta">
                             <span class="commit-sha">${sha}</span>
-                            <span class="commit-author">${escHtml(author)}</span>
+                            <span class="commit-author">${profileLink(authorUsername, author)}</span>
                             <span class="commit-time">${date} at ${time}</span>
                         </div>
                     </div>
@@ -3577,7 +3899,108 @@
             panel.innerHTML = header + '<div class="commit-list">' + list + '</div>';
         }
 
+        async function loadTags() {
+            const panel = document.getElementById('code-panel');
+            panel.innerHTML = '<div class="code-loading">loading tags...</div>';
+            try {
+                let tags = [];
+                if (rv.provider === 'gh') {
+                    let page = 1;
+                    while (true) {
+                        const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/tags?per_page=100&page=${page}`);
+                        if (!res.ok) break;
+                        const data = await res.json();
+                        if (!Array.isArray(data) || data.length === 0) break;
+                        tags.push(...data);
+                        const link = res.headers.get('Link') || '';
+                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                        page++;
+                    }
+                } else if (rv.provider === 'cb') {
+                    let page = 1;
+                    while (true) {
+                        const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/tags?limit=50&page=${page}`);
+                        if (!res.ok) break;
+                        const data = await res.json();
+                        if (!Array.isArray(data) || data.length === 0) break;
+                        tags.push(...data);
+                        const link = res.headers.get('Link') || '';
+                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                        page++;
+                    }
+                } else {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    let page = 1;
+                    while (true) {
+                        const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/tags?per_page=100&page=${page}`);
+                        if (!res.ok) break;
+                        const data = await res.json();
+                        if (!Array.isArray(data) || data.length === 0) break;
+                        tags.push(...data);
+                        const link = res.headers.get('Link') || '';
+                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                        page++;
+                    }
+                }
+                renderTagsView(tags);
+            } catch(e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+            }
+        }
+
+        function renderTagsView(tags) {
+            const panel = document.getElementById('code-panel');
+            if (!tags.length) {
+                panel.innerHTML = '<div class="bugs-empty">no tags found</div>';
+                return;
+            }
+            const baseUrl = rv.provider === 'cb'
+                ? `https://codeberg.org/${rv.owner}/${rv.repo}/src/tag/`
+                : rv.provider === 'gh'
+                    ? `https://github.com/${rv.owner}/${rv.repo}/releases/tag/`
+                    : `https://gitlab.com/${rv.owner}/${rv.repo}/-/tags/`;
+            const header = `<div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;">
+                <span style="font-size:0.85rem;font-weight:600;color:var(--fg);">${tags.length.toLocaleString()} tags</span>
+            </div>`;
+            const list = tags.map((t, i) => {
+                const name = t.name || '';
+                const sha = String(t.commit?.sha || t.commit?.id || '').substring(0, 7);
+                const date = t.commit?.created_at || t.commit?.created || '';
+                const dateStr = date ? ` · ${timeAgo(date)}` : '';
+                const badge = i === 0 ? ' <span class="release-latest-badge">Latest</span>' : '';
+                return `<div class="issue-item" style="cursor:default;align-items:flex-start;">
+                    <span class="issue-title" style="display:flex;align-items:center;flex-wrap:wrap;gap:0.3rem;">
+                        <a href="#" data-tag="${escAttr(name)}" onclick="openTag(this.dataset.tag); return false;" style="color:var(--accent);text-decoration:none;font-family:'IBM Plex Mono',monospace;">${escHtml(name)}</a>${badge}
+                    </span>
+                    <span class="issue-meta" style="display:flex;align-items:center;gap:0.35rem;font-family:'IBM Plex Mono',monospace;">
+                        <span>${sha}${dateStr}</span>
+                        <a href="${baseUrl}${escAttr(name)}" target="_blank" rel="noopener" title="open in ${rv.provider}" style="color:var(--fg-muted);text-decoration:none;font-size:0.7rem;">↗</a>
+                    </span>
+                </div>`;
+            }).join('');
+            panel.innerHTML = header + '<div class="commit-list">' + list + '</div>';
+        }
+
+        // Abre el contenido del repo en la ref de un tag (árbol de archivos interno).
+        function openTag(tagName) {
+            if (!tagName) return;
+            rv.branch = tagName;
+            updateStatusbarPath();
+            showView('files');
+        }
+
         let _packagesCache = [];
+
+        async function _githubPackages() {
+            const token = localStorage.getItem('gh_token');
+            const headers = token ? { 'Authorization': `token ${token}` } : {};
+            const res = await fetch(`${getApiBase()}/api/github/packages/${encodeURIComponent(rv.owner)}`, { headers });
+            if (!res.ok) {
+                if (res.status === 401 || res.status === 404) return [];
+                throw new Error(`HTTP ${res.status}`);
+            }
+            return await res.json();
+        }
 
         async function checkPackages() {
             try {
@@ -3596,12 +4019,8 @@
                         has = Array.isArray(data) && data.length > 0;
                     }
                 } else if (rv.provider === 'gh') {
-                    let res = await ghFetch(`https://api.github.com/users/${rv.owner}/packages?per_page=100`);
-                    if (res.status === 404) res = await ghFetch(`https://api.github.com/orgs/${rv.owner}/packages?per_page=100`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        has = Array.isArray(data) && data.some(p => p.repository?.name === rv.repo);
-                    }
+                    const data = await _githubPackages();
+                    has = Array.isArray(data) && data.some(p => p.repository?.name === rv.repo);
                 }
                 const nav = document.getElementById('nav-packages');
                 if (nav) nav.style.display = has ? '' : 'none';
@@ -3640,12 +4059,8 @@
                         page++;
                     }
                 } else if (rv.provider === 'gh') {
-                    let res = await ghFetch(`https://api.github.com/users/${rv.owner}/packages?per_page=100`);
-                    if (res.status === 404) res = await ghFetch(`https://api.github.com/orgs/${rv.owner}/packages?per_page=100`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        packages = (data || []).filter(p => p.repository?.name === rv.repo);
-                    }
+                    const data = await _githubPackages();
+                    packages = (data || []).filter(p => p.repository?.name === rv.repo);
                 }
                 _packagesCache = packages;
                 renderPackagesView();
@@ -3751,7 +4166,7 @@
                             ${badges.join(' ')}
                         </div>
                         <span class="release-title">${escHtml(name)}</span>
-                        <span class="release-meta">${author ? escHtml(author) + ' · ' : ''}${dateStr}</span>
+                            <span class="release-meta">${author ? profileLink(author) + ' · ' : ''}${dateStr}</span>
                     </div>
                 </div>`;
             }).join('');
@@ -3810,7 +4225,7 @@
                 <div style="margin-bottom:0.75rem;">
                     <h2 style="font-size:1.1rem;margin:0 0 0.3rem;color:var(--fg);">${escHtml(name)}</h2>
                     <div style="font-size:0.75rem;color:var(--fg-muted);">
-                        ${author ? 'Published by <strong>' + escHtml(author) + '</strong>' : ''}
+                        ${author ? 'Published by <strong>' + profileLink(author) + '</strong>' : ''}
                         ${dateStr ? ' · ' + dateStr : ''}
                     </div>
                 </div>
@@ -4021,6 +4436,7 @@
             const shortSha = fullSha.substring(0, 7);
             const msg = commit.commit?.message || commit.message || commit.title || '';
             const author = commit.commit?.author?.name || commit.author_name || commit.author?.login || '';
+            const authorUsername = commit.author?.login || commit.author?.username || '';
             const email = commit.commit?.author?.email || commit.author_email || commit.committer_email || '';
             const avatarUrl = glAvatarUrl || commit.author?.avatar_url || '';
             const initial = (author[0]||'?').toUpperCase();
@@ -4071,7 +4487,7 @@
                     </div>
                     <div class="commit-detail-meta">
                         ${avatarHtml}
-                        <span class="cd-author">${escHtml(author)}</span>
+                        <span class="cd-author">${profileLink(authorUsername, author)}</span>
                         <span class="cd-date">committed ${date}</span>
                         <span class="cd-stats">
                             <span class="add">+${stats.additions || 0}</span>
@@ -4214,7 +4630,7 @@
                         <div style="margin-bottom:0.75rem;display:flex;gap:0.3rem;flex-wrap:wrap;">${stateBadge}${branchInfo}</div>
                         <div class="issue-detail-meta">
                             ${avatar ? `<img class="issue-detail-avatar" src="${avatar}" alt="${user}" />` : ''}
-                            <strong style="color:var(--fg);">${escHtml(user)}</strong>
+                            <strong style="color:var(--fg);">${profileLink(user)}</strong>
                             <span>opened ${created}</span>
                             <span style="margin-left:auto;"><a class="issue-ext-link" href="${url}" target="_blank" rel="noopener">${rv.owner}/${rv.repo}#${num} <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
@@ -4320,6 +4736,7 @@
                     rv.language = d.language || rv.language;
                     rv.branch = d.default_branch || rv.branch;
                     rv.stars = d.stargazers_count || 0;
+                    setRepoHomepage(d.homepage && d.homepage !== d.html_url ? d.homepage : '');
 
                     const sbDesc = document.getElementById('sb-desc');
                     if (sbDesc) sbDesc.textContent = d.description || '—';
@@ -4336,8 +4753,14 @@
                     if (sbCreated && d.created_at) {
                         sbCreated.textContent = new Date(d.created_at).toLocaleDateString('en', {year:'numeric', month:'short', day:'numeric'});
                     }
+                    const sbForks = document.getElementById('sb-forks');
+                    if (sbForks) sbForks.textContent = d.forks_count ? d.forks_count.toLocaleString() : '0';
+                    const sbWatching = document.getElementById('sb-watching');
+                    if (sbWatching) sbWatching.textContent = d.subscribers_count ? d.subscribers_count.toLocaleString() : '0';
                     const sbLicense = document.getElementById('sb-license');
                     if (sbLicense) sbLicense.textContent = _licenseLabel(d.license && d.license.spdx_id) || '—';
+                    const sbSize = document.getElementById('sb-size');
+                    if (sbSize) sbSize.textContent = d.size ? formatBytes(d.size * 1024) : '—';
                     const sbStarCount = document.getElementById('sb-star-count');
                     if (sbStarCount) sbStarCount.textContent = d.stargazers_count ? d.stargazers_count.toLocaleString() : '';
                     updateStatusbarPath();
@@ -4353,9 +4776,12 @@
                     }
 
                     loadCommitCount();
+                    loadContributors();
+                    loadDeployments();
                 } else if (rv.provider === 'gl') {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
-                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}`);
+                    const glToken = localStorage.getItem('gl_token');
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}?statistics=true`, glToken ? { headers: { 'PRIVATE-TOKEN': glToken } } : {});
                     if (!res.ok) {
                         const sbDesc = document.getElementById('sb-desc');
                         if (sbDesc) sbDesc.textContent = `gitlab API error ${res.status}`;
@@ -4373,6 +4799,16 @@
                     rv.branch = d.default_branch || rv.branch;
                     rv.stars = d.star_count || 0;
 
+                    // GitLab Pages: el endpoint /pages del proyecto exige autenticación (403 sin token);
+                    // la URL se deriva por convención de GitLab: https://{namespace}.gitlab.io/{project}
+                    try {
+                        const nsParts = (d.path_with_namespace || '').split('/');
+                        if (nsParts.length >= 2 && nsParts[0]) {
+                            const siteUrl = `https://${nsParts[0]}.gitlab.io/${nsParts.slice(1).join('/')}`;
+                            if (siteUrl) setRepoHomepage(siteUrl);
+                        }
+                    } catch(_) {}
+
                     const sbDesc = document.getElementById('sb-desc');
                     if (sbDesc) sbDesc.textContent = d.description || '—';
                     const sbTags = document.getElementById('sb-tags');
@@ -4389,6 +4825,8 @@
                     if (sbCreated && d.created_at) {
                         sbCreated.textContent = new Date(d.created_at).toLocaleDateString('en', {year:'numeric', month:'short', day:'numeric'});
                     }
+                    const sbForks = document.getElementById('sb-forks');
+                    if (sbForks) sbForks.textContent = d.forks_count ? d.forks_count.toLocaleString() : '0';
                     const sbLicense = document.getElementById('sb-license');
                     if (sbLicense) {
                         try {
@@ -4411,6 +4849,10 @@
                             }
                         } catch(_) {}
                     }
+                    const sbSize = document.getElementById('sb-size');
+                    if (sbSize) sbSize.textContent = d.statistics && d.statistics.repository_size ? formatBytes(d.statistics.repository_size) : '—';
+                    const sbLfs = document.getElementById('sb-lfs');
+                    if (sbLfs) sbLfs.textContent = d.statistics && d.statistics.lfs_objects_size ? formatBytes(d.statistics.lfs_objects_size) : '—';
                     const sbStarCount = document.getElementById('sb-star-count');
                     if (sbStarCount) sbStarCount.textContent = d.star_count ? d.star_count.toLocaleString() : '';
                     updateStatusbarPath();
@@ -4432,6 +4874,8 @@
                     }
 
                     loadCommitCount();
+                    loadContributors();
+                    loadDeployments();
                 } else if (rv.provider === 'cb') {
                     const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}`);
                     if (!res.ok) {
@@ -4453,6 +4897,7 @@
                     rv.language = d.language || rv.language;
                     rv.branch = d.default_branch || rv.branch;
                     rv.stars = d.stars_count || 0;
+                    setRepoHomepage(d.website);
 
                     const sbDesc = document.getElementById('sb-desc');
                     if (sbDesc) sbDesc.textContent = d.description || '—';
@@ -4469,20 +4914,47 @@
                     if (sbCreated && d.created_at) {
                         sbCreated.textContent = new Date(d.created_at).toLocaleDateString('en', {year:'numeric', month:'short', day:'numeric'});
                     }
+                    const sbForks = document.getElementById('sb-forks');
+                    if (sbForks) sbForks.textContent = d.forks_count ? d.forks_count.toLocaleString() : '0';
+                    const sbWatching = document.getElementById('sb-watching');
+                    if (sbWatching) {
+                        try {
+                            // Gitea/Codeberg no incluye el conteo de watchers en el JSON del repo:
+                            // se obtiene del header de paginación X-Total-Count de /subscribers.
+                            const wRes = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/subscribers?limit=1`);
+                            if (wRes.ok) {
+                                const total = wRes.headers.get('X-Total-Count');
+                                if (total != null) sbWatching.textContent = Number(total).toLocaleString();
+                            }
+                        } catch(_) {}
+                    }
                     const sbLicense = document.getElementById('sb-license');
                     if (sbLicense) {
                         const ref = currentBranch() || rv.branch || 'master';
-                        const licNames = ['LICENSE', 'LICENSE.md', 'LICENSE.txt', 'COPYING', 'COPYING.md'];
-                        for (const licName of licNames) {
-                            try {
-                                const licRes = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/raw/${encodeURIComponent(licName)}?ref=${encodeURIComponent(ref)}`);
-                                if (licRes.ok) {
-                                    const label = _detectLicense(await licRes.text());
-                                    if (label) { sbLicense.textContent = label; break; }
+                        try {
+                            // El proxy de Codeberg bloquea /raw/<file>?ref= (403): se lista la raíz
+                            // con /contents (1 request) y se lee el archivo de licencia real (1 request),
+                            // en vez de probar hasta 5 nombres con rutas no permitidas.
+                            const listRes = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/contents/?ref=${encodeURIComponent(ref)}`);
+                            if (listRes.ok) {
+                                const items = await listRes.json();
+                                const licItem = Array.isArray(items)
+                                    ? items.find(f => f && f.type === 'file' && /^(LICENSE|COPYING)(\.(md|txt))?$/i.test(f.name || ''))
+                                    : null;
+                                if (licItem) {
+                                    const licPath = (licItem.path || '').split('/').map(encodeURIComponent).join('/');
+                                    const licRes = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/contents/${licPath}?ref=${encodeURIComponent(ref)}`);
+                                    if (licRes.ok) {
+                                        const data = await licRes.json();
+                                        const label = _detectLicense(decodeBase64Utf8(data.content || ''));
+                                        if (label) sbLicense.textContent = label;
+                                    }
                                 }
-                            } catch(_) {}
-                        }
+                            }
+                        } catch(_) {}
                     }
+                    const sbSize = document.getElementById('sb-size');
+                    if (sbSize) sbSize.textContent = d.size ? formatBytes(d.size * 1024) : '—';
                     const sbStarCount = document.getElementById('sb-star-count');
                     if (sbStarCount) sbStarCount.textContent = d.stars_count ? d.stars_count.toLocaleString() : '';
                     updateStatusbarPath();
@@ -4493,11 +4965,463 @@
                     }
 
                     loadCommitCount();
+                    loadContributors();
                 }
             } catch(e) {
                 const sbDesc = document.getElementById('sb-desc');
                 if (sbDesc) sbDesc.textContent = `error: ${e.message}`;
             }
+            _checkSecurityPolicy();
+        }
+
+        let _securityFile = null;
+
+        // Muestra el botón "Security Policy" en el sidebar derecho solo si el repo
+        // tiene un archivo de seguridad en la raíz (SECURITY.md o security.md).
+        async function _checkSecurityPolicy() {
+            const btn = document.getElementById('sb-security-btn');
+            if (!btn) return;
+            try {
+                const items = await _fetchDirItems([]);
+                const item = Array.isArray(items)
+                    ? items.find(f => f && f.type === 'file' && /^SECURITY\.(md|markdown|txt)$/i.test(f.name || ''))
+                    : null;
+                if (item) {
+                    _securityFile = item;
+                    btn.style.display = '';
+                }
+            } catch(_) {}
+        }
+
+        function openSecurityPolicy() {
+            if (!_securityFile) return;
+            loadFile(_securityFile);
+        }
+
+        function setRepoHomepage(url) {
+            const row = document.getElementById('sb-home-row');
+            const link = document.getElementById('sb-home-link');
+            if (!row || !link) return;
+            const safe = sanitizeHttpUrl(String(url || '').trim());
+            if (!safe) {
+                row.style.display = 'none';
+                return;
+            }
+            const label = safe.replace(/^https?:\/\//, '').replace(/\/$/, '');
+            link.href = safe;
+            link.title = safe;
+            const span = link.querySelector('span');
+            if (span) span.textContent = label;
+            row.style.display = '';
+        }
+
+        // GitLab /repository/contributors no incluye el username (solo name/email).
+        // Se resuelve desde los commits recientes (author.username) y, como fallback,
+        // por email vía el proxy existente gl-avatar (que también devuelve username).
+        async function _glContributorUsernames(list) {
+            const map = new Map();
+            if (!Array.isArray(list) || list.length === 0) return map;
+            try {
+                const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/commits?per_page=100`);
+                if (res.ok) {
+                    const commits = await res.json();
+                    if (Array.isArray(commits)) {
+                        commits.forEach(c => {
+                            const email = c.author_email || (c.commit && c.commit.author && c.commit.author.email) || '';
+                            if (email && c.author && c.author.username) map.set(email, c.author.username);
+                        });
+                    }
+                }
+            } catch(_) {}
+            const missing = [...new Set(list.map(c => c && c.email).filter(Boolean))].filter(e => !map.has(e)).slice(0, 50);
+            await Promise.all(missing.map(async email => {
+                try {
+                    const res = await fetch(`${API_BASE}/api/gl-avatar?email=${encodeURIComponent(email)}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.username) map.set(email, data.username);
+                    }
+                } catch(_) {}
+            }));
+            return map;
+        }
+
+        // Codeberg/Forgejo no expone /stats/contributors (404 verificado): los
+        // contribuidores se agregan desde los commits recientes (cada commit trae
+        // author.login, full_name y avatar_url), agrupando por autor y contando
+        // commits como aportes. Devuelve el mismo shape {author, total} que
+        // normaliza _cbContributorStats.
+        async function _cbContributorsFromCommits(maxAuthors, maxPages) {
+            const stats = [];
+            const byLogin = new Map();
+            for (let page = 1; page <= maxPages; page++) {
+                const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/commits?limit=50&page=${page}`);
+                if (!res.ok) break;
+                const data = await res.json();
+                if (!Array.isArray(data) || data.length === 0) break;
+                for (const c of data) {
+                    const a = c && c.author;
+                    if (!a || !a.login) continue;
+                    let s = byLogin.get(a.login);
+                    if (!s) {
+                        s = { author: a, total: 0 };
+                        byLogin.set(a.login, s);
+                        stats.push(s);
+                    }
+                    s.total++;
+                }
+                if (maxAuthors && stats.length >= maxAuthors) break;
+            }
+            return stats;
+        }
+
+        // Normaliza {author, total} al shape común de contribuidores
+        // (login, name, contributions, avatar_url) para reutilizar el render.
+        function _cbContributorStats(list) {
+            if (!Array.isArray(list)) return [];
+            return list.map(s => {
+                const a = (s && s.author) || {};
+                return {
+                    login: a.login || '',
+                    name: a.full_name || a.login || '',
+                    contributions: s.total || 0,
+                    avatar_url: a.avatar_url || '',
+                };
+            }).filter(c => c.login);
+        }
+
+        async function loadContributors() {
+            const section = document.getElementById('sb-contributors-section');
+            const box = document.getElementById('sb-contributors');
+            if (!section || !box) return;
+            let list = [];
+            let cbTotal = 0;
+            try {
+                if (rv.provider === 'gh') {
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/contributors?per_page=10`);
+                    if (res.ok) list = await res.json();
+                } else if (rv.provider === 'gl') {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/contributors?per_page=10`);
+                    if (res.ok) list = await res.json();
+                } else if (rv.provider === 'cb') {
+                    // Se agregan autores desde los commits recientes; el conteo es el
+                    // de autores únicos encontrados (límite para el rate limit).
+                    const stats = await _cbContributorsFromCommits(50, 5);
+                    cbTotal = stats.length;
+                    list = _cbContributorStats(stats).slice(0, 10);
+                }
+            } catch(_) {}
+            if (!Array.isArray(list) || list.length === 0) return;
+            // GitLab no incluye el username en /contributors: se resuelve por email
+            // con el mismo patrón que loadCommits (commits recientes + gl-avatar).
+            const userMap = rv.provider === 'gl' ? await _glContributorUsernames(list) : new Map();
+            const html = list.map(c => {
+                if (!c) return '';
+                const name = c.login || c.name || '';
+                // username real solo si viene del login del repo o del mapa por email;
+                // si no se resolvió (GitLab sin token) se muestra el nombre sin enlace.
+                const login = c.login || userMap.get(c.email) || '';
+                const username = login || name;
+                const commits = c.contributions || c.commits || 0;
+                // GitLab no devuelve avatar: se usa gravatar a partir del email (patrón existente).
+                const avatar = c.avatar_url || (c.email ? `https://www.gravatar.com/avatar/${md5(String(c.email).trim().toLowerCase())}?s=56&d=identicon` : '');
+                if (!username || !avatar) return '';
+                const img = `<img src="${escAttr(avatar)}" alt="${escAttr(username)}" loading="lazy">`;
+                const title = `${escAttr(username)} · ${commits} commits`;
+                if (!login) return `<span class="sb-contributor" title="${title}">${img}</span>`;
+                return `<a class="sb-contributor" href="/${rv.provider}/${encodeURIComponent(login)}" title="${title}">${img}</a>`;
+            }).join('');
+            if (!html) return;
+            box.innerHTML = html;
+            section.style.display = '';
+            // conteo total para el enlace "View all contributors"
+            const countEl = document.getElementById('sb-contributors-count');
+            if (countEl) {
+                try {
+                    if (rv.provider === 'gh') {
+                        const cRes = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/contributors?per_page=1`);
+                        if (cRes.ok) {
+                            const m = (cRes.headers.get('Link') || '').match(/&page=(\d+)>;\s*rel="last"/);
+                            if (m) countEl.textContent = parseInt(m[1]).toLocaleString();
+                        }
+                    } else if (rv.provider === 'gl') {
+                        const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                        const cRes = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/contributors?per_page=1`);
+                        if (cRes.ok) {
+                            const xTotal = cRes.headers.get('X-Total');
+                            if (xTotal) countEl.textContent = parseInt(xTotal).toLocaleString();
+                        }
+                    } else if (rv.provider === 'cb') {
+                        if (cbTotal) countEl.textContent = cbTotal.toLocaleString();
+                    }
+                } catch(_) {}
+            }
+        }
+
+        async function loadContributorsView() {
+            const panel = document.getElementById('code-panel');
+            panel.innerHTML = '<div class="code-loading">loading contributors...</div>';
+            try {
+                let list = [];
+                if (rv.provider === 'gh') {
+                    let page = 1;
+                    while (true) {
+                        const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/contributors?per_page=100&page=${page}`);
+                        if (!res.ok) break;
+                        const data = await res.json();
+                        if (!Array.isArray(data) || data.length === 0) break;
+                        list.push(...data);
+                        const link = res.headers.get('Link') || '';
+                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                        page++;
+                        if (page > 10) break;
+                    }
+                } else if (rv.provider === 'gl') {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    let page = 1;
+                    while (true) {
+                        const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/contributors?per_page=100&page=${page}`);
+                        if (!res.ok) break;
+                        const data = await res.json();
+                        if (!Array.isArray(data) || data.length === 0) break;
+                        list.push(...data);
+                        const link = res.headers.get('Link') || '';
+                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                        page++;
+                        if (page > 10) break;
+                    }
+                } else if (rv.provider === 'cb') {
+                    // Vista completa: más páginas de commits para cubrir más autores.
+                    const stats = await _cbContributorsFromCommits(200, 20);
+                    list = _cbContributorStats(stats);
+                }
+                const userMap = rv.provider === 'gl' ? await _glContributorUsernames(list) : new Map();
+                renderContributorsView(list, userMap);
+            } catch(e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+            }
+        }
+
+        function renderContributorsView(list, userMap) {
+            userMap = userMap || new Map();
+            const panel = document.getElementById('code-panel');
+            if (!list.length) {
+                panel.innerHTML = '<div class="bugs-empty">no contributors found</div>';
+                return;
+            }
+            const count = list.length;
+            const header = `<div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;">
+                <span style="font-size:0.85rem;font-weight:600;color:var(--fg);">${count} contributor${count !== 1 ? 's' : ''}</span>
+            </div>`;
+            const body = list.map(c => {
+                if (!c) return '';
+                const name = c.login || c.name || '';
+                // username real solo si viene del login del repo o del mapa por email;
+                // si no se resolvió (GitLab sin token) se muestra el nombre sin enlace.
+                const login = c.login || userMap.get(c.email) || '';
+                const username = login || name;
+                const commits = c.contributions || c.commits || 0;
+                // GitLab no devuelve avatar: se usa gravatar a partir del email (patrón existente).
+                const avatar = c.avatar_url || (c.email ? `https://www.gravatar.com/avatar/${md5(String(c.email).trim().toLowerCase())}?s=56&d=identicon` : '');
+                const img = avatar
+                    ? `<img src="${escAttr(avatar)}" alt="${escAttr(username)}" loading="lazy" style="width:2rem;height:2rem;border-radius:50%;object-fit:cover;background:var(--accent);flex:none;">`
+                    : `<span style="width:2rem;height:2rem;border-radius:50%;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:0.7rem;color:#fff;flex:none;">${escHtml((username || '?')[0].toUpperCase())}</span>`;
+                const avatarHtml = login
+                    ? `<a href="/${rv.provider}/${encodeURIComponent(login)}" aria-label="${escAttr(username)} profile">${img}</a>`
+                    : img;
+                const nameHtml = login
+                    ? `<a href="/${rv.provider}/${encodeURIComponent(login)}" style="color:var(--fg);text-decoration:none;font-weight:500;">${escHtml(username)}</a>`
+                    : `<span style="color:var(--fg);font-weight:500;">${escHtml(username)}</span>`;
+                return `<div class="release-item">
+                    <div style="display:flex;align-items:center;gap:0.75rem;min-width:0;flex:1;">
+                        ${avatarHtml}
+                        <div style="display:flex;flex-direction:column;gap:0.15rem;min-width:0;flex:1;">
+                            ${nameHtml}
+                            <span class="release-meta">${commits} commit${commits !== 1 ? 's' : ''}</span>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+            panel.innerHTML = header + `<div class="release-list">${body}</div>`;
+        }
+
+        function _deployStatusCls(status) {
+            const s = String(status || '').toLowerCase();
+            if (s === 'success' || s === 'created' || s === 'manual') return 'success';
+            if (s === 'failed' || s === 'error' || s === 'failure' || s === 'canceled' || s === 'cancelled' || s === 'blocked') return 'failed';
+            if (s === 'running' || s === 'in_progress' || s === 'pending' || s === 'queued') return 'running';
+            return 'pending';
+        }
+
+        async function loadDeployments() {
+            const section = document.getElementById('sb-deployments-section');
+            const box = document.getElementById('sb-deployments');
+            if (!section || !box) return;
+            // Codeberg/Gitea no expone un endpoint público de deployments; GitHub lo expone
+            // públicamente y GitLab solo responde con token: la sección se carga cuando puede funcionar.
+            if (rv.provider === 'cb') return;
+            if (rv.provider === 'gl' && !localStorage.getItem('gl_token')) return;
+            let items = [];
+            let total = 0;
+            try {
+                if (rv.provider === 'gh') {
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/deployments?per_page=1`);
+                    if (res.ok) {
+                        const deploys = await res.json();
+                        if (Array.isArray(deploys)) {
+                            // El estado de cada deployment vive en un endpoint aparte: se consulta en paralelo.
+                            const statuses = await Promise.all(deploys.map(async d => {
+                                if (!d || !d.statuses_url) return '';
+                                try {
+                                    const sRes = await ghFetch(d.statuses_url);
+                                    if (sRes.ok) {
+                                        const list = await sRes.json();
+                                        return Array.isArray(list) && list.length > 0 ? list[0].state : '';
+                                    }
+                                } catch(_) {}
+                                return '';
+                            }));
+                            items = deploys.map((d, i) => ({
+                                env: d.environment || '',
+                                ref: d.ref || '',
+                                created_at: d.created_at || '',
+                                status: statuses[i] || '',
+                                description: d.description || ''
+                            }));
+                            const m = (res.headers.get('Link') || '').match(/&page=(\d+)>;\s*rel="last"/);
+                            total = m ? parseInt(m[1]) : deploys.length;
+                        }
+                    }
+                } else if (rv.provider === 'gl') {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const glToken = localStorage.getItem('gl_token');
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/deployments?per_page=1`, glToken ? { headers: { 'PRIVATE-TOKEN': glToken } } : {});
+                    if (res.ok) {
+                        const deploys = await res.json();
+                        if (Array.isArray(deploys)) {
+                            items = deploys.map(d => ({
+                                env: d.environment && d.environment.name ? d.environment.name : '',
+                                ref: d.ref || '',
+                                created_at: d.created_at || '',
+                                status: d.status || ''
+                            }));
+                            const xTotal = res.headers.get('X-Total');
+                            total = xTotal ? parseInt(xTotal) : deploys.length;
+                        }
+                    }
+                }
+            } catch(_) {}
+            if (items.length === 0) return;
+            const html = items.map(d => {
+                const env = escHtml(d.env || 'default');
+                const ref = escHtml(d.ref || '');
+                const time = d.created_at ? timeAgo(d.created_at) : '';
+                const status = escHtml(d.status || '');
+                const head = `<span class="sb-deploy-env" title="${escAttr(d.description || d.env || '')}">${env}</span>` +
+                    (status ? `<span class="sb-deploy-status ${_deployStatusCls(d.status)}">${status}</span>` : '');
+                const meta = [ref, time].filter(Boolean).join(' · ');
+                return `<div class="sb-deploy"><div class="sb-deploy-head">${head}</div>` +
+                    (meta ? `<div class="sb-deploy-meta">${meta}</div>` : '') + `</div>`;
+            }).join('');
+            if (!html) return;
+            box.innerHTML = html;
+            section.style.display = '';
+            // conteo total para el enlace "View all deployments" (headers del mismo response)
+            const countEl = document.getElementById('sb-deployments-count');
+            if (countEl && total > 0) countEl.textContent = total.toLocaleString();
+        }
+
+        async function loadDeploymentsView() {
+            const panel = document.getElementById('code-panel');
+            panel.innerHTML = '<div class="code-loading">loading deployments...</div>';
+            // Igual que en el sidebar: Codeberg no expone deployments; GitLab exige token.
+            if (rv.provider === 'cb') {
+                panel.innerHTML = '<div class="bugs-empty">deployments are not available on codeberg</div>';
+                return;
+            }
+            if (rv.provider === 'gl' && !localStorage.getItem('gl_token')) {
+                panel.innerHTML = '<div class="bugs-empty">deployments require a gitlab token</div>';
+                return;
+            }
+            try {
+                let items = [];
+                if (rv.provider === 'gh') {
+                    let page = 1;
+                    while (true) {
+                        const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/deployments?per_page=100&page=${page}`);
+                        if (!res.ok) break;
+                        const data = await res.json();
+                        if (!Array.isArray(data) || data.length === 0) break;
+                        items.push(...data);
+                        const link = res.headers.get('Link') || '';
+                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                        page++;
+                        if (page > 10) break;
+                    }
+                    items = items.map(d => ({
+                        env: d.environment || '',
+                        ref: d.ref || '',
+                        created_at: d.created_at || '',
+                        status: '',
+                        description: d.description || ''
+                    }));
+                } else if (rv.provider === 'gl') {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const glToken = localStorage.getItem('gl_token');
+                    let page = 1;
+                    while (true) {
+                        const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/deployments?per_page=100&page=${page}`, glToken ? { headers: { 'PRIVATE-TOKEN': glToken } } : {});
+                        if (!res.ok) break;
+                        const data = await res.json();
+                        if (!Array.isArray(data) || data.length === 0) break;
+                        items.push(...data);
+                        const link = res.headers.get('Link') || '';
+                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                        page++;
+                        if (page > 10) break;
+                    }
+                    items = items.map(d => ({
+                        env: d.environment && d.environment.name ? d.environment.name : '',
+                        ref: d.ref || '',
+                        created_at: d.created_at || '',
+                        status: d.status || ''
+                    }));
+                }
+                // Codeberg/Gitea no expone un endpoint público de deployments.
+                renderDeploymentsView(items);
+            } catch(e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+            }
+        }
+
+        function renderDeploymentsView(items) {
+            const panel = document.getElementById('code-panel');
+            if (!items.length) {
+                panel.innerHTML = '<div class="bugs-empty">no deployments found</div>';
+                return;
+            }
+            const count = items.length;
+            const header = `<div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;">
+                <span style="font-size:0.85rem;font-weight:600;color:var(--fg);">${count} deployment${count !== 1 ? 's' : ''}</span>
+            </div>`;
+            const list = items.map(d => {
+                const env = escHtml(d.env || 'default');
+                const ref = escHtml(d.ref || '');
+                const date = d.created_at ? new Date(d.created_at).toLocaleDateString('en', {month:'short', day:'numeric', year:'numeric'}) : '';
+                const status = escHtml(d.status || '');
+                return `<div class="release-item">
+                    <div style="display:flex;flex-direction:column;gap:0.25rem;min-width:0;flex:1;">
+                        <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;">
+                            <span class="sb-deploy-env">${env}</span>
+                            ${status ? `<span class="sb-deploy-status ${_deployStatusCls(d.status)}">${status}</span>` : ''}
+                        </div>
+                        <span class="release-meta">${ref ? escHtml(ref) + ' · ' : ''}${date}</span>
+                    </div>
+                </div>`;
+            }).join('');
+            panel.innerHTML = header + `<div class="release-list">${list}</div>`;
         }
 
         async function loadCommitCount() {
@@ -4618,6 +5542,61 @@
                         el.textContent = '';
                         if (section) section.style.display = 'none';
                     }
+                }
+            } catch(_) {}
+        }
+
+        async function loadTagCount() {
+            const el = document.getElementById('sb-tags-count');
+            const section = document.getElementById('sb-tags-section');
+            const listEl = document.getElementById('sb-tags-list');
+            if (!el) return;
+            try {
+                let tags = [];
+                let total = 0;
+                if (rv.provider === 'gh') {
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/tags?per_page=100`);
+                    if (!res.ok) { if (section) section.style.display = 'none'; return; }
+                    const data = await res.json();
+                    tags = Array.isArray(data) ? data : [];
+                    // GitHub no expone el total de tags: se aproxima con la última página × per_page.
+                    const link = res.headers.get('Link') || '';
+                    const match = link.match(/&page=(\d+)>; rel="last"/);
+                    total = match ? parseInt(match[1]) * 100 : tags.length;
+                } else if (rv.provider === 'gl') {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/tags?per_page=100`);
+                    if (!res.ok) { if (section) section.style.display = 'none'; return; }
+                    const data = await res.json();
+                    tags = Array.isArray(data) ? data : [];
+                    const xTotal = res.headers.get('X-Total');
+                    total = xTotal ? parseInt(xTotal) : tags.length;
+                } else if (rv.provider === 'cb') {
+                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/tags?limit=50`);
+                    if (!res.ok) { if (section) section.style.display = 'none'; return; }
+                    const data = await res.json();
+                    tags = Array.isArray(data) ? data : [];
+                    const xTotal = res.headers.get('X-Total-Count');
+                    total = xTotal ? parseInt(xTotal) : tags.length;
+                }
+                if (tags.length > 0) {
+                    el.textContent = total.toLocaleString();
+                    if (listEl) {
+                        // La última tag (más reciente) se muestra destacada, como Latest en Releases.
+                        const latestName = tags[0].name || '';
+                        const latestHtml = `<a href="#" data-tag="${escAttr(latestName)}" onclick="openTag(this.dataset.tag); return false;" style="display:block;padding:0.3rem 0;color:var(--fg);text-decoration:none;">
+                            <div style="font-size:0.82rem;font-weight:500;line-height:1.3;font-family:'IBM Plex Mono',monospace;">${escHtml(latestName)} <span class="release-latest-badge">Latest</span></div>
+                        </a>`;
+                        const restHtml = tags.slice(1, 10).map(t => {
+                            const name = t.name || '';
+                            return `<a href="#" data-tag="${escAttr(name)}" onclick="openTag(this.dataset.tag); return false;" style="display:block;padding:0.15rem 0;color:var(--accent);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;">${escHtml(name)}</a>`;
+                        }).join('');
+                        listEl.innerHTML = latestHtml + restHtml;
+                    }
+                    if (section) section.style.display = '';
+                } else {
+                    el.textContent = '';
+                    if (section) section.style.display = 'none';
                 }
             } catch(_) {}
         }
@@ -4829,6 +5808,135 @@
             }
         }
 
+        const _fileTreeSearch = `<div class="repo-search">
+            <input class="repo-search-input" id="repo-search-input" type="search" placeholder="search files or code" aria-label="Search repository" autocomplete="off" onkeydown="if(event.key==='Enter') searchRepository('files')">
+            <div class="repo-search-actions">
+                <button class="repo-search-btn" type="button" onclick="searchRepository('files')">Files</button>
+                <button class="repo-search-btn" type="button" onclick="searchRepository('code')">Code</button>
+            </div>
+        </div>`;
+        function _fileTreeShell(content) { return _fileTreeSearch + content; }
+
+        function _searchItem(name, path, extra) {
+            return { name: name || String(path || '').split('/').pop(), path: path || name, type: 'file', ...(extra || {}) };
+        }
+
+        async function _allRepositoryFiles() {
+            const ref = currentBranch();
+            if (rv.provider === 'gh') {
+                const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/git/trees/${encodeURIComponent(ref)}?recursive=1`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                return (data.tree || []).filter(i => i.type === 'blob').map(i => _searchItem('', i.path));
+            }
+            if (rv.provider === 'cb') {
+                const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/git/trees/${encodeURIComponent(ref)}?recursive=true`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                return (data.tree || []).filter(i => i.type === 'blob').map(i => _searchItem('', i.path));
+            }
+            const project = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+            const files = [];
+            for (let page = 1; page <= 10; page++) {
+                const res = await fetch(`https://gitlab.com/api/v4/projects/${project}/repository/tree?recursive=true&per_page=100&page=${page}&ref=${encodeURIComponent(ref)}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const pageItems = await res.json();
+                files.push(...pageItems.filter(i => i.type === 'blob').map(i => _searchItem(i.name, i.path)));
+                if (!res.headers.get('x-next-page')) break;
+            }
+            return files;
+        }
+
+        async function _providerCodeSearch(query) {
+            if (rv.provider === 'gh') {
+                const token = localStorage.getItem('gh_token');
+                const headers = token ? { 'Authorization': `token ${token}` } : {};
+                const url = `${getApiBase()}/api/code/search?q=${encodeURIComponent(query)}&owner=${encodeURIComponent(rv.owner)}&repo=${encodeURIComponent(rv.repo)}&provider=gh`;
+                const res = await fetch(url, { headers });
+                if (!res.ok) throw new Error(res.status === 401 ? 'Code search is not configured on the server.' : `HTTP ${res.status}`);
+                const data = await res.json();
+                return (data.results || []).map(i => _searchItem(i.name, i.path));
+            }
+            if (rv.provider === 'gl') {
+                const project = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                const res = await fetch(`https://gitlab.com/api/v4/projects/${project}/search?scope=blobs&search=${encodeURIComponent(query)}&ref=${encodeURIComponent(currentBranch())}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                return (data || []).map(i => _searchItem(i.filename, i.path || i.filename));
+            }
+            // Forgejo's public API has no repository-scoped code search. Search file contents
+            // client-side in a bounded set to keep the page responsive on large repositories.
+            const binary = /\.(?:7z|avif|bin|bmp|class|dll|exe|gif|gz|ico|jar|jpe?g|mp3|mp4|otf|pdf|png|so|tar|ttf|webm|woff2?|zip)$/i;
+            const candidates = (await _allRepositoryFiles()).filter(i => !binary.test(i.path)).slice(0, 200);
+            const needle = query.toLowerCase();
+            const matches = [];
+            for (let start = 0; start < candidates.length; start += 8) {
+                const batch = await Promise.all(candidates.slice(start, start + 8).map(async item => {
+                    try {
+                        const path = item.path.split('/').map(encodeURIComponent).join('/');
+                        const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/contents/${path}?ref=${encodeURIComponent(currentBranch())}`);
+                        if (!res.ok) return null;
+                        const data = await res.json();
+                        return decodeBase64Utf8(data.content || '').toLowerCase().includes(needle) ? item : null;
+                    } catch (_) { return null; }
+                }));
+                matches.push(...batch.filter(Boolean));
+                if (matches.length >= 100) break;
+            }
+            return matches;
+        }
+
+        function _renderSearchResults(query, mode, items) {
+            const panel = document.getElementById('code-panel');
+            const label = mode === 'code' ? 'code results' : 'file results';
+            panel.innerHTML = '';
+            const wrap = document.createElement('div');
+            wrap.className = 'search-results';
+            const heading = document.createElement('h2');
+            heading.textContent = `${items.length} ${label} for “${query}”`;
+            wrap.appendChild(heading);
+            if (!items.length) {
+                const empty = document.createElement('div');
+                empty.className = 'code-loading';
+                empty.textContent = 'no matches found';
+                wrap.appendChild(empty);
+            }
+            items.slice(0, 100).forEach(item => {
+                const button = document.createElement('button');
+                button.className = 'search-result';
+                button.type = 'button';
+                const path = document.createElement('span');
+                path.className = 'search-result-path';
+                path.textContent = item.path || item.name;
+                button.appendChild(path);
+                if (mode === 'code') {
+                    const note = document.createElement('span');
+                    note.className = 'search-result-note';
+                    note.textContent = 'open file';
+                    button.appendChild(note);
+                }
+                button.onclick = () => loadFile(item);
+                wrap.appendChild(button);
+            });
+            panel.appendChild(wrap);
+        }
+
+        async function searchRepository(mode) {
+            const input = document.getElementById('repo-search-input');
+            const query = (input && input.value || '').trim();
+            if (!query) { input && input.focus(); return; }
+            const panel = document.getElementById('code-panel');
+            panel.innerHTML = '<div class="code-loading">searching repository...</div>';
+            try {
+                const items = mode === 'code'
+                    ? await _providerCodeSearch(query)
+                    : (await _allRepositoryFiles()).filter(i => i.path.toLowerCase().includes(query.toLowerCase()));
+                _renderSearchResults(query, mode, items);
+            } catch (e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">search error: ${escHtml(e.message || String(e))}</div>`;
+            }
+        }
+
         function _sortItems(items) {
             return items.slice().sort((a, b) => {
                 const ad = a.type === 'dir' || a.type === 'tree';
@@ -4908,12 +6016,12 @@
             rv.path = pathParts;
             updateBreadcrumb();
             const tree = document.getElementById('file-tree');
-            tree.innerHTML = '<div class="tree-loading">loading...</div>';
+            tree.innerHTML = _fileTreeShell('<div class="tree-loading">loading...</div>');
             _treeActiveEl = null;
 
             try {
                 const items = await _fetchDirItems(pathParts);
-                tree.innerHTML = '';
+                tree.innerHTML = _fileTreeShell('');
 
                 _sortItems(items).forEach(item => {
                     tree.appendChild(_buildTreeNode(item, pathParts, 0));
@@ -4927,11 +6035,12 @@
                     document.getElementById('code-panel').innerHTML = '<div class="code-loading">select a file</div>';
                 }
             } catch(e) {
-                tree.innerHTML = `<div class="tree-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+                tree.innerHTML = _fileTreeShell(`<div class="tree-loading" style="color:var(--accent)">${escHtml(e.message || String(e))}</div>`);
             }
         }
 
-        async function loadFile(item) {
+        async function loadFile(item, opts) {
+            opts = opts || {};
             const panel = document.getElementById('code-panel');
             panel.innerHTML = '<div class="code-loading">loading file...</div>';
             try {
@@ -4943,7 +6052,9 @@
                         if (!res.ok) throw new Error(`HTTP ${res.status}`);
                         content = await res.text();
                     } else {
-                        const res = await fetch(item.url);
+                        const path = (item.path || item.name || '').split('/').map(encodeURIComponent).join('/');
+                        const url = item.url || `https://api.github.com/repos/${rv.owner}/${rv.repo}/contents/${path}?ref=${encodeURIComponent(currentBranch())}`;
+                        const res = await ghFetch(url);
                         if (!res.ok) throw new Error(`HTTP ${res.status}`);
                         const data = await res.json();
                         content = decodeBase64Utf8(data.content);
@@ -4980,7 +6091,7 @@
                             : `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/${item.path}`;
                     }
                     const safeImgUrl = sanitizeHttpUrl(imgUrl);
-                    _renderFilePanel(name, { content, size: fileSize, imgUrl: safeImgUrl, isImage: true, previewHtml: `<div style="padding:1rem;text-align:center;"><img src="${escHtml(safeImgUrl)}" alt="${escHtml(name)}" style="max-width:100%;max-height:80vh;object-fit:contain;border-radius:4px;" /></div>` });
+                    _renderFilePanel(name, { path: item.path || item.name, lastCommitScope: opts.lastCommitScope || 'file', content, size: fileSize, imgUrl: safeImgUrl, isImage: true, previewHtml: `<div style="padding:1rem;text-align:center;"><img src="${escHtml(safeImgUrl)}" alt="${escHtml(name)}" style="max-width:100%;max-height:80vh;object-fit:contain;border-radius:4px;" /></div>` });
                 } else if (name.toLowerCase().endsWith('.md')) {
                     const dir = item.path ? item.path.substring(0, item.path.lastIndexOf('/') + 1) : '';
                     let mdBaseUrl = `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/${dir}`;
@@ -4991,9 +6102,9 @@
                             ? `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${branch}/${dir}`
                             : `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/${dir}`;
                     }
-                    _renderFilePanel(name, { content, size: fileSize, isMd: true, previewHtml: `<div class="readme">${renderMd(content, mdBaseUrl)}</div>` });
+                    _renderFilePanel(name, { path: item.path || item.name, lastCommitScope: opts.lastCommitScope || 'file', content, size: fileSize, isMd: true, previewHtml: `<div class="readme">${renderMd(content, mdBaseUrl)}</div>` });
                 } else {
-                    _renderFilePanel(name, { content, size: fileSize, previewHtml: _buildCodeHtml(content, name) });
+                    _renderFilePanel(name, { path: item.path || item.name, lastCommitScope: opts.lastCommitScope || 'file', content, size: fileSize, previewHtml: _buildCodeHtml(content, name) });
                 }
             } catch (e) {
                 _activeFile = null;
@@ -5014,6 +6125,8 @@
             if (!panel || !opts) return;
             const f = {
                 name: name || '',
+                path: opts.path || '',
+                lastCommitScope: opts.lastCommitScope || 'file',
                 content: (opts.content !== undefined ? opts.content : '') || '',
                 imgUrl: opts.imgUrl || '',
                 isImage: !!opts.isImage,
@@ -5055,6 +6168,81 @@
                     </svg></button>` +
                 `</div>` +
                 `<div class="file-body" id="file-body">${f.previewHtml}</div>`;
+            if (f.path) _loadLastCommit(f.path, f.lastCommitScope);
+        }
+
+        // Consulta el último commit (del repositorio en la vista home, del archivo al abrirlo)
+        // y lo muestra encima del toolbar, sin bloquear la visualización si falla.
+        async function _loadLastCommit(filePath, scope) {
+            try {
+                scope = scope || 'file';
+                let commits = [];
+                const ref = currentBranch();
+                const pathQ = scope === 'repo' ? '' : `path=${encodeURIComponent(filePath)}&`;
+                const shaQ = ref ? `&sha=${encodeURIComponent(ref)}` : '';
+                if (rv.provider === 'gh') {
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/commits?${pathQ}per_page=1${shaQ}`);
+                    if (!res.ok) return;
+                    commits = await res.json();
+                } else if (rv.provider === 'cb') {
+                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/commits?${pathQ}limit=1${shaQ}`);
+                    if (!res.ok) return;
+                    commits = await res.json();
+                } else {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const refQ = ref ? `&ref_name=${encodeURIComponent(ref)}` : '';
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/commits?${pathQ}per_page=1${refQ}`);
+                    if (!res.ok) return;
+                    commits = await res.json();
+                }
+                const c = Array.isArray(commits) ? commits[0] : null;
+                if (!c) return;
+                const fullSha = c.sha || c.id || '';
+                const msg = String(c.commit?.message || c.message || c.title || '').split('\n')[0];
+                const author = c.commit?.author?.name || c.author_name || c.author?.login || '';
+                const authorUsername = c.author?.login || c.author?.username || '';
+                const email = c.author_email || c.commit?.author?.email || '';
+                const dateStr = c.commit?.author?.date || c.authored_date || c.created_at || '';
+                let dateLabel = '';
+                if (dateStr) {
+                    const dt = new Date(dateStr);
+                    if (!isNaN(dt.getTime())) {
+                        dateLabel = dt.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' });
+                    }
+                }
+                const initial = escHtml((author[0] || '?').toUpperCase());
+                const avatarUrl = c.author?.avatar_url || '';
+                let avatarHtml;
+                if (avatarUrl) {
+                    avatarHtml = `<img class="flc-avatar" src="${escAttr(avatarUrl)}" alt="" onerror="this.outerHTML='<span class=flc-avatar>${initial}</span>'" />`;
+                } else if (email) {
+                    const gravatarSrc = `https://www.gravatar.com/avatar/${md5(email.trim().toLowerCase())}?s=56&d=identicon`;
+                    avatarHtml = `<img class="flc-avatar" src="${escAttr(gravatarSrc)}" alt="" onerror="this.outerHTML='<span class=flc-avatar>${initial}</span>'" />`;
+                } else {
+                    avatarHtml = `<span class="flc-avatar">${initial}</span>`;
+                }
+                const panel = document.getElementById('code-panel');
+                if (!panel) return;
+                // Si el usuario navegó a otro archivo mientras se resolvía la consulta, no insertar.
+                if (!_activeFile || _activeFile.path !== filePath) return;
+                const toolbar = panel.querySelector('.file-toolbar');
+                if (!toolbar) return;
+                const div = document.createElement('div');
+                div.className = 'file-last-commit';
+                div.innerHTML =
+                    avatarHtml +
+                    `<span class="flc-main">` +
+                        `<span class="flc-msg" title="${escAttr(msg)}">${escHtml(msg)}</span>` +
+                        `<span class="flc-meta">` +
+                            (author ? `<span class="flc-author">${profileLink(authorUsername, author)}</span>` : '') +
+                            (fullSha ? `<a class="flc-sha" title="${escAttr(fullSha)}" onclick="showCommitDetail('${escJsStr(fullSha)}')">${escHtml(fullSha.substring(0, 7))}</a>` : '') +
+                            (dateLabel ? `<span class="flc-time" title="${escAttr(new Date(dateStr).toLocaleString('en'))}">${escHtml(dateLabel)}</span>` : '') +
+                        `</span>` +
+                    `</span>`;
+                panel.insertBefore(div, toolbar);
+            } catch (e) {
+                // La consulta del último commit es informativa; ante cualquier fallo se omite.
+            }
         }
 
         function sanitizeHttpUrl(url) {
@@ -5426,6 +6614,7 @@
         window.toggleTheme = function() {
             if (_origToggle) _origToggle();
             syncHljsTheme();
+            _rethemeMermaid();
         };
 
         // Sync mobile sidebar panel with the real (desktop) sidebar data
@@ -5443,8 +6632,14 @@
             syncText('sb-desc', 'msb-desc');
             syncHtml('sb-tags', 'msb-tags');
             syncText('sb-created', 'msb-created');
+            syncText('sb-forks', 'msb-forks');
+            syncText('sb-watching', 'msb-watching');
             syncText('sb-status', 'msb-status');
             syncText('sb-license', 'msb-license');
+            syncText('sb-size', 'msb-size');
+            syncText('sb-lfs', 'msb-lfs');
+            syncText('sb-deployments-count', 'msb-deployments-count');
+            syncText('sb-contributors-count', 'msb-contributors-count');
             syncText('sb-star-text', 'msb-star-text');
             syncText('sb-star-count', 'msb-star-count');
             // releases
@@ -5456,6 +6651,14 @@
                 msbRel.innerHTML = sbRel.innerHTML;
                 msbRelLabel.style.display = relSec.style.display === 'none' ? 'none' : '';
             }
+            // tags
+            const tSec = document.getElementById('sb-tags-section');
+            const msbTSec = document.getElementById('msb-tags-section');
+            if (tSec && msbTSec) {
+                syncHtml('sb-tags-list', 'msb-tags-list');
+                syncText('sb-tags-count', 'msb-tags-count');
+                msbTSec.style.display = tSec.style.display === 'none' ? 'none' : '';
+            }
             // languages
             const langSec = document.getElementById('sb-langs-section');
             const msbLangSec = document.getElementById('msb-langs-section');
@@ -5463,6 +6666,34 @@
                 syncHtml('sb-lang-bar', 'msb-lang-bar');
                 syncHtml('sb-lang-legend', 'msb-lang-legend');
                 msbLangSec.style.display = langSec.style.display === 'none' ? 'none' : '';
+            }
+            // contributors
+            const cSec = document.getElementById('sb-contributors-section');
+            const msbCSec = document.getElementById('msb-contributors-section');
+            if (cSec && msbCSec) {
+                syncHtml('sb-contributors', 'msb-contributors');
+                msbCSec.style.display = cSec.style.display === 'none' ? 'none' : '';
+            }
+            // deployments
+            const dSec = document.getElementById('sb-deployments-section');
+            const msbDSec = document.getElementById('msb-deployments-section');
+            if (dSec && msbDSec) {
+                syncHtml('sb-deployments', 'msb-deployments');
+                msbDSec.style.display = dSec.style.display === 'none' ? 'none' : '';
+            }
+            // homepage
+            const homeRow = document.getElementById('sb-home-row');
+            const msbHomeRow = document.getElementById('msb-home-row');
+            if (homeRow && msbHomeRow) {
+                msbHomeRow.style.display = homeRow.style.display === 'none' ? 'none' : '';
+                const homeLink = document.getElementById('sb-home-link');
+                const msbHomeLink = document.getElementById('msb-home-link');
+                if (homeLink && msbHomeLink) {
+                    msbHomeLink.href = homeLink.href;
+                    const s1 = homeLink.querySelector('span');
+                    const s2 = msbHomeLink.querySelector('span');
+                    if (s1 && s2) s2.textContent = s1.textContent;
+                }
             }
         }
 
@@ -5516,6 +6747,10 @@
             renderer.code = function(token) {
                 const code = (token && token.text != null) ? token.text : (arguments[0] || '');
                 const lang = (token && token.lang != null) ? token.lang : (arguments[1] || '');
+                // Bloques ```mermaid: se convierten en un div pendiente que _renderMermaid sustituye por el diagrama.
+                if (typeof mermaid !== 'undefined' && String(lang).trim().split(/\s+/)[0].toLowerCase() === 'mermaid') {
+                    return `<div class="mermaid">${escHtml(code)}</div>`;
+                }
                 if (typeof hljs !== 'undefined' && lang && hljs.getLanguage(lang)) {
                     const hl = hljs.highlight(code, { language: lang }).value;
                     return `<pre style="white-space:pre;overflow-x:auto;"><code class="hljs language-${lang}">${hl}</code></pre>`;
@@ -5628,6 +6863,80 @@
                 });
             }
             return result;
+        }
+
+        // ---- Diagramas Mermaid en markdown ----
+        // Los bloques ```mermaid se convierten en <div class="mermaid">; un MutationObserver los
+        // detecta al insertarse en el DOM (README, archivos .md, wiki, issues, PRs, releases, comentarios)
+        // y los sustituye por el SVG renderizado.
+        let _mermaidSeq = 0;
+        let _mermaidTimer = null;
+        const _mermaidQueue = new Set();
+
+        function _mermaidTheme() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+                (!document.documentElement.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            return isDark ? 'dark' : 'default';
+        }
+
+        async function _renderMermaid(el) {
+            if (typeof mermaid === 'undefined' || !el || !(el instanceof HTMLElement)) return;
+            const src = (el.getAttribute('data-mermaid-src') || el.textContent || '').trim();
+            if (!src) return;
+            // Se retira la clase de "pendiente" para que el observer no lo reprocese.
+            el.classList.remove('mermaid');
+            el.setAttribute('data-mermaid-src', src);
+            try {
+                const result = await mermaid.render('mermaid-' + (++_mermaidSeq), src);
+                if (!result || !result.svg) return;
+                const div = document.createElement('div');
+                div.className = 'mermaid-graph';
+                div.setAttribute('data-mermaid-src', src);
+                div.innerHTML = result.svg;
+                el.replaceWith(div);
+            } catch (err) {
+                // Fallback: se mantiene la fuente visible (estilo .mermaid como bloque de código).
+                console.warn('mermaid render failed:', err && err.message ? err.message : err);
+            }
+        }
+
+        function _scheduleMermaid(root) {
+            if (typeof mermaid === 'undefined' || !root) return;
+            if (root.matches && root.matches('.mermaid')) {
+                _mermaidQueue.add(root);
+            } else {
+                root.querySelectorAll('.mermaid').forEach(el => _mermaidQueue.add(el));
+            }
+            if (_mermaidTimer) return;
+            _mermaidTimer = setTimeout(async () => {
+                _mermaidTimer = null;
+                const pending = Array.from(_mermaidQueue);
+                _mermaidQueue.clear();
+                for (const el of pending) {
+                    if (!el.isConnected || !el.classList.contains('mermaid')) continue;
+                    await _renderMermaid(el);
+                }
+            }, 60);
+        }
+
+        function _rethemeMermaid() {
+            if (typeof mermaid === 'undefined') return;
+            mermaid.initialize({ startOnLoad: false, theme: _mermaidTheme() });
+            document.querySelectorAll('.mermaid-graph[data-mermaid-src]').forEach(el => _renderMermaid(el));
+        }
+
+        if (typeof mermaid !== 'undefined') {
+            mermaid.initialize({ startOnLoad: false, theme: _mermaidTheme() });
+            const _mermaidObserver = new MutationObserver((muts) => {
+                for (const m of muts) {
+                    if (m.type !== 'childList') continue;
+                    for (const n of m.addedNodes) {
+                        if (!(n instanceof HTMLElement)) continue;
+                        if (n.matches('.mermaid') || n.querySelector('.mermaid')) _scheduleMermaid(n);
+                    }
+                }
+            });
+            _mermaidObserver.observe(document.body, { childList: true, subtree: true });
         }
 
         // Oculta imágenes del README rechazadas por el servidor (403/404) en vez de dejar el icono roto.

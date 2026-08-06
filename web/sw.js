@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gitgost-v1';
+const CACHE_NAME = 'gitgost-v2';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
@@ -38,8 +38,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first for HTML pages and API calls
-  if (url.pathname === '/' || url.pathname.endsWith('.html') || url.pathname.startsWith('/api/')) {
+  // Network-first for HTML pages, API calls and SPA profile routes (/gh, /gl, /cb).
+  // Sin esto, las rutas de perfil (que no terminan en .html) caen en cache-first
+  // y el navegador sirve profile.html viejo para siempre tras la primera visita.
+  if (url.pathname === '/' || url.pathname.endsWith('.html') || url.pathname.startsWith('/api/') || /^\/(?:gh|gl|cb)\//.test(url.pathname)) {
     event.respondWith(
       fetch(request)
         .then((response) => {

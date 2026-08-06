@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/hmac"
+	"crypto/md5"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base32"
@@ -1475,39 +1476,44 @@ func GitLabAvatarHandler(c *gin.Context) {
 		return
 	}
 
-	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/users?email=%s", url.QueryEscape(email))
+	// GitLab.com ya no permite /api/v4/users sin token (403): el avatar se resuelve
+	// por Gravatar (esquema que GitLab usa por defecto) sin depender de la API.
+	// Con GITLAB_TOKEN configurado se consulta la API real para avatar/username.
+	username := ""
+	avatarURL := ""
 
-	req, err := http.NewRequest("GET", apiURL, nil)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "proxy error"})
-		return
+	if glToken := os.Getenv("GITLAB_TOKEN"); glToken != "" {
+		apiURL := fmt.Sprintf("https://gitlab.com/api/v4/users?email=%s", url.QueryEscape(email))
+		req, err := http.NewRequest("GET", apiURL, nil)
+		if err == nil {
+			req.Header.Set("PRIVATE-TOKEN", glToken)
+			req.Header.Set("Accept", "application/json")
+			client := &http.Client{Timeout: 8 * time.Second}
+			resp, err := client.Do(req)
+			if err == nil {
+				body, _ := io.ReadAll(resp.Body)
+				resp.Body.Close()
+				if resp.StatusCode == http.StatusOK {
+					var users []struct {
+						AvatarURL string `json:"avatar_url"`
+						Username  string `json:"username"`
+					}
+					if json.Unmarshal(body, &users) == nil && len(users) > 0 {
+						username = users[0].Username
+						avatarURL = users[0].AvatarURL
+					}
+				}
+			}
+		}
 	}
 
-	glToken := os.Getenv("GITLAB_TOKEN")
-	if glToken != "" {
-		req.Header.Set("PRIVATE-TOKEN", glToken)
-	}
-	req.Header.Set("Accept", "application/json")
-
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"error": "gitlab unreachable"})
-		return
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-
-	var users []struct {
-		AvatarURL string `json:"avatar_url"`
-	}
-	if err := json.Unmarshal(body, &users); err != nil || len(users) == 0 {
-		c.JSON(http.StatusOK, gin.H{"avatar_url": ""})
-		return
+	if avatarURL == "" {
+		// Fallback: Gravatar, mismo esquema que GitLab para avatares por defecto.
+		sum := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(email))))
+		avatarURL = fmt.Sprintf("https://www.gravatar.com/avatar/%s?d=identicon&s=64", hex.EncodeToString(sum[:]))
 	}
 
-	c.JSON(http.StatusOK, gin.H{"avatar_url": users[0].AvatarURL})
+	c.JSON(http.StatusOK, gin.H{"avatar_url": avatarURL, "username": username})
 }
 
 func GitLabCommitsHandler(c *gin.Context) {
@@ -2994,6 +3000,16 @@ func CodebergProxyHandler(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
+	// Gitea/Codeberg devuelve 404 en /contributors cuando el repo tiene demasiada
+	// historia (el cálculo de autores se aborta server-side). Se degrada con una
+	// lista vacía para que el frontend oculte la sección sin error de red.
+	if resp.StatusCode == http.StatusNotFound && strings.HasSuffix(path, "/contributors") {
+		c.Writer.Header().Set("Content-Type", "application/json")
+		c.Writer.WriteHeader(http.StatusOK)
+		c.Writer.Write([]byte("[]"))
+		return
+	}
+
 	for _, h := range []string{"Content-Type", "Content-Length", "Cache-Control", "ETag", "Link", "X-Total-Count", "X-Total", "X-Page", "X-PerPage", "X-PageCount", "X-HasMore"} {
 		if v := resp.Header.Get(h); v != "" {
 			c.Writer.Header().Set(h, v)
@@ -3328,6 +3344,1113 @@ func searchGitLab(query string) []gin.H {
 	}
 
 	return results
+}
+
+func UsersSearchHandler(c *gin.Context) {
+	query := strings.TrimSpace(c.Query("q"))
+	provider := c.Query("provider")
+
+	if query == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "query parameter required"})
+		return
+	}
+
+	// Token del cliente (localStorage) como respaldo cuando el servidor no tiene env token.
+	clientToken := ""
+	if auth := c.GetHeader("Authorization"); auth != "" {
+		clientToken = strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(auth, "token "), "Bearer "))
+	}
+
+	results := []gin.H{}
+
+	if provider == "gh" || provider == "all" || provider == "" {
+		results = append(results, searchGitHubUsers(query, clientToken)...)
+	}
+	if provider == "gl" || provider == "all" || provider == "" {
+		results = append(results, searchGitLabUsers(query, clientToken)...)
+	}
+	if provider == "cb" || provider == "all" || provider == "" {
+		results = append(results, searchCodebergUsers(query, clientToken)...)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"query":   query,
+		"results": results,
+	})
+}
+
+// CodeSearchHandler keeps provider credentials on the server, matching the
+// repository and user search endpoints. GitHub's code search rejects anonymous
+// browser requests, so calling it from repo.html causes a visible 401.
+func CodeSearchHandler(c *gin.Context) {
+	query := strings.TrimSpace(c.Query("q"))
+	owner := strings.TrimSpace(c.Query("owner"))
+	repo := strings.TrimSpace(c.Query("repo"))
+	provider := c.DefaultQuery("provider", "gh")
+	if query == "" || owner == "" || repo == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "q, owner and repo parameters are required"})
+		return
+	}
+	if provider != "gh" {
+		c.JSON(http.StatusNotImplemented, gin.H{"error": "provider code search is not available"})
+		return
+	}
+
+	clientToken := strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(c.GetHeader("Authorization"), "token "), "Bearer "))
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+	if token == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "GitHub code search requires the bot token or a user token"})
+		return
+	}
+
+	apiURL := fmt.Sprintf("https://api.github.com/search/code?q=%s&per_page=100", url.QueryEscape(fmt.Sprintf("%s repo:%s/%s", query, owner, repo)))
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create GitHub code search request"})
+		return
+	}
+	req.Header.Set("Authorization", "token "+token)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", "gitGost")
+	resp, err := (&http.Client{Timeout: 10 * time.Second}).Do(req)
+	if err != nil {
+		utils.Log("GitHub code search error: %v", err)
+		c.JSON(http.StatusBadGateway, gin.H{"error": "GitHub code search is unavailable"})
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		utils.Log("GitHub code search returned status: %d", resp.StatusCode)
+		c.JSON(resp.StatusCode, gin.H{"error": "GitHub code search failed"})
+		return
+	}
+
+	var data struct {
+		Items []struct {
+			Name string `json:"name"`
+			Path string `json:"path"`
+		} `json:"items"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"error": "could not read GitHub code search results"})
+		return
+	}
+	results := make([]gin.H, 0, len(data.Items))
+	for _, item := range data.Items {
+		results = append(results, gin.H{"name": item.Name, "path": item.Path})
+	}
+	c.JSON(http.StatusOK, gin.H{"results": results})
+}
+
+// GitHubPackagesHandler avoids exposing GitHub's package endpoint directly to
+// browsers. It uses the same bot-token-first policy as repository/user search.
+func GitHubPackagesHandler(c *gin.Context) {
+	owner := strings.TrimSpace(c.Param("owner"))
+	if owner == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "owner parameter is required"})
+		return
+	}
+	clientToken := strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(c.GetHeader("Authorization"), "token "), "Bearer "))
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+	if token == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "GitHub packages require the bot token or a user token"})
+		return
+	}
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	for _, kind := range []string{"users", "orgs"} {
+		apiURL := fmt.Sprintf("https://api.github.com/%s/%s/packages?per_page=100", kind, url.PathEscape(owner))
+		req, err := http.NewRequest("GET", apiURL, nil)
+		if err != nil {
+			continue
+		}
+		req.Header.Set("Authorization", "token "+token)
+		req.Header.Set("Accept", "application/vnd.github+json")
+		req.Header.Set("User-Agent", "gitGost")
+		resp, err := client.Do(req)
+		if err != nil {
+			continue
+		}
+		if resp.StatusCode == http.StatusNotFound {
+			resp.Body.Close()
+			continue
+		}
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			utils.Log("GitHub packages returned status: %d", resp.StatusCode)
+			c.JSON(resp.StatusCode, gin.H{"error": "GitHub packages request failed"})
+			return
+		}
+		var packages []gin.H
+		err = json.NewDecoder(resp.Body).Decode(&packages)
+		resp.Body.Close()
+		if err != nil {
+			c.JSON(http.StatusBadGateway, gin.H{"error": "could not read GitHub packages"})
+			return
+		}
+		c.JSON(http.StatusOK, packages)
+		return
+	}
+	c.JSON(http.StatusNotFound, gin.H{"error": "GitHub packages owner was not found"})
+}
+
+func searchGitHubUsers(query, clientToken string) []gin.H {
+	results := []gin.H{}
+
+	apiURL := fmt.Sprintf("https://api.github.com/search/users?q=%s&per_page=100", url.QueryEscape(query))
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return results
+	}
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+	if token != "" {
+		req.Header.Set("Authorization", "token "+token)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.Log("GitHub users search error: %v", err)
+		return results
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		utils.Log("GitHub users search returned status: %d", resp.StatusCode)
+		return results
+	}
+
+	var data struct {
+		Items []struct {
+			Login   string `json:"login"`
+			Avatar  string `json:"avatar_url"`
+			HTMLURL string `json:"html_url"`
+		} `json:"items"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		utils.Log("GitHub users search decode error: %v", err)
+		return results
+	}
+
+	for _, item := range data.Items {
+		results = append(results, gin.H{
+			"provider":   "github",
+			"username":   item.Login,
+			"name":       "",
+			"avatar_url": item.Avatar,
+			"url":        item.HTMLURL,
+		})
+	}
+
+	return results
+}
+
+func searchGitLabUsers(query, clientToken string) []gin.H {
+	results := []gin.H{}
+
+	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/users?search=%s&per_page=100", url.QueryEscape(query))
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return results
+	}
+	token := os.Getenv("GITLAB_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+	if token != "" {
+		req.Header.Set("PRIVATE-TOKEN", token)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.Log("GitLab users search error: %v", err)
+		return results
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		utils.Log("GitLab users search returned status: %d", resp.StatusCode)
+		return results
+	}
+
+	var data []struct {
+		Username string `json:"username"`
+		Name     string `json:"name"`
+		Avatar   string `json:"avatar_url"`
+		WebURL   string `json:"web_url"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		utils.Log("GitLab users search decode error: %v", err)
+		return results
+	}
+
+	for _, item := range data {
+		results = append(results, gin.H{
+			"provider":   "gitlab",
+			"username":   item.Username,
+			"name":       item.Name,
+			"avatar_url": item.Avatar,
+			"url":        item.WebURL,
+		})
+	}
+
+	return results
+}
+
+func searchCodebergUsers(query, clientToken string) []gin.H {
+	results := []gin.H{}
+
+	params := url.Values{}
+	params.Set("q", query)
+	params.Set("limit", "100")
+	apiURL := "https://codeberg.org/api/v1/users/search?" + params.Encode()
+
+	client := &http.Client{Timeout: 45 * time.Second}
+
+	token := os.Getenv("CODEBERG_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+
+	// Codeberg exige el scope read:user para users/search; si el token configurado
+	// no lo tiene responde 403, así que se reintenta sin token (la búsqueda
+	// anónima funciona). El segundo intento también cubre timeouts puntuales.
+	for attempt := 0; attempt < 2; attempt++ {
+		req, err := http.NewRequest("GET", apiURL, nil)
+		if err != nil {
+			return results
+		}
+		req.Header.Set("User-Agent", "gitGost/1.0")
+		if token != "" {
+			req.Header.Set("Authorization", "token "+token)
+		}
+		resp, err := client.Do(req)
+		if err == nil && resp.StatusCode == http.StatusOK {
+			defer resp.Body.Close()
+
+			var data struct {
+				Data []struct {
+					Login    string `json:"login"`
+					FullName string `json:"full_name"`
+					Avatar   string `json:"avatar_url"`
+					HTMLURL  string `json:"html_url"`
+				} `json:"data"`
+			}
+
+			if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+				utils.Log("Codeberg users search decode error: %v", err)
+				return results
+			}
+
+			for _, item := range data.Data {
+				results = append(results, gin.H{
+					"provider":   "codeberg",
+					"username":   item.Login,
+					"name":       item.FullName,
+					"avatar_url": item.Avatar,
+					"url":        item.HTMLURL,
+				})
+			}
+			return results
+		}
+		if resp != nil {
+			resp.Body.Close()
+		}
+		if err != nil {
+			utils.Log("Codeberg users search error: %v", err)
+		} else {
+			utils.Log("Codeberg users search returned status: %d", resp.StatusCode)
+		}
+		// Fallback: reintentar sin token si el token no sirvió (scope insuficiente).
+		token = ""
+	}
+
+	return results
+}
+
+func UserProfileHandler(c *gin.Context) {
+	provider := c.Query("provider")
+	username := strings.TrimSpace(c.Query("user"))
+
+	if username == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user parameter required"})
+		return
+	}
+
+	// Token del cliente (localStorage) como respaldo cuando el servidor no tiene env token.
+	clientToken := ""
+	if auth := c.GetHeader("Authorization"); auth != "" {
+		clientToken = strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(auth, "token "), "Bearer "))
+	}
+
+	var profile gin.H
+	switch provider {
+	case "gl":
+		profile = gitLabUserProfile(username, clientToken)
+		if profile == nil {
+			// Los grupos no se resuelven por /users; probar como grupo.
+			profile = gitLabGroupProfile(username, clientToken)
+		}
+	case "cb":
+		profile = codebergUserProfile(username, clientToken)
+		if profile == nil {
+			profile = codebergOrgProfile(username, clientToken)
+		}
+	default:
+		// GitHub resuelve usuarios y organizaciones por /users/{login}.
+		profile = gitHubUserProfile(username, clientToken)
+	}
+
+	if profile == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+	c.JSON(http.StatusOK, profile)
+}
+
+func gitHubUserProfile(username, clientToken string) gin.H {
+	apiURL := fmt.Sprintf("https://api.github.com/users/%s", url.PathEscape(username))
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return nil
+	}
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+	if token != "" {
+		req.Header.Set("Authorization", "token "+token)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.Log("GitHub user profile error: %v", err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		utils.Log("GitHub user profile returned status: %d", resp.StatusCode)
+		return nil
+	}
+
+	var d struct {
+		Login       string `json:"login"`
+		Name        string `json:"name"`
+		Avatar      string `json:"avatar_url"`
+		Bio         string `json:"bio"`
+		Location    string `json:"location"`
+		Followers   int    `json:"followers"`
+		Following   int    `json:"following"`
+		PublicRepos int    `json:"public_repos"`
+		HTMLURL     string `json:"html_url"`
+		CreatedAt   string `json:"created_at"`
+		Blog        string `json:"blog"`
+		Type        string `json:"type"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&d); err != nil {
+		utils.Log("GitHub user profile decode error: %v", err)
+		return nil
+	}
+
+	userType := "user"
+	if d.Type == "Organization" {
+		userType = "org"
+	}
+
+	return gin.H{
+		"provider":     "github",
+		"username":     d.Login,
+		"name":         d.Name,
+		"avatar_url":   d.Avatar,
+		"bio":          d.Bio,
+		"location":     d.Location,
+		"followers":    d.Followers,
+		"following":    d.Following,
+		"public_repos": d.PublicRepos,
+		"url":          d.HTMLURL,
+		"type":         userType,
+		"joined_at":    d.CreatedAt,
+		"website":      d.Blog,
+	}
+}
+
+func gitLabUserProfile(username, clientToken string) gin.H {
+	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/users?username=%s", url.QueryEscape(username))
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return nil
+	}
+	token := os.Getenv("GITLAB_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+	if token != "" {
+		req.Header.Set("PRIVATE-TOKEN", token)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.Log("GitLab user profile error: %v", err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		utils.Log("GitLab user profile returned status: %d", resp.StatusCode)
+		return nil
+	}
+
+	var data []struct {
+		ID       int    `json:"id"`
+		Username string `json:"username"`
+		Name     string `json:"name"`
+		Avatar   string `json:"avatar_url"`
+		Bio      string `json:"bio"`
+		Location string `json:"location"`
+		WebURL   string `json:"web_url"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		utils.Log("GitLab user profile decode error: %v", err)
+		return nil
+	}
+	if len(data) == 0 {
+		return nil
+	}
+
+	u := data[0]
+	return gin.H{
+		"provider":   "gitlab",
+		"username":   u.Username,
+		"name":       u.Name,
+		"avatar_url": u.Avatar,
+		"bio":        u.Bio,
+		"location":   u.Location,
+		"followers":  gitLabUserCount(u.ID, "followers", clientToken),
+		"following":  gitLabUserCount(u.ID, "following", clientToken),
+		"url":        u.WebURL,
+		"type":       "user",
+	}
+}
+
+func gitLabGroupProfile(username, clientToken string) gin.H {
+	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/groups/%s", url.PathEscape(username))
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return nil
+	}
+	token := os.Getenv("GITLAB_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+	if token != "" {
+		req.Header.Set("PRIVATE-TOKEN", token)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.Log("GitLab group profile error: %v", err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		utils.Log("GitLab group profile returned status: %d", resp.StatusCode)
+		return nil
+	}
+
+	var g struct {
+		Path        string `json:"path"`
+		Name        string `json:"name"`
+		Avatar      string `json:"avatar_url"`
+		Description string `json:"description"`
+		WebURL      string `json:"web_url"`
+		CreatedAt   string `json:"created_at"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&g); err != nil {
+		utils.Log("GitLab group profile decode error: %v", err)
+		return nil
+	}
+
+	return gin.H{
+		"provider":   "gitlab",
+		"username":   g.Path,
+		"name":       g.Name,
+		"avatar_url": g.Avatar,
+		"bio":        g.Description,
+		"url":        g.WebURL,
+		"type":       "org",
+		"joined_at":  g.CreatedAt,
+	}
+}
+
+func gitLabUserCount(userID int, kind, clientToken string) int {
+	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/users/%d/%s?per_page=1", userID, kind)
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return 0
+	}
+	token := os.Getenv("GITLAB_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+	if token != "" {
+		req.Header.Set("PRIVATE-TOKEN", token)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return 0
+	}
+	if total := resp.Header.Get("X-Total"); total != "" {
+		if n, err := strconv.Atoi(total); err == nil {
+			return n
+		}
+	}
+	return 0
+}
+
+func codebergUserProfile(username, clientToken string) gin.H {
+	apiURL := fmt.Sprintf("https://codeberg.org/api/v1/users/%s", url.PathEscape(username))
+
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	token := os.Getenv("CODEBERG_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+
+	// Codeberg exige el scope read:user para endpoints de usuarios; si el token
+	// configurado no lo tiene responde 403, así que se reintenta sin token.
+	for attempt := 0; attempt < 2; attempt++ {
+		req, err := http.NewRequest("GET", apiURL, nil)
+		if err != nil {
+			return nil
+		}
+		if token != "" {
+			req.Header.Set("Authorization", "token "+token)
+		}
+		resp, err := client.Do(req)
+		if err == nil && resp.StatusCode == http.StatusOK {
+			defer resp.Body.Close()
+
+			var d struct {
+				Login       string `json:"login"`
+				FullName    string `json:"full_name"`
+				Avatar      string `json:"avatar_url"`
+				Description string `json:"description"`
+				Location    string `json:"location"`
+				Followers   int    `json:"followers_count"`
+				Following   int    `json:"following_count"`
+				PublicRepos int    `json:"public_repo_count"`
+				HTMLURL     string `json:"html_url"`
+				CreatedAt   string `json:"created"`
+				Website     string `json:"website"`
+				Type        string `json:"type"`
+			}
+
+			if err := json.NewDecoder(resp.Body).Decode(&d); err != nil {
+				utils.Log("Codeberg user profile decode error: %v", err)
+				return nil
+			}
+
+			userType := "user"
+			if d.Type == "organization" {
+				userType = "org"
+			}
+
+			return gin.H{
+				"provider":     "codeberg",
+				"username":     d.Login,
+				"name":         d.FullName,
+				"avatar_url":   d.Avatar,
+				"bio":          d.Description,
+				"location":     d.Location,
+				"followers":    d.Followers,
+				"following":    d.Following,
+				"public_repos": d.PublicRepos,
+				"url":          d.HTMLURL,
+				"type":         userType,
+				"joined_at":    d.CreatedAt,
+				"website":      d.Website,
+			}
+		}
+		if resp != nil {
+			resp.Body.Close()
+		}
+		if err != nil {
+			utils.Log("Codeberg user profile error: %v", err)
+		} else {
+			utils.Log("Codeberg user profile returned status: %d", resp.StatusCode)
+		}
+		token = ""
+	}
+
+	return nil
+}
+
+func codebergOrgProfile(username, clientToken string) gin.H {
+	apiURL := fmt.Sprintf("https://codeberg.org/api/v1/orgs/%s", url.PathEscape(username))
+
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	token := os.Getenv("CODEBERG_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+
+	// Codeberg exige el scope read:user para endpoints de usuarios; si el token
+	// configurado no lo tiene responde 403, así que se reintenta sin token.
+	for attempt := 0; attempt < 2; attempt++ {
+		req, err := http.NewRequest("GET", apiURL, nil)
+		if err != nil {
+			return nil
+		}
+		if token != "" {
+			req.Header.Set("Authorization", "token "+token)
+		}
+		resp, err := client.Do(req)
+		if err == nil && resp.StatusCode == http.StatusOK {
+			defer resp.Body.Close()
+
+			var o struct {
+				Username    string `json:"username"`
+				FullName    string `json:"full_name"`
+				Avatar      string `json:"avatar_url"`
+				Description string `json:"description"`
+				Location    string `json:"location"`
+				HTMLURL     string `json:"html_url"`
+				CreatedAt   string `json:"created"`
+				Website     string `json:"website"`
+			}
+
+			if err := json.NewDecoder(resp.Body).Decode(&o); err != nil {
+				utils.Log("Codeberg org profile decode error: %v", err)
+				return nil
+			}
+
+			return gin.H{
+				"provider":   "codeberg",
+				"username":   o.Username,
+				"name":       o.FullName,
+				"avatar_url": o.Avatar,
+				"bio":        o.Description,
+				"location":   o.Location,
+				"url":        o.HTMLURL,
+				"type":       "org",
+				"joined_at":  o.CreatedAt,
+				"website":    o.Website,
+			}
+		}
+		if resp != nil {
+			resp.Body.Close()
+		}
+		if err != nil {
+			utils.Log("Codeberg org profile error: %v", err)
+		} else {
+			utils.Log("Codeberg org profile returned status: %d", resp.StatusCode)
+		}
+		token = ""
+	}
+
+	return nil
+}
+
+// UserReadmeHandler devuelve el README del repo de perfil {user}/{user} (gh/gl/cb).
+// Se sirve por el backend en vez de fetch directo del navegador: gitlab.com responde
+// 302 hacia /users/sign_in para repos inexistentes/privados y el navegador bloquea
+// esa redirección cross-origin por CORS.
+func UserReadmeHandler(c *gin.Context) {
+	provider := c.Query("provider")
+	username := strings.TrimSpace(c.Query("user"))
+
+	if username == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user parameter required"})
+		return
+	}
+
+	// Token del cliente (localStorage) como respaldo cuando el servidor no tiene env token.
+	clientToken := ""
+	if auth := c.GetHeader("Authorization"); auth != "" {
+		clientToken = strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(auth, "token "), "Bearer "))
+	}
+
+	var refs []string
+	basePrefix := ""
+	switch provider {
+	case "gl":
+		refs = []string{"HEAD", "master", "main"}
+		basePrefix = fmt.Sprintf("https://gitlab.com/%s/%s/-/raw/", url.PathEscape(username), url.PathEscape(username))
+	case "cb":
+		refs = []string{"main", "master"}
+		basePrefix = fmt.Sprintf("https://codeberg.org/%s/%s/raw/branch/", url.PathEscape(username), url.PathEscape(username))
+	default: // gh
+		refs = []string{"HEAD", "master", "main"}
+		basePrefix = fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/", url.PathEscape(username), url.PathEscape(username))
+	}
+
+	// No seguir redirecciones: GitLab responde 302 a /users/sign_in cuando el repo no
+	// existe o es privado; sin esto terminaríamos con el HTML de la página de login.
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	for _, ref := range refs {
+		req, err := http.NewRequest(http.MethodGet, basePrefix+url.PathEscape(ref)+"/README.md", nil)
+		if err != nil {
+			continue
+		}
+		req.Header.Set("User-Agent", "gitGost/1.0")
+		if provider == "gl" {
+			if token := os.Getenv("GITLAB_TOKEN"); token != "" {
+				req.Header.Set("PRIVATE-TOKEN", token)
+			} else if clientToken != "" {
+				req.Header.Set("PRIVATE-TOKEN", clientToken)
+			}
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			continue
+		}
+		body, readErr := io.ReadAll(io.LimitReader(resp.Body, 2<<20)) // máx 2 MiB
+		resp.Body.Close()
+		if readErr != nil {
+			continue
+		}
+		contentType := strings.ToLower(resp.Header.Get("Content-Type"))
+		if resp.StatusCode >= 200 && resp.StatusCode < 300 &&
+			!strings.Contains(contentType, "html") &&
+			len(bytes.TrimSpace(body)) > 0 {
+			c.JSON(http.StatusOK, gin.H{
+				"content":  string(body),
+				"base_url": basePrefix + url.PathEscape(ref) + "/",
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusNotFound, gin.H{"error": "readme not found"})
+}
+
+// UserReposHandler devuelve los repositorios públicos de un usuario u organización (gh/gl/cb).
+func UserReposHandler(c *gin.Context) {
+	provider := c.Query("provider")
+	username := strings.TrimSpace(c.Query("user"))
+	userType := strings.TrimSpace(c.Query("type"))
+
+	if username == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user parameter required"})
+		return
+	}
+
+	// Token del cliente (localStorage) como respaldo cuando el servidor no tiene env token.
+	clientToken := ""
+	if auth := c.GetHeader("Authorization"); auth != "" {
+		clientToken = strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(auth, "token "), "Bearer "))
+	}
+
+	var repos []gin.H
+	switch provider {
+	case "gl":
+		repos = gitLabUserRepos(username, userType, clientToken)
+	case "cb":
+		repos = codebergUserRepos(username, userType, clientToken)
+	default:
+		repos = gitHubUserRepos(username, clientToken)
+	}
+
+	if repos == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"repos": repos})
+}
+
+func gitHubUserRepos(username, clientToken string) []gin.H {
+	apiURL := fmt.Sprintf("https://api.github.com/users/%s/repos?per_page=30&sort=updated&type=all", url.PathEscape(username))
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return nil
+	}
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+	if token != "" {
+		req.Header.Set("Authorization", "token "+token)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.Log("GitHub user repos error: %v", err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		utils.Log("GitHub user repos returned status: %d", resp.StatusCode)
+		return nil
+	}
+
+	var d []struct {
+		Name        string `json:"name"`
+		FullName    string `json:"full_name"`
+		Description string `json:"description"`
+		Language    string `json:"language"`
+		Stars       int    `json:"stargazers_count"`
+		Forks       int    `json:"forks_count"`
+		Fork        bool   `json:"fork"`
+		HTMLURL     string `json:"html_url"`
+		UpdatedAt   string `json:"updated_at"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&d); err != nil {
+		utils.Log("GitHub user repos decode error: %v", err)
+		return nil
+	}
+
+	repos := make([]gin.H, 0, len(d))
+	for _, r := range d {
+		repos = append(repos, gin.H{
+			"provider":    "github",
+			"full_name":   r.FullName,
+			"name":        r.Name,
+			"description": r.Description,
+			"language":    r.Language,
+			"stars":       r.Stars,
+			"forks":       r.Forks,
+			"fork":        r.Fork,
+			"html_url":    r.HTMLURL,
+			"updated_at":  r.UpdatedAt,
+		})
+	}
+	return repos
+}
+
+func gitLabUserRepos(username, userType, clientToken string) []gin.H {
+	// Los proyectos de un grupo se listan por /groups/{path}/projects; los de un usuario requieren su ID.
+	apiURL := ""
+	if userType == "org" {
+		apiURL = fmt.Sprintf("https://gitlab.com/api/v4/groups/%s/projects?per_page=30&order_by=updated_at&include_subgroups=false", url.PathEscape(username))
+	} else {
+		userID := gitLabUserID(username, clientToken)
+		if userID > 0 {
+			apiURL = fmt.Sprintf("https://gitlab.com/api/v4/users/%d/projects?per_page=30&order_by=updated_at", userID)
+		} else {
+			// Puede ser un grupo sin resolverse como usuario.
+			apiURL = fmt.Sprintf("https://gitlab.com/api/v4/groups/%s/projects?per_page=30&order_by=updated_at&include_subgroups=false", url.PathEscape(username))
+		}
+	}
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return nil
+	}
+	token := os.Getenv("GITLAB_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+	if token != "" {
+		req.Header.Set("PRIVATE-TOKEN", token)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.Log("GitLab user repos error: %v", err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		utils.Log("GitLab user repos returned status: %d", resp.StatusCode)
+		return nil
+	}
+
+	var d []struct {
+		Name              string          `json:"name"`
+		PathWithNamespace string          `json:"path_with_namespace"`
+		Description       string          `json:"description"`
+		Stars             int             `json:"star_count"`
+		Forks             int             `json:"forks_count"`
+		ForkedFromProject json.RawMessage `json:"forked_from_project"`
+		WebURL            string          `json:"web_url"`
+		LastActivityAt    string          `json:"last_activity_at"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&d); err != nil {
+		utils.Log("GitLab user repos decode error: %v", err)
+		return nil
+	}
+
+	repos := make([]gin.H, 0, len(d))
+	for _, r := range d {
+		repos = append(repos, gin.H{
+			"provider":    "gitlab",
+			"full_name":   r.PathWithNamespace,
+			"name":        r.Name,
+			"description": r.Description,
+			"language":    "",
+			"stars":       r.Stars,
+			"forks":       r.Forks,
+			"fork":        len(r.ForkedFromProject) > 0,
+			"html_url":    r.WebURL,
+			"updated_at":  r.LastActivityAt,
+		})
+	}
+	return repos
+}
+
+func gitLabUserID(username, clientToken string) int {
+	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/users?username=%s", url.QueryEscape(username))
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return 0
+	}
+	token := os.Getenv("GITLAB_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+	if token != "" {
+		req.Header.Set("PRIVATE-TOKEN", token)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return 0
+	}
+
+	var data []struct {
+		ID int `json:"id"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil || len(data) == 0 {
+		return 0
+	}
+	return data[0].ID
+}
+
+func codebergUserRepos(username, userType, clientToken string) []gin.H {
+	apiURL := ""
+	if userType == "org" {
+		apiURL = fmt.Sprintf("https://codeberg.org/api/v1/orgs/%s/repos?limit=30&sort=updated", url.PathEscape(username))
+	} else {
+		apiURL = fmt.Sprintf("https://codeberg.org/api/v1/users/%s/repos?limit=30&sort=updated", url.PathEscape(username))
+	}
+
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	token := os.Getenv("CODEBERG_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+
+	doReq := func(url, token string) (*http.Response, error) {
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return nil, err
+		}
+		if token != "" {
+			req.Header.Set("Authorization", "token "+token)
+		}
+		return client.Do(req)
+	}
+
+	resp, err := doReq(apiURL, token)
+	if err == nil && resp.StatusCode == http.StatusForbidden {
+		// Scope read:user faltante: reintentar sin token (la API pública funciona).
+		resp.Body.Close()
+		token = ""
+		resp, err = doReq(apiURL, token)
+	}
+	if err != nil {
+		utils.Log("Codeberg user repos error: %v", err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	// Si el usuario no existe, probar como organización.
+	if resp.StatusCode != http.StatusOK && userType != "org" {
+		resp.Body.Close()
+		apiURL = fmt.Sprintf("https://codeberg.org/api/v1/orgs/%s/repos?limit=30&sort=updated", url.PathEscape(username))
+		resp, err = doReq(apiURL, token)
+		if err != nil {
+			utils.Log("Codeberg org repos error: %v", err)
+			return nil
+		}
+		defer resp.Body.Close()
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		utils.Log("Codeberg user repos returned status: %d", resp.StatusCode)
+		return nil
+	}
+
+	var d []struct {
+		Name        string `json:"name"`
+		FullName    string `json:"full_name"`
+		Description string `json:"description"`
+		Language    string `json:"language"`
+		Stars       int    `json:"stargazers_count"`
+		Forks       int    `json:"forks_count"`
+		Fork        bool   `json:"fork"`
+		HTMLURL     string `json:"html_url"`
+		UpdatedAt   string `json:"updated_at"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&d); err != nil {
+		utils.Log("Codeberg user repos decode error: %v", err)
+		return nil
+	}
+
+	repos := make([]gin.H, 0, len(d))
+	for _, r := range d {
+		repos = append(repos, gin.H{
+			"provider":    "codeberg",
+			"full_name":   r.FullName,
+			"name":        r.Name,
+			"description": r.Description,
+			"language":    r.Language,
+			"stars":       r.Stars,
+			"forks":       r.Forks,
+			"fork":        r.Fork,
+			"html_url":    r.HTMLURL,
+			"updated_at":  r.UpdatedAt,
+		})
+	}
+	return repos
 }
 
 func TrendingHandler(c *gin.Context) {

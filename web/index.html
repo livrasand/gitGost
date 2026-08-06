@@ -3468,7 +3468,7 @@
                 const headers = token ? { 'Authorization': `token ${token}` } : {};
                 // Siempre por el backend: usa el token del servidor (y el local como respaldo), evitando 403 del navegador.
                 const res = await fetch(`${API_BASE}/api/users/search?q=${encodeURIComponent(query)}&provider=gh`, { headers });
-                if (!res.ok) return [];
+                if (!res.ok) throw new Error(`GitHub users search failed: ${res.status}`);
                 const data = await res.json();
                 return data.results || [];
             }
@@ -3478,7 +3478,7 @@
                 const headers = token ? { 'Authorization': `token ${token}` } : {};
                 // Siempre por el backend: usa el token del servidor (y el local como respaldo), evitando 403 del navegador.
                 const res = await fetch(`${API_BASE}/api/users/search?q=${encodeURIComponent(query)}&provider=gl`, { headers });
-                if (!res.ok) return [];
+                if (!res.ok) throw new Error(`GitLab users search failed: ${res.status}`);
                 const data = await res.json();
                 return data.results || [];
             }
@@ -3488,7 +3488,7 @@
                 const headers = token ? { 'Authorization': `token ${token}` } : {};
                 // Siempre por el backend: usa el token del servidor (y el local como respaldo), evitando 403 del navegador.
                 const res = await fetch(`${API_BASE}/api/users/search?q=${encodeURIComponent(query)}&provider=cb`, { headers });
-                if (!res.ok) return [];
+                if (!res.ok) throw new Error(`Codeberg users search failed: ${res.status}`);
                 const data = await res.json();
                 return data.results || [];
             }

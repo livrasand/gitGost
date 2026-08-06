@@ -4800,14 +4800,9 @@
                     rv.stars = d.star_count || 0;
 
                     // GitLab Pages: el endpoint /pages del proyecto exige autenticación (403 sin token);
-                    // la URL se deriva por convención de GitLab: https://{namespace}.gitlab.io/{project}
-                    try {
-                        const nsParts = (d.path_with_namespace || '').split('/');
-                        if (nsParts.length >= 2 && nsParts[0]) {
-                            const siteUrl = `https://${nsParts[0]}.gitlab.io/${nsParts.slice(1).join('/')}`;
-                            if (siteUrl) setRepoHomepage(siteUrl);
-                        }
-                    } catch(_) {}
+                    // Since we cannot verify if Pages is actually published without authentication,
+                    // and the GitLab API v4 projects endpoint does not include a separate homepage field,
+                    // we do not automatically set a Pages URL to avoid pointing to non-existent sites.
 
                     const sbDesc = document.getElementById('sb-desc');
                     if (sbDesc) sbDesc.textContent = d.description || '—';
@@ -5360,11 +5355,23 @@
                         page++;
                         if (page > 10) break;
                     }
-                    items = items.map(d => ({
+                    // Resolve deployment statuses from statuses_url
+                    const statuses = await Promise.all(items.map(async d => {
+                        if (!d || !d.statuses_url) return '';
+                        try {
+                            const sRes = await ghFetch(d.statuses_url);
+                            if (sRes.ok) {
+                                const list = await sRes.json();
+                                return Array.isArray(list) && list.length > 0 ? list[0].state : '';
+                            }
+                        } catch(_) {}
+                        return '';
+                    }));
+                    items = items.map((d, i) => ({
                         env: d.environment || '',
                         ref: d.ref || '',
                         created_at: d.created_at || '',
-                        status: '',
+                        status: statuses[i] || '',
                         description: d.description || ''
                     }));
                 } else if (rv.provider === 'gl') {
@@ -6896,6 +6903,7 @@
                 el.replaceWith(div);
             } catch (err) {
                 // Fallback: se mantiene la fuente visible (estilo .mermaid como bloque de código).
+                el.classList.add('mermaid');
                 console.warn('mermaid render failed:', err && err.message ? err.message : err);
             }
         }

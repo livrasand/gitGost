@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -597,6 +597,9 @@
         </nav>
 
         <main class="main-content" id="main-content">
+            <div class="profile-header" id="profile-header"></div>
+            <div class="section-title" id="profile-section-title"></div>
+
             <div id="readme-section"></div>
 
             <div class="section-title" id="repos-section-title">repositories</div>
@@ -646,6 +649,17 @@
         }
         function escAttr(s) {
             return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function sanitizeUrl(url) {
+            if (!url) return '';
+            try {
+                const parsed = new URL(url, window.location.href);
+                if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+                    return url;
+                }
+            } catch (_) {}
+            return '';
         }
 
         function formatNumber(num) {
@@ -735,14 +749,14 @@
             const safeAvatar = escHtml(p.avatar_url || '');
             const safeBio = escHtml(p.bio || '');
             const safeLocation = escHtml(p.location || '');
-            const safeUrl = escHtml(p.url || '');
-            const safeWebsite = escHtml(p.website || '');
+            const safeUrl = escAttr(sanitizeUrl(p.url || ''));
+            const safeWebsite = escAttr(sanitizeUrl(p.website || ''));
             const isOrg = p.type === 'org';
             const typeLabel = isOrg ? 'organization' : 'user';
             const joined = formatJoined(p.joined_at);
 
             // En las vistas SPA (stars/followers/following) el título lo gestiona switchView; no pisarlo.
-            if (_currentView === 'overview') document.title = `${safeName || safeUser} · gitGost`;
+            if (_currentView === 'overview') document.title = `${p.name || p.username} · gitGost`;
 
             const header = document.getElementById('profile-header');
             if (header) {
@@ -781,7 +795,7 @@
                     ${safeUrl ? `<a class="sb-btn" href="${safeUrl}" target="_blank" rel="noopener noreferrer">open profile on ${meta.name}</a>` : ''}
                     <ul class="meta-list">
                         ${safeLocation ? `<li><span class="k">location</span><span class="v">${safeLocation}</span></li>` : ''}
-                        ${safeWebsite ? `<li><span class="k">website</span><span class="v"><a href="${escAttr(safeWebsite)}" target="_blank" rel="noopener noreferrer">${safeWebsite}</a></span></li>` : ''}
+                        ${safeWebsite ? `<li><span class="k">website</span><span class="v"><a href="${safeWebsite}" target="_blank" rel="noopener noreferrer">${escHtml(p.website || '')}</a></span></li>` : ''}
                         ${joined ? `<li><span class="k">joined</span><span class="v">${joined}</span></li>` : ''}
                     </ul>
                 `;
@@ -1163,7 +1177,7 @@
                 container.innerHTML = `
                     <div class="sb-contrib">
                         ${head}
-                        <div class="hm-empty">${noRepos ? 'no repos' : 'aún no tiene commits'}</div>
+                        <div class="hm-empty">${noRepos ? 'no repos' : 'no commits yet'}</div>
                     </div>
                 `;
                 return;

@@ -3361,17 +3361,56 @@ func UsersSearchHandler(c *gin.Context) {
 		clientToken = strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(auth, "token "), "Bearer "))
 	}
 
-	results := []gin.H{}
+	// Fan out provider searches concurrently
+	type searchResult struct {
+		results []gin.H
+	}
+
+	var wg sync.WaitGroup
+	ghChan := make(chan searchResult, 1)
+	glChan := make(chan searchResult, 1)
+	cbChan := make(chan searchResult, 1)
 
 	if provider == "gh" || provider == "all" || provider == "" {
-		results = append(results, searchGitHubUsers(query, clientToken)...)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			ghChan <- searchResult{results: searchGitHubUsers(query, clientToken)}
+		}()
+	} else {
+		ghChan <- searchResult{results: []gin.H{}}
 	}
+
 	if provider == "gl" || provider == "all" || provider == "" {
-		results = append(results, searchGitLabUsers(query, clientToken)...)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			glChan <- searchResult{results: searchGitLabUsers(query, clientToken)}
+		}()
+	} else {
+		glChan <- searchResult{results: []gin.H{}}
 	}
+
 	if provider == "cb" || provider == "all" || provider == "" {
-		results = append(results, searchCodebergUsers(query, clientToken)...)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			cbChan <- searchResult{results: searchCodebergUsers(query, clientToken)}
+		}()
+	} else {
+		cbChan <- searchResult{results: []gin.H{}}
 	}
+
+	wg.Wait()
+	close(ghChan)
+	close(glChan)
+	close(cbChan)
+
+	// Collect and merge results
+	results := []gin.H{}
+	results = append(results, (<-ghChan).results...)
+	results = append(results, (<-glChan).results...)
+	results = append(results, (<-cbChan).results...)
 
 	c.JSON(http.StatusOK, gin.H{
 		"query":   query,
@@ -3680,6 +3719,11 @@ func searchCodebergUsers(query, clientToken string) []gin.H {
 	return results
 }
 
+type profileResult struct {
+	profile gin.H
+	notFound bool
+}
+
 func UserProfileHandler(c *gin.Context) {
 	provider := c.Query("provider")
 	username := strings.TrimSpace(c.Query("user"))
@@ -3695,38 +3739,42 @@ func UserProfileHandler(c *gin.Context) {
 		clientToken = strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(auth, "token "), "Bearer "))
 	}
 
-	var profile gin.H
+	var result profileResult
 	switch provider {
 	case "gl":
-		profile = gitLabUserProfile(username, clientToken)
-		if profile == nil {
+		result = gitLabUserProfile(username, clientToken)
+		if result.profile == nil && !result.notFound {
 			// Los grupos no se resuelven por /users; probar como grupo.
-			profile = gitLabGroupProfile(username, clientToken)
+			result = gitLabGroupProfile(username, clientToken)
 		}
 	case "cb":
-		profile = codebergUserProfile(username, clientToken)
-		if profile == nil {
-			profile = codebergOrgProfile(username, clientToken)
+		result = codebergUserProfile(username, clientToken)
+		if result.profile == nil && !result.notFound {
+			result = codebergOrgProfile(username, clientToken)
 		}
 	default:
 		// GitHub resuelve usuarios y organizaciones por /users/{login}.
-		profile = gitHubUserProfile(username, clientToken)
+		result = gitHubUserProfile(username, clientToken)
 	}
 
-	if profile == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+	if result.profile == nil {
+		if result.notFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		} else {
+			c.JSON(http.StatusBadGateway, gin.H{"error": "upstream service error"})
+		}
 		return
 	}
-	c.JSON(http.StatusOK, profile)
+	c.JSON(http.StatusOK, result.profile)
 }
 
-func gitHubUserProfile(username, clientToken string) gin.H {
+func gitHubUserProfile(username, clientToken string) profileResult {
 	apiURL := fmt.Sprintf("https://api.github.com/users/%s", url.PathEscape(username))
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
-		return nil
+		return profileResult{profile: nil, notFound: false}
 	}
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
@@ -3738,13 +3786,14 @@ func gitHubUserProfile(username, clientToken string) gin.H {
 	resp, err := client.Do(req)
 	if err != nil {
 		utils.Log("GitHub user profile error: %v", err)
-		return nil
+		return profileResult{profile: nil, notFound: false}
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		utils.Log("GitHub user profile returned status: %d", resp.StatusCode)
-		return nil
+		notFound := resp.StatusCode == http.StatusNotFound
+		return profileResult{profile: nil, notFound: notFound}
 	}
 
 	var d struct {
@@ -3764,7 +3813,7 @@ func gitHubUserProfile(username, clientToken string) gin.H {
 
 	if err := json.NewDecoder(resp.Body).Decode(&d); err != nil {
 		utils.Log("GitHub user profile decode error: %v", err)
-		return nil
+		return profileResult{profile: nil, notFound: false}
 	}
 
 	userType := "user"
@@ -3772,30 +3821,33 @@ func gitHubUserProfile(username, clientToken string) gin.H {
 		userType = "org"
 	}
 
-	return gin.H{
-		"provider":     "github",
-		"username":     d.Login,
-		"name":         d.Name,
-		"avatar_url":   d.Avatar,
-		"bio":          d.Bio,
-		"location":     d.Location,
-		"followers":    d.Followers,
-		"following":    d.Following,
-		"public_repos": d.PublicRepos,
-		"url":          d.HTMLURL,
-		"type":         userType,
-		"joined_at":    d.CreatedAt,
-		"website":      d.Blog,
+	return profileResult{
+		profile: gin.H{
+			"provider":     "github",
+			"username":     d.Login,
+			"name":         d.Name,
+			"avatar_url":   d.Avatar,
+			"bio":          d.Bio,
+			"location":     d.Location,
+			"followers":    d.Followers,
+			"following":    d.Following,
+			"public_repos": d.PublicRepos,
+			"url":          d.HTMLURL,
+			"type":         userType,
+			"joined_at":    d.CreatedAt,
+			"website":      d.Blog,
+		},
+		notFound: false,
 	}
 }
 
-func gitLabUserProfile(username, clientToken string) gin.H {
+func gitLabUserProfile(username, clientToken string) profileResult {
 	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/users?username=%s", url.QueryEscape(username))
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
-		return nil
+		return profileResult{profile: nil, notFound: false}
 	}
 	token := os.Getenv("GITLAB_TOKEN")
 	if token == "" {
@@ -3807,13 +3859,14 @@ func gitLabUserProfile(username, clientToken string) gin.H {
 	resp, err := client.Do(req)
 	if err != nil {
 		utils.Log("GitLab user profile error: %v", err)
-		return nil
+		return profileResult{profile: nil, notFound: false}
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		utils.Log("GitLab user profile returned status: %d", resp.StatusCode)
-		return nil
+		notFound := resp.StatusCode == http.StatusNotFound
+		return profileResult{profile: nil, notFound: notFound}
 	}
 
 	var data []struct {
@@ -3828,34 +3881,37 @@ func gitLabUserProfile(username, clientToken string) gin.H {
 
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		utils.Log("GitLab user profile decode error: %v", err)
-		return nil
+		return profileResult{profile: nil, notFound: false}
 	}
 	if len(data) == 0 {
-		return nil
+		return profileResult{profile: nil, notFound: true}
 	}
 
 	u := data[0]
-	return gin.H{
-		"provider":   "gitlab",
-		"username":   u.Username,
-		"name":       u.Name,
-		"avatar_url": u.Avatar,
-		"bio":        u.Bio,
-		"location":   u.Location,
-		"followers":  gitLabUserCount(u.ID, "followers", clientToken),
-		"following":  gitLabUserCount(u.ID, "following", clientToken),
-		"url":        u.WebURL,
-		"type":       "user",
+	return profileResult{
+		profile: gin.H{
+			"provider":   "gitlab",
+			"username":   u.Username,
+			"name":       u.Name,
+			"avatar_url": u.Avatar,
+			"bio":        u.Bio,
+			"location":   u.Location,
+			"followers":  gitLabUserCount(u.ID, "followers", clientToken),
+			"following":  gitLabUserCount(u.ID, "following", clientToken),
+			"url":        u.WebURL,
+			"type":       "user",
+		},
+		notFound: false,
 	}
 }
 
-func gitLabGroupProfile(username, clientToken string) gin.H {
+func gitLabGroupProfile(username, clientToken string) profileResult {
 	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/groups/%s", url.PathEscape(username))
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
-		return nil
+		return profileResult{profile: nil, notFound: false}
 	}
 	token := os.Getenv("GITLAB_TOKEN")
 	if token == "" {
@@ -3867,13 +3923,14 @@ func gitLabGroupProfile(username, clientToken string) gin.H {
 	resp, err := client.Do(req)
 	if err != nil {
 		utils.Log("GitLab group profile error: %v", err)
-		return nil
+		return profileResult{profile: nil, notFound: false}
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		utils.Log("GitLab group profile returned status: %d", resp.StatusCode)
-		return nil
+		notFound := resp.StatusCode == http.StatusNotFound
+		return profileResult{profile: nil, notFound: notFound}
 	}
 
 	var g struct {
@@ -3887,18 +3944,21 @@ func gitLabGroupProfile(username, clientToken string) gin.H {
 
 	if err := json.NewDecoder(resp.Body).Decode(&g); err != nil {
 		utils.Log("GitLab group profile decode error: %v", err)
-		return nil
+		return profileResult{profile: nil, notFound: false}
 	}
 
-	return gin.H{
-		"provider":   "gitlab",
-		"username":   g.Path,
-		"name":       g.Name,
-		"avatar_url": g.Avatar,
-		"bio":        g.Description,
-		"url":        g.WebURL,
-		"type":       "org",
-		"joined_at":  g.CreatedAt,
+	return profileResult{
+		profile: gin.H{
+			"provider":   "gitlab",
+			"username":   g.Path,
+			"name":       g.Name,
+			"avatar_url": g.Avatar,
+			"bio":        g.Description,
+			"url":        g.WebURL,
+			"type":       "org",
+			"joined_at":  g.CreatedAt,
+		},
+		notFound: false,
 	}
 }
 
@@ -3934,7 +3994,7 @@ func gitLabUserCount(userID int, kind, clientToken string) int {
 	return 0
 }
 
-func codebergUserProfile(username, clientToken string) gin.H {
+func codebergUserProfile(username, clientToken string) profileResult {
 	apiURL := fmt.Sprintf("https://codeberg.org/api/v1/users/%s", url.PathEscape(username))
 
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -3944,12 +4004,13 @@ func codebergUserProfile(username, clientToken string) gin.H {
 		token = clientToken
 	}
 
+	var lastStatusCode int
 	// Codeberg exige el scope read:user para endpoints de usuarios; si el token
 	// configurado no lo tiene responde 403, así que se reintenta sin token.
 	for attempt := 0; attempt < 2; attempt++ {
 		req, err := http.NewRequest("GET", apiURL, nil)
 		if err != nil {
-			return nil
+			return profileResult{profile: nil, notFound: false}
 		}
 		if token != "" {
 			req.Header.Set("Authorization", "token "+token)
@@ -3975,7 +4036,7 @@ func codebergUserProfile(username, clientToken string) gin.H {
 
 			if err := json.NewDecoder(resp.Body).Decode(&d); err != nil {
 				utils.Log("Codeberg user profile decode error: %v", err)
-				return nil
+				return profileResult{profile: nil, notFound: false}
 			}
 
 			userType := "user"
@@ -3983,23 +4044,29 @@ func codebergUserProfile(username, clientToken string) gin.H {
 				userType = "org"
 			}
 
-			return gin.H{
-				"provider":     "codeberg",
-				"username":     d.Login,
-				"name":         d.FullName,
-				"avatar_url":   d.Avatar,
-				"bio":          d.Description,
-				"location":     d.Location,
-				"followers":    d.Followers,
-				"following":    d.Following,
-				"public_repos": d.PublicRepos,
-				"url":          d.HTMLURL,
-				"type":         userType,
-				"joined_at":    d.CreatedAt,
-				"website":      d.Website,
+			return profileResult{
+				profile: gin.H{
+					"provider":     "codeberg",
+					"username":     d.Login,
+					"name":         d.FullName,
+					"avatar_url":   d.Avatar,
+					"bio":          d.Description,
+					"location":     d.Location,
+					"followers":    d.Followers,
+					"following":    d.Following,
+					"public_repos": d.PublicRepos,
+					"url":          d.HTMLURL,
+					"type":         userType,
+					"joined_at":    d.CreatedAt,
+					"website":      d.Website,
+				},
+				notFound: false,
 			}
 		}
 		if resp != nil {
+			if resp.StatusCode != 0 {
+				lastStatusCode = resp.StatusCode
+			}
 			resp.Body.Close()
 		}
 		if err != nil {
@@ -4010,10 +4077,11 @@ func codebergUserProfile(username, clientToken string) gin.H {
 		token = ""
 	}
 
-	return nil
+	notFound := lastStatusCode == http.StatusNotFound
+	return profileResult{profile: nil, notFound: notFound}
 }
 
-func codebergOrgProfile(username, clientToken string) gin.H {
+func codebergOrgProfile(username, clientToken string) profileResult {
 	apiURL := fmt.Sprintf("https://codeberg.org/api/v1/orgs/%s", url.PathEscape(username))
 
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -4023,12 +4091,13 @@ func codebergOrgProfile(username, clientToken string) gin.H {
 		token = clientToken
 	}
 
+	var lastStatusCode int
 	// Codeberg exige el scope read:user para endpoints de usuarios; si el token
 	// configurado no lo tiene responde 403, así que se reintenta sin token.
 	for attempt := 0; attempt < 2; attempt++ {
 		req, err := http.NewRequest("GET", apiURL, nil)
 		if err != nil {
-			return nil
+			return profileResult{profile: nil, notFound: false}
 		}
 		if token != "" {
 			req.Header.Set("Authorization", "token "+token)
@@ -4050,23 +4119,29 @@ func codebergOrgProfile(username, clientToken string) gin.H {
 
 			if err := json.NewDecoder(resp.Body).Decode(&o); err != nil {
 				utils.Log("Codeberg org profile decode error: %v", err)
-				return nil
+				return profileResult{profile: nil, notFound: false}
 			}
 
-			return gin.H{
-				"provider":   "codeberg",
-				"username":   o.Username,
-				"name":       o.FullName,
-				"avatar_url": o.Avatar,
-				"bio":        o.Description,
-				"location":   o.Location,
-				"url":        o.HTMLURL,
-				"type":       "org",
-				"joined_at":  o.CreatedAt,
-				"website":    o.Website,
+			return profileResult{
+				profile: gin.H{
+					"provider":   "codeberg",
+					"username":   o.Username,
+					"name":       o.FullName,
+					"avatar_url": o.Avatar,
+					"bio":        o.Description,
+					"location":   o.Location,
+					"url":        o.HTMLURL,
+					"type":       "org",
+					"joined_at":  o.CreatedAt,
+					"website":    o.Website,
+				},
+				notFound: false,
 			}
 		}
 		if resp != nil {
+			if resp.StatusCode != 0 {
+				lastStatusCode = resp.StatusCode
+			}
 			resp.Body.Close()
 		}
 		if err != nil {
@@ -4077,7 +4152,8 @@ func codebergOrgProfile(username, clientToken string) gin.H {
 		token = ""
 	}
 
-	return nil
+	notFound := lastStatusCode == http.StatusNotFound
+	return profileResult{profile: nil, notFound: notFound}
 }
 
 // UserReadmeHandler devuelve el README del repo de perfil {user}/{user} (gh/gl/cb).

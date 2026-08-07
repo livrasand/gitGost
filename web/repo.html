@@ -2526,7 +2526,7 @@
             const name = String(username || '').trim();
             if (!name) return escHtml(label || '');
             const classes = `profile-link${className ? ` ${className}` : ''}`;
-            return `<a class="${classes}" href="/${rv.provider}/${encodeURIComponent(name)}" onclick="event.stopPropagation();">${escHtml(label || name)}</a>`;
+            return `<a class="${classes}" href="/${encodeURIComponent(rv.provider)}/${encodeURIComponent(name)}" onclick="event.stopPropagation();">${escHtml(label || name)}</a>`;
         }
 
         function currentBranch() { return rv.branch || ''; }
@@ -2538,7 +2538,7 @@
             if (!el) return;
             const branchName = rv.branch ? escHtml(rv.branch) : '';
             el.innerHTML =
-                `<a href="/${rv.provider}/${encodeURIComponent(rv.owner)}" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.owner)}</a>`+
+                `<a href="/${encodeURIComponent(rv.provider)}/${encodeURIComponent(rv.owner)}" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.owner)}</a>`+
                 `<span style="color:var(--fg-muted);">/</span>`+
                 `<a href="#" onclick="showView('home');return false;" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.repo)}</a>`+
                 (branchName ? `<span style="color:var(--fg-muted);">/</span><span style="color:var(--fg-muted);display:inline-flex;align-items:center;gap:0.25rem;">${BRANCH_SVG}${branchName}</span>` : '');
@@ -2779,7 +2779,7 @@
 
             const list = items.map(i => {
                 const labels = (i.labels || []).map(l => {
-                    const color = l.color ? `#${l.color}` : 'var(--border)';
+                    const color = escHtml(l.color ? `#${l.color}` : 'var(--border)');
                     return `<span class="issue-label" style="background:${color}22;border:1px solid ${color};color:${color};">${escHtml(l.name)}</span>`;
                 }).join('');
                 const user = i.user?.login || i.author?.username || '';
@@ -2787,8 +2787,8 @@
                 const url  = i.html_url || i.web_url || '#';
                 const assignee = i.assignees?.[0]?.login || i.assignee?.login || i.assignee?.username || '';
                 const num = i.number || i.iid;
-                return `<div class="issue-item" style="cursor:pointer;" onclick="showIssueDetail(${num})">
-                    <span class="issue-num">#${num}</span>
+                return `<div class="issue-item" style="cursor:pointer;" onclick="showIssueDetail(${escJsStr(num)})">
+                    <span class="issue-num">#${escHtml(num)}</span>
                     <span class="issue-title">${escHtml(i.title)}${labels}</span>
                     <span class="issue-meta">${assignee ? profileLink(assignee) + ' · ' : ''}${profileLink(user)} · ${date}</span>
                 </div>`;
@@ -2813,7 +2813,7 @@
             const safeOwner = escHtml(rv.owner || '');
             const safeRepo  = escHtml(rv.repo || '');
             const labels  = (issue.labels || []).map(l => {
-                const color = l.color ? `#${l.color}` : 'var(--border)';
+                const color = escHtml(l.color ? `#${l.color}` : 'var(--border)');
                 return `<span class="issue-label" style="background:${color}22;border:1px solid ${color};color:${color};">${escHtml(l.name)}</span>`;
             }).join('');
             const renderedBody = body ? renderMd(body) : '<em style="color:var(--fg-muted)">No description provided.</em>';
@@ -2827,15 +2827,15 @@
                 <div class="issue-detail">
                     <div class="issue-detail-main">
                         <div class="issue-detail-header">
-                            <span class="issue-detail-num">#${num}</span>
+                            <span class="issue-detail-num">#${escHtml(num)}</span>
                             <span class="issue-detail-title">${escHtml(issue.title)}</span>
                         </div>
                         ${labels ? `<div style="margin-bottom:0.75rem;display:flex;gap:0.3rem;flex-wrap:wrap;">${labels}</div>` : ''}
                         <div class="issue-detail-meta">
-                            ${avatar ? `<img class="issue-detail-avatar" src="${avatar}" alt="${user}" />` : ''}
+                            ${avatar ? `<img class="issue-detail-avatar" src="${escAttr(avatar)}" alt="${escAttr(user)}" />` : ''}
                             <strong style="color:var(--fg);">${profileLink(user)}</strong>
                             <span>opened ${created}</span>
-                            <span style="margin-left:auto;"><a class="issue-ext-link" href="${url}" target="_blank" rel="noopener">${safeOwner}/${safeRepo}#${num} <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                            <span style="margin-left:auto;"><a class="issue-ext-link" href="${escAttr(url)}" target="_blank" rel="noopener">${safeOwner}/${safeRepo}#${escHtml(num)} <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.25 3.75h-2.5a4 4 0 0 0-4 4v8.5a4 4 0 0 0 4 4h8.5a4 4 0 0 0 4-4v-2.5m-6.5-10h5.5c.276 0 .526.112.707.293m.293 6.207v-5.5a1 1 0 0 0-.293-.707M12.75 11.25l6.5-6.5l.707-.707" />
                             </svg>
@@ -2852,7 +2852,7 @@
                                     <div class="reply-footer">
                                         <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                         <span class="reply-status" id="${statusId}"></span>
-                                        <button class="reply-send-btn" onclick="submitIssueComment('${rv.provider}','${rv.owner}','${rv.repo}',${num},'${replyId}','${tokenId}','${statusId}','${listId}','${captchaId}')" title="Send">
+                                        <button class="reply-send-btn" onclick="submitIssueComment('${escJsStr(rv.provider)}','${escJsStr(rv.owner)}','${escJsStr(rv.repo)}',${escJsStr(num)},'${escJsStr(replyId)}','${escJsStr(tokenId)}','${escJsStr(statusId)}','${escJsStr(listId)}','${escJsStr(captchaId)}')" title="Send">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                                         </button>
                                     </div>
@@ -2910,7 +2910,7 @@
                     li.className = 'comment-item';
                     li.innerHTML = `
                         ${cAvatar
-                            ? `<img src="${cAvatar}" style="width:26px;height:26px;border-radius:50%;flex-shrink:0;border:1px solid var(--border);" />`
+                            ? `<img src="${escAttr(cAvatar)}" style="width:26px;height:26px;border-radius:50%;flex-shrink:0;border:1px solid var(--border);" />`
                             : `<div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>`}
                         <div class="comment-bubble">
                             <div class="comment-meta"><strong style="color:var(--fg);">${profileLink(cUser)}</strong> &middot; ${cDate}</div>
@@ -3067,7 +3067,7 @@
                     if (rClosed.ok) closed = await rClosed.json();
                 }
                 if (loadError && !open.length && !closed.length) {
-                    panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">pull requests unavailable (HTTP ${loadError})${loadError === 404 ? ' - repo not found or private' : loadError === 502 ? ' - upstream unreachable, try again' : ''}</div>`;
+                    panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">pull requests unavailable (HTTP ${escHtml(loadError)})${loadError === 404 ? ' - repo not found or private' : loadError === 502 ? ' - upstream unreachable, try again' : ''}</div>`;
                     return;
                 }
                 _prsCache = { open, closed, openTotal, closedTotal };
@@ -3122,12 +3122,12 @@
                     : '';
 
                 const reviewState = i.review_comments > 0
-                    ? `<span style="font-size:0.68rem;color:var(--fg-muted);font-family:'IBM Plex Mono',monospace;flex-shrink:0;display:inline-flex;align-items:center;gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7.09 2.75a4 4 0 0 0-4 4v6.208a4 4 0 0 0 4 4h.093v3.792a.5.5 0 0 0 .839.368l4.52-4.16h4.369a4 4 0 0 0 4-4V6.75a4 4 0 0 0-4-4z"/></svg> ${i.review_comments}</span>`
+                    ? `<span style="font-size:0.68rem;color:var(--fg-muted);font-family:'IBM Plex Mono',monospace;flex-shrink:0;display:inline-flex;align-items:center;gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7.09 2.75a4 4 0 0 0-4 4v6.208a4 4 0 0 0 4 4h.093v3.792a.5.5 0 0 0 .839.368l4.52-4.16h4.369a4 4 0 0 0 4-4V6.75a4 4 0 0 0-4-4z"/></svg> ${escHtml(i.review_comments)}</span>`
                     : '';
 
                 const num = i.number || i.iid;
-                return `<div class="issue-item" style="align-items:flex-start;padding:0.6rem 0;cursor:pointer;" onclick="showPRDetail(${num})">
-                    <span class="issue-num">#${num}</span>
+                return `<div class="issue-item" style="align-items:flex-start;padding:0.6rem 0;cursor:pointer;" onclick="showPRDetail(${escJsStr(num)})">
+                    <span class="issue-num">#${escHtml(num)}</span>
                     <span class="issue-title" style="display:flex;flex-direction:column;gap:0.25rem;">
                         <span>${escHtml(i.title)}${stateBadge}</span>
                         <span style="display:flex;gap:0.3rem;flex-wrap:wrap;">${branchInfo}</span>
@@ -3243,12 +3243,12 @@
                 const catName = d.category || (d.category?.name) || '';
                 const catEmoji = d.categoryEmoji || (d.category?.emoji) || '';
                 const cat = catName
-                    ? `<span class="disc-category">${catEmoji ? catEmoji + ' ' : ''}${escHtml(catName)}</span>`
+                    ? `<span class="disc-category">${catEmoji ? escHtml(catEmoji) + ' ' : ''}${escHtml(catName)}</span>`
                     : '';
-                const comments = d.commentCount ? `<span style="color:var(--fg-muted);font-size:0.72rem;margin-left:0.4rem;">💬 ${d.commentCount}</span>` : '';
+                const comments = d.commentCount ? `<span style="color:var(--fg-muted);font-size:0.72rem;margin-left:0.4rem;">💬 ${escHtml(d.commentCount)}</span>` : '';
 
-                return `<div class="issue-item" style="cursor:pointer;" onclick="showDiscussionDetail(${num})">
-                    <span class="issue-num">#${num}</span>
+                return `<div class="issue-item" style="cursor:pointer;" onclick="showDiscussionDetail(${escJsStr(num)})">
+                    <span class="issue-num">#${escHtml(num)}</span>
                     <span class="issue-title">${escHtml(title)}${cat}${comments}</span>
                     <span class="issue-meta" style="display:flex;flex-direction:column;align-items:flex-end;gap:0.2rem;flex-shrink:0;">
                         <span>${profileLink(user)}${date ? ' · ' + date : ''}</span>
@@ -3278,7 +3278,7 @@
                 const catName = data.category?.name || cached?.category || '';
                 const catEmoji = data.category?.emoji || cached?.categoryEmoji || '';
                 const cat = catName
-                    ? `<span class="disc-category">${catEmoji ? catEmoji + ' ' : ''}${escHtml(catName)}</span>`
+                    ? `<span class="disc-category">${catEmoji ? escHtml(catEmoji) + ' ' : ''}${escHtml(catName)}</span>`
                     : '';
                 const answered = data.isAnswered ? `<span class="disc-answer-badge">✓ answered</span>` : '';
                 const renderedBody = body ? renderMd(body) : '<em style="color:var(--fg-muted)">No description provided.</em>';
@@ -3306,14 +3306,14 @@
                     <div class="issue-detail">
                         <div class="issue-detail-main">
                             <div class="issue-detail-header">
-                                <span class="issue-detail-num">#${num}</span>
+                                <span class="issue-detail-num">#${escHtml(num)}</span>
                                 <span class="issue-detail-title">${escHtml(title)}</span>
                             </div>
                             <div style="margin-bottom:0.75rem;display:flex;gap:0.3rem;flex-wrap:wrap;">${cat}${answered}</div>
                             <div class="issue-detail-meta">
                                 <strong style="color:var(--fg);">${profileLink(user)}</strong>
                                 <span>opened ${created}</span>
-                                <span style="margin-left:auto;"><a class="issue-ext-link" href="${url}" target="_blank" rel="noopener">${escHtml(rv.owner)}/${escHtml(rv.repo)}#${num} <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                                <span style="margin-left:auto;"><a class="issue-ext-link" href="${escAttr(url)}" target="_blank" rel="noopener">${escHtml(rv.owner)}/${escHtml(rv.repo)}#${escHtml(num)} <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.25 3.75h-2.5a4 4 0 0 0-4 4v8.5a4 4 0 0 0 4 4h8.5a4 4 0 0 0 4-4v-2.5m-6.5-10h5.5c.276 0 .526.112.707.293m.293 6.207v-5.5a1 1 0 0 0-.293-.707M12.75 11.25l6.5-6.5l.707-.707" />
                                 </svg>
@@ -3407,7 +3407,7 @@
                     li.innerHTML = `
                         <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                         <div class="comment-bubble">
-                            <div class="comment-meta">you · just now${data.hash ? ` · <span style="color:var(--accent)">${data.hash}</span>` : ''}</div>
+                            <div class="comment-meta">you · just now${data.hash ? ` · <span style="color:var(--accent)">${escHtml(data.hash)}</span>` : ''}</div>
                             <div>${escHtml(commentBody).replace(/\n/g, '<br>')}</div>
                         </div>`;
                     list.appendChild(li);
@@ -3458,7 +3458,7 @@
                         panel.innerHTML = `<div style="padding:1rem;color:var(--fg-secondary);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;">
                             This repository has no wiki content yet.
                             <div style="margin-top:0.5rem;font-size:0.72rem;color:var(--fg-muted);">
-                                <a href="${rv.provider === 'cb' ? `https://codeberg.org/${rv.owner}/${rv.repo}/wiki` : rv.provider === 'gh' ? `https://github.com/${rv.owner}/${rv.repo}/wiki` : `https://gitlab.com/${rv.owner}/${rv.repo}/-/wikis`}" target="_blank" style="color:var(--accent);">${rv.provider === 'cb' ? 'Open wiki on Codeberg' : rv.provider === 'gh' ? 'Open wiki on GitHub' : 'Open wiki on GitLab'} ↗</a>
+                                <a href="${rv.provider === 'cb' ? `https://codeberg.org/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/wiki` : rv.provider === 'gh' ? `https://github.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/wiki` : `https://gitlab.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/-/wikis`}" target="_blank" style="color:var(--accent);">${rv.provider === 'cb' ? 'Open wiki on Codeberg' : rv.provider === 'gh' ? 'Open wiki on GitHub' : 'Open wiki on GitLab'} ↗</a>
                             </div>
                         </div>`;
                         _wikiCache = { slug: '', html: '' };
@@ -3568,7 +3568,7 @@
                             const target = p.slug + (p.anchor ? '#' + p.anchor : '');
                             return `<a href="#" data-wiki="${escAttr(target)}" style="color:${active ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${active ? 'var(--accent)' : 'var(--border)'};border-radius:3px;">${escHtml(p.title)}</a>`;
                         }).join('')}
-                        <a href="https://codeberg.org/${rv.owner}/${rv.repo}/wiki" target="_blank" style="color:var(--accent);text-decoration:none;padding:0.15rem 0.4rem;">Open on Codeberg ↗</a>
+                        <a href="https://codeberg.org/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/wiki" target="_blank" style="color:var(--accent);text-decoration:none;padding:0.15rem 0.4rem;">Open on Codeberg ↗</a>
                     </div>`;
 
                     panel.innerHTML = sidebar + `<div class="readme" style="padding-top:0;">${renderMd(content, null, true)}</div>`;
@@ -3593,7 +3593,7 @@
                             const active = p.slug === targetSlug;
                             return `<a href="#" data-wiki="${escAttr(p.slug)}" style="color:${active ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${active ? 'var(--accent)' : 'var(--border)'};border-radius:3px;">${escHtml(p.title)}</a>`;
                         }).join('')}
-                        <a href="https://gitlab.com/${rv.owner}/${rv.repo}/-/wikis" target="_blank" style="color:var(--accent);text-decoration:none;padding:0.15rem 0.4rem;">Open on GitLab ↗</a>
+                        <a href="https://gitlab.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/-/wikis" target="_blank" style="color:var(--accent);text-decoration:none;padding:0.15rem 0.4rem;">Open on GitLab ↗</a>
                     </div>`;
 
                     const content = wikiPage.content || '';
@@ -3707,22 +3707,22 @@
                     .toLocaleTimeString('en', {hour:'2-digit', minute:'2-digit'});
                 const email = c.author_email || c.commit?.author?.email || c.committer_email || '';
                 const avatarUrl = avatarMap.get(email) || c.author?.avatar_url || '';
-                const initial = (author[0]||'?').toUpperCase();
+                const initial = escHtml((author[0]||'?').toUpperCase());
                 let avatarHtml;
                 if (avatarUrl) {
-                    avatarHtml = `<img src="${avatarUrl}" alt="" />`;
+                    avatarHtml = `<img src="${escAttr(avatarUrl)}" alt="" />`;
                 } else if (email) {
                     const gravatarSrc = `https://www.gravatar.com/avatar/${md5(email.trim().toLowerCase())}?s=28&d=identicon`;
-                    avatarHtml = `<img src="${gravatarSrc}" alt="" onerror='this.outerHTML="<span class=commit-avatar-placeholder>${initial}</span>"' />`;
+                    avatarHtml = `<img src="${escAttr(gravatarSrc)}" alt="" onerror='this.outerHTML="<span class=commit-avatar-placeholder>${initial}</span>"' />`;
                 } else {
                     avatarHtml = `<span class="commit-avatar-placeholder">${initial}</span>`;
                 }
-                return `<div class="commit-item" onclick="showCommitDetail('${fullSha}')">
+                return `<div class="commit-item" onclick="showCommitDetail('${escJsStr(fullSha)}')">
                     <div class="commit-avatar">${avatarHtml}</div>
                     <div class="commit-body">
                         <div class="commit-msg">${escHtml(firstLine)}</div>
                         <div class="commit-meta">
-                            <span class="commit-sha">${sha}</span>
+                            <span class="commit-sha">${escHtml(sha)}</span>
                             <span class="commit-author">${profileLink(authorUsername, author)}</span>
                             <span class="commit-time">${date} at ${time}</span>
                         </div>
@@ -3782,7 +3782,7 @@
                 if (rv.provider === 'gh') {
                     const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/releases?per_page=30`);
                     if (!res.ok) {
-                        panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">releases unavailable (HTTP ${res.status})${res.status === 404 ? ' - repo not found or private' : ''}</div>`;
+                        panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">releases unavailable (HTTP ${escHtml(res.status)})${res.status === 404 ? ' - repo not found or private' : ''}</div>`;
                         return;
                     }
                     releases = await res.json();
@@ -3866,10 +3866,10 @@
                 return;
             }
             const baseUrl = rv.provider === 'cb'
-                ? `https://codeberg.org/${rv.owner}/${rv.repo}/src/branch/`
+                ? `https://codeberg.org/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/src/branch/`
                 : rv.provider === 'gh'
-                    ? `https://github.com/${rv.owner}/${rv.repo}/tree/`
-                    : `https://gitlab.com/${rv.owner}/${rv.repo}/-/tree/`;
+                    ? `https://github.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/tree/`
+                    : `https://gitlab.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/-/tree/`;
             const defaultName = (branches.find(b => b.name === 'main' || b.name === 'master') || branches[0]).name;
             const header = `<div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;">
                 <span style="font-size:0.85rem;font-weight:600;color:var(--fg);">${branches.length.toLocaleString()} branches</span>
@@ -3884,7 +3884,7 @@
                         <a href="${baseUrl}${escAttr(name)}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-family:'IBM Plex Mono',monospace;">${escHtml(name)}</a>
                         ${defaultBadge}${protectedBadge}
                     </span>
-                    <span class="issue-meta" style="font-family:'IBM Plex Mono',monospace;">${sha}</span>
+                    <span class="issue-meta" style="font-family:'IBM Plex Mono',monospace;">${escHtml(sha)}</span>
                 </div>`;
             }).join('');
             panel.innerHTML = header + '<div class="commit-list">' + list + '</div>';
@@ -3949,10 +3949,10 @@
                 return;
             }
             const baseUrl = rv.provider === 'cb'
-                ? `https://codeberg.org/${rv.owner}/${rv.repo}/src/tag/`
+                ? `https://codeberg.org/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/src/tag/`
                 : rv.provider === 'gh'
-                    ? `https://github.com/${rv.owner}/${rv.repo}/releases/tag/`
-                    : `https://gitlab.com/${rv.owner}/${rv.repo}/-/tags/`;
+                    ? `https://github.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/releases/tag/`
+                    : `https://gitlab.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/-/tags/`;
             const header = `<div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;">
                 <span style="font-size:0.85rem;font-weight:600;color:var(--fg);">${tags.length.toLocaleString()} tags</span>
             </div>`;
@@ -3967,8 +3967,8 @@
                         <a href="#" data-tag="${escAttr(name)}" onclick="openTag(this.dataset.tag); return false;" style="color:var(--accent);text-decoration:none;font-family:'IBM Plex Mono',monospace;">${escHtml(name)}</a>${badge}
                     </span>
                     <span class="issue-meta" style="display:flex;align-items:center;gap:0.35rem;font-family:'IBM Plex Mono',monospace;">
-                        <span>${sha}${dateStr}</span>
-                        <a href="${baseUrl}${escAttr(name)}" target="_blank" rel="noopener" title="open in ${rv.provider}" style="color:var(--fg-muted);text-decoration:none;font-size:0.7rem;">↗</a>
+                        <span>${escHtml(sha)}${dateStr}</span>
+                        <a href="${baseUrl}${escAttr(name)}" target="_blank" rel="noopener" title="open in ${escAttr(rv.provider)}" style="color:var(--fg-muted);text-decoration:none;font-size:0.7rem;">↗</a>
                     </span>
                 </div>`;
             }).join('');
@@ -4198,8 +4198,8 @@
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12.074 3.25v12.478M6.19 10.465l4.822 4.822c.293.293.677.44 1.06.44m5.883-5.262l-4.822 4.822c-.293.293-.677.44-1.06.44m8.677.788v.935a3.3 3.3 0 0 1-3.3 3.3H6.55a3.3 3.3 0 0 1-3.3-3.3v-.935" />
 </svg></span>
-                        <a href="${a.browser_download_url || '#'}" style="color:var(--accent);text-decoration:none;" target="_blank" rel="noopener">${escHtml(a.name)}</a>
-                        <span style="color:var(--fg-muted);font-size:0.7rem;">${size}</span>
+                        <a href="${escAttr(a.browser_download_url || '#')}" style="color:var(--accent);text-decoration:none;" target="_blank" rel="noopener">${escHtml(a.name)}</a>
+                        <span style="color:var(--fg-muted);font-size:0.7rem;">${escHtml(size)}</span>
                     </div>`;
                 }).join('');
                 assetsHtml = `<div style="margin-top:1rem;">
@@ -4228,11 +4228,11 @@
                 </div>
                 ${assetsHtml}
                 <div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
-                    ${zipball ? `<a href="${zipball}" style="font-size:0.75rem;color:var(--accent);text-decoration:none;border:1px solid var(--border);padding:0.25rem 0.5rem;border-radius:6px;" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                    ${zipball ? `<a href="${escAttr(zipball)}" style="font-size:0.75rem;color:var(--accent);text-decoration:none;border:1px solid var(--border);padding:0.25rem 0.5rem;border-radius:6px;" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.5" d="m12 12l8.073-4.625M12 12v9.25M12 12L7.963 9.688m12.11-2.313a3.17 3.17 0 0 0-1.165-1.156L16.25 4.696m3.823 2.679c.275.472.427 1.015.427 1.58v6.09a3.15 3.15 0 0 1-1.592 2.736l-5.316 3.046A3.2 3.2 0 0 1 12 21.25M3.926 7.375a3.14 3.14 0 0 0-.426 1.58v6.09c0 1.13.607 2.172 1.592 2.736l5.316 3.046A3.2 3.2 0 0 0 12 21.25M3.926 7.375a3.17 3.17 0 0 1 1.166-1.156l5.316-3.046a3.2 3.2 0 0 1 3.184 0l2.658 1.523M3.926 7.375l4.037 2.313m0 0l8.287-4.992" />
 </svg> Source (zip)</a>` : ''}
-                    ${tarball ? `<a href="${tarball}" style="font-size:0.75rem;color:var(--accent);text-decoration:none;border:1px solid var(--border);padding:0.25rem 0.5rem;border-radius:6px;" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                    ${tarball ? `<a href="${escAttr(tarball)}" style="font-size:0.75rem;color:var(--accent);text-decoration:none;border:1px solid var(--border);padding:0.25rem 0.5rem;border-radius:6px;" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.5" d="m12 12l8.073-4.625M12 12v9.25M12 12L7.963 9.688m12.11-2.313a3.17 3.17 0 0 0-1.165-1.156L16.25 4.696m3.823 2.679c.275.472.427 1.015.427 1.58v6.09a3.15 3.15 0 0 1-1.592 2.736l-5.316 3.046A3.2 3.2 0 0 1 12 21.25M3.926 7.375a3.14 3.14 0 0 0-.426 1.58v6.09c0 1.13.607 2.172 1.592 2.736l5.316 3.046A3.2 3.2 0 0 0 12 21.25M3.926 7.375a3.17 3.17 0 0 1 1.166-1.156l5.316-3.046a3.2 3.2 0 0 1 3.184 0l2.658 1.523M3.926 7.375l4.037 2.313m0 0l8.287-4.992" />
 </svg> Source (tar.gz)</a>` : ''}
@@ -4433,13 +4433,13 @@
             const authorUsername = commit.author?.login || commit.author?.username || '';
             const email = commit.commit?.author?.email || commit.author_email || commit.committer_email || '';
             const avatarUrl = glAvatarUrl || commit.author?.avatar_url || '';
-            const initial = (author[0]||'?').toUpperCase();
+            const initial = escHtml((author[0]||'?').toUpperCase());
             let avatarHtml;
             if (avatarUrl) {
-                avatarHtml = `<img class="cd-avatar" src="${avatarUrl}" alt="${author}" />`;
+                avatarHtml = `<img class="cd-avatar" src="${escAttr(avatarUrl)}" alt="${escAttr(author)}" />`;
             } else if (email) {
                 const gravatarSrc = `https://www.gravatar.com/avatar/${md5(email.trim().toLowerCase())}?s=28&d=identicon`;
-                avatarHtml = `<img class="cd-avatar" src="${gravatarSrc}" alt="${author}" onerror='this.outerHTML="<div class=cd-avatar style=\\"display:flex;align-items:center;justify-content:center;background:var(--bg-hover);color:var(--fg-muted);font-size:0.7rem;font-weight:600;\">${initial}</div>"' />`;
+                avatarHtml = `<img class="cd-avatar" src="${escAttr(gravatarSrc)}" alt="${escAttr(author)}" onerror='this.outerHTML="<div class=cd-avatar style=\"display:flex;align-items:center;justify-content:center;background:var(--bg-hover);color:var(--fg-muted);font-size:0.7rem;font-weight:600;\">${initial}</div>"' />`;
             } else {
                 avatarHtml = `<div class="cd-avatar" style="display:flex;align-items:center;justify-content:center;background:var(--bg-hover);color:var(--fg-muted);font-size:0.7rem;font-weight:600;">${initial}</div>`;
             }
@@ -4458,9 +4458,9 @@
                     return `<div class="commit-diff-file">
                         <div class="cdf-header">
                             <span class="cdf-name">${escHtml(f.filename)}</span>
-                            <span class="cdf-status">${status}</span>
-                            ${adds ? `<span class="cdf-stat add">+${adds}</span>` : ''}
-                            ${dels ? `<span class="cdf-stat del">-${dels}</span>` : ''}
+                            <span class="cdf-status">${escHtml(status)}</span>
+                            ${adds ? `<span class="cdf-stat add">+${escHtml(adds)}</span>` : ''}
+                            ${dels ? `<span class="cdf-stat del">-${escHtml(dels)}</span>` : ''}
                         </div>
                         ${patch ? `<pre>${escHtml(patch)}</pre>` : ''}
                     </div>`;
@@ -4472,8 +4472,8 @@
             panel.innerHTML = `
                 <div class="commit-detail">
                     <div class="commit-detail-header">
-                        <span class="commit-detail-sha">${shortSha}</span>
-                        <a class="commit-ext-link" href="${url}" target="_blank" rel="noopener">open on ${rv.provider === 'cb' ? 'Codeberg' : rv.provider === 'gh' ? 'GitHub' : 'GitLab'} <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                        <span class="commit-detail-sha">${escHtml(shortSha)}</span>
+                        <a class="commit-ext-link" href="${escAttr(url)}" target="_blank" rel="noopener">open on ${rv.provider === 'cb' ? 'Codeberg' : rv.provider === 'gh' ? 'GitHub' : 'GitLab'} <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.25 3.75h-2.5a4 4 0 0 0-4 4v8.5a4 4 0 0 0 4 4h8.5a4 4 0 0 0 4-4v-2.5m-6.5-10h5.5c.276 0 .526.112.707.293m.293 6.207v-5.5a1 1 0 0 0-.293-.707M12.75 11.25l6.5-6.5l.707-.707" />
                         </svg>
@@ -4484,9 +4484,9 @@
                         <span class="cd-author">${profileLink(authorUsername, author)}</span>
                         <span class="cd-date">committed ${date}</span>
                         <span class="cd-stats">
-                            <span class="add">+${stats.additions || 0}</span>
-                            <span class="del">-${stats.deletions || 0}</span>
-                            <span style="color:var(--fg-muted);">${stats.total || (files ? files.length : 0)} ${((stats.total || files?.length) === 1) ? 'file' : 'files'}</span>
+                            <span class="add">+${escHtml(stats.additions || 0)}</span>
+                            <span class="del">-${escHtml(stats.deletions || 0)}</span>
+                            <span style="color:var(--fg-muted);">${escHtml(stats.total || (files ? files.length : 0))} ${((stats.total || files?.length) === 1) ? 'file' : 'files'}</span>
                         </span>
                     </div>
                     <div class="commit-detail-body">${escHtml(msg).split('\n').join('<br>')}</div>
@@ -4531,7 +4531,7 @@
                     li.innerHTML = `
                         <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                         <div class="comment-bubble">
-                            <div class="comment-meta">you &middot; just now${data.hash ? ` &middot; <span style="color:var(--accent)">${data.hash}</span>` : ''}</div>
+                            <div class="comment-meta">you &middot; just now${data.hash ? ` &middot; <span style="color:var(--accent)">${escHtml(data.hash)}</span>` : ''}</div>
                             <div>${escHtml(commentBody).replace(/\n/g, '<br>')}</div>
                         </div>`;
                     list.appendChild(li);
@@ -4618,15 +4618,15 @@
                 <div class="issue-detail">
                     <div class="issue-detail-main">
                         <div class="issue-detail-header">
-                            <span class="issue-detail-num">#${num}</span>
+                            <span class="issue-detail-num">#${escHtml(num)}</span>
                             <span class="issue-detail-title">${escHtml(pr.title)}</span>
                         </div>
                         <div style="margin-bottom:0.75rem;display:flex;gap:0.3rem;flex-wrap:wrap;">${stateBadge}${branchInfo}</div>
                         <div class="issue-detail-meta">
-                            ${avatar ? `<img class="issue-detail-avatar" src="${avatar}" alt="${user}" />` : ''}
+                            ${avatar ? `<img class="issue-detail-avatar" src="${escAttr(avatar)}" alt="${escAttr(user)}" />` : ''}
                             <strong style="color:var(--fg);">${profileLink(user)}</strong>
                             <span>opened ${created}</span>
-                            <span style="margin-left:auto;"><a class="issue-ext-link" href="${url}" target="_blank" rel="noopener">${rv.owner}/${rv.repo}#${num} <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                            <span style="margin-left:auto;"><a class="issue-ext-link" href="${escAttr(url)}" target="_blank" rel="noopener">${escHtml(rv.owner)}/${escHtml(rv.repo)}#${escHtml(num)} <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.25 3.75h-2.5a4 4 0 0 0-4 4v8.5a4 4 0 0 0 4 4h8.5a4 4 0 0 0 4-4v-2.5m-6.5-10h5.5c.276 0 .526.112.707.293m.293 6.207v-5.5a1 1 0 0 0-.293-.707M12.75 11.25l6.5-6.5l.707-.707" />
                             </svg>
@@ -4642,7 +4642,7 @@
                                     <div class="reply-footer">
                                         <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                         <span class="reply-status" id="${statusId}"></span>
-                                        <button class="reply-send-btn" onclick="submitIssueComment('${rv.provider}','${rv.owner}','${rv.repo}',${num},'${replyId}','${tokenId}','${statusId}',null,'${captchaId}')" title="Send">
+                                        <button class="reply-send-btn" onclick="submitIssueComment('${escJsStr(rv.provider)}','${escJsStr(rv.owner)}','${escJsStr(rv.repo)}',${escJsStr(num)},'${escJsStr(replyId)}','${escJsStr(tokenId)}','${escJsStr(statusId)}',null,'${escJsStr(captchaId)}')" title="Send">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                                         </button>
                                     </div>
@@ -4664,7 +4664,7 @@
                             <div class="ds-val">${updated}</div>
                         </div>
                         ${pr.merged_at ? `<div><div class="ds-label">merged</div><div class="ds-val">${new Date(pr.merged_at).toLocaleDateString('en',{year:'numeric',month:'short',day:'numeric'})}</div></div>` : ''}
-                        ${pr.review_comments > 0 ? `<div><div class="ds-label">comments</div><div class="ds-val">${pr.review_comments}</div></div>` : ''}
+                        ${pr.review_comments > 0 ? `<div><div class="ds-label">comments</div><div class="ds-val">${escHtml(pr.review_comments)}</div></div>` : ''}
                     </div>
                 </div>`;
         }
@@ -4736,7 +4736,7 @@
                     if (sbDesc) sbDesc.textContent = d.description || '—';
                     const sbTags = document.getElementById('sb-tags');
                     if (sbTags && d.topics && d.topics.length > 0) {
-                        sbTags.innerHTML = d.topics.map(t => `<a class="sidebar-tag" href="/?tag=${encodeURIComponent(t)}" title="Search ${t}">${t}</a>`).join('');
+                        sbTags.innerHTML = d.topics.map(t => `<a class="sidebar-tag" href="/?tag=${encodeURIComponent(t)}" title="Search ${escAttr(t)}">${escHtml(t)}</a>`).join('');
                     }
                     const sbVis = document.getElementById('sb-vis');
                     if (sbVis) {
@@ -4803,7 +4803,7 @@
                     const sbTags = document.getElementById('sb-tags');
                     const tags = d.tag_list?.length ? d.tag_list : (d.topics || []);
                     if (sbTags && tags.length > 0) {
-                        sbTags.innerHTML = tags.map(t => `<a class="sidebar-tag" href="/?tag=${encodeURIComponent(t)}" title="Search ${t}">${t}</a>`).join('');
+                        sbTags.innerHTML = tags.map(t => `<a class="sidebar-tag" href="/?tag=${encodeURIComponent(t)}" title="Search ${escAttr(t)}">${escHtml(t)}</a>`).join('');
                     }
                     const sbVis = document.getElementById('sb-vis');
                     if (sbVis) {
@@ -4892,7 +4892,7 @@
                     if (sbDesc) sbDesc.textContent = d.description || '—';
                     const sbTags = document.getElementById('sb-tags');
                     if (sbTags && d.topics && d.topics.length > 0) {
-                        sbTags.innerHTML = d.topics.map(t => `<a class="sidebar-tag" href="/?tag=${encodeURIComponent(t)}" title="Search ${t}">${t}</a>`).join('');
+                        sbTags.innerHTML = d.topics.map(t => `<a class="sidebar-tag" href="/?tag=${encodeURIComponent(t)}" title="Search ${escAttr(t)}">${escHtml(t)}</a>`).join('');
                     }
                     const sbVis = document.getElementById('sb-vis');
                     if (sbVis) {
@@ -5120,7 +5120,7 @@
                 const img = `<img src="${escAttr(avatar)}" alt="${escAttr(username)}" loading="lazy">`;
                 const title = `${escAttr(username)} · ${commits} commits`;
                 if (!login) return `<span class="sb-contributor" title="${title}">${img}</span>`;
-                return `<a class="sb-contributor" href="/${rv.provider}/${encodeURIComponent(login)}" title="${title}">${img}</a>`;
+                return `<a class="sb-contributor" href="/${encodeURIComponent(rv.provider)}/${encodeURIComponent(login)}" title="${title}">${img}</a>`;
             }).join('');
             if (!html) return;
             box.innerHTML = html;
@@ -5218,17 +5218,17 @@
                     ? `<img src="${escAttr(avatar)}" alt="${escAttr(username)}" loading="lazy" style="width:2rem;height:2rem;border-radius:50%;object-fit:cover;background:var(--accent);flex:none;">`
                     : `<span style="width:2rem;height:2rem;border-radius:50%;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:0.7rem;color:#fff;flex:none;">${escHtml((username || '?')[0].toUpperCase())}</span>`;
                 const avatarHtml = login
-                    ? `<a href="/${rv.provider}/${encodeURIComponent(login)}" aria-label="${escAttr(username)} profile">${img}</a>`
+                    ? `<a href="/${encodeURIComponent(rv.provider)}/${encodeURIComponent(login)}" aria-label="${escAttr(username)} profile">${img}</a>`
                     : img;
                 const nameHtml = login
-                    ? `<a href="/${rv.provider}/${encodeURIComponent(login)}" style="color:var(--fg);text-decoration:none;font-weight:500;">${escHtml(username)}</a>`
+                    ? `<a href="/${encodeURIComponent(rv.provider)}/${encodeURIComponent(login)}" style="color:var(--fg);text-decoration:none;font-weight:500;">${escHtml(username)}</a>`
                     : `<span style="color:var(--fg);font-weight:500;">${escHtml(username)}</span>`;
                 return `<div class="release-item">
                     <div style="display:flex;align-items:center;gap:0.75rem;min-width:0;flex:1;">
                         ${avatarHtml}
                         <div style="display:flex;flex-direction:column;gap:0.15rem;min-width:0;flex:1;">
                             ${nameHtml}
-                            <span class="release-meta">${commits} commit${commits !== 1 ? 's' : ''}</span>
+                            <span class="release-meta">${escHtml(commits)} commit${commits !== 1 ? 's' : ''}</span>
                         </div>
                     </div>
                 </div>`;
@@ -5709,7 +5709,7 @@
 
                     const item = document.createElement('div');
                     item.className = 'lang-legend-item';
-                    item.innerHTML = `<span class="lang-dot" style="background:${color}"></span><span class="lang-name">${lang}</span><span>${pct}%</span>`;
+                    item.innerHTML = `<span class="lang-dot" style="background:${escAttr(color)}"></span><span class="lang-name">${escHtml(lang)}</span><span>${escHtml(pct)}%</span>`;
                     legend.appendChild(item);
                 });
 
@@ -6393,7 +6393,7 @@
             ];
             bc.innerHTML = parts.map((p, i) => {
                 if (i < parts.length - 1) {
-                    return `<span class="crumb" onclick='loadDir(${JSON.stringify(p.path)})' style="cursor:pointer;color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(p.label)}</span><span style="color:var(--fg-muted);margin:0 0.2rem;">/</span>`;
+                    return `<span class="crumb" onclick='loadDir(${JSON.stringify(p.path).replace(/'/g, "\\u0027")})' style="cursor:pointer;color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(p.label)}</span><span style="color:var(--fg-muted);margin:0 0.2rem;">/</span>`;
                 }
                 return `<span style="color:var(--fg);">${escHtml(p.label)}</span>`;
             }).join('');

@@ -4,8 +4,7 @@
     "@capacitor/core": "^8.5.0"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.5.0",
-    "@openai/codex-security": "^0.1.6"
+    "@capacitor/cli": "^8.5.0"
   },
   "overrides": {
     "xcode": {

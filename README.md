@@ -269,7 +269,7 @@ for an overview of features.
 ### From binary
 
 > [!IMPORTANT]
-> **macOS Users:** You may see a warning that Apple cannot verify Komi Store. This happens because the app is distributed outside the App Store and is not notarized yet. Allow it via System Settings → Privacy & Security → Open Anyway.
+> **macOS Users:** You may see a warning that Apple cannot verify GREN. This happens because the app is distributed outside the App Store and is not notarized yet. Allow it via System Settings → Privacy & Security → Open Anyway.
 
 
 <a href="https://github.com/livrasand/gitGost/releases"><img src="https://raw.githubusercontent.com/rubenpgrady/get-it-on-github/refs/heads/main/get-it-on-github.png" alt="Get it on GitHub" height="96" />

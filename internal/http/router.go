@@ -280,6 +280,12 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/pr-status/:hash", PRStatusHandler)
 		api.GET("/pr/:hash/status", prCheckLimiter(), PRCheckHandler)
 		api.GET("/search", SearchHandler)
+		api.GET("/users/search", prCheckLimiter(), UsersSearchHandler)
+		api.GET("/code/search", prCheckLimiter(), CodeSearchHandler)
+		api.GET("/github/packages/:owner", prCheckLimiter(), GitHubPackagesHandler)
+		api.GET("/users/profile", prCheckLimiter(), UserProfileHandler)
+		api.GET("/users/repos", prCheckLimiter(), UserReposHandler)
+		api.GET("/users/readme", prCheckLimiter(), UserReadmeHandler)
 		api.GET("/trending/:provider", TrendingHandler)
 		api.GET("/cb-proxy/*path", prCheckLimiter(), CodebergProxyHandler)
 		api.GET("/gl-notes/:owner/:repo/:number", GitLabIssueNotesProxyHandler)
@@ -310,6 +316,14 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.GET("/api/status", ServiceStatusHandler)
 
 	r.NoRoute(func(c *gin.Context) {
+		// Rutas limpias de perfil de usuario/organización: /gh/:username, /gl/:username, /cb/:username
+		if c.Request.Method == http.MethodGet {
+			parts := strings.Split(strings.Trim(c.Request.URL.Path, "/"), "/")
+			if len(parts) == 2 && (parts[0] == "gh" || parts[0] == "gl" || parts[0] == "cb") {
+				c.File("./web/profile.html")
+				return
+			}
+		}
 		c.File("./web/index.html")
 	})
 

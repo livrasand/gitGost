@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 176.7857 499.9999 146.4286" width="499.9999px" height="146.4286px" xmlns:bx="https://boxy-svg.com">
+  <defs>
+    <style bx:fonts="Roboto Condensed">@import url(https://fonts.googleapis.com/css2?family=Roboto+Condensed%3Aital%2Cwght%400%2C100..900%3B1%2C100..900&amp;display=swap);</style>
+  </defs>
+  <g transform="matrix(0.8928570151329039, 0, 0, 0.8928570151329039, -296.4284973144531, -140.50172424316406)" id="g76">
+    <path id="rect10" style="display:inline;overflow:visible;stroke:#a6a6a6;stroke-width:4;marker:none" d="m 352,355.362 h 520 c 11.08,0 20,8.92 20,20 v 124 c 0,11.08 -8.92,20 -20,20 H 352 c -11.08,0 -20,-8.92 -20,-20 v -124 c 0,-11.08 8.92,-20 20,-20 z"/>
+    <g id="svg5" transform="matrix(1.97767, 0, 0, 1.97767, -725.143311, -761.734314)">
+      <g id="layer1" transform="matrix(1.12, 0, 0, 1.12, 457.117493, 482.185577)">
+        <path style="fill:none;fill-opacity:0.964706;stroke:#7ada9d;stroke-width:6.61447;stroke-linecap:round;stroke-opacity:1" id="path7456" d="m 86.63565,121.09388 a 22.54248,22.54248 0 0 1 4.774563,-28.811437 22.54248,22.54248 0 0 1 29.204267,0.07938 22.54248,22.54248 0 0 1 4.61787,28.836969"/>
+        <path id="rect11866" style="fill:#ffb780;fill-opacity:0.964706;stroke:none;stroke-width:5.40899;stroke-linecap:round;stroke-opacity:1" d="m 105.96562,115.09375 c -1.38674,0 -2.50315,1.38364 -2.50315,3.10249 v 11.89935 l -4.848753,-4.84876 c -0.909166,-0.90916 -2.373314,-0.90916 -3.28248,0 l -0.257484,0.25749 c -0.909166,0.90916 -0.909166,2.37331 0,3.28248 l 9.173127,9.17313 c 0.46597,0.46597 1.07776,0.6925 1.68578,0.68083 0.011,1.7e-4 0.022,0.002 0.0329,0.002 0.011,0 0.0219,-7e-4 0.0329,-0.002 0.60802,0.0117 1.21982,-0.21486 1.68578,-0.68083 l 9.17313,-9.17313 c 0.90916,-0.90917 0.90916,-2.37332 0,-3.28248 l -0.25749,-0.25749 c -0.90916,-0.90916 -2.37331,-0.90916 -3.28247,0 l -4.84876,4.84876 v -11.89935 c 0,-1.71885 -1.11641,-3.10249 -2.50315,-3.10249 z"/>
+        <circle style="fill:#7ada9d;fill-opacity:0.964706;stroke:none;stroke-width:5.42057;stroke-linecap:round;stroke-opacity:1" id="path14993" cx="99.48333" cy="104.11353" r="2.2489583"/>
+        <circle style="fill:#7ada9d;fill-opacity:0.964706;stroke:none;stroke-width:5.42057;stroke-linecap:round;stroke-opacity:1" id="circle14995" cx="113.24167" cy="104.11353" r="2.2489583"/>
+        <rect style="fill:#7ada9d;fill-opacity:0.964706;stroke:none;stroke-width:8.92799;stroke-linecap:round;stroke-opacity:1" id="rect15005" width="3.4395833" height="9.260417" x="150.00912" y="-28.951738" ry="1.4113488" transform="rotate(45)"/>
+        <rect style="fill:#7ada9d;fill-opacity:0.964706;stroke:none;stroke-width:8.92799;stroke-linecap:round;stroke-opacity:1" id="rect15007" width="3.4395833" height="9.260417" x="0.52526945" y="120.53213" ry="1.4113488" transform="matrix(-0.70710678,0.70710678,0.70710678,0.70710678,0,0)"/>
+      </g>
+    </g>
+    <g aria-label="GET IT ON" id="text14" style="font-size:12.3952px;line-height:100%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';letter-spacing:0;word-spacing:0;display:inline;overflow:visible;fill:#ffffff;stroke-width:1px;marker:none">
+      <path d="m 529.2627,398.81787 v -6.6817 h -5.49866 v -2.76599 h 8.83117 v 10.68072 q -1.94952,1.383 -4.29895,2.09949 -2.34942,0.69983 -5.01544,0.69983 -5.83191,0 -9.1311,-3.39917 -3.28253,-3.41583 -3.28253,-9.49768 0,-6.09851 3.28253,-9.49768 3.29919,-3.41583 9.1311,-3.41583 2.43274,0 4.61554,0.59985 2.19947,0.59985 4.04901,1.76623 v 3.58246 q -1.86621,-1.58294 -3.96569,-2.38275 -2.09949,-0.7998 -4.41559,-0.7998 -4.56555,0 -6.86499,2.54937 -2.28278,2.54938 -2.28278,7.59815 0,5.0321 2.28278,7.58148 2.29944,2.54938 6.86499,2.54938 1.78289,0 3.18255,-0.29993 1.39966,-0.31659 2.51606,-0.96643 z" style="font-size:34.125px" id="path83"/>
+      <path d="m 538.74371,377.48975 h 15.7295 v 2.83264 h -12.36365 v 7.36487 h 11.84711 v 2.83264 h -11.84711 v 9.01446 h 12.66357 v 2.83264 h -16.02942 z" style="font-size:34.125px" id="path85"/>
+      <path d="m 556.85596,377.48975 h 21.04486 v 2.83264 h -8.83118 V 402.367 h -3.38251 v -22.04461 h -8.83117 z" style="font-size:34.125px" id="path87"/>
+      <path d="m 591.99738,377.48975 h 3.36584 V 402.367 h -3.36584 z" style="font-size:34.125px" id="path89"/>
+      <path d="m 598.61243,377.48975 h 21.04486 v 2.83264 h -8.83118 V 402.367 h -3.38251 v -22.04461 h -8.83117 z" style="font-size:34.125px" id="path91"/>
+      <path d="m 643.85138,379.77252 q -3.66577,0 -5.83191,2.73267 -2.14947,2.73266 -2.14947,7.44818 0,4.69885 2.14947,7.43152 2.16614,2.73266 5.83191,2.73266 3.66577,0 5.79858,-2.73266 2.14948,-2.73267 2.14948,-7.43152 0,-4.71552 -2.14948,-7.44818 -2.13281,-2.73267 -5.79858,-2.73267 z m 0,-2.73266 q 5.23206,0 8.36462,3.5158 3.13257,3.49915 3.13257,9.39771 0,5.8819 -3.13257,9.3977 -3.13256,3.49915 -8.36462,3.49915 -5.24872,0 -8.39795,-3.49915 -3.13257,-3.49914 -3.13257,-9.3977 0,-5.89856 3.13257,-9.39771 3.14923,-3.5158 8.39795,-3.5158 z" style="font-size:34.125px" id="path93"/>
+      <path d="m 660.61395,377.48975 h 4.53223 l 11.03064,20.81158 v -20.81158 h 3.26587 V 402.367 h -4.53223 L 663.87982,381.55542 V 402.367 h -3.26587 z" style="font-size:34.125px" id="path95"/>
+    </g>
+    <g aria-label="F-Droid" id="text18" style="font-weight:700;font-size:29.7088px;line-height:100%;font-family:Rokkitt;-inkscape-font-specification:'Rokkitt Bold';letter-spacing:0;word-spacing:0;display:inline;overflow:visible;fill:#ffffff;stroke-width:1px;marker:none">
+      <text style="font-family: &quot;Roboto Condensed&quot;; font-size: 96.3px; white-space: pre;" x="507.339" y="487.563">Droid-ify</text>
+    </g>
+  </g>
+</svg>

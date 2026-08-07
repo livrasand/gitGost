@@ -139,7 +139,7 @@ func (p *GitLabProvider) CreateMR(owner, repo, branch, forkOwner, commitMessage 
 
 	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/merge_requests", projectID(owner, repo))
 
-	mrBody := fmt.Sprintf("%s\n\n---\n\n*This is an anonymous contribution made via [gitGost](https://gitgost.fly.dev).*\n\n*The original author's identity has been anonymized to protect their privacy.*", commitMessage)
+	mrBody := fmt.Sprintf("%s\n\n---\n\n*This is an anonymous contribution made via [gitGost](https://gitgost.livrasand.com).*\n\n*The original author's identity has been anonymized to protect their privacy. This is a service account that allows real humans to contribute anonymously.*", commitMessage)
 
 	payload := map[string]interface{}{
 		"source_branch":       branch,

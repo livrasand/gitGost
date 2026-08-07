@@ -1,4 +1,3 @@
-
 <div align="center" markdown="1">
 <img src="./web/assets/logos/gitgost-logo.svg" width="80" alt="gitGost Logo" height="80"/>
 
@@ -16,6 +15,10 @@ A community-led free and open-source Git collaboration platform built for privac
 <p align="center">
   <img src="./web/assets/screenshots/home.png" width="100%" />
  </p>
+
+> [!CAUTION]
+> gitGost anonymizes your identity from the final platform. Your IP is visible to the gitGost server, and the final platform only sees our server's IP.
+> For stronger protection, we recommend using Tor or a VPN to hide your IP from the gitGost server. Check the [README section](https://github.com/livrasand/gitGost/edit/main/README.md#threat-model) or the [Threat Model](THREAT_MODEL.md) for more details.
 
 ## One-liner demo
 

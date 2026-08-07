@@ -3366,6 +3366,11 @@ func UsersSearchHandler(c *gin.Context) {
 		results []gin.H
 	}
 
+	// Deadline global: los reintentos de proveedores lentos no deben extender
+	// la latencia total del request de forma indefinida.
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 45*time.Second)
+	defer cancel()
+
 	var wg sync.WaitGroup
 	ghChan := make(chan searchResult, 1)
 	glChan := make(chan searchResult, 1)
@@ -3401,7 +3406,17 @@ func UsersSearchHandler(c *gin.Context) {
 		cbChan <- searchResult{results: []gin.H{}}
 	}
 
-	wg.Wait()
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-ctx.Done():
+		c.JSON(http.StatusGatewayTimeout, gin.H{"error": "upstream search timed out"})
+		return
+	}
 	close(ghChan)
 	close(glChan)
 	close(cbChan)
@@ -3463,7 +3478,7 @@ func CodeSearchHandler(c *gin.Context) {
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		utils.Log("GitHub code search returned status: %d", resp.StatusCode)
-		c.JSON(resp.StatusCode, gin.H{"error": "GitHub code search failed"})
+		c.JSON(http.StatusBadGateway, gin.H{"error": "GitHub code search failed"})
 		return
 	}
 
@@ -3677,8 +3692,6 @@ func searchCodebergUsers(query, clientToken string) []gin.H {
 		}
 		resp, err := client.Do(req)
 		if err == nil && resp.StatusCode == http.StatusOK {
-			defer resp.Body.Close()
-
 			var data struct {
 				Data []struct {
 					Login    string `json:"login"`
@@ -3689,9 +3702,11 @@ func searchCodebergUsers(query, clientToken string) []gin.H {
 			}
 
 			if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+				resp.Body.Close()
 				utils.Log("Codeberg users search decode error: %v", err)
 				return results
 			}
+			resp.Body.Close()
 
 			for _, item := range data.Data {
 				results = append(results, gin.H{
@@ -3720,7 +3735,7 @@ func searchCodebergUsers(query, clientToken string) []gin.H {
 }
 
 type profileResult struct {
-	profile gin.H
+	profile  gin.H
 	notFound bool
 }
 
@@ -4475,7 +4490,6 @@ func codebergUserRepos(username, userType, clientToken string) []gin.H {
 		utils.Log("Codeberg user repos error: %v", err)
 		return nil
 	}
-	defer resp.Body.Close()
 
 	// Si el usuario no existe, probar como organización.
 	if resp.StatusCode != http.StatusOK && userType != "org" {
@@ -4486,8 +4500,8 @@ func codebergUserRepos(username, userType, clientToken string) []gin.H {
 			utils.Log("Codeberg org repos error: %v", err)
 			return nil
 		}
-		defer resp.Body.Close()
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		utils.Log("Codeberg user repos returned status: %d", resp.StatusCode)

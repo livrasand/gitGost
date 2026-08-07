@@ -17,7 +17,7 @@
     <script>if (typeof hljs !== 'undefined') hljs.configure({ ignoreUnescapedHTML: true });</script>
     <script src="https://cdn.jsdelivr.net/npm/marked@4/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.16.1/dist/mermaid.min.js" integrity="sha384-aBQXj4hK6Jm05i7aQAsUV3bLdSUrHX1BGYfMB0166TtWt/RRaw+h0Eelme9OCOvy" crossorigin="anonymous"></script>
     <style>
         :root {
             --bg: #ffffff;
@@ -2250,16 +2250,7 @@
 </svg> about</a>
                     </nav>
 
-        <div class="file-tree" id="file-tree" style="display:none;">
-            <div class="repo-search">
-                <input class="repo-search-input" id="repo-search-input" type="search" placeholder="search files or code" aria-label="Search repository" autocomplete="off" onkeydown="if(event.key==='Enter') searchRepository('files')">
-                <div class="repo-search-actions">
-                    <button class="repo-search-btn" type="button" onclick="searchRepository('files')">Files</button>
-                    <button class="repo-search-btn" type="button" onclick="searchRepository('code')">Code</button>
-                </div>
-            </div>
-            <div class="tree-loading">loading...</div>
-        </div>
+        <div class="file-tree" id="file-tree" style="display:none;"></div>
         <div class="code-panel" id="code-panel">
             <div class="code-loading">select a file</div>
         </div>
@@ -3915,6 +3906,7 @@
                         const link = res.headers.get('Link') || '';
                         if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
                         page++;
+                        if (page > 10) break;
                     }
                 } else if (rv.provider === 'cb') {
                     let page = 1;
@@ -3927,6 +3919,7 @@
                         const link = res.headers.get('Link') || '';
                         if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
                         page++;
+                        if (page > 10) break;
                     }
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
@@ -3940,6 +3933,7 @@
                         const link = res.headers.get('Link') || '';
                         if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
                         page++;
+                        if (page > 10) break;
                     }
                 }
                 renderTagsView(tags);
@@ -5566,10 +5560,21 @@
                     if (!res.ok) { if (section) section.style.display = 'none'; return; }
                     const data = await res.json();
                     tags = Array.isArray(data) ? data : [];
-                    // GitHub no expone el total de tags: se aproxima con la última página × per_page.
+                    // GitHub no expone el total de tags: se consulta la última página para un total exacto.
                     const link = res.headers.get('Link') || '';
                     const match = link.match(/&page=(\d+)>; rel="last"/);
-                    total = match ? parseInt(match[1]) * 100 : tags.length;
+                    if (match) {
+                        const lastPage = parseInt(match[1]);
+                        try {
+                            const lastRes = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/tags?per_page=100&page=${lastPage}`);
+                            const lastData = lastRes.ok ? await lastRes.json() : [];
+                            total = (lastPage - 1) * 100 + (Array.isArray(lastData) ? lastData.length : 0);
+                        } catch(_) {
+                            total = lastPage * 100;
+                        }
+                    } else {
+                        total = tags.length;
+                    }
                 } else if (rv.provider === 'gl') {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/tags?per_page=100`);
@@ -5824,6 +5829,12 @@
         </div>`;
         function _fileTreeShell(content) { return _fileTreeSearch + content; }
 
+        // Shell inicial del árbol: el buscador vive solo en _fileTreeSearch, sin copia duplicada.
+        const _fileTreeEl = document.getElementById('file-tree');
+        if (_fileTreeEl && !_fileTreeEl.childElementCount) {
+            _fileTreeEl.innerHTML = _fileTreeShell('<div class="tree-loading">loading...</div>');
+        }
+
         function _searchItem(name, path, extra) {
             return { name: name || String(path || '').split('/').pop(), path: path || name, type: 'file', ...(extra || {}) };
         }
@@ -5834,13 +5845,13 @@
                 const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/git/trees/${encodeURIComponent(ref)}?recursive=1`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
-                return (data.tree || []).filter(i => i.type === 'blob').map(i => _searchItem('', i.path));
+                return (data.tree || []).filter(i => i.type === 'blob').map(i => _searchItem('', i.path, { size: i.size }));
             }
             if (rv.provider === 'cb') {
                 const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/git/trees/${encodeURIComponent(ref)}?recursive=true`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
-                return (data.tree || []).filter(i => i.type === 'blob').map(i => _searchItem('', i.path));
+                return (data.tree || []).filter(i => i.type === 'blob').map(i => _searchItem('', i.path, { size: i.size }));
             }
             const project = encodeURIComponent(`${rv.owner}/${rv.repo}`);
             const files = [];
@@ -5853,6 +5864,8 @@
             }
             return files;
         }
+
+        let _codeSearchSubsetNote = false;
 
         async function _providerCodeSearch(query) {
             if (rv.provider === 'gh') {
@@ -5873,8 +5886,14 @@
             }
             // Forgejo's public API has no repository-scoped code search. Search file contents
             // client-side in a bounded set to keep the page responsive on large repositories.
+            _codeSearchSubsetNote = false;
             const binary = /\.(?:7z|avif|bin|bmp|class|dll|exe|gif|gz|ico|jar|jpe?g|mp3|mp4|otf|pdf|png|so|tar|ttf|webm|woff2?|zip)$/i;
-            const candidates = (await _allRepositoryFiles()).filter(i => !binary.test(i.path)).slice(0, 200);
+            const maxFileSize = 1024 * 1024; // 1 MiB: archivos más grandes se descartan antes de fetchear.
+            const maxCandidates = 100;
+            const allFiles = await _allRepositoryFiles();
+            const eligible = allFiles.filter(i => !binary.test(i.path) && (!i.size || i.size <= maxFileSize));
+            const candidates = eligible.slice(0, maxCandidates);
+            _codeSearchSubsetNote = eligible.length > candidates.length;
             const needle = query.toLowerCase();
             const matches = [];
             for (let start = 0; start < candidates.length; start += 8) {
@@ -5902,6 +5921,12 @@
             const heading = document.createElement('h2');
             heading.textContent = `${items.length} ${label} for “${query}”`;
             wrap.appendChild(heading);
+            if (mode === 'code' && _codeSearchSubsetNote) {
+                const note = document.createElement('div');
+                note.className = 'code-loading';
+                note.textContent = 'showing results from a subset of this repository';
+                wrap.appendChild(note);
+            }
             if (!items.length) {
                 const empty = document.createElement('div');
                 empty.className = 'code-loading';

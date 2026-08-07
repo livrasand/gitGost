@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout
-        # v5 runs on Node 24 (the runner no longer supports Node 20 actions).
+        # v5 runs on Node 24 (now the default runtime).
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
 
       - name: Set up Node
@@ -23,7 +23,7 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 22
-          cache: npm
+          package-manager-cache: false
 
       - name: Install Node dependencies
         run: npm ci
@@ -37,7 +37,6 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-          cache: gradle
 
       - name: Make gradlew executable
         run: chmod +x ./android/gradlew

@@ -7,6 +7,11 @@
     "@capacitor/cli": "^8.5.0",
     "@openai/codex-security": "^0.1.6"
   },
+  "overrides": {
+    "xcode": {
+      "uuid": "^11.1.1"
+    }
+  },
   "scripts": {
     "cap:sync": "npx cap sync",
     "cap:android": "npx cap run android",

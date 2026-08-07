@@ -84,6 +84,28 @@ That’s it. No login, token, name, or email required — gitGost provides stron
 | **Anonymous Contributions** | Push code and open pull requests without exposing your identity; open anonymous issues and comment on issues, PRs and GitHub Discussions. |
 | **Open Source & AGPL**      | 100% transparent. Fork it, audit it, host it yourself.                     |
 
+## Web and Android Interface
+
+gitGost also includes a privacy-first web interface for browsing and contributing to repositories across multiple Git forges — no account required.
+
+| Category | Features |
+|----------|----------|
+| **Explore** | Trending repositories, recently updated projects, popular repositories, users, stars, repository discovery |
+| **Repository** | Repository overview, README rendering, license, languages, stars, forks, releases, tags, contributors, packages, repository statistics |
+| **Code Browser** | Browse files and directories, syntax highlighting, Markdown rendering, latest commit per file |
+| **Commits** | Commit history, author, date, commit message, commit hash |
+| **Branches** | Browse branches, default branch, protected branches |
+| **Releases** | Browse releases, release notes, latest release |
+| **Tags** | Browse repository tags |
+| **Packages** | Browse published packages |
+| **Wiki** | Browse project wikis with Markdown rendering |
+| **Issues** | Browse issues, create anonymous issues, anonymous issue comments |
+| **Pull Requests** | Browse pull requests, create anonymous pull requests, anonymous PR comments |
+| **GitHub Discussions** | Browse discussions, anonymous discussion comments |
+| **Search & Navigation** | Repository navigation, forge switching, tag browsing |
+| **Identity Protection** | Anonymous browsing (`goster`), no account required, metadata stripping, anonymous contributions |
+| **Supported Forges** | GitHub, GitLab, Codeberg (Bitbucket, Gitea and SourceHut planned) |
+
 ## Quick Start
 
 ```bash

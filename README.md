@@ -268,8 +268,15 @@ for an overview of features.
 
 ### From binary
 
+> [!IMPORTANT]
+> **macOS Users:** You may see a warning that Apple cannot verify Komi Store. This happens because the app is distributed outside the App Store and is not notarized yet. Allow it via System Settings → Privacy & Security → Open Anyway.
+
+
 <a href="https://github.com/livrasand/gitGost/releases"><img src="https://raw.githubusercontent.com/rubenpgrady/get-it-on-github/refs/heads/main/get-it-on-github.png" alt="Get it on GitHub" height="96" />
 </a>
+
+> [!TIP]
+> **macOS Users:** Install GREN with Homebrew.
 
 ### From Homebrew
 
@@ -590,7 +597,7 @@ _gitGost does not host any content. All content on gitGost is from GitHub, GitLa
 ---
 
 > [!IMPORTANT]
-> Upvote gitGost on [Product Hunt](https://www.producthunt.com/posts/gitgost-anonymous-git-contributions), [PeerPush](https://peerpush.com/p/gitgost), to help me promote it.
+> Upvote gitGost on [AlternativeTo](https://alternativeto.net/software/gitgost/), [Product Hunt](https://www.producthunt.com/posts/gitgost-anonymous-git-contributions), [PeerPush](https://peerpush.com/p/gitgost), to help me promote it.
 
 [![Share](https://img.shields.io/badge/share-000000?logo=x&logoColor=white)](https://x.com/intent/tweet?text=Check%20out%20this%20project%20on%20GitHub:%20https://github.com/livrasand/gitGost%20%23gitGost%20%23anonymous%20%23privacy)
 [![Share](https://img.shields.io/badge/share-1877F2?logo=facebook&logoColor=white)](https://www.facebook.com/sharer/sharer.php?u=https://github.com/livrasand/gitGost)

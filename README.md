@@ -176,6 +176,10 @@ Every donation will be spent on making gitGost better for our users.
 
 Please consider a regular donation through [GitHub Sponsors](https://github.com/sponsors/livrasand).
 
+## Discussion
+
+There is a community-managed chat group for gitGost using Openbin at [https://openbin.livrasand.com/group/gitgost](https://openbin.livrasand.com/group/gitgost). Any web browser should be able to connect. This chat is not private; it is only anonymous. Anyone inside or outside Openbin can see the group and its messages. But as I have mentioned on several occasions, anonymity depends on you—on whether you use Tor or a VPN and avoid sharing data in your messages that could link back to you.
+
 ## Repository Opt-Out
 
 Maintainers can block anonymous contributions via gitGost by adding `DENY_ALL: true` to the `.gitgost.yml` file in their repository root:

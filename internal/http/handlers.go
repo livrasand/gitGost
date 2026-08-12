@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -2998,6 +2999,17 @@ func CodebergProxyHandler(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "failed to reach Codeberg"})
 		return
 	}
+	// Si Codeberg rechaza el token por scopes insuficientes (p.ej. read:package
+	// en /packages) devuelve 403 incluso para contenido público. Se reintenta
+	// sin token para que la UI no oculte secciones por un 403 de configuración.
+	if allowedAPIPath && resp.StatusCode == http.StatusForbidden && req.Header.Get("Authorization") != "" {
+		anonReq := req.Clone(c.Request.Context())
+		anonReq.Header.Del("Authorization")
+		if anonResp, anonErr := client.Do(anonReq); anonErr == nil {
+			resp.Body.Close()
+			resp = anonResp
+		}
+	}
 	defer resp.Body.Close()
 
 	// Gitea/Codeberg devuelve 404 en /contributors cuando el repo tiene demasiada
@@ -3824,6 +3836,8 @@ func gitHubUserProfile(username, clientToken string) profileResult {
 		CreatedAt   string `json:"created_at"`
 		Blog        string `json:"blog"`
 		Type        string `json:"type"`
+		Twitter     string `json:"twitter_username"`
+		Email       string `json:"email"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&d); err != nil {
@@ -3835,6 +3849,15 @@ func gitHubUserProfile(username, clientToken string) profileResult {
 	if d.Type == "Organization" {
 		userType = "org"
 	}
+
+	// LinkedIn/YouTube no vienen en /users/{login}: se obtienen de las cuentas sociales conectadas.
+	socials := map[string]string{}
+	if d.Type != "Organization" {
+		socials = githubSocialAccounts(d.Login, token)
+	}
+	linkedin := socials["linkedin"]
+	youtube := socials["youtube"]
+	instagram := socials["instagram"]
 
 	return profileResult{
 		profile: gin.H{
@@ -3851,9 +3874,404 @@ func gitHubUserProfile(username, clientToken string) profileResult {
 			"type":         userType,
 			"joined_at":    d.CreatedAt,
 			"website":      d.Blog,
+			"twitter":      d.Twitter,
+			"email":        d.Email,
+			"linkedin":     linkedin,
+			"youtube":      youtube,
+			"instagram":    instagram,
 		},
 		notFound: false,
 	}
+}
+
+// githubSocialAccounts obtiene las cuentas sociales conectadas del usuario
+// (GET /users/{username}/social_accounts); GitHub no las expone en el perfil.
+// Devuelve un mapa provider -> url.
+func githubSocialAccounts(username, token string) map[string]string {
+	accounts := map[string]string{}
+	apiURL := fmt.Sprintf("https://api.github.com/users/%s/social_accounts?per_page=100", url.PathEscape(username))
+	client := &http.Client{Timeout: 5 * time.Second}
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return accounts
+	}
+	if token != "" {
+		req.Header.Set("Authorization", "token "+token)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return accounts
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return accounts
+	}
+	var items []struct {
+		Provider string `json:"provider"`
+		URL      string `json:"url"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&items); err != nil {
+		return accounts
+	}
+	for _, a := range items {
+		if a.URL != "" {
+			accounts[a.Provider] = a.URL
+		}
+	}
+	return accounts
+}
+
+// UserStarredHandler proxy GET /users/{login}/starred. El navegador no debe llamar a
+// api.github.com directamente: sin token el rate-limit por IP (60/h) responde 403. Aquí
+// se usa el bot token del servidor, con el del cliente de respaldo. Codeberg (Gitea)
+// exige auth para /users/{user}/starred (401 sin token); si la consulta falla se
+// responde lista vacía (200) para que el navegador no loguee errores de red por una
+// sección opcional del perfil.
+func UserStarredHandler(c *gin.Context) {
+	username := strings.TrimSpace(c.Query("user"))
+	provider := strings.TrimSpace(c.Query("provider"))
+	if username == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user parameter required"})
+		return
+	}
+	clientToken := strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(c.GetHeader("Authorization"), "token "), "Bearer "))
+
+	if provider == "cb" {
+		token := os.Getenv("CODEBERG_TOKEN")
+		if token == "" {
+			token = clientToken
+		}
+		starred := []json.RawMessage{}
+		for page := 1; page <= 10; page++ {
+			body, status, _ := codebergAPIGet(fmt.Sprintf("/api/v1/users/%s/starred?limit=50&page=%d", url.PathEscape(username), page), token)
+			if status != http.StatusOK || len(body) == 0 {
+				break
+			}
+			var items []json.RawMessage
+			if json.Unmarshal(body, &items) != nil {
+				break
+			}
+			if len(items) == 0 {
+				break
+			}
+			starred = append(starred, items...)
+			if len(items) < 50 {
+				break
+			}
+		}
+		c.JSON(http.StatusOK, starred)
+		return
+	}
+
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+	client := &http.Client{Timeout: 15 * time.Second}
+	starred := []json.RawMessage{}
+	for page := 1; page <= 10; page++ {
+		apiURL := fmt.Sprintf("https://api.github.com/users/%s/starred?per_page=100&page=%d", url.PathEscape(username), page)
+		req, err := http.NewRequest("GET", apiURL, nil)
+		if err != nil {
+			break
+		}
+		if token != "" {
+			req.Header.Set("Authorization", "token "+token)
+		}
+		req.Header.Set("Accept", "application/vnd.github+json")
+		req.Header.Set("User-Agent", "gitGost")
+		resp, err := client.Do(req)
+		if err != nil {
+			break
+		}
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			// Sección opcional: lista vacía en vez de propagar el error de red.
+			break
+		}
+		var items []json.RawMessage
+		if err := json.NewDecoder(resp.Body).Decode(&items); err != nil {
+			resp.Body.Close()
+			break
+		}
+		resp.Body.Close()
+		if len(items) == 0 {
+			break
+		}
+		starred = append(starred, items...)
+		if !strings.Contains(resp.Header.Get("Link"), `rel="next"`) {
+			break
+		}
+	}
+	c.JSON(http.StatusOK, starred)
+}
+
+// UserOrgsHandler devuelve las organizaciones públicas de un usuario. Codeberg exige
+// auth para /users/{user}/orgs (401 sin token); se intenta con el token del
+// servidor/cliente y, si falla, se responde lista vacía (200) para que el navegador no
+// loguee errores de red por una sección opcional del perfil.
+func UserOrgsHandler(c *gin.Context) {
+	username := strings.TrimSpace(c.Query("user"))
+	provider := strings.TrimSpace(c.Query("provider"))
+	if username == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user parameter required"})
+		return
+	}
+	clientToken := strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(c.GetHeader("Authorization"), "token "), "Bearer "))
+	orgs := []gin.H{}
+
+	if provider == "cb" {
+		token := os.Getenv("CODEBERG_TOKEN")
+		if token == "" {
+			token = clientToken
+		}
+		body, status, _ := codebergAPIGet("/api/v1/users/"+url.PathEscape(username)+"/orgs?limit=50", token)
+		if status == http.StatusOK {
+			var items []struct {
+				Username string `json:"username"`
+				Avatar   string `json:"avatar_url"`
+			}
+			if json.Unmarshal(body, &items) == nil {
+				for _, o := range items {
+					if o.Username != "" {
+						orgs = append(orgs, gin.H{"login": o.Username, "avatar_url": o.Avatar})
+					}
+				}
+			}
+		}
+		c.JSON(http.StatusOK, orgs)
+		return
+	}
+
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/users/%s/orgs?per_page=100", url.PathEscape(username)), nil)
+	if err == nil {
+		if token != "" {
+			req.Header.Set("Authorization", "token "+token)
+		}
+		req.Header.Set("Accept", "application/vnd.github+json")
+		req.Header.Set("User-Agent", "gitGost")
+		resp, err := client.Do(req)
+		if err == nil && resp.StatusCode == http.StatusOK {
+			var items []struct {
+				Login  string `json:"login"`
+				Avatar string `json:"avatar_url"`
+			}
+			if json.NewDecoder(resp.Body).Decode(&items) == nil {
+				for _, o := range items {
+					if o.Login != "" {
+						orgs = append(orgs, gin.H{"login": o.Login, "avatar_url": o.Avatar})
+					}
+				}
+			}
+			resp.Body.Close()
+		} else if resp != nil {
+			resp.Body.Close()
+		}
+	}
+	c.JSON(http.StatusOK, orgs)
+}
+
+// UserEventsHandler proxies GET /users/{login}/events de GitHub (usado por el
+// heatmap de commits del perfil), con el mismo motivo que UserStarredHandler.
+func UserEventsHandler(c *gin.Context) {
+	username := strings.TrimSpace(c.Query("user"))
+	if username == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user parameter required"})
+		return
+	}
+	clientToken := strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(c.GetHeader("Authorization"), "token "), "Bearer "))
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+	client := &http.Client{Timeout: 15 * time.Second}
+	events := []json.RawMessage{}
+	for page := 1; page <= 3; page++ {
+		apiURL := fmt.Sprintf("https://api.github.com/users/%s/events?per_page=100&page=%d", url.PathEscape(username), page)
+		req, err := http.NewRequest("GET", apiURL, nil)
+		if err != nil {
+			break
+		}
+		if token != "" {
+			req.Header.Set("Authorization", "token "+token)
+		}
+		req.Header.Set("Accept", "application/vnd.github+json")
+		req.Header.Set("User-Agent", "gitGost")
+		resp, err := client.Do(req)
+		if err != nil {
+			break
+		}
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			if page == 1 {
+				c.JSON(resp.StatusCode, gin.H{"error": "GitHub events request failed"})
+				return
+			}
+			break
+		}
+		var items []json.RawMessage
+		if err := json.NewDecoder(resp.Body).Decode(&items); err != nil {
+			resp.Body.Close()
+			break
+		}
+		resp.Body.Close()
+		if len(items) == 0 {
+			break
+		}
+		events = append(events, items...)
+		if !strings.Contains(resp.Header.Get("Link"), `rel="next"`) {
+			break
+		}
+	}
+	c.JSON(http.StatusOK, events)
+}
+
+// UserContributionsHandler devuelve el gráfico anual de contribuciones de un
+// usuario de GitHub (el mismo que muestra su perfil), usado por el heatmap de
+// la sidebar. Con token usa la GraphQL API (conteos exactos por día); sin token
+// parsea el HTML público de github.com/{login} (niveles 0-4 por día).
+func UserContributionsHandler(c *gin.Context) {
+	username := strings.TrimSpace(c.Query("user"))
+	if username == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user parameter required"})
+		return
+	}
+	clientToken := strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(c.GetHeader("Authorization"), "token "), "Bearer "))
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		token = clientToken
+	}
+	if token != "" {
+		if result, ok := ghContributionsGraphQL(username, token); ok {
+			c.JSON(http.StatusOK, result)
+			return
+		}
+	}
+	result, err := ghContributionsScrape(username)
+	if err != nil {
+		// github.com devuelve 404 para usuarios inexistentes; el resto son fallos de red/parseo.
+		if strings.Contains(err.Error(), "status 404") {
+			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			return
+		}
+		c.JSON(http.StatusBadGateway, gin.H{"error": "GitHub contributions request failed"})
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+var ghTotalContributionsRe = regexp.MustCompile(`([\d,]+)\s+contributions in the last year`)
+var ghContributionCellRe = regexp.MustCompile(`data-date="([0-9]{4}-[0-9]{2}-[0-9]{2})"[^>]*data-level="([0-4])"`)
+
+// ghContributionsGraphQL consulta la contributionCalendar de GitHub vía GraphQL:
+// datos exactos por día (incluye commits, PRs, issues, reviews y discusiones).
+func ghContributionsGraphQL(username, token string) (map[string]any, bool) {
+	body, err := json.Marshal(map[string]any{
+		"query":     `query($login:String!){user(login:$login){contributionsCollection{restrictedContributionsCount contributionCalendar{totalContributions weeks{contributionDays{date contributionCount}}}}}}`,
+		"variables": map[string]any{"login": username},
+	})
+	if err != nil {
+		return nil, false
+	}
+	req, err := http.NewRequest("POST", "https://api.github.com/graphql", bytes.NewReader(body))
+	if err != nil {
+		return nil, false
+	}
+	req.Header.Set("Authorization", "token "+token)
+	req.Header.Set("User-Agent", "gitGost")
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, false
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, false
+	}
+	var gql struct {
+		Data struct {
+			User struct {
+				ContributionsCollection struct {
+					RestrictedContributionsCount int `json:"restrictedContributionsCount"`
+					ContributionCalendar         struct {
+						TotalContributions int `json:"totalContributions"`
+						Weeks              []struct {
+							ContributionDays []struct {
+								Date              string `json:"date"`
+								ContributionCount int    `json:"contributionCount"`
+							} `json:"contributionDays"`
+						} `json:"weeks"`
+					} `json:"contributionCalendar"`
+				} `json:"contributionsCollection"`
+			} `json:"user"`
+		} `json:"data"`
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&gql); err != nil {
+		return nil, false
+	}
+	cc := gql.Data.User.ContributionsCollection
+	if len(gql.Errors) > 0 || cc.ContributionCalendar.Weeks == nil {
+		return nil, false
+	}
+	days := make([]map[string]any, 0, 370)
+	for _, w := range cc.ContributionCalendar.Weeks {
+		for _, d := range w.ContributionDays {
+			days = append(days, map[string]any{"date": d.Date, "count": d.ContributionCount})
+		}
+	}
+	return map[string]any{
+		"total":   cc.ContributionCalendar.TotalContributions,
+		"private": cc.RestrictedContributionsCount,
+		"days":    days,
+	}, true
+}
+
+// ghContributionsScrape parsea las celdas del contribution calendar del HTML
+// público del perfil (sin token): data-level va de 0 a 4, sin conteo exacto.
+func ghContributionsScrape(username string) (map[string]any, error) {
+	apiURL := fmt.Sprintf("https://github.com/%s", url.PathEscape(username))
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "gitGost")
+	req.Header.Set("Accept", "text/html")
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("GitHub profile returned status %d", resp.StatusCode)
+	}
+	raw, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	html := string(raw)
+	total := 0
+	if m := ghTotalContributionsRe.FindStringSubmatch(html); m != nil {
+		total, _ = strconv.Atoi(strings.ReplaceAll(m[1], ",", ""))
+	}
+	cells := ghContributionCellRe.FindAllStringSubmatch(html, -1)
+	if len(cells) == 0 {
+		return nil, fmt.Errorf("contribution calendar not found in profile page")
+	}
+	days := make([]map[string]any, 0, len(cells))
+	for _, m := range cells {
+		level, _ := strconv.Atoi(m[2])
+		days = append(days, map[string]any{"date": m[1], "level": level})
+	}
+	return map[string]any{"total": total, "days": days}, nil
 }
 
 func gitLabUserProfile(username, clientToken string) profileResult {
@@ -4009,6 +4427,43 @@ func gitLabUserCount(userID int, kind, clientToken string) int {
 	return 0
 }
 
+// codebergAPIGet hace GET a la API de Codeberg. Codeberg responde 403 cuando el
+// token configurado no tiene los scopes necesarios, incluso para contenido público;
+// por eso, ante un 403 se reintenta una vez sin token. Devuelve body, status y
+// X-Total-Count (cuando el endpoint es un listado).
+func codebergAPIGet(apiPath, token string) ([]byte, int, int) {
+	client := &http.Client{Timeout: 10 * time.Second}
+	for attempt := 0; attempt < 2; attempt++ {
+		req, err := http.NewRequest("GET", "https://codeberg.org"+apiPath, nil)
+		if err != nil {
+			return nil, 0, 0
+		}
+		if token != "" {
+			req.Header.Set("Authorization", "token "+token)
+		}
+		req.Header.Set("User-Agent", "gitGost/1.0")
+		resp, err := client.Do(req)
+		if err != nil {
+			token = ""
+			continue
+		}
+		body, readErr := io.ReadAll(resp.Body)
+		total := 0
+		if h := resp.Header.Get("X-Total-Count"); h != "" {
+			fmt.Sscanf(h, "%d", &total)
+		}
+		resp.Body.Close()
+		if readErr != nil {
+			return nil, resp.StatusCode, 0
+		}
+		if resp.StatusCode == http.StatusOK || attempt == 1 {
+			return body, resp.StatusCode, total
+		}
+		token = ""
+	}
+	return nil, 0, 0
+}
+
 func codebergUserProfile(username, clientToken string) profileResult {
 	apiURL := fmt.Sprintf("https://codeberg.org/api/v1/users/%s", url.PathEscape(username))
 
@@ -4018,6 +4473,7 @@ func codebergUserProfile(username, clientToken string) profileResult {
 	if token == "" {
 		token = clientToken
 	}
+	authToken := token
 
 	var lastStatusCode int
 	// Codeberg exige el scope read:user para endpoints de usuarios; si el token
@@ -4030,6 +4486,7 @@ func codebergUserProfile(username, clientToken string) profileResult {
 		if token != "" {
 			req.Header.Set("Authorization", "token "+token)
 		}
+		req.Header.Set("User-Agent", "gitGost/1.0")
 		resp, err := client.Do(req)
 		if err == nil && resp.StatusCode == http.StatusOK {
 			defer resp.Body.Close()
@@ -4042,7 +4499,6 @@ func codebergUserProfile(username, clientToken string) profileResult {
 				Location    string `json:"location"`
 				Followers   int    `json:"followers_count"`
 				Following   int    `json:"following_count"`
-				PublicRepos int    `json:"public_repo_count"`
 				HTMLURL     string `json:"html_url"`
 				CreatedAt   string `json:"created"`
 				Website     string `json:"website"`
@@ -4054,9 +4510,28 @@ func codebergUserProfile(username, clientToken string) profileResult {
 				return profileResult{profile: nil, notFound: false}
 			}
 
-			userType := "user"
+			if d.Login == "" {
+				return profileResult{profile: nil, notFound: false}
+			}
+
+			// Codeberg (Forgejo) no incluye el campo type en /users/{login}, así que
+			// las organizaciones se detectan consultando /orgs/{login}: si responde
+			// 200, el perfil se resuelve como organización (con sus miembros públicos).
 			if d.Type == "organization" {
-				userType = "org"
+				return codebergOrgProfile(d.Login, clientToken)
+			}
+			if _, status, _ := codebergAPIGet("/api/v1/orgs/"+url.PathEscape(d.Login), authToken); status == http.StatusOK {
+				return codebergOrgProfile(d.Login, clientToken)
+			}
+
+			// /users/{login} no expone el total de repos ni paquetes: se obtienen de
+			// los endpoints de listado (X-Total-Count), con reintento anónimo si el
+			// token carece de scopes.
+			reposTotal, packagesTotal := 0, 0
+			if d.Login != "" {
+				esc := url.PathEscape(d.Login)
+				_, _, reposTotal = codebergAPIGet("/api/v1/users/"+esc+"/repos?limit=1", authToken)
+				_, _, packagesTotal = codebergAPIGet("/api/v1/packages/"+esc+"?limit=1", authToken)
 			}
 
 			return profileResult{
@@ -4069,9 +4544,10 @@ func codebergUserProfile(username, clientToken string) profileResult {
 					"location":     d.Location,
 					"followers":    d.Followers,
 					"following":    d.Following,
-					"public_repos": d.PublicRepos,
+					"public_repos": reposTotal,
+					"packages":     packagesTotal,
 					"url":          d.HTMLURL,
-					"type":         userType,
+					"type":         "user",
 					"joined_at":    d.CreatedAt,
 					"website":      d.Website,
 				},
@@ -4105,6 +4581,7 @@ func codebergOrgProfile(username, clientToken string) profileResult {
 	if token == "" {
 		token = clientToken
 	}
+	authToken := token
 
 	var lastStatusCode int
 	// Codeberg exige el scope read:user para endpoints de usuarios; si el token
@@ -4117,6 +4594,7 @@ func codebergOrgProfile(username, clientToken string) profileResult {
 		if token != "" {
 			req.Header.Set("Authorization", "token "+token)
 		}
+		req.Header.Set("User-Agent", "gitGost/1.0")
 		resp, err := client.Do(req)
 		if err == nil && resp.StatusCode == http.StatusOK {
 			defer resp.Body.Close()
@@ -4137,18 +4615,45 @@ func codebergOrgProfile(username, clientToken string) profileResult {
 				return profileResult{profile: nil, notFound: false}
 			}
 
+			// /orgs/{org} no incluye totales ni miembros: se completan con los
+			// endpoints públicos (listados con X-Total-Count y public_members).
+			reposTotal, packagesTotal := 0, 0
+			var members []gin.H
+			if o.Username != "" {
+				esc := url.PathEscape(o.Username)
+				_, _, reposTotal = codebergAPIGet("/api/v1/orgs/"+esc+"/repos?limit=1", authToken)
+				_, _, packagesTotal = codebergAPIGet("/api/v1/packages/"+esc+"?limit=1", authToken)
+				body, status, _ := codebergAPIGet("/api/v1/orgs/"+esc+"/public_members?limit=50", authToken)
+				if status == http.StatusOK {
+					var users []struct {
+						Login  string `json:"login"`
+						Avatar string `json:"avatar_url"`
+					}
+					if json.Unmarshal(body, &users) == nil {
+						for _, u := range users {
+							if u.Login != "" {
+								members = append(members, gin.H{"login": u.Login, "avatar_url": u.Avatar})
+							}
+						}
+					}
+				}
+			}
+
 			return profileResult{
 				profile: gin.H{
-					"provider":   "codeberg",
-					"username":   o.Username,
-					"name":       o.FullName,
-					"avatar_url": o.Avatar,
-					"bio":        o.Description,
-					"location":   o.Location,
-					"url":        o.HTMLURL,
-					"type":       "org",
-					"joined_at":  o.CreatedAt,
-					"website":    o.Website,
+					"provider":     "codeberg",
+					"username":     o.Username,
+					"name":         o.FullName,
+					"avatar_url":   o.Avatar,
+					"bio":          o.Description,
+					"location":     o.Location,
+					"url":          o.HTMLURL,
+					"type":         "org",
+					"joined_at":    o.CreatedAt,
+					"website":      o.Website,
+					"public_repos": reposTotal,
+					"packages":     packagesTotal,
+					"members":      members,
 				},
 				notFound: false,
 			}
@@ -4171,7 +4676,8 @@ func codebergOrgProfile(username, clientToken string) profileResult {
 	return profileResult{profile: nil, notFound: notFound}
 }
 
-// UserReadmeHandler devuelve el README del repo de perfil {user}/{user} (gh/gl/cb).
+// UserReadmeHandler devuelve el README del repo de perfil: {user}/{user} en gh/gl,
+// y el repo ".profile" en Codeberg (con fallback a {user}/{user}).
 // Se sirve por el backend en vez de fetch directo del navegador: gitlab.com responde
 // 302 hacia /users/sign_in para repos inexistentes/privados y el navegador bloquea
 // esa redirección cross-origin por CORS.
@@ -4191,17 +4697,23 @@ func UserReadmeHandler(c *gin.Context) {
 	}
 
 	var refs []string
-	basePrefix := ""
+	var basePrefixes []string
 	switch provider {
 	case "gl":
 		refs = []string{"HEAD", "master", "main"}
-		basePrefix = fmt.Sprintf("https://gitlab.com/%s/%s/-/raw/", url.PathEscape(username), url.PathEscape(username))
+		basePrefixes = []string{fmt.Sprintf("https://gitlab.com/%s/%s/-/raw/", url.PathEscape(username), url.PathEscape(username))}
 	case "cb":
 		refs = []string{"main", "master"}
-		basePrefix = fmt.Sprintf("https://codeberg.org/%s/%s/raw/branch/", url.PathEscape(username), url.PathEscape(username))
+		// Codeberg/Forgejo guarda el README de perfil en el repo ".profile" (no en
+		// {user}/{user} como Gitea). Se intenta ".profile" primero y se mantiene la
+		// convención antigua como fallback para usuarios que aún usen ese nombre.
+		basePrefixes = []string{
+			fmt.Sprintf("https://codeberg.org/%s/.profile/raw/branch/", url.PathEscape(username)),
+			fmt.Sprintf("https://codeberg.org/%s/%s/raw/branch/", url.PathEscape(username), url.PathEscape(username)),
+		}
 	default: // gh
 		refs = []string{"HEAD", "master", "main"}
-		basePrefix = fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/", url.PathEscape(username), url.PathEscape(username))
+		basePrefixes = []string{fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/", url.PathEscape(username), url.PathEscape(username))}
 	}
 
 	// No seguir redirecciones: GitLab responde 302 a /users/sign_in cuando el repo no
@@ -4213,41 +4725,45 @@ func UserReadmeHandler(c *gin.Context) {
 		},
 	}
 
-	for _, ref := range refs {
-		req, err := http.NewRequest(http.MethodGet, basePrefix+url.PathEscape(ref)+"/README.md", nil)
-		if err != nil {
-			continue
-		}
-		req.Header.Set("User-Agent", "gitGost/1.0")
-		if provider == "gl" {
-			if token := os.Getenv("GITLAB_TOKEN"); token != "" {
-				req.Header.Set("PRIVATE-TOKEN", token)
-			} else if clientToken != "" {
-				req.Header.Set("PRIVATE-TOKEN", clientToken)
+	for _, basePrefix := range basePrefixes {
+		for _, ref := range refs {
+			req, err := http.NewRequest(http.MethodGet, basePrefix+url.PathEscape(ref)+"/README.md", nil)
+			if err != nil {
+				continue
 			}
-		}
-		resp, err := client.Do(req)
-		if err != nil {
-			continue
-		}
-		body, readErr := io.ReadAll(io.LimitReader(resp.Body, 2<<20)) // máx 2 MiB
-		resp.Body.Close()
-		if readErr != nil {
-			continue
-		}
-		contentType := strings.ToLower(resp.Header.Get("Content-Type"))
-		if resp.StatusCode >= 200 && resp.StatusCode < 300 &&
-			!strings.Contains(contentType, "html") &&
-			len(bytes.TrimSpace(body)) > 0 {
-			c.JSON(http.StatusOK, gin.H{
-				"content":  string(body),
-				"base_url": basePrefix + url.PathEscape(ref) + "/",
-			})
-			return
+			req.Header.Set("User-Agent", "gitGost/1.0")
+			if provider == "gl" {
+				if token := os.Getenv("GITLAB_TOKEN"); token != "" {
+					req.Header.Set("PRIVATE-TOKEN", token)
+				} else if clientToken != "" {
+					req.Header.Set("PRIVATE-TOKEN", clientToken)
+				}
+			}
+			resp, err := client.Do(req)
+			if err != nil {
+				continue
+			}
+			body, readErr := io.ReadAll(io.LimitReader(resp.Body, 2<<20)) // máx 2 MiB
+			resp.Body.Close()
+			if readErr != nil {
+				continue
+			}
+			contentType := strings.ToLower(resp.Header.Get("Content-Type"))
+			if resp.StatusCode >= 200 && resp.StatusCode < 300 &&
+				!strings.Contains(contentType, "html") &&
+				len(bytes.TrimSpace(body)) > 0 {
+				c.JSON(http.StatusOK, gin.H{
+					"content":  string(body),
+					"base_url": basePrefix + url.PathEscape(ref) + "/",
+				})
+				return
+			}
 		}
 	}
 
-	c.JSON(http.StatusNotFound, gin.H{"error": "readme not found"})
+	// Sin README: 200 con contenido vacío. La ausencia de README es un caso normal,
+	// no un error, y el navegador loguea como fallo de red cualquier 404 del fetch.
+	c.JSON(http.StatusOK, gin.H{"content": "", "base_url": ""})
 }
 
 // UserReposHandler devuelve los repositorios públicos de un usuario u organización (gh/gl/cb).

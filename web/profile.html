@@ -24,6 +24,10 @@
             --border: #e0e0e0;
             --card: #f9f9f9;
             --code-bg: #f4f4f4;
+            --radius-lg: 4px;
+            --radius-md: 4px;
+            --radius-sm: 3px;
+            --radius-pill: 999px;
             --alert-note: #0969da;
             --alert-tip: #1a7f37;
             --alert-important: #8250df;
@@ -122,9 +126,11 @@
             font-size: 0.8rem;
             font-family: 'IBM Plex Mono', monospace;
             white-space: nowrap;
+            border-left: 2px solid transparent;
+            transition: background 0.1s, color 0.1s;
         }
         .left-nav a:hover { background: var(--bg-hover); color: var(--fg); }
-        .left-nav a.active { background: var(--bg-hover); color: var(--fg); font-weight: 600; }
+        .left-nav a.active { border-left-color: var(--accent); color: var(--fg); background: var(--bg-hover); font-weight: 600; }
         .left-nav a .count { margin-left: auto; color: var(--fg-secondary); font-size: 0.68rem; }
 
         .main-content {
@@ -164,7 +170,7 @@
         .profile-header .avatar {
             width: 64px;
             height: 64px;
-            border-radius: 6px;
+            border-radius: 50%;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             display: flex;
@@ -185,12 +191,13 @@
             font-family: 'IBM Plex Mono', monospace;
             font-size: 0.65rem;
             border: 1px solid;
-            border-radius: 3px;
-            padding: 0.1em 0.4em;
+            border-radius: var(--radius-pill);
+            padding: 0.15em 0.6em;
             opacity: 0.85;
+            background: var(--bg-secondary);
             display: inline-flex;
             align-items: center;
-            gap: 0.25em;
+            gap: 0.3em;
         }
         .provider-badge svg { display: block; }
 
@@ -198,16 +205,17 @@
             font-family: 'IBM Plex Mono', monospace;
             font-size: 0.65rem;
             border: 1px solid var(--border);
-            border-radius: 3px;
-            padding: 0.1em 0.4em;
+            border-radius: var(--radius-pill);
+            padding: 0.15em 0.6em;
             color: var(--fg-muted);
+            background: var(--bg-secondary);
             display: inline-flex;
             align-items: center;
         }
 
         .readme-box {
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: var(--radius-lg);
             margin-bottom: 1.5rem;
         }
         .readme-header {
@@ -290,14 +298,14 @@
         .markdown-alert-tip       { border-left-color: var(--alert-tip); }
         .markdown-alert-caution   { border-left-color: var(--alert-caution); }
 
-        .repo-list { display: flex; flex-direction: column; gap: 0.6rem; }
+        .repo-list { display: flex; flex-direction: column; gap: 0; }
         .repo-card {
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 0.7rem 1rem;
-            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0.8rem 0;
+            transition: background-color 0.1s ease;
         }
-        .repo-card:hover { background: var(--bg-secondary); }
+        .repo-card:last-child { border-bottom: none; }
+        .repo-card:hover { background: var(--bg-hover); }
         .repo-card-head { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
         .repo-name {
             color: var(--accent);
@@ -312,8 +320,9 @@
             font-size: 0.62rem;
             color: var(--fg-muted);
             border: 1px solid var(--border);
-            border-radius: 3px;
-            padding: 0.08em 0.45em;
+            border-radius: var(--radius-pill);
+            padding: 0.1em 0.55em;
+            background: var(--bg-secondary);
             flex-shrink: 0;
         }
         .repo-desc {
@@ -367,6 +376,38 @@
         .person-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .person-info { min-width: 0; }
         .person-name { color: var(--fg-muted); font-size: 0.72rem; margin-top: 0.1rem; }
+
+        .orgs-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+        }
+        .orgs-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--fg-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .org-avatar {
+            width: 2.1rem;
+            height: 2.1rem;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: var(--fg-muted);
+            overflow: hidden;
+            flex-shrink: 0;
+            text-decoration: none;
+        }
+        .org-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .profile-error {
             color: var(--fg-secondary);
             font-family: 'IBM Plex Mono', monospace;
@@ -377,7 +418,7 @@
         .sb-about .sb-avatar {
             width: 56px;
             height: 56px;
-            border-radius: 6px;
+            border-radius: 50%;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             display: flex;
@@ -494,7 +535,7 @@
         }
         .hm-cell {
             aspect-ratio: 1;
-            border-radius: 1px;
+            border-radius: 2px;
             background: var(--bg-hover);
         }
         .hm-cell.hm-blank { background: transparent; }
@@ -545,6 +586,13 @@
             .right-sidebar { display: none; }
             .main-content { padding: 1rem; }
         }
+        @media (max-width: 560px) {
+            .profile-header { flex-direction: column; align-items: flex-start; }
+            .stats-grid { flex-wrap: wrap; }
+            .statusbar { padding: 0.5rem 0.9rem; }
+            .readme-content { padding: 1rem; }
+            .hm-months { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
+        }
     </style>
 </head>
 <body>
@@ -594,13 +642,35 @@
                 stars
                 <span class="count" id="nav-star-count"></span>
             </a>
+            <a href="#" id="nav-projects" style="display:none;" onclick="openProjects(); return false;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                    <path d="M0 0h24v24H0z" fill="none" />
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.5 5.25A1.75 1.75 0 0 1 6.25 3.5h11.5A1.75 1.75 0 0 1 19.5 5.25v13.5A1.75 1.75 0 0 1 17.75 20.5H6.25A1.75 1.75 0 0 1 4.5 18.75zM9.5 8v8M14.5 8v8" />
+                </svg>
+                projects
+                <span class="count" id="nav-projects-count"></span>
+            </a>
+            <a href="#" id="nav-packages" style="display:none;" onclick="openPackages(); return false;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                    <path d="M0 0h24v24H0z" fill="none" />
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m12 12l8.073-4.625M12 12v9.25M12 12L7.963 9.688m12.11-2.313a3.17 3.17 0 0 0-1.165-1.156L16.25 4.696m3.823 2.679c.275.472.427 1.015.427 1.58v6.09a3.15 3.15 0 0 1-1.592 2.736l-5.316 3.046A3.2 3.2 0 0 1 12 21.25M3.926 7.375a3.14 3.14 0 0 0-.426 1.58v6.09c0 1.13.607 2.172 1.592 2.736l5.316 3.046A3.2 3.2 0 0 0 12 21.25M3.926 7.375a3.17 3.17 0 0 1 1.166-1.156l5.316-3.046a3.2 3.2 0 0 1 3.184 0l2.658 1.523M3.926 7.375l4.037 2.313m0 0l8.287-4.992" />
+                </svg>
+                packages
+                <span class="count" id="nav-packages-count"></span>
+            </a>
+            <a href="#" id="nav-members" style="display:none;" onclick="openPeople('members'); return false;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                    <path d="M0 0h24v24H0z" fill="none" />
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.5 12a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 0a6 6 0 0 0-6 6v1.5h12V18a6 6 0 0 0-6-6Zm9-4.25a2.75 2.75 0 1 1 0-5.5 2.75 2.75 0 0 1 0 5.5Zm0 0a4.75 4.75 0 0 0-4.6 6M14.5 19.5H24V18a5 5 0 0 0-9.5-2" />
+                </svg>
+                members
+                <span class="count" id="nav-members-count"></span>
+            </a>
         </nav>
 
         <main class="main-content" id="main-content">
-            <div class="profile-header" id="profile-header"></div>
-            <div class="section-title" id="profile-section-title"></div>
-
             <div id="readme-section"></div>
+            <div id="orgs-row"></div>
 
             <div class="section-title" id="repos-section-title">repositories</div>
             <div id="repos-section" class="repo-list"></div>
@@ -610,6 +680,12 @@
 
             <div class="section-title view-hidden" id="people-section-title"></div>
             <div id="people-section" class="repo-list view-hidden"></div>
+
+            <div class="section-title view-hidden" id="projects-section-title"></div>
+            <div id="projects-section" class="repo-list view-hidden"></div>
+
+            <div class="section-title view-hidden" id="packages-section-title"></div>
+            <div id="packages-section" class="repo-list view-hidden"></div>
         </main>
 
         <aside class="right-sidebar">
@@ -634,15 +710,41 @@
 
         // Ruta limpia: /gh|gl|cb/{username}
         const _pathParts = window.location.pathname.split('/').filter(Boolean);
-        const PROVIDER = (_pathParts[0] === 'gl' || _pathParts[0] === 'cb') ? _pathParts[0] : 'gh';
+        let PROVIDER = (_pathParts[0] === 'gl' || _pathParts[0] === 'cb') ? _pathParts[0] : 'gh';
         let USERNAME = '';
         try {
             USERNAME = decodeURIComponent(_pathParts[1] || '');
         } catch (_) {
             USERNAME = _pathParts[1] || '';
         }
+        // Fallback con query params: /profile.html?provider=gh&user=octocat.
+        // repo.html enlaza así para que el perfil también abra en la app (Capacitor
+        // sirve contenido local y no tiene el fallback de rutas limpias del servidor).
+        const _qp = new URLSearchParams(window.location.search);
+        const _qpProvider = _qp.get('provider');
+        const _qpUser = _qp.get('user');
+        if (_qpProvider) PROVIDER = (_qpProvider === 'gl' || _qpProvider === 'cb') ? _qpProvider : 'gh';
+        if (_qpUser) USERNAME = _qpUser;
 
         const STAR_ICON_HTML = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" style="vertical-align:-0.125em;"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.704 4.325a1.5 1.5 0 0 1 2.592 0l1.818 3.12a1.5 1.5 0 0 0 .978.712l3.53.764a1.5 1.5 0 0 1 .8 2.465l-2.405 2.693a1.5 1.5 0 0 0-.374 1.15l.363 3.593a1.5 1.5 0 0 1-2.097 1.524l-3.304-1.456a1.5 1.5 0 0 0-1.21 0l-3.304 1.456a1.5 1.5 0 0 1-2.097-1.524l.363-3.593a1.5 1.5 0 0 0-.373-1.15l-2.406-2.693a1.5 1.5 0 0 1 .8-2.465l3.53-.764a1.5 1.5 0 0 0 .979-.711z"/></svg>`;
+        const X_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="1em" height="1em" role="img" style="vertical-align:-0.125em;"><path fill="currentColor" d="M9.332 6.925 14.544 1h-1.235L8.783 6.145 5.17 1H1l5.466 7.78L1 14.993h1.235l4.78-5.433 3.816 5.433H15L9.332 6.925ZM7.64 8.848l-.554-.775L2.68 1.91h1.897l3.556 4.975.554.775 4.622 6.466h-1.897L7.64 8.848Z"></path></svg>`;
+        const MAIL_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="1em" height="1em" role="img" style="vertical-align:-0.125em;"><path fill="currentColor" d="M1.75 2h12.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 14.25 14H1.75A1.75 1.75 0 0 1 0 12.25v-8.5C0 2.784.784 2 1.75 2ZM1.5 12.251c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V5.809L8.38 9.397a.75.75 0 0 1-.76 0L1.5 5.809v6.442Zm13-8.181v-.32a.25.25 0 0 0-.25-.25H1.75a.25.25 0 0 0-.25.25v.32L8 7.88Z"></path></svg>`;
+        const LINKEDIN_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="1em" height="1em" role="img" style="vertical-align:-0.125em;"><path fill="currentColor" d="M14.5455 0H1.45455C0.650909 0 0 0.650909 0 1.45455V14.5455C0 15.3491 0.650909 16 1.45455 16H14.5455C15.3491 16 16 15.3491 16 14.5455V1.45455C16 0.650909 15.3491 0 14.5455 0ZM5.05746 13.0909H2.912V6.18764H5.05746V13.0909ZM3.96291 5.20073C3.27127 5.20073 2.712 4.64 2.712 3.94982C2.712 3.25964 3.272 2.69964 3.96291 5.20073C4.65236 5.20073 5.21309 3.26036 5.21309 3.94982C5.21309 4.64 4.65236 5.20073 3.96291 5.20073ZM13.0938 13.0909H10.9498V9.73382C10.9498 8.93309 10.9353 7.90327 9.83491 7.90327C8.71855 7.90327 8.54691 8.77527 8.54691 9.67564V13.0909H6.40291V6.18764H8.46109V7.13091H8.49018C8.77673 6.58836 9.47636 6.016 10.52 6.016C12.6924 6.016 13.0938 7.44582 13.0938 9.30473V13.0909V13.0909Z"></path></svg>`;
+        const YOUTUBE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<g fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.5">
+		<path stroke-linecap="round" d="M2.45 11.419c0-3.017.3-4.526 1.237-5.463s2.446-.937 5.463-.937h5.7c3.017 0 4.525 0 5.463.937s1.237 2.446 1.237 5.463v1.162c0 3.017-.3 4.526-1.237 5.463s-2.446.937-5.463.937h-5.7c-3.017 0-4.526 0-5.463-.937S2.45 15.598 2.45 12.581z" />
+		<path d="m14.686 11.491l-4.268-2.667a.6.6 0 0 0-.918.509v5.335a.6.6 0 0 0 .918.508l4.268-2.667a.6.6 0 0 0 0-1.018Z" />
+	</g>
+        </svg>`;
+        const INSTAGRAM_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<g fill="none">
+		<rect width="17" height="17" x="3.5" y="3.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" rx="5.5" />
+		<circle cx="12" cy="12" r="3.606" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
+		<circle cx="16.894" cy="7.106" r="1.03" fill="currentColor" />
+	</g>
+        </svg>`;
 
         function escHtml(s) {
             return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -743,6 +845,7 @@
         }
 
         function renderProfile(p) {
+            _profileData = p;
             const meta = providerMeta();
             const safeUser = escHtml(p.username || USERNAME);
             const safeName = escHtml(p.name || '');
@@ -751,6 +854,12 @@
             const safeLocation = escHtml(p.location || '');
             const safeUrl = escAttr(sanitizeUrl(p.url || ''));
             const safeWebsite = escAttr(sanitizeUrl(p.website || ''));
+            const safeLinkedin = escAttr(sanitizeUrl(p.linkedin || ''));
+            const linkedinLabel = escHtml((p.linkedin || '').replace(/^https?:\/\/(www\.)?linkedin\.com\//i, ''));
+            const safeYoutube = escAttr(sanitizeUrl(p.youtube || ''));
+            const youtubeLabel = escHtml((p.youtube || '').replace(/^https?:\/\/(www\.)?youtube\.com\//i, ''));
+            const safeInstagram = escAttr(sanitizeUrl(p.instagram || ''));
+            const instagramLabel = escHtml((p.instagram || '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, ''));
             const isOrg = p.type === 'org';
             const typeLabel = isOrg ? 'organization' : 'user';
             const joined = formatJoined(p.joined_at);
@@ -782,20 +891,30 @@
                 if (p.followers !== undefined && p.followers !== null) stats.push(`<div class="stat stat-link" onclick="openPeople('followers'); return false;"><span class="v">${formatNumber(p.followers)}</span><span class="l">followers</span></div>`);
                 if (p.following !== undefined && p.following !== null) stats.push(`<div class="stat stat-link" onclick="openPeople('following'); return false;"><span class="v">${formatNumber(p.following)}</span><span class="l">following</span></div>`);
                 if (p.public_repos !== undefined && p.public_repos !== null) stats.push(`<div class="stat"><span class="v">${formatNumber(p.public_repos)}</span><span class="l">public repos</span></div>`);
+                if (p.packages !== undefined && p.packages !== null && p.packages > 0) stats.push(`<div class="stat"><span class="v">${formatNumber(p.packages)}</span><span class="l">packages</span></div>`);
                 sbAbout.innerHTML = `
                     <div class="sb-head">
                         <div class="sb-avatar">${safeAvatar ? `<img src="${safeAvatar}" alt=""/>` : escHtml((safeName || safeUser).slice(0, 1).toUpperCase())}</div>
                         <div>
                             <div class="sb-name">${safeName || safeUser}</div>
                             <div class="sb-user">@${safeUser}</div>
+
+                            <div class="badges">
+                                <a href="${safeUrl}" target="_blank" rel="noopener noreferrer"><span class="provider-badge" style="color:${meta.color};border-color:${meta.color};margin-top: 5px;">${meta.icon}${meta.label}</span></a>
+                                <span class="type-badge">${typeLabel}</span>
+                            </div>
                         </div>
                     </div>
                     ${safeBio ? `<p class="sb-bio">${safeBio}</p>` : ''}
                     ${stats.length ? `<div class="stats-grid">${stats.join('')}</div>` : ''}
-                    ${safeUrl ? `<a class="sb-btn" href="${safeUrl}" target="_blank" rel="noopener noreferrer">open profile on ${meta.name}</a>` : ''}
                     <ul class="meta-list">
                         ${safeLocation ? `<li><span class="k">location</span><span class="v">${safeLocation}</span></li>` : ''}
                         ${safeWebsite ? `<li><span class="k">website</span><span class="v"><a href="${safeWebsite}" target="_blank" rel="noopener noreferrer">${escHtml(p.website || '')}</a></span></li>` : ''}
+                        ${p.twitter ? `<li><span class="k">${X_ICON_SVG}</span><span class="v"><a href="https://x.com/${encodeURIComponent(p.twitter)}" target="_blank" rel="noopener noreferrer">@${escHtml(p.twitter)}</a></span></li>` : ''}
+                        ${safeLinkedin ? `<li><span class="k">${LINKEDIN_ICON_SVG}</span><span class="v"><a href="${safeLinkedin}" target="_blank" rel="noopener noreferrer">${linkedinLabel || 'linkedin'}</a></span></li>` : ''}
+                        ${safeYoutube ? `<li><span class="k">${YOUTUBE_ICON_SVG}</span><span class="v"><a href="${safeYoutube}" target="_blank" rel="noopener noreferrer">${youtubeLabel || 'youtube'}</a></span></li>` : ''}
+                        ${safeInstagram ? `<li><span class="k">${INSTAGRAM_ICON_SVG}</span><span class="v"><a href="${safeInstagram}" target="_blank" rel="noopener noreferrer">${instagramLabel || 'instagram'}</a></span></li>` : ''}
+                        ${p.email ? `<li><span class="k">${MAIL_ICON_SVG}</span><span class="v"><a href="mailto:${escAttr(p.email)}">${escHtml(p.email)}</a></span></li>` : ''}
                         ${joined ? `<li><span class="k">joined</span><span class="v">${joined}</span></li>` : ''}
                     </ul>
                 `;
@@ -804,6 +923,24 @@
             const navCount = document.getElementById('nav-repo-count');
             if (navCount && p.public_repos !== undefined && p.public_repos !== null) {
                 navCount.textContent = formatNumber(p.public_repos);
+            }
+
+            const navPackagesCount = document.getElementById('nav-packages-count');
+            if (navPackagesCount && p.packages !== undefined && p.packages !== null) {
+                navPackagesCount.textContent = formatNumber(p.packages);
+            }
+
+            // Miembros: solo Codeberg los expone (public_members) y solo para organizaciones.
+            const navMembers = document.getElementById('nav-members');
+            if (navMembers) {
+                const members = (p.members && Array.isArray(p.members)) ? p.members : [];
+                if (PROVIDER === 'cb' && p.type === 'org' && members.length > 0) {
+                    navMembers.style.display = '';
+                    const navMembersCount = document.getElementById('nav-members-count');
+                    if (navMembersCount) navMembersCount.textContent = formatNumber(members.length);
+                } else {
+                    navMembers.style.display = 'none';
+                }
             }
         }
 
@@ -865,25 +1002,12 @@
         async function fetchStarred() {
             const repos = [];
             try {
-                if (PROVIDER === 'gh') {
-                    const headers = authHeaders();
-                    for (let page = 1; page <= 10; page++) {
-                        const res = await fetch(`https://api.github.com/users/${encodeURIComponent(USERNAME)}/starred?per_page=100&page=${page}`, { headers });
-                        if (!res.ok) break;
-                        const items = await res.json();
-                        if (!Array.isArray(items) || items.length === 0) break;
-                        repos.push(...items.map(normalizeStarred).filter(Boolean));
-                    }
-                } else if (PROVIDER === 'cb') {
-                    const token = localStorage.getItem('cb_token');
-                    const headers = token ? { 'Authorization': 'token ' + token } : {};
-                    for (let page = 1; page <= 10; page++) {
-                        const res = await fetch(`https://codeberg.org/api/v1/users/${encodeURIComponent(USERNAME)}/starred?limit=50&page=${page}`, { headers });
-                        if (!res.ok) break;
-                        const items = await res.json();
-                        if (!Array.isArray(items) || items.length === 0) break;
-                        repos.push(...items.map(normalizeStarred).filter(Boolean));
-                    }
+                if (PROVIDER === 'gh' || PROVIDER === 'cb') {
+                    // Vía proxy del servidor: GitHub sin token devuelve 403 (rate-limit por IP)
+                    // y Codeberg exige auth para /users/{user}/starred (401 sin token); el
+                    // backend reintenta sin token y responde lista vacía si no puede.
+                    const items = await apiGet(`/api/users/starred?provider=${PROVIDER}&user=${encodeURIComponent(USERNAME)}`);
+                    if (Array.isArray(items)) repos.push(...items.map(normalizeStarred).filter(Boolean));
                 }
             } catch (_) {}
             return repos;
@@ -914,9 +1038,17 @@
             switchView('stars');
         }
         function openPeople(kind) {
-            if (kind !== 'followers' && kind !== 'following') return;
+            if (kind !== 'followers' && kind !== 'following' && kind !== 'members') return;
             if (_currentView === kind) return;
             switchView(kind);
+        }
+        function openProjects() {
+            if (_currentView === 'projects') return;
+            switchView('projects');
+        }
+        function openPackages() {
+            if (_currentView === 'packages') return;
+            switchView('packages');
         }
 
         function switchView(view) {
@@ -924,35 +1056,44 @@
             const prev = _currentView;
             const isOverview = view === 'overview';
             const isStars = view === 'stars';
-            const isPeople = view === 'followers' || view === 'following';
+            const isPeople = view === 'followers' || view === 'following' || view === 'members';
+            const isProjects = view === 'projects';
+            const isPackages = view === 'packages';
             _currentView = view;
 
             if (!isOverview && prev === 'overview') _prevTitle = document.title;
             if (isOverview) {
                 document.title = _prevTitle || `${USERNAME} · gitGost`;
             } else {
-                const label = view === 'followers' ? 'followers' : view === 'following' ? 'following' : 'starred';
+                const label = view === 'followers' ? 'followers' : view === 'following' ? 'following' : view === 'members' ? 'members' : view === 'projects' ? 'projects' : view === 'packages' ? 'packages' : 'starred';
                 document.title = `${USERNAME} · ${label} · gitGost`;
             }
 
             const show = (el, on) => { if (el) el.classList.toggle('view-hidden', !on); };
             show(document.getElementById('readme-section'), isOverview);
+            show(document.getElementById('orgs-row'), isOverview);
             show(document.getElementById('repos-section-title'), isOverview);
             show(document.getElementById('repos-section'), isOverview);
             show(document.getElementById('starred-section-title'), isStars);
             show(document.getElementById('starred-section'), isStars);
             show(document.getElementById('people-section-title'), isPeople);
             show(document.getElementById('people-section'), isPeople);
+            show(document.getElementById('projects-section-title'), isProjects);
+            show(document.getElementById('projects-section'), isProjects);
+            show(document.getElementById('packages-section-title'), isPackages);
+            show(document.getElementById('packages-section'), isPackages);
             const aside = document.querySelector('.right-sidebar');
             if (aside) aside.style.display = isOverview ? '' : 'none';
 
             const navLinks = document.querySelectorAll('.left-nav a');
             for (let i = 0; i < navLinks.length; i++) {
-                navLinks[i].classList.toggle('active', isOverview ? i === 0 : (isStars && i === 2));
+                navLinks[i].classList.toggle('active', isOverview ? i === 0 : ((isStars && i === 2) || (isProjects && i === 3) || (isPackages && i === 4) || (view === 'members' && i === 5)));
             }
 
             if (isStars) _loadStars();
             if (isPeople) _loadPeople(view);
+            if (isProjects) _loadProjects();
+            if (isPackages) _loadPackages();
         }
 
         async function _loadStars() {
@@ -971,7 +1112,118 @@
             starredSec.innerHTML = starred.map(repoCardHtml).join('');
         }
 
+        // ---- Projects (GitHub classic) / Packages (vista SPA) ----
+        let _projectsCache = null;
+        let _packagesCache = null;
+
+        async function fetchProjects() {
+            const headers = authHeaders();
+            headers['Accept'] = 'application/vnd.github+json';
+            try {
+                let res = await fetch(`https://api.github.com/users/${encodeURIComponent(USERNAME)}/projects?per_page=100`, { headers });
+                // Los projects de una organización usan la ruta /orgs/...
+                if (res.status === 404) {
+                    res = await fetch(`https://api.github.com/orgs/${encodeURIComponent(USERNAME)}/projects?per_page=100`, { headers });
+                }
+                if (!res.ok) return [];
+                const data = await res.json();
+                return Array.isArray(data) ? data : [];
+            } catch (_) { return []; }
+        }
+
+        function projectCardHtml(p) {
+            const safeName = escHtml(p.name || '');
+            const safeUrl = escAttr(sanitizeUrl(p.html_url || ''));
+            const safeBody = p.body ? escHtml(p.body.slice(0, 140)) : '';
+            const state = p.state === 'closed' ? 'closed' : 'open';
+            return `
+                <div class="repo-card">
+                    <div class="repo-card-head">
+                        ${safeUrl ? `<a class="repo-name" href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeName}</a>` : `<span class="repo-name">${safeName}</span>`}
+                        <span class="repo-visibility">${state}</span>
+                    </div>
+                    ${safeBody ? `<p class="repo-desc">${safeBody}</p>` : ''}
+                </div>
+            `;
+        }
+
+        async function _loadProjects() {
+            const titleEl = document.getElementById('projects-section-title');
+            const listEl = document.getElementById('projects-section');
+            if (!titleEl || !listEl) return;
+            titleEl.innerHTML = '<a class="stars-back" href="#" onclick="switchView(\'overview\'); return false;">‹ back to profile</a>';
+            const projects = _projectsCache || (_projectsCache = await fetchProjects());
+            const navCount = document.getElementById('nav-projects-count');
+            if (navCount && projects.length > 0) navCount.textContent = formatNumber(projects.length);
+            if (!projects.length) {
+                listEl.innerHTML = '<div class="repo-empty">no projects found</div>';
+                return;
+            }
+            titleEl.insertAdjacentHTML('beforeend', ` <span class="stars-count">· ${projects.length}</span>`);
+            listEl.innerHTML = projects.map(projectCardHtml).join('');
+        }
+
+        async function fetchPackages() {
+            if (PROVIDER === 'cb') {
+                // Codeberg (Gitea) expone /packages/{owner} con paginación; sin token
+                // funciona para paquetes públicos.
+                const packages = [];
+                const token = localStorage.getItem('cb_token');
+                const headers = token ? { 'Authorization': 'token ' + token } : {};
+                try {
+                    for (let page = 1; page <= 10; page++) {
+                        const res = await fetch(`https://codeberg.org/api/v1/packages/${encodeURIComponent(USERNAME)}?limit=50&page=${page}`, { headers });
+                        if (!res.ok) break;
+                        const items = await res.json();
+                        if (!Array.isArray(items) || items.length === 0) break;
+                        packages.push(...items);
+                        const link = res.headers.get('Link') || '';
+                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                    }
+                } catch (_) {}
+                return packages;
+            }
+            const data = await apiGet(`/api/github/packages/${encodeURIComponent(USERNAME)}`);
+            return Array.isArray(data) ? data : [];
+        }
+
+        function packageCardHtml(p) {
+            const safeName = escHtml(p.name || '');
+            const safeUrl = escAttr(sanitizeUrl(p.html_url || ''));
+            // Codeberg no devuelve visibility: solo los paquetes públicos son listables.
+            const visibility = p.visibility === 'private' ? 'private' : 'public';
+            const type = escHtml(p.package_type || p.type || '');
+            const version = p.version ? escHtml(p.version) : '';
+            const meta = [type, version].filter(Boolean).join(' · ');
+            return `
+                <div class="repo-card">
+                    <div class="repo-card-head">
+                        ${safeUrl ? `<a class="repo-name" href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeName}</a>` : `<span class="repo-name">${safeName}</span>`}
+                        <span class="repo-visibility">${visibility}</span>
+                    </div>
+                    ${meta ? `<p class="repo-desc">${meta}</p>` : ''}
+                </div>
+            `;
+        }
+
+        async function _loadPackages() {
+            const titleEl = document.getElementById('packages-section-title');
+            const listEl = document.getElementById('packages-section');
+            if (!titleEl || !listEl) return;
+            titleEl.innerHTML = '<a class="stars-back" href="#" onclick="switchView(\'overview\'); return false;">‹ back to profile</a>';
+            const packages = _packagesCache || (_packagesCache = await fetchPackages());
+            const navCount = document.getElementById('nav-packages-count');
+            if (navCount && packages.length > 0) navCount.textContent = formatNumber(packages.length);
+            if (!packages.length) {
+                listEl.innerHTML = '<div class="repo-empty">no packages found</div>';
+                return;
+            }
+            titleEl.insertAdjacentHTML('beforeend', ` <span class="stars-count">· ${packages.length}</span>`);
+            listEl.innerHTML = packages.map(packageCardHtml).join('');
+        }
+
         // ---- Seguidores / siguiendo (vista SPA reutilizada para ambas listas) ----
+        let _profileData = null;
         let _peopleCache = {};
         function personCardHtml(p) {
             const safeUser = escHtml(p.username || '');
@@ -1025,8 +1277,10 @@
                         }
                     }
                 } else if (PROVIDER === 'cb') {
+                    // Codeberg exige auth para followers/following (401 sin token).
                     const token = localStorage.getItem('cb_token');
-                    const headers = token ? { 'Authorization': 'token ' + token } : {};
+                    if (!token) return users;
+                    const headers = { 'Authorization': 'token ' + token };
                     for (let page = 1; page <= 10; page++) {
                         const res = await fetch(`https://codeberg.org/api/v1/users/${encodeURIComponent(USERNAME)}/${path}?limit=50&page=${page}`, { headers });
                         if (!res.ok) break;
@@ -1046,15 +1300,75 @@
             const titleEl = document.getElementById('people-section-title');
             const listEl = document.getElementById('people-section');
             if (!titleEl || !listEl) return;
-            const label = kind === 'followers' ? 'followers' : 'following';
+            const label = kind === 'followers' ? 'followers' : kind === 'following' ? 'following' : 'members';
             titleEl.innerHTML = `<a class="stars-back" href="#" onclick="switchView('overview'); return false;">‹ back to profile</a> <span class="stars-count">${label}</span>`;
-            const people = _peopleCache[kind] || (_peopleCache[kind] = await fetchPeople(kind));
+            // Los miembros de una organización de Codeberg ya vienen en el perfil (public_members).
+            let people;
+            if (kind === 'members') {
+                people = (_profileData && Array.isArray(_profileData.members))
+                    ? _profileData.members.map(m => ({ username: m.login || m.username || '', name: m.name || m.full_name || '', avatar_url: m.avatar_url || '' }))
+                    : [];
+            } else {
+                people = _peopleCache[kind] || (_peopleCache[kind] = await fetchPeople(kind));
+            }
             titleEl.querySelector('.stars-count').textContent = `${label} · ${people.length}`;
             if (!people.length) {
                 listEl.innerHTML = `<div class="repo-empty">no ${label} found</div>`;
                 return;
             }
             listEl.innerHTML = people.map(personCardHtml).join('');
+        }
+
+        async function fetchOrgs() {
+            // Organizaciones del perfil: GitHub REST y Codeberg (Gitea) exponen /users/{user}/orgs.
+            try {
+                if (PROVIDER === 'cb') {
+                    // Codeberg exige auth para /users/{user}/orgs (401 sin token): el
+                    // backend reintenta sin token y responde lista vacía si no puede.
+                    const items = await apiGet(`/api/users/orgs?provider=cb&user=${encodeURIComponent(USERNAME)}`);
+                    if (!Array.isArray(items)) return [];
+                    return items.filter(o => o && o.login).map(o => ({
+                        name: o.login,
+                        avatar: o.avatar_url || '',
+                        url: `/cb/${encodeURIComponent(o.login)}`,
+                    }));
+                }
+                if (PROVIDER === 'gh') {
+                    const res = await fetch(`https://api.github.com/users/${encodeURIComponent(USERNAME)}/orgs?per_page=100`, { headers: authHeaders() });
+                    if (!res.ok) return [];
+                    const items = await res.json();
+                    if (!Array.isArray(items)) return [];
+                    return items.filter(o => o && o.login).map(o => ({
+                        name: o.login,
+                        avatar: o.avatar_url || '',
+                        url: `/gh/${encodeURIComponent(o.login)}`,
+                    }));
+                }
+            } catch (_) {}
+            return [];
+        }
+
+        function renderOrgs(container, orgs) {
+            if (!container) return;
+            if (!Array.isArray(orgs) || orgs.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = `
+                <div class="orgs-row">
+                    <span class="orgs-label">organizations</span>
+                    ${orgs.map(o => `
+                        <a class="org-avatar" href="${escAttr(o.url)}" title="${escAttr(o.name)}">
+                            ${o.avatar ? `<img src="${escAttr(o.avatar)}" alt="${escAttr(o.name)}" loading="lazy"/>` : escHtml((o.name[0] || '?').toUpperCase())}
+                        </a>`).join('')}
+                </div>
+            `;
+        }
+
+        async function loadOrgs() {
+            const container = document.getElementById('orgs-row');
+            if (!container || !USERNAME) return;
+            renderOrgs(container, await fetchOrgs());
         }
 
         function renderReadme(text, baseUrl) {
@@ -1064,7 +1378,7 @@
                 ? `https://raw.githubusercontent.com/${USERNAME}/${USERNAME}/HEAD/`
                 : (PROVIDER === 'gl')
                     ? `https://gitlab.com/${USERNAME}/${USERNAME}/-/raw/HEAD/`
-                    : `https://codeberg.org/${USERNAME}/${USERNAME}/raw/branch/main/`);
+                    : `https://codeberg.org/${USERNAME}/.profile/raw/branch/main/`);
             const html = renderMd(text, readmeUrl);
             section.innerHTML = `
                 <div class="readme-box">
@@ -1074,7 +1388,7 @@
             `;
         }
 
-        // ---- README del perfil (repo {user}/{user}) ----
+        // ---- README del perfil (repo {user}/{user} en gh/gl; repo ".profile" en Codeberg) ----
         // Se carga a través del backend (/api/users/readme) en vez de fetch directo:
         // gitlab.com responde 302 hacia /users/sign_in cuando el repo no existe o es
         // privado, y el navegador bloquea esa redirección cross-origin por CORS.
@@ -1093,34 +1407,18 @@
         }
 
         async function ghContributionDays(username) {
+            // Vía proxy del servidor: con token usa la GraphQL API (conteos exactos por día);
+            // sin token parsea el calendar del perfil público (niveles 0-4, sin conteo exacto).
+            const data = await apiGet(`/api/users/contributions?user=${encodeURIComponent(username)}`);
+            if (!data || !Array.isArray(data.days)) return null;
             const days = new Map();
-            const repos = new Map();
-            let priv = 0;
-            const headers = authHeaders();
-            for (let page = 1; page <= 3; page++) {
-                const res = await fetch(`https://api.github.com/users/${encodeURIComponent(username)}/events?per_page=100&page=${page}`, { headers });
-                if (!res.ok) return page === 1 ? null : { days, repos, private: priv };
-                const events = await res.json();
-                if (!Array.isArray(events) || events.length === 0) break;
-                let pushFound = false;
-                for (const ev of events) {
-                    if (!ev || ev.type !== 'PushEvent' || !ev.created_at) continue;
-                    pushFound = true;
-                    const key = dayKey(new Date(ev.created_at));
-                    const pc = ev.payload || {};
-                    const n = (typeof pc.size === 'number' && pc.size > 0) ? pc.size
-                        : (pc.commits && pc.commits.length) ? pc.commits.length
-                        : 1;
-                    days.set(key, (days.get(key) || 0) + n);
-                    if (ev.repo && ev.repo.name) {
-                        const short = ev.repo.name.split('/')[1] || ev.repo.name;
-                        repos.set(short, (repos.get(short) || 0) + n);
-                    }
-                    if (ev.public === false) priv += n;
-                }
-                if (!pushFound) break;
+            for (const d of data.days) {
+                if (!d || !d.date) continue;
+                const n = typeof d.count === 'number' ? d.count : (d.level || 0);
+                if (!n) continue;
+                days.set(d.date, (days.get(d.date) || 0) + n);
             }
-            return { days, repos, private: priv };
+            return { days, repos: new Map(), private: data.private || 0, total: data.total };
         }
 
         async function glContributionDays(username) {
@@ -1163,11 +1461,36 @@
             return { days, repos: reposNamed, private: 0 };
         }
 
+        async function cbContributionDays(username) {
+            // Codeberg (Gitea) expone el heatmap en GET /api/v1/users/{user}/heatmap, con el
+            // mismo formato que data-heatmap-data de la página de actividad:
+            // [{ timestamp (segundos), contributions }, ...]
+            const days = new Map();
+            const repos = new Map();
+            const token = localStorage.getItem('cb_token');
+            const headers = token ? { 'Authorization': 'token ' + token } : {};
+            const res = await fetch(`https://codeberg.org/api/v1/users/${encodeURIComponent(username)}/heatmap`, { headers });
+            if (!res.ok) return null;
+            const items = await res.json();
+            if (!Array.isArray(items)) return null;
+            for (const item of items) {
+                if (!item || !item.timestamp || !item.contributions) continue;
+                const key = dayKey(new Date(item.timestamp * 1000));
+                days.set(key, (days.get(key) || 0) + item.contributions);
+            }
+            return { days, repos, private: 0 };
+        }
+
         function renderContributions(container, data, p) {
-            const total = Array.from(data.days.values()).reduce((a, b) => a + b, 0);
+            // El backend de GitHub devuelve el total real del año; sin token los días son niveles
+            // 0-4, así que la suma de días no reflejaría las contribuciones exactas.
+            const total = typeof data.total === 'number' ? data.total : Array.from(data.days.values()).reduce((a, b) => a + b, 0);
+            // El heatmap de Codeberg cuenta contribuciones (commits, issues, PRs, comentarios), no solo commits.
+            const isCb = PROVIDER === 'cb';
+            const unit = isCb ? 'contribution' : 'commit';
             const head = `
                 <div class="hm-head">
-                    <span class="hm-title">commits</span>
+                    <span class="hm-title">${isCb ? 'contributions' : 'commits'}</span>
                     <span class="hm-total">${total ? total.toLocaleString('en-US') + ' total' : ''}</span>
                 </div>
             `;
@@ -1177,7 +1500,7 @@
                 container.innerHTML = `
                     <div class="sb-contrib">
                         ${head}
-                        <div class="hm-empty">${noRepos ? 'no repos' : 'no commits yet'}</div>
+                        <div class="hm-empty">${noRepos ? 'no repos' : 'no ' + unit + 's yet'}</div>
                     </div>
                 `;
                 return;
@@ -1210,7 +1533,7 @@
                     const key = dayKey(date);
                     const n = data.days.get(key) || 0;
                     const lvl = n === 0 ? '' : ' lvl' + Math.max(1, Math.min(4, Math.ceil((n / max) * 4)));
-                    cells += `<div class="hm-cell${lvl}" title="${key}: ${n} ${n === 1 ? 'commit' : 'commits'}"></div>`;
+                    cells += `<div class="hm-cell${lvl}" title="${key}: ${n} ${n === 1 ? unit : unit + 's'}"></div>`;
                 }
                 const rem = (7 - ((lead + daysInMonth) % 7)) % 7;
                 for (let i = 0; i < rem; i++) cells += '<div class="hm-cell hm-blank"></div>';
@@ -1242,8 +1565,15 @@
             try {
                 if (PROVIDER === 'gh') data = await ghContributionDays(USERNAME);
                 else if (PROVIDER === 'gl') data = await glContributionDays(USERNAME);
+                else if (PROVIDER === 'cb') data = await cbContributionDays(USERNAME);
             } catch (_) { data = null; }
-            if (!data) return;
+            if (!data) {
+                // GitHub puede bloquear el scraping anónimo (anti-bot): avisar en vez de dejar la sidebar muda.
+                if (PROVIDER === 'gh') {
+                    container.innerHTML = '<div class="sb-contrib"><div class="hm-empty">heatmap unavailable: add a GitHub token or retry later</div></div>';
+                }
+                return;
+            }
             renderContributions(container, data, p);
         }
 
@@ -1285,6 +1615,18 @@
             const sbUser = document.getElementById('sb-username');
             if (sbUser) sbUser.textContent = USERNAME || '—';
 
+            // Projects solo existe en GitHub (clásicos); Packages también en Codeberg
+            // (el backend ya devuelve el total en el perfil, y la vista se alimenta de
+            // /packages/{owner} de la API).
+            if (PROVIDER === 'gh') {
+                const navProjects = document.getElementById('nav-projects');
+                if (navProjects) navProjects.style.display = '';
+            }
+            if (PROVIDER === 'gh' || PROVIDER === 'cb') {
+                const navPackages = document.getElementById('nav-packages');
+                if (navPackages) navPackages.style.display = '';
+            }
+
             if (!USERNAME) {
                 showError();
                 return;
@@ -1296,6 +1638,8 @@
                 return;
             }
             renderProfile(p);
+
+            loadOrgs();
 
             loadContributions(p);
 

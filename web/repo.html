@@ -26,6 +26,7 @@
             --fg-secondary: #9ca3af;
             --bg-secondary: #f5f5f5;
             --bg-hover: #ebebeb;
+            --nav-active-bg: #e8e8e8;
             --accent: #d16014;
             --border: #e0e0e0;
             --card: #f9f9f9;
@@ -43,6 +44,7 @@
             --fg-secondary: #6b7280;
             --bg-secondary: #0d0d0d;
             --bg-hover: #1a1a1a;
+            --nav-active-bg: #202020;
             --accent: #ffa657;
             --border: #222222;
             --card: #0d0d0d;
@@ -57,7 +59,7 @@
             :root:not([data-theme]) {
                 --bg: #000000; --fg: #d4d4d4; --fg-muted: #9ca3af;
                 --fg-secondary: #6b7280; --bg-secondary: #0d0d0d;
-                --bg-hover: #1a1a1a; --accent: #ffa657;
+                --bg-hover: #1a1a1a; --nav-active-bg: #202020; --accent: #ffa657;
                 --border: #222222; --card: #0d0d0d; --code-bg: #111111;
                 --alert-note: #4493f8; --alert-tip: #3fb950; --alert-important: #ab7df8;
                 --alert-warning: #d29922; --alert-caution: #ff7b72;
@@ -368,6 +370,23 @@
         }
         .file-toolbar .ft-btn:hover { border-color: var(--fg-secondary); }
         .file-toolbar .ft-btn.active { color: var(--accent); border-color: var(--accent); }
+        /* Botón "volver al árbol" de la vista de archivos: visible solo en móvil con archivo abierto. */
+        .file-back-btn {
+            display: none;
+            align-items: center;
+            gap: 0.25rem;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            background: transparent;
+            color: var(--fg);
+            font-size: 0.7rem;
+            cursor: pointer;
+            font-family: "IBM Plex Mono", monospace;
+            padding: 0.22rem 0.5rem;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .file-back-btn:hover { color: var(--accent); border-color: var(--accent); }
         .code-loading {
             padding: 2rem;
             font-size: 0.78rem;
@@ -380,6 +399,8 @@
             line-height: 1.75;
             color: var(--fg);
             max-width: 860px;
+            /* Parte URLs largas, fingerprints, permisos y tablas en vez de desbordar el panel. */
+            overflow-wrap: anywhere;
         }
         .readme h1, .readme h2, .readme h3, .readme h4, .readme h5, .readme h6 {
             margin: 1.5rem 0 0.75rem;
@@ -437,7 +458,11 @@
         .readme blockquote p { margin: 0; }
         .readme ul, .readme ol { padding-left: 2rem; margin: 0.5rem 0; }
         .readme li { margin: 0.3rem 0; }
-        .readme img { max-width: 100%; border-radius: 4px; }
+        .readme img {
+            max-width: 100%;
+            height: auto;   /* escala proporcional; las que no caben bajan a la siguiente línea */
+            border-radius: 4px;
+        }
         .readme table {
             border-collapse: collapse;
             width: 100%;
@@ -506,7 +531,7 @@
             transition: background 0.1s, color 0.1s;
         }
         .left-nav a:hover { background: var(--bg-hover); color: var(--fg); }
-        .left-nav a.active { border-left-color: var(--accent); color: var(--fg); background: var(--bg-hover); }
+        .left-nav a.active { border-left-color: var(--accent); color: var(--fg); background: var(--nav-active-bg); font-weight: 500; }
 
         .right-sidebar {
             width: 300px;
@@ -611,6 +636,21 @@
             height: 100%;
             object-fit: cover;
             display: block;
+        }
+        .sb-contributor.top {
+            outline: 2px solid var(--accent);
+            outline-offset: 1px;
+        }
+        .contrib-top-badge {
+            display: inline-block;
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 999px;
+            padding: 0.05rem 0.45rem;
+            line-height: 1.3;
+            vertical-align: middle;
         }
         .sb-home-row {
             display: flex;
@@ -989,11 +1029,14 @@
             font-weight: 600;
             color: var(--fg);
             flex: 1;
+            min-width: 0;
+            overflow-wrap: anywhere;
         }
         .issue-detail-meta {
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            flex-wrap: wrap;
             font-size: 0.75rem;
             color: var(--fg-muted);
             font-family: "IBM Plex Mono", monospace;
@@ -1001,6 +1044,8 @@
             padding-bottom: 0.75rem;
             border-bottom: 1px solid var(--border);
         }
+        .issue-detail-meta > * { min-width: 0; }
+        .issue-detail-meta a { white-space: nowrap; }
         .issue-detail-avatar {
             width: 22px;
             height: 22px;
@@ -1012,6 +1057,11 @@
             font-size: 0.88rem;
             line-height: 1.7;
             color: var(--fg);
+            overflow-wrap: anywhere;
+        }
+        .issue-detail-body table {
+            display: block;
+            overflow-x: auto;
         }
         .issue-detail-body code {
             background: var(--code-bg);
@@ -1105,6 +1155,12 @@
             display: flex;
             flex-direction: column;
             gap: 0.4rem;
+            min-width: 0;
+        }
+        .reply-box menta-widget {
+            display: block;
+            max-width: 100%;
+            overflow-x: auto;
         }
         .reply-textarea {
             width: 100%;
@@ -1119,6 +1175,36 @@
             line-height: 1.5;
         }
         .reply-textarea::placeholder { color: var(--fg-muted); }
+        .reply-tabs {
+            display: flex;
+            gap: 0.25rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.3rem;
+            margin-bottom: 0.4rem;
+        }
+        .reply-tab {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.68rem;
+            color: var(--fg-muted);
+            padding: 0.1rem 0.45rem;
+            border-radius: 3px;
+        }
+        .reply-tab:hover { color: var(--fg); background: var(--bg-hover); }
+        .reply-tab.active {
+            color: var(--accent);
+            background: var(--bg-hover);
+            font-weight: 600;
+        }
+        .reply-preview.readme {
+            padding: 0;
+            max-width: none;
+            font-size: 0.85rem;
+            min-height: 56px;
+            overflow-wrap: anywhere;
+        }
         .reply-footer {
             display: flex;
             justify-content: flex-end;
@@ -1165,9 +1251,19 @@
             display: flex;
             gap: 0.6rem;
             align-items: flex-start;
+            min-width: 0;
+        }
+        .comment-avatar {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
         }
         .comment-bubble {
             flex: 1;
+            min-width: 0;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             border-radius: 5px;
@@ -1175,6 +1271,11 @@
             font-size: 0.8rem;
             line-height: 1.5;
             color: var(--fg);
+            overflow-wrap: anywhere;
+        }
+        .comment-bubble table {
+            display: block;
+            overflow-x: auto;
         }
         .comment-meta {
             font-family: "IBM Plex Mono", monospace;
@@ -1392,6 +1493,11 @@
                     margin-bottom: 0.25rem;
                 }
 
+                @media (min-width: 901px) and (max-width: 1199px) {
+                    .left-nav { width: 240px; }
+                    .right-sidebar { width: 240px; padding: 0.75rem; }
+                }
+
                 @media (max-width: 900px) {
                     .right-sidebar {
                         display: none;
@@ -1466,6 +1572,27 @@
                 @media (max-width: 480px) {
                     .mobile-sidebar-panel .msb-grid {
                         grid-template-columns: 1fr;
+                    }
+
+                    .issue-detail-main {
+                        padding: 0.85rem 0.9rem;
+                    }
+
+                    .issue-detail-meta .issue-ext-link {
+                        white-space: normal;
+                        overflow-wrap: anywhere;
+                    }
+
+                    .comment-avatar {
+                        display: none;
+                    }
+
+                    .reply-footer {
+                        justify-content: flex-end;
+                    }
+
+                    .reply-token {
+                        flex: 1 1 100%;
                     }
                 }
                 .mobile-sidebar-panel .msb-section {
@@ -1782,6 +1909,40 @@
                     background: var(--code-bg);
                     color: var(--fg);
                 }
+                /* @pierre/diffs: altura máxima y scroll para los diffs renderizados. */
+                .pierre-diff-host {
+                    max-height: 60vh;
+                    overflow: auto;
+                }
+                .pierre-diff-host > diffs-container {
+                    max-height: 60vh;
+                    overflow: auto;
+                }
+                .pr-files-section {
+                    border-top: 1px solid var(--border);
+                    margin-top: 1rem;
+                }
+                .pr-files-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.75rem 1.25rem 0.4rem;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    color: var(--fg);
+                }
+                .pr-files-count {
+                    font-size: 0.7rem;
+                    color: var(--fg-muted);
+                    font-weight: 400;
+                    font-family: 'IBM Plex Mono', monospace;
+                }
+                .pr-files-list {
+                    padding: 0.4rem 1.25rem 1.25rem;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.5rem;
+                }
 
                 @media (max-width: 768px) {
                     .topbar {
@@ -1857,10 +2018,17 @@
 
                     .file-tree {
                         width: 100%;
-                        max-height: 200px;
+                        max-height: none;
+                        flex: 1;
+                        min-height: 0;
                         border-right: none;
                         border-bottom: 1px solid var(--border);
                     }
+
+                    /* Flujo lista-detalle en móvil: al abrir un archivo se oculta el árbol
+                       y el panel del archivo ocupa todo el alto, con botón para volver. */
+                    .repo-layout.mobile-file-open .file-tree { display: none; }
+                    .repo-layout.mobile-file-open .file-back-btn { display: flex; }
 
                     .code-panel {
                         width: 100%;
@@ -2005,6 +2173,11 @@
                         font-size: 0.62rem;
                     }
 
+                    .reply-tab {
+                        font-size: 0.62rem;
+                        padding: 0.08rem 0.35rem;
+                    }
+
                     .reply-send-btn {
                         padding: 0.25rem 0.45rem;
                     }
@@ -2024,6 +2197,16 @@
 
                     .comment-meta {
                         font-size: 0.6rem;
+                    }
+
+                    .issue-detail-meta {
+                        gap: 0.35rem 0.5rem;
+                        font-size: 0.7rem;
+                    }
+
+                    .comment-avatar {
+                        width: 22px;
+                        height: 22px;
                     }
 
                     .statusbar {
@@ -2544,12 +2727,6 @@
                 (branchName ? `<span style="color:var(--fg-muted);">/</span><span style="color:var(--fg-muted);display:inline-flex;align-items:center;gap:0.25rem;">${BRANCH_SVG}${branchName}</span>` : '');
         }
 
-        if (!rv.owner || !rv.repo) {
-            document.body.innerHTML = '<div style="padding:2rem;font-family:monospace;color:#d16014;">Error: missing owner/repo parameters in the URL.</div>';
-        } else {
-            init();
-        }
-
         function init() {
             document.title = `${rv.owner}/${rv.repo} · gitGost`;
             updateStatusbarPath();
@@ -2584,6 +2761,7 @@
         }
 
         function showView(view) {
+            _disposePierreDiffs();
             const navLinks = document.querySelectorAll('.left-nav a');
             navLinks.forEach(a => a.classList.remove('active'));
             const idx = ['home','files','commits','branches','packages','bugs','reviews','discussions','wiki'].indexOf(view);
@@ -2592,6 +2770,13 @@
             const fileTree = document.getElementById('file-tree');
             const codePanel = document.getElementById('code-panel');
 
+            // En móvil la vista "files" oculta el panel del archivo hasta tocar un archivo;
+            // al cambiar de vista se restaura el panel.
+            if (view !== 'files') {
+                codePanel.style.display = '';
+                document.querySelector('.repo-layout')?.classList.remove('mobile-file-open');
+            }
+
             if (view === 'home') {
                 fileTree.style.display = 'none';
                 codePanel.innerHTML = '<div class="code-loading">loading README...</div>';
@@ -2599,6 +2784,10 @@
             } else if (view === 'files') {
                 fileTree.style.display = '';
                 loadDir([]);
+                if (_isMobileFiles()) {
+                    codePanel.style.display = 'none';
+                    document.querySelector('.repo-layout')?.classList.remove('mobile-file-open');
+                }
             } else if (view === 'branches') {
                 fileTree.style.display = 'none';
                 loadBranches();
@@ -2847,7 +3036,12 @@
                             <div class="reply-row">
                                 <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                                 <div class="reply-box">
+                                    <div class="reply-tabs">
+                                        <button type="button" class="reply-tab active" data-mode="write" onclick="setReplyTab('${escJsStr(replyId)}','write')">Write</button>
+                                        <button type="button" class="reply-tab" data-mode="preview" onclick="setReplyTab('${escJsStr(replyId)}','preview')">Preview</button>
+                                    </div>
                                     <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
+                                    <div class="reply-preview readme" id="preview-${replyId}" hidden></div>
                                     <menta-widget id="${captchaId}" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                     <div class="reply-footer">
                                         <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
@@ -2910,7 +3104,7 @@
                     li.className = 'comment-item';
                     li.innerHTML = `
                         ${cAvatar
-                            ? `<img src="${escAttr(cAvatar)}" style="width:26px;height:26px;border-radius:50%;flex-shrink:0;border:1px solid var(--border);" />`
+                            ? `<img class="comment-avatar" src="${escAttr(cAvatar)}" />`
                             : `<div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>`}
                         <div class="comment-bubble">
                             <div class="comment-meta"><strong style="color:var(--fg);">${profileLink(cUser)}</strong> &middot; ${cDate}</div>
@@ -2955,7 +3149,12 @@
                     </div>
                     <div>
                         <div class="bug-modal-title"># Description</div>
+                        <div class="reply-tabs">
+                            <button type="button" class="reply-tab active" data-mode="write" onclick="setReplyTab('bug-desc-input','write')">Write</button>
+                            <button type="button" class="reply-tab" data-mode="preview" onclick="setReplyTab('bug-desc-input','preview')">Preview</button>
+                        </div>
                         <textarea id="bug-desc-input" placeholder="What happened, what you expected, steps to reproduce..."></textarea>
+                        <div class="reply-preview readme" id="preview-bug-desc-input" hidden></div>
                     </div>
                     <div>
                         <div class="bug-modal-title"># Labels (optional, comma-separated)</div>
@@ -3113,9 +3312,10 @@
                 const isDraft = !!(i.draft);
 
                 let stateBadge = '';
-                if (merged)       stateBadge = `<span class="issue-label" style="background:#8957e522;border:1px solid #8957e5;color:#8957e5;">merged</span>`;
+                if (merged)       stateBadge = `<span class="issue-label" style="background:color-mix(in srgb, var(--alert-important) 20%, transparent);border:1px solid var(--alert-important);color:var(--alert-important);">merged</span>`;
                 else if (isDraft) stateBadge = `<span class="issue-label" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--fg-muted);">draft</span>`;
-                else if (i.state === 'closed' || i.state === 'merged') stateBadge = `<span class="issue-label" style="background:#da373722;border:1px solid #da3737;color:#da3737;">closed</span>`;
+                else if (i.state === 'closed' || i.state === 'merged') stateBadge = `<span class="issue-label" style="background:color-mix(in srgb, var(--alert-caution) 20%, transparent);border:1px solid var(--alert-caution);color:var(--alert-caution);">closed</span>`;
+                else              stateBadge = `<span class="issue-label" style="background:color-mix(in srgb, var(--alert-tip) 20%, transparent);border:1px solid var(--alert-tip);color:var(--alert-tip);">open</span>`;
 
                 const branchInfo = (head && base)
                     ? `<span class="issue-label" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--fg-muted);font-size:0.62rem;">${escHtml(head)} → ${escHtml(base)}</span>`
@@ -4003,7 +4203,9 @@
                     const res = await cbFetch(`${CB_BASE}/packages/${rv.owner}?limit=50`);
                     if (res.ok) {
                         const data = await res.json();
-                        has = Array.isArray(data) && data.some(p => p.repository?.name === rv.repo);
+                        // El paquete de Codeberg referencia su repo (repository.name); se
+                        // acepta también full_name (owner/name) como respaldo del filtro.
+                        has = Array.isArray(data) && data.some(p => p.repository?.name === rv.repo || ((p.full_name || '').split('/').pop() === rv.repo));
                     }
                 } else if (rv.provider === 'gl') {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
@@ -4034,7 +4236,7 @@
                         if (!res.ok) break;
                         const data = await res.json();
                         if (!Array.isArray(data) || data.length === 0) break;
-                        packages.push(...data.filter(p => p.repository?.name === rv.repo));
+                        packages.push(...data.filter(p => p.repository?.name === rv.repo || ((p.full_name || '').split('/').pop() === rv.repo)));
                         const link = res.headers.get('Link') || '';
                         if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
                         page++;
@@ -4290,6 +4492,7 @@
 
         async function showCommitDetail(sha) {
             const panel = document.getElementById('code-panel');
+            _disposePierreDiffs();
             panel.innerHTML = '<div class="code-loading">loading commit...</div>';
             try {
                 let commit, files;
@@ -4318,6 +4521,7 @@
                     const rawDiff = resDiff.ok ? await resDiff.json() : [];
                     files = rawDiff.map(d => ({
                         filename: d.new_path,
+                        old_path: d.old_path,
                         status: d.new_file ? 'added' : d.deleted_file ? 'removed' : d.renamed_file ? 'renamed' : 'modified',
                         additions: 0,
                         deletions: 0,
@@ -4424,6 +4628,147 @@
             if (count > 0) console.log('shiki highlighted', count, 'files');
         }
 
+        // ---- @pierre/diffs (render de diffs y código, vía CDN con fallback) ----
+        let _pierreMod = null;
+        let _pierreLoading = null;
+        const _pierreViewers = new Map();
+
+        function _pierreThemeType() {
+            return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        }
+
+        async function _getPierreDiffs() {
+            if (_pierreMod) return _pierreMod;
+            if (_pierreLoading) return _pierreLoading;
+            const cdnUrls = [
+                'https://cdn.jsdelivr.net/npm/@pierre/diffs@1.3.5/+esm',
+                'https://esm.sh/@pierre/diffs@1.3.5'
+            ];
+            _pierreLoading = (async () => {
+                for (const cdnUrl of cdnUrls) {
+                    try {
+                        const m = await import(cdnUrl);
+                        if (typeof m.preloadHighlighter === 'function') {
+                            await m.preloadHighlighter({
+                                themes: [m.DEFAULT_THEMES.dark, m.DEFAULT_THEMES.light],
+                                langs: ['typescript', 'javascript', 'jsx', 'tsx', 'python', 'go', 'rust',
+                                        'c', 'cpp', 'csharp', 'html', 'css', 'scss', 'json', 'bash', 'shell',
+                                        'yaml', 'sql', 'ruby', 'php', 'java', 'kotlin', 'swift', 'lua',
+                                        'dart', 'vue', 'svelte', 'docker', 'make', 'toml', 'xml', 'diff',
+                                        'text', 'markdown', 'zig']
+                            });
+                        }
+                        console.log('pierre/diffs loaded from', cdnUrl);
+                        _pierreMod = m;
+                        return m;
+                    } catch(e) {
+                        console.warn('pierre/diffs load failed from ' + cdnUrl + ':', e.message);
+                    }
+                }
+                console.warn('pierre/diffs: all CDNs failed, diffs fall back to plain text');
+                return null;
+            })();
+            return _pierreLoading;
+        }
+
+        function _disposePierreDiffs() {
+            for (const [, entry] of _pierreViewers) {
+                try { if (entry.viewer && typeof entry.viewer.cleanUp === 'function') entry.viewer.cleanUp(); } catch(_) {}
+            }
+            _pierreViewers.clear();
+        }
+
+        // Reconstruye un diff unificado completo (diff --git + ---/+++ + hunks) para
+        // parsePatchFiles: el patch de GitHub (commits y files de PR) y el diff de
+        // GitLab solo traen los hunks; Codeberg ya entrega el diff unificado.
+        function _gitPatchForFile(f) {
+            const patch = f.patch || f.diff || '';
+            if (!patch) return '';
+            if (/^diff --git /m.test(patch)) return patch;
+            const oldPath = f.previous_filename || f.old_path || f.filename || '';
+            const newPath = f.filename || f.new_path || oldPath;
+            const lines = [`diff --git a/${oldPath} b/${newPath}`];
+            if (f.status === 'added' || f.new_file) lines.push('new file mode 100644');
+            if (f.status === 'removed' || f.deleted_file) lines.push('deleted file mode 100644');
+            if (f.status === 'renamed' || f.renamed_file) { lines.push(`rename from ${oldPath}`); lines.push(`rename to ${newPath}`); }
+            lines.push(`--- a/${oldPath}`, `+++ b/${newPath}`);
+            lines.push(patch.trimEnd());
+            return lines.join('\n');
+        }
+
+        // Sustituye el <pre> plano de cada .commit-diff-file por el render de
+        // @pierre/diffs. Si el CDN o el parseo fallan, el <pre> queda como fallback
+        // y _highlightDiffs lo resalta con Shiki.
+        async function _upgradeDiffsWithPierre(root, patchByKey) {
+            const mod = await _getPierreDiffs();
+            if (!mod || !root) return;
+            const slots = root.querySelectorAll('.commit-diff-file[data-pierre-key]');
+            if (!slots.length) return;
+            const themeType = _pierreThemeType();
+            for (const el of slots) {
+                const key = el.getAttribute('data-pierre-key');
+                const patch = patchByKey.get(key);
+                if (!patch) continue;
+                const pre = el.querySelector('pre');
+                if (!pre) continue;
+                try {
+                    const parsed = mod.parsePatchFiles(patch);
+                    const files = (parsed || []).flatMap(p => (p.files || []));
+                    if (!files.length) continue;
+                    const host = document.createElement('div');
+                    host.className = 'pierre-diff-host';
+                    el.appendChild(host);
+                    if (files.length === 1) {
+                        const fc = document.createElement('diffs-container');
+                        host.appendChild(fc);
+                        const view = new mod.FileDiff({ theme: mod.DEFAULT_THEMES, themeType }, undefined, true);
+                        view.hydrate({ fileContainer: fc, fileDiff: files[0] });
+                        view.render({ fileDiff: files[0] });
+                        _pierreViewers.set(key, { viewer: view, host, files });
+                    } else {
+                        const view = new mod.CodeView({ theme: mod.DEFAULT_THEMES, themeType }, undefined, true);
+                        view.setup(host);
+                        view.setItems(files.map((fd, i) => ({ id: `${key}-${i}`, type: 'diff', fileDiff: fd })));
+                        _pierreViewers.set(key, { viewer: view, host, files });
+                    }
+                    pre.remove();
+                } catch(e) {
+                    console.warn('pierre/diffs render failed for', key, e.message);
+                }
+            }
+        }
+
+        // Re-renderiza los viewers activos con el tema actual (toggleTheme).
+        async function _rethemePierreDiffs() {
+            if (!_pierreViewers.size) return;
+            const mod = await _getPierreDiffs();
+            if (!mod) return;
+            const themeType = _pierreThemeType();
+            for (const [key, entry] of _pierreViewers) {
+                try { if (entry.viewer && typeof entry.viewer.cleanUp === 'function') entry.viewer.cleanUp(); } catch(_) {}
+                if (entry.host) entry.host.innerHTML = '';
+                const files = entry.files || [];
+                if (!files.length) { _pierreViewers.delete(key); continue; }
+                try {
+                    if (files.length === 1) {
+                        const fc = document.createElement('diffs-container');
+                        entry.host.appendChild(fc);
+                        const view = new mod.FileDiff({ theme: mod.DEFAULT_THEMES, themeType }, undefined, true);
+                        view.hydrate({ fileContainer: fc, fileDiff: files[0] });
+                        view.render({ fileDiff: files[0] });
+                        entry.viewer = view;
+                    } else {
+                        const view = new mod.CodeView({ theme: mod.DEFAULT_THEMES, themeType }, undefined, true);
+                        view.setup(entry.host);
+                        view.setItems(files.map((fd, i) => ({ id: `${key}-${i}`, type: 'diff', fileDiff: fd })));
+                        entry.viewer = view;
+                    }
+                } catch(e) {
+                    console.warn('pierre/diffs re-theme failed for', key, e.message);
+                }
+            }
+        }
+
         function renderCommitDetail(commit, files, glAvatarUrl) {
             const panel = document.getElementById('code-panel');
             const fullSha = commit.sha || commit.id || '';
@@ -4449,13 +4794,16 @@
             const stats = commit.stats || { total: 0, additions: 0, deletions: 0 };
 
             let diffsHtml = '';
+            const patchByKey = new Map();
             if (files && files.length) {
-                diffsHtml = '<div class="commit-diff-list">' + files.map(f => {
+                diffsHtml = '<div class="commit-diff-list">' + files.map((f, i) => {
                     const patch = f.patch || '';
                     const status = f.status || 'modified';
                     const adds = f.additions || 0;
                     const dels = f.deletions || 0;
-                    return `<div class="commit-diff-file">
+                    const pierreKey = `commit-${fullSha}-${i}`;
+                    if (patch) patchByKey.set(pierreKey, _gitPatchForFile(f));
+                    return `<div class="commit-diff-file" data-pierre-key="${pierreKey}">
                         <div class="cdf-header">
                             <span class="cdf-name">${escHtml(f.filename)}</span>
                             <span class="cdf-status">${escHtml(status)}</span>
@@ -4493,7 +4841,35 @@
                     ${diffsHtml}
                 </div>`;
 
+            _upgradeDiffsWithPierre(panel, patchByKey);
             _highlightDiffs(panel);
+        }
+
+        // Alterna entre escritura y preview (renderMd + hljs) en un editor de comentario.
+        function setReplyTab(textareaId, mode) {
+            const textarea = document.getElementById(textareaId);
+            if (!textarea) return;
+            const wrap = textarea.parentElement;
+            if (!wrap) return;
+            const preview = document.getElementById('preview-' + textareaId);
+            if (!preview) return;
+            const writeBtn   = wrap.querySelector('.reply-tab[data-mode="write"]');
+            const previewBtn = wrap.querySelector('.reply-tab[data-mode="preview"]');
+            if (mode === 'preview') {
+                const body = textarea.value.trim();
+                preview.innerHTML = body ? renderMd(body) : '<em style="color:var(--fg-muted);font-size:0.75rem;">Nothing to preview.</em>';
+                textarea.hidden = true;
+                preview.hidden = false;
+                if (writeBtn) writeBtn.classList.remove('active');
+                if (previewBtn) previewBtn.classList.add('active');
+                preview.querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
+            } else {
+                textarea.hidden = false;
+                preview.hidden = true;
+                preview.innerHTML = '';
+                if (writeBtn) writeBtn.classList.add('active');
+                if (previewBtn) previewBtn.classList.remove('active');
+            }
         }
 
         async function submitIssueComment(provider, owner, repo, number, replyId, tokenId, statusId, listId, captchaId) {
@@ -4522,6 +4898,7 @@
                 const data = await res.json();
                 const commentBody = body;
                 if (textarea) textarea.value = '';
+                setReplyTab(replyId, 'write');
                 if (statusEl) statusEl.textContent = 'sent';
 
                 const list = document.getElementById(listId);
@@ -4582,6 +4959,7 @@
         let _currentPRsTab = 'all';
 
         function showPRDetail(num) {
+            _disposePierreDiffs();
             const all = [...(_prsCache?.open||[]), ...(_prsCache?.closed||[])];
             const pr = all.find(i => (i.number || i.iid) === num);
             if (!pr) return;
@@ -4599,10 +4977,10 @@
             const isDraft = !!(pr.draft);
 
             let stateBadge = '';
-            if (state === 'merged')      stateBadge = `<span class="issue-label" style="background:#8957e522;border:1px solid #8957e5;color:#8957e5;">merged</span>`;
+            if (state === 'merged')      stateBadge = `<span class="issue-label" style="background:color-mix(in srgb, var(--alert-important) 20%, transparent);border:1px solid var(--alert-important);color:var(--alert-important);">merged</span>`;
             else if (isDraft)            stateBadge = `<span class="issue-label" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--fg-muted);">draft</span>`;
-            else if (state === 'closed') stateBadge = `<span class="issue-label" style="background:#da373722;border:1px solid #da3737;color:#da3737;">closed</span>`;
-            else                         stateBadge = `<span class="issue-label" style="background:#1a7f3722;border:1px solid #1a7f37;color:#1a7f37;">open</span>`;
+            else if (state === 'closed') stateBadge = `<span class="issue-label" style="background:color-mix(in srgb, var(--alert-caution) 20%, transparent);border:1px solid var(--alert-caution);color:var(--alert-caution);">closed</span>`;
+            else                         stateBadge = `<span class="issue-label" style="background:color-mix(in srgb, var(--alert-tip) 20%, transparent);border:1px solid var(--alert-tip);color:var(--alert-tip);">open</span>`;
 
             const branchInfo = (head && base)
                 ? `<span class="issue-label" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--fg-muted);font-size:0.62rem;">${escHtml(head)} → ${escHtml(base)}</span>`
@@ -4637,7 +5015,12 @@
                             <div class="reply-row">
                                 <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                                 <div class="reply-box">
+                                    <div class="reply-tabs">
+                                        <button type="button" class="reply-tab active" data-mode="write" onclick="setReplyTab('${escJsStr(replyId)}','write')">Write</button>
+                                        <button type="button" class="reply-tab" data-mode="preview" onclick="setReplyTab('${escJsStr(replyId)}','preview')">Preview</button>
+                                    </div>
                                     <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
+                                    <div class="reply-preview readme" id="preview-${replyId}" hidden></div>
                                     <menta-widget id="${captchaId}" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                     <div class="reply-footer">
                                         <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
@@ -4667,6 +5050,101 @@
                         ${pr.review_comments > 0 ? `<div><div class="ds-label">comments</div><div class="ds-val">${escHtml(pr.review_comments)}</div></div>` : ''}
                     </div>
                 </div>`;
+
+            panel.insertAdjacentHTML('beforeend', `
+                <div class="pr-files-section" id="pr-files-section-${num}">
+                    <div class="pr-files-header">files changed <span class="pr-files-count" id="pr-files-count-${num}"></span></div>
+                    <div class="pr-files-list" id="pr-files-list-${num}"><div class="code-loading">loading files...</div></div>
+                </div>`);
+            loadPRFiles(pr, num);
+        }
+
+        let _prFilesCache = {};
+
+        async function loadPRFiles(pr, num) {
+            const cacheKey = `${rv.provider}/${rv.owner}/${rv.repo}#${num}`;
+            if (_prFilesCache[cacheKey]) { renderPRFiles(_prFilesCache[cacheKey], num); return; }
+            const listEl = document.getElementById(`pr-files-list-${num}`);
+            if (!listEl) return;
+            try {
+                let files = [];
+                if (rv.provider === 'gh') {
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/pulls/${num}/files?per_page=100`);
+                    if (res.ok) files = await res.json();
+                } else if (rv.provider === 'cb') {
+                    const [resFiles, resDiff] = await Promise.all([
+                        cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/pulls/${num}/files?limit=100`),
+                        cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/pulls/${num}.diff`)
+                    ]);
+                    // Codeberg no incluye el patch en /pulls/{n}/files: el diff completo
+                    // viene de pulls/{n}.diff (parseGitDiff lo divide por archivo) y los
+                    // conteos +- de la API de files se usan si están disponibles.
+                    const apiFiles = resFiles.ok ? await resFiles.json() : [];
+                    const diffText = resDiff.ok ? await resDiff.text() : '';
+                    const diffFiles = diffText ? parseGitDiff(diffText) : [];
+                    const byName = new Map((Array.isArray(apiFiles) ? apiFiles : []).map(f => [f.filename, f]));
+                    files = diffFiles.map(df => {
+                        const api = byName.get(df.filename);
+                        return {
+                            ...df,
+                            additions: api && api.additions != null ? api.additions : df.additions,
+                            deletions: api && api.deletions != null ? api.deletions : df.deletions
+                        };
+                    });
+                    if (!files.length && Array.isArray(apiFiles)) files = apiFiles;
+                } else {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const iid = pr.iid || num;
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/merge_requests/${iid}/diffs?per_page=100`);
+                    const items = res.ok ? await res.json() : [];
+                    files = (Array.isArray(items) ? items : []).map(d => ({
+                        filename: d.new_path,
+                        old_path: d.old_path,
+                        status: d.new_file ? 'added' : d.deleted_file ? 'removed' : d.renamed_file ? 'renamed' : 'modified',
+                        additions: 0,
+                        deletions: 0,
+                        patch: d.diff || ''
+                    }));
+                }
+                files = (Array.isArray(files) ? files : []).filter(f => f && f.filename);
+                _prFilesCache[cacheKey] = files;
+                renderPRFiles(files, num);
+            } catch(e) {
+                if (listEl) listEl.innerHTML = `<div class="bugs-empty">files unavailable (${escHtml(e.message)})</div>`;
+            }
+        }
+
+        function renderPRFiles(files, num) {
+            const listEl = document.getElementById(`pr-files-list-${num}`);
+            const countEl = document.getElementById(`pr-files-count-${num}`);
+            if (!listEl) return;
+            if (!files.length) {
+                if (countEl) countEl.textContent = '0';
+                listEl.innerHTML = '<div class="bugs-empty">no files changed</div>';
+                return;
+            }
+            const adds = files.reduce((a, f) => a + (f.additions || 0), 0);
+            const dels = files.reduce((a, f) => a + (f.deletions || 0), 0);
+            if (countEl) {
+                countEl.textContent = `${files.length} ${files.length === 1 ? 'file' : 'files'}${adds ? ` · +${adds}` : ''}${dels ? ` · -${dels}` : ''}`;
+            }
+            const patchByKey = new Map();
+            listEl.innerHTML = files.map((f, i) => {
+                const pierreKey = `pr-${num}-${i}`;
+                const patch = f.patch || f.diff || '';
+                if (patch) patchByKey.set(pierreKey, _gitPatchForFile(f));
+                return `<div class="commit-diff-file pr-file" data-pierre-key="${pierreKey}">
+                    <div class="cdf-header">
+                        <span class="cdf-name">${escHtml(f.filename)}</span>
+                        <span class="cdf-status">${escHtml(f.status || 'modified')}</span>
+                        ${(f.additions) ? `<span class="cdf-stat add">+${escHtml(f.additions)}</span>` : ''}
+                        ${(f.deletions) ? `<span class="cdf-stat del">-${escHtml(f.deletions)}</span>` : ''}
+                    </div>
+                    ${patch ? `<pre>${escHtml(patch)}</pre>` : ''}
+                </div>`;
+            }).join('');
+            _upgradeDiffsWithPierre(listEl, patchByKey);
+            _highlightDiffs(listEl);
         }
 
         // Etiquetas de licencia estilo choosealicense.com para los SPDX id / keys más comunes.
@@ -5102,12 +5580,17 @@
                     list = _cbContributorStats(stats).slice(0, 10);
                 }
             } catch(_) {}
+            // El que más commits ha hecho queda primero (y por tanto visible en el sidebar).
+            if (Array.isArray(list) && list.length > 1) {
+                list = list.slice().sort((a, b) => (b.contributions || b.commits || 0) - (a.contributions || a.commits || 0));
+            }
             if (!Array.isArray(list) || list.length === 0) return;
             // GitLab no incluye el username en /contributors: se resuelve por email
             // con el mismo patrón que loadCommits (commits recientes + gl-avatar).
             const userMap = rv.provider === 'gl' ? await _glContributorUsernames(list) : new Map();
-            const html = list.map(c => {
+            const html = list.map((c, i) => {
                 if (!c) return '';
+                const top = i === 0 && list.length > 1;
                 const name = c.login || c.name || '';
                 // username real solo si viene del login del repo o del mapa por email;
                 // si no se resolvió (GitLab sin token) se muestra el nombre sin enlace.
@@ -5118,9 +5601,9 @@
                 const avatar = c.avatar_url || (c.email ? `https://www.gravatar.com/avatar/${md5(String(c.email).trim().toLowerCase())}?s=56&d=identicon` : '');
                 if (!username || !avatar) return '';
                 const img = `<img src="${escAttr(avatar)}" alt="${escAttr(username)}" loading="lazy">`;
-                const title = `${escAttr(username)} · ${commits} commits`;
-                if (!login) return `<span class="sb-contributor" title="${title}">${img}</span>`;
-                return `<a class="sb-contributor" href="/${encodeURIComponent(rv.provider)}/${encodeURIComponent(login)}" title="${title}">${img}</a>`;
+                const title = `${escAttr(username)} · ${commits} commits${top ? ' · top contributor' : ''}`;
+                if (!login) return `<span class="sb-contributor${top ? ' top' : ''}" title="${title}">${img}</span>`;
+                return `<a class="sb-contributor${top ? ' top' : ''}" href="/profile.html?provider=${encodeURIComponent(rv.provider)}&user=${encodeURIComponent(login)}" title="${title}">${img}</a>`;
             }).join('');
             if (!html) return;
             box.innerHTML = html;
@@ -5186,6 +5669,10 @@
                     const stats = await _cbContributorsFromCommits(200, 20);
                     list = _cbContributorStats(stats);
                 }
+                // El que más commits ha hecho debe aparecer primero en la vista.
+                if (list.length > 1) {
+                    list = list.slice().sort((a, b) => (b.contributions || b.commits || 0) - (a.contributions || a.commits || 0));
+                }
                 const userMap = rv.provider === 'gl' ? await _glContributorUsernames(list) : new Map();
                 renderContributorsView(list, userMap);
             } catch(e) {
@@ -5204,8 +5691,9 @@
             const header = `<div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;">
                 <span style="font-size:0.85rem;font-weight:600;color:var(--fg);">${count} contributor${count !== 1 ? 's' : ''}</span>
             </div>`;
-            const body = list.map(c => {
+            const body = list.map((c, i) => {
                 if (!c) return '';
+                const top = i === 0 && list.length > 1;
                 const name = c.login || c.name || '';
                 // username real solo si viene del login del repo o del mapa por email;
                 // si no se resolvió (GitLab sin token) se muestra el nombre sin enlace.
@@ -5218,17 +5706,21 @@
                     ? `<img src="${escAttr(avatar)}" alt="${escAttr(username)}" loading="lazy" style="width:2rem;height:2rem;border-radius:50%;object-fit:cover;background:var(--accent);flex:none;">`
                     : `<span style="width:2rem;height:2rem;border-radius:50%;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:0.7rem;color:#fff;flex:none;">${escHtml((username || '?')[0].toUpperCase())}</span>`;
                 const avatarHtml = login
-                    ? `<a href="/${encodeURIComponent(rv.provider)}/${encodeURIComponent(login)}" aria-label="${escAttr(username)} profile">${img}</a>`
+                    ? `<a href="/profile.html?provider=${encodeURIComponent(rv.provider)}&user=${encodeURIComponent(login)}" aria-label="${escAttr(username)} profile">${img}</a>`
                     : img;
                 const nameHtml = login
-                    ? `<a href="/${encodeURIComponent(rv.provider)}/${encodeURIComponent(login)}" style="color:var(--fg);text-decoration:none;font-weight:500;">${escHtml(username)}</a>`
+                    ? `<a href="/profile.html?provider=${encodeURIComponent(rv.provider)}&user=${encodeURIComponent(login)}" style="color:var(--fg);text-decoration:none;font-weight:500;">${escHtml(username)}</a>`
                     : `<span style="color:var(--fg);font-weight:500;">${escHtml(username)}</span>`;
+                const meta = `${escHtml(commits)} commit${commits !== 1 ? 's' : ''}`;
+                const metaHtml = top
+                    ? `<span class="release-meta">${meta} <span class="contrib-top-badge">top contributor</span></span>`
+                    : `<span class="release-meta">${meta}</span>`;
                 return `<div class="release-item">
                     <div style="display:flex;align-items:center;gap:0.75rem;min-width:0;flex:1;">
                         ${avatarHtml}
                         <div style="display:flex;flex-direction:column;gap:0.15rem;min-width:0;flex:1;">
                             ${nameHtml}
-                            <span class="release-meta">${escHtml(commits)} commit${commits !== 1 ? 's' : ''}</span>
+                            ${metaHtml}
                         </div>
                     </div>
                 </div>`;
@@ -5594,16 +6086,12 @@
                 if (tags.length > 0) {
                     el.textContent = total.toLocaleString();
                     if (listEl) {
-                        // La última tag (más reciente) se muestra destacada, como Latest en Releases.
+                        // Solo la última tag (más reciente) se muestra destacada, como Latest en Releases.
                         const latestName = tags[0].name || '';
                         const latestHtml = `<a href="#" data-tag="${escAttr(latestName)}" onclick="openTag(this.dataset.tag); return false;" style="display:block;padding:0.3rem 0;color:var(--fg);text-decoration:none;">
                             <div style="font-size:0.82rem;font-weight:500;line-height:1.3;font-family:'IBM Plex Mono',monospace;">${escHtml(latestName)} <span class="release-latest-badge">Latest</span></div>
                         </a>`;
-                        const restHtml = tags.slice(1, 10).map(t => {
-                            const name = t.name || '';
-                            return `<a href="#" data-tag="${escAttr(name)}" onclick="openTag(this.dataset.tag); return false;" style="display:block;padding:0.15rem 0;color:var(--accent);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;">${escHtml(name)}</a>`;
-                        }).join('');
-                        listEl.innerHTML = latestHtml + restHtml;
+                        listEl.innerHTML = latestHtml;
                     }
                     if (section) section.style.display = '';
                 } else {
@@ -5959,6 +6447,8 @@
             if (!query) { input && input.focus(); return; }
             const panel = document.getElementById('code-panel');
             panel.innerHTML = '<div class="code-loading">searching repository...</div>';
+            // En móvil los resultados se muestran como vista detalle (ocultando el árbol).
+            if (_isMobileFiles()) _openMobileFile();
             try {
                 const items = mode === 'code'
                     ? await _providerCodeSearch(query)
@@ -6038,10 +6528,32 @@
                     row.classList.add('active');
                     _treeActiveEl = row;
                     loadFile(item);
+                    if (_isMobileFiles()) _openMobileFile();
                 };
             }
 
             return wrapper;
+        }
+
+        // Vista de archivos en móvil: flujo lista-detalle (árbol -> archivo -> volver).
+        function _isMobileFiles() {
+            return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 768px)').matches;
+        }
+        function _openMobileFile() {
+            const ft = document.getElementById('file-tree');
+            const cp = document.getElementById('code-panel');
+            const layout = document.querySelector('.repo-layout');
+            if (ft) ft.style.display = 'none';
+            if (cp) cp.style.display = '';
+            if (layout) layout.classList.add('mobile-file-open');
+        }
+        function closeMobileFile() {
+            const ft = document.getElementById('file-tree');
+            const cp = document.getElementById('code-panel');
+            const layout = document.querySelector('.repo-layout');
+            if (ft) ft.style.display = '';
+            if (cp) cp.style.display = 'none';
+            if (layout) layout.classList.remove('mobile-file-open');
         }
 
         async function loadDir(pathParts) {
@@ -6183,6 +6695,7 @@
                 : '';
             panel.innerHTML =
                 `<div class="file-toolbar">` +
+                    `<button class="file-back-btn" onclick="closeMobileFile()" title="Back to files"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.75 5.75L8.25 12l6.5 6.25"/></svg>Back</button>` +
                     `<span class="ft-name" title="${escAttr(f.name)}">${_fileIcon(f.name)}${escHtml(f.name)}</span>` +
                     (f.size > 0 ? `<span class="ft-size">${formatBytes(f.size)}</span>` : '') +
                     `<span class="ft-spacer"></span>` +
@@ -6447,6 +6960,7 @@
             const options = [
                 { label: 'clone / push',  cmd: `git clone https://anon:@${host}` },
                 { label: 'push (update)', cmd: `git remote add gost https://${host}` },
+                { label: 'clone via GREN', cmd: `git gost clone ${githubBase}` },
             ];
             const overlay = document.createElement('div');
             overlay.id = 'clone-modal-overlay';
@@ -6647,6 +7161,7 @@
             if (_origToggle) _origToggle();
             syncHljsTheme();
             _rethemeMermaid();
+            _rethemePierreDiffs();
         };
 
         // Sync mobile sidebar panel with the real (desktop) sidebar data
@@ -6979,6 +7494,14 @@
                 t.style.display = 'none';
             }
         }, true);
+
+        // init() se invoca al final del script para que todas las declaraciones
+        // const/let (p.ej. _pierreViewers, languageColors) ya estén inicializadas.
+        if (!rv.owner || !rv.repo) {
+            document.body.innerHTML = '<div style="padding:2rem;font-family:monospace;color:#d16014;">Error: missing owner/repo parameters in the URL.</div>';
+        } else {
+            init();
+        }
     </script>
     <script src="/ethicalmetrics.js" data-site-key="gitgost-repo"></script>
 </body>

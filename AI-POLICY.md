@@ -26,14 +26,14 @@ You can use AI tools **as support** to write code or documentation, but:
 It is **strictly prohibited**:
 
 - Publishing AI-generated content in issues or PRs via automated bots or agents.
-- Sending PRs generated solely by AI.
+- Submitting pull requests that were generated and submitted without meaningful human review or involvement.
 - Using automated accounts that publish contributions without human supervision.
 
 We can:
 
 - Close AI-generated PRs.
 - Block users.
-- Report them to GitHub if we consider they violate our rules.
+- We may close or reject such contributions, block participating accounts, and, where appropriate, report abusive behavior to the relevant platform.
 
 ## 5. Consistency with gitGost Conventions
 

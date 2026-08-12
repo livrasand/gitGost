@@ -210,14 +210,19 @@
 
             .rate-limit-provider {
                 position: relative;
-                width: 52px;
-                height: 52px;
+                width: 42px;
+                height: 42px;
                 padding: 4px;
                 border: 0;
                 border-radius: 50%;
                 color: var(--fg-muted);
                 background: transparent;
                 cursor: pointer;
+                transition: color 0.1s;
+            }
+
+            .rate-limit-provider:hover {
+                color: var(--fg);
             }
 
             .rate-limit-provider svg {
@@ -262,9 +267,13 @@
 
             .rate-limit-icon svg {
                 position: static;
-                width: 1.35rem;
-                height: 1.35rem;
+                width: 1.05rem;
+                height: 1.05rem;
                 transform: none;
+            }
+
+            .rate-limit-icon svg path {
+                fill: currentColor;
             }
 
             .rate-limit-modal {
@@ -569,7 +578,7 @@
             .content-tab {
                 font-family: "IBM Plex Mono", monospace;
                 font-size: 0.82rem;
-                color: var(--fg-muted);
+                color: var(--fg-secondary);
                 cursor: pointer;
                 background: none;
                 border: none;
@@ -579,12 +588,30 @@
             }
 
             .content-tab:hover {
-                color: var(--fg);
+                color: var(--fg-muted);
             }
 
             .content-tab.active {
                 color: var(--fg);
                 font-weight: 600;
+            }
+
+            #search-input {
+                width: 100%;
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                background: var(--bg-secondary);
+                padding: 0.3rem 0.5rem;
+                margin-bottom: 0.75rem;
+                font-family: "IBM Plex Mono", monospace;
+                font-size: 0.78rem;
+                color: var(--fg);
+                outline: none;
+            }
+
+            #search-input:focus {
+                outline: 1px solid var(--accent);
+                border-color: var(--accent);
             }
 
             @keyframes shimmer {
@@ -1830,18 +1857,6 @@
                         id="search-input"
                         placeholder="search..."
                         autocomplete="off"
-                        style="
-                            width: 100%;
-                            background: transparent;
-                            border: none;
-                            border-bottom: 1px solid var(--border);
-                            padding: 0.3rem 0;
-                            margin-bottom: 0.75rem;
-                            font-family: &quot;IBM Plex Mono&quot;, monospace;
-                            font-size: 0.78rem;
-                            color: var(--fg);
-                            outline: none;
-                        "
                     />
                     <div id="search-history-dropdown" class="search-history-dropdown"></div>
                 </div>
@@ -3567,6 +3582,8 @@
                 if (p.followers !== undefined && p.followers !== null) stats.push(`<div class="user-stat"><span class="user-stat-value">${formatNumber(p.followers)}</span><span class="user-stat-label">followers</span></div>`);
                 if (p.following !== undefined && p.following !== null) stats.push(`<div class="user-stat"><span class="user-stat-value">${formatNumber(p.following)}</span><span class="user-stat-label">following</span></div>`);
                 if (p.public_repos !== undefined && p.public_repos !== null) stats.push(`<div class="user-stat"><span class="user-stat-value">${formatNumber(p.public_repos)}</span><span class="user-stat-label">public repos</span></div>`);
+                if (p.packages !== undefined && p.packages !== null) stats.push(`<div class="user-stat"><span class="user-stat-value">${formatNumber(p.packages)}</span><span class="user-stat-label">packages</span></div>`);
+                const members = Array.isArray(p.members) ? p.members.filter(m => m && m.login) : [];
                 return `
                     <div class="user-profile">
                         <div class="user-profile-header">
@@ -3580,6 +3597,7 @@
                         ${safeBio ? `<p class="user-profile-bio">${safeBio}</p>` : ''}
                         ${safeLocation ? `<p class="user-profile-location">location: ${safeLocation}</p>` : ''}
                         ${stats.length ? `<div class="user-profile-stats">${stats.join('')}</div>` : ''}
+                        ${members.length ? `<div style="margin-top:0.85rem;padding-top:0.85rem;border-top:1px solid var(--border);"><div style="font-size:0.7rem;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">${members.length} member${members.length === 1 ? '' : 's'}</div><div style="display:flex;flex-wrap:wrap;gap:0.4rem;">${members.map(m => `<span style="display:inline-flex;align-items:center;gap:0.3rem;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--fg);border:1px solid var(--border);border-radius:999px;padding:0.15em 0.6em;">${m.avatar_url ? `<img src="${escapeHtml(m.avatar_url)}" style="width:1rem;height:1rem;border-radius:50%;" alt=""/>` : ''}${escapeHtml(m.login)}</span>`).join('')}</div></div>` : ''}
                         ${safeUsername ? `<a class="user-profile-link" href="/${p.provider === 'gitlab' ? 'gl' : p.provider === 'codeberg' ? 'cb' : 'gh'}/${encodeURIComponent(p.username || '')}">open profile in gitGost</a>` : ''}
                     </div>
                 `;
@@ -4774,7 +4792,7 @@
                         </div>
                         <div id="tag-wiki-desc" style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--fg-muted);line-height:1.6;margin-bottom:0.5rem;"></div>
                         <div id="tag-wiki-links" style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;margin-bottom:0.6rem;"></div>
-                        <div id="tag-repo-count" style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--fg-muted);">searching repositories…</div>
+                        <div id="tag-repo-count" style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--fg-secondary);">Repositories</div>
                     </div>
                     <div id="tag-repo-list"></div>`;
 
@@ -4845,9 +4863,6 @@
                     if (!append && listEl) listEl.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">Error loading repositories.</p>';
                 } finally {
                     window.tagState.loading = false;
-                    // Carga terminada: ocultar el indicador "searching repositories…"
-                    const countEl = document.getElementById('tag-repo-count');
-                    if (countEl) countEl.style.display = 'none';
                 }
             }
 

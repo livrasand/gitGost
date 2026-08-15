@@ -937,10 +937,46 @@
         .bug-modal {
             background: var(--bg);
             border: 1px solid var(--border);
-            border-radius: 6px;
-            width: 480px;
+            border-radius: 10px;
+            width: 760px;
             max-width: 95vw;
-            padding: 1.5rem;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .bug-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .bug-modal-heading {
+            font: 600 0.9rem "IBM Plex Sans", system-ui, sans-serif;
+            color: var(--fg);
+        }
+        .bug-modal-close {
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--fg-muted);
+            border-radius: 6px;
+            width: 2rem;
+            height: 2rem;
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+        }
+        .bug-modal-close:hover { color: var(--fg); border-color: var(--fg-secondary); }
+        .bug-modal-body {
+            padding: 0.8rem 0;
+            overflow: auto;
+            min-height: 0;
+        }
+        .bug-modal-body-inner {
+            padding: 0 1rem 1rem;
             display: flex;
             flex-direction: column;
             gap: 0.85rem;
@@ -969,8 +1005,10 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding-top: 0.5rem;
+            gap: 1rem;
+            padding: 0.9rem 1rem 1rem;
             border-top: 1px solid var(--border);
+            background: var(--bg);
         }
         .bug-modal-footer .note {
             font-size: 0.7rem;
@@ -978,7 +1016,70 @@
             font-family: "IBM Plex Mono", monospace;
         }
         .bug-modal-footer .note a { color: var(--accent); }
-        .bug-modal-actions { display: flex; gap: 0.5rem; }
+        .bug-modal-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; }
+        .bug-template-list {
+            display: flex;
+            flex-direction: column;
+        }
+        .bug-template-item {
+            border-bottom: 1px solid var(--border);
+            padding: 0.85rem 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        .bug-template-item:hover { background: var(--bg-hover); }
+        .bug-template-item-main { min-width: 0; }
+        .bug-template-item-title {
+            font: 600 0.92rem "IBM Plex Sans", system-ui, sans-serif;
+            color: var(--fg);
+            margin-bottom: 0.2rem;
+        }
+        .bug-template-item-desc {
+            font: 0.78rem "IBM Plex Sans", system-ui, sans-serif;
+            color: var(--fg-muted);
+        }
+        .bug-template-item-arrow {
+            color: var(--fg-muted);
+            font-size: 1rem;
+            flex: none;
+        }
+        .bug-form-section { display: flex; flex-direction: column; gap: 0.85rem; }
+        .bug-field-group { display: flex; flex-direction: column; gap: 0.35rem; }
+        .bug-field-label {
+            font: 600 0.8rem "IBM Plex Sans", system-ui, sans-serif;
+            color: var(--fg);
+        }
+        .bug-field-desc {
+            font: 0.74rem "IBM Plex Sans", system-ui, sans-serif;
+            color: var(--fg-muted);
+        }
+        .bug-field-markdown {
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--fg);
+            font-size: 0.82rem;
+            line-height: 1.55;
+            white-space: pre-wrap;
+        }
+        .bug-field-checklist { display: flex; flex-direction: column; gap: 0.45rem; }
+        .bug-field-check { display: flex; align-items: flex-start; gap: 0.5rem; font: 0.8rem "IBM Plex Sans", system-ui, sans-serif; color: var(--fg); }
+        .bug-field-check input { width: auto; margin-top: 0.18rem; }
+        .bug-template-back {
+            align-self: flex-start;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--fg-muted);
+            border-radius: 999px;
+            padding: 0.3rem 0.7rem;
+            cursor: pointer;
+            font: 0.75rem "IBM Plex Mono", monospace;
+        }
+        .bug-template-back:hover { color: var(--fg); border-color: var(--fg-secondary); }
         .bug-cancel-btn {
             font-family: "IBM Plex Mono", monospace;
             font-size: 0.75rem;
@@ -3120,18 +3221,263 @@
         }
 
         let _currentBugsTab = 'open';
+        let _bugTemplates = [];
+        let _bugBlankEnabled = true;
+        let _bugSelectedIndex = null;
+
+        function bugEscapeHtml(s) {
+            return String(s).replace(/[&<>"]|'/g, c => (
+                c === '&' ? '&amp;' :
+                c === '<' ? '&lt;' :
+                c === '>' ? '&gt;' :
+                c === '"' ? '&quot;' : '&#39;'
+            ));
+        }
+
+        function bugTemplateLabel(template, index) {
+            return template?.name || template?.filename || ('Template ' + (index + 1));
+        }
+
+        function bugTemplateDescription(template) {
+            return template?.description || template?.about || '';
+        }
+
+        function bugSelectedTemplate() {
+            if (_bugSelectedIndex === null || _bugSelectedIndex === undefined) return null;
+            return _bugTemplates[_bugSelectedIndex] || null;
+        }
+
+        function bugRenderList() {
+            const body = document.getElementById('bug-modal-body');
+            const footer = document.getElementById('bug-modal-footer');
+            const heading = document.getElementById('bug-modal-heading');
+            if (!body) return;
+            if (heading) heading.textContent = 'Create new issue';
+            if (footer) footer.hidden = true;
+
+            const rows = [];
+            if (_bugBlankEnabled) {
+                rows.push(`
+                    <div class="bug-template-item" data-bug-template-index="blank">
+                        <div class="bug-template-item-main">
+                            <div class="bug-template-item-title">Blank issue</div>
+                            <div class="bug-template-item-desc">Open a blank issue without using a template</div>
+                        </div>
+                        <div class="bug-template-item-arrow">→</div>
+                    </div>`);
+            }
+            _bugTemplates.forEach((template, index) => {
+                const label = bugTemplateLabel(template, index);
+                const desc = bugTemplateDescription(template);
+                rows.push(`
+                    <div class="bug-template-item" data-bug-template-index="${index}">
+                        <div class="bug-template-item-main">
+                            <div class="bug-template-item-title">${bugEscapeHtml(label)}</div>
+                            ${desc ? `<div class="bug-template-item-desc">${bugEscapeHtml(desc)}</div>` : ''}
+                        </div>
+                        <div class="bug-template-item-arrow">→</div>
+                    </div>`);
+            });
+
+            body.innerHTML = `<div class="bug-template-list">${rows.join('')}</div>`;
+            body.querySelectorAll('[data-bug-template-index]').forEach(item => {
+                item.addEventListener('click', () => {
+                    const idx = item.getAttribute('data-bug-template-index');
+                    if (idx === 'blank') {
+                        _bugSelectedIndex = null;
+                        bugRenderDefaultForm();
+                        return;
+                    }
+                    _bugSelectedIndex = parseInt(idx, 10);
+                    bugRenderTemplateForm();
+                });
+            });
+        }
+
+        function bugRenderField(templateIndex, fieldIndex, field) {
+            const label = field?.attributes?.label || field?.id || ('Field ' + (fieldIndex + 1));
+            const desc = field?.attributes?.description || '';
+            const required = !!(field?.validations?.required || field?.attributes?.required);
+            const fieldId = `bug-field-${templateIndex}-${fieldIndex}`;
+            const fieldType = field?.type || 'input';
+            const value = field?.attributes?.value || '';
+
+            if (fieldType === 'markdown') {
+                return `<div class="bug-field-markdown">${bugEscapeHtml(value || desc || '')}</div>`;
+            }
+
+            if (fieldType === 'checkboxes') {
+                const options = Array.isArray(field?.attributes?.options) ? field.attributes.options : [];
+                const checks = options.map((opt, optIndex) => {
+                    const optId = `${fieldId}-${optIndex}`;
+                    return `<label class="bug-field-check" for="${optId}"><input id="${optId}" type="checkbox" data-bug-field-type="checkbox" data-bug-field-key="${fieldId}" data-bug-field-label="${bugEscapeHtml(label)}" data-bug-required="${required ? '1' : '0'}" value="${bugEscapeHtml(opt)}" /> <span>${bugEscapeHtml(opt)}</span></label>`;
+                }).join('');
+                return `
+                    <div class="bug-field-group" data-bug-field-wrapper="${fieldId}" data-bug-field-type="checkboxes" data-bug-field-label="${bugEscapeHtml(label)}" data-bug-required="${required ? '1' : '0'}">
+                        <div class="bug-field-label">${bugEscapeHtml(label)}${required ? ' *' : ''}</div>
+                        ${desc ? `<div class="bug-field-desc">${bugEscapeHtml(desc)}</div>` : ''}
+                        <div class="bug-field-checkboxes">${checks || '<div class="bug-field-desc">No options</div>'}</div>
+                    </div>`;
+            }
+
+            if (fieldType === 'dropdown') {
+                const options = Array.isArray(field?.attributes?.options) ? field.attributes.options : [];
+                const opts = options.map(opt => `<option value="${bugEscapeHtml(opt)}">${bugEscapeHtml(opt)}</option>`).join('');
+                return `
+                    <div class="bug-field-group" data-bug-field-wrapper="${fieldId}" data-bug-field-type="dropdown" data-bug-field-label="${bugEscapeHtml(label)}" data-bug-required="${required ? '1' : '0'}">
+                        <div class="bug-field-label">${bugEscapeHtml(label)}${required ? ' *' : ''}</div>
+                        ${desc ? `<div class="bug-field-desc">${bugEscapeHtml(desc)}</div>` : ''}
+                        <select id="${fieldId}" data-bug-control="1" ${required ? 'required' : ''}>
+                            <option value="">Select one</option>
+                            ${opts}
+                        </select>
+                    </div>`;
+            }
+
+            const tag = fieldType === 'textarea' ? 'textarea' : 'input';
+            const inputType = fieldType === 'textarea' ? '' : ' type="text"';
+            const placeholder = field?.attributes?.placeholder ? ` placeholder="${bugEscapeHtml(field.attributes.placeholder)}"` : '';
+            const defaultValue = value ? ` value="${bugEscapeHtml(value)}"` : '';
+            return `
+                <div class="bug-field-group" data-bug-field-wrapper="${fieldId}" data-bug-field-type="${bugEscapeHtml(fieldType)}" data-bug-field-label="${bugEscapeHtml(label)}" data-bug-required="${required ? '1' : '0'}" data-bug-field-default="${bugEscapeHtml(value)}">
+                    <div class="bug-field-label">${bugEscapeHtml(label)}${required ? ' *' : ''}</div>
+                    ${desc ? `<div class="bug-field-desc">${bugEscapeHtml(desc)}</div>` : ''}
+                    <${tag} id="${fieldId}" data-bug-control="1"${inputType}${placeholder}${defaultValue}${tag === 'textarea' ? '' : ''}${required ? ' required' : ''}></${tag}>
+                </div>`;
+        }
+
+        function bugRenderDefaultForm() {
+            const body = document.getElementById('bug-modal-body');
+            const footer = document.getElementById('bug-modal-footer');
+            const heading = document.getElementById('bug-modal-heading');
+            if (!body) return;
+            _bugSelectedIndex = null;
+            if (heading) heading.textContent = 'Create new issue';
+            if (footer) footer.hidden = false;
+            body.innerHTML = `
+                <div class="bug-modal-body-inner">
+                    <div class="bug-form-section">
+                        <div class="bug-field-group">
+                            <div class="bug-field-label">Title</div>
+                            <input id="bug-title-input" type="text" placeholder="Summarize the issue in one line" />
+                        </div>
+                        <div class="bug-field-group">
+                            <div class="bug-field-label">Description</div>
+                            <div class="reply-tabs">
+                                <button type="button" class="reply-tab active" data-mode="write" onclick="setReplyTab('bug-desc-input','write')">Write</button>
+                                <button type="button" class="reply-tab" data-mode="preview" onclick="setReplyTab('bug-desc-input','preview')">Preview</button>
+                            </div>
+                            <textarea id="bug-desc-input" placeholder="What happened, what you expected, steps to reproduce..."></textarea>
+                            <div class="reply-preview readme" id="preview-bug-desc-input" hidden></div>
+                        </div>
+                        <div class="bug-field-group">
+                            <div class="bug-field-label">Labels (optional, comma-separated)</div>
+                            <input id="bug-labels-input" type="text" placeholder="bug, enhancement, help wanted" />
+                        </div>
+                    </div>
+                    <menta-widget id="menta-bug" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                </div>`;
+        }
+
+        function bugRenderTemplateForm() {
+            const template = bugSelectedTemplate();
+            if (!template) {
+                bugRenderDefaultForm();
+                return;
+            }
+            const body = document.getElementById('bug-modal-body');
+            const footer = document.getElementById('bug-modal-footer');
+            const heading = document.getElementById('bug-modal-heading');
+            if (!body) return;
+            if (heading) heading.textContent = bugTemplateLabel(template, _bugSelectedIndex || 0);
+            if (footer) footer.hidden = false;
+
+            if (template.type === 'markdown') {
+                body.innerHTML = `
+                    <div class="bug-modal-body-inner bug-form-section">
+                        <button type="button" class="bug-template-back" data-bug-back>← Back to templates</button>
+                        <div class="bug-field-group">
+                            <div class="bug-field-label">Title</div>
+                            <input id="bug-title-input" type="text" placeholder="Summarize the issue in one line" value="${bugEscapeHtml(template.title || '')}" />
+                        </div>
+                        <div class="bug-field-group">
+                            <div class="bug-field-label">Description</div>
+                            <div class="reply-tabs">
+                                <button type="button" class="reply-tab active" data-mode="write" onclick="setReplyTab('bug-desc-input','write')">Write</button>
+                                <button type="button" class="reply-tab" data-mode="preview" onclick="setReplyTab('bug-desc-input','preview')">Preview</button>
+                            </div>
+                            <textarea id="bug-desc-input" placeholder="Template content">${bugEscapeHtml(template.content || '')}</textarea>
+                            <div class="reply-preview readme" id="preview-bug-desc-input" hidden></div>
+                        </div>
+                        <div class="bug-field-group">
+                            <div class="bug-field-label">Labels (optional, comma-separated)</div>
+                            <input id="bug-labels-input" type="text" placeholder="bug, enhancement, help wanted" />
+                        </div>
+                        <menta-widget id="menta-bug" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                    </div>`;
+            } else {
+                const fields = Array.isArray(template.body) ? template.body.map((field, index) => bugRenderField(_bugSelectedIndex || 0, index, field)).join('') : '';
+                body.innerHTML = `
+                    <div class="bug-modal-body-inner bug-form-section">
+                        <button type="button" class="bug-template-back" data-bug-back>← Back to templates</button>
+                        <div class="bug-field-group">
+                            <div class="bug-field-label">Title</div>
+                            <input id="bug-title-input" type="text" placeholder="${bugEscapeHtml(template.title || 'Summarize the issue in one line')}" value="${bugEscapeHtml(template.title || '')}" />
+                        </div>
+                        ${template.about ? `<div class="bug-field-desc">${bugEscapeHtml(template.about)}</div>` : ''}
+                        <div id="bug-template-fields">${fields}</div>
+                        <div class="bug-field-group">
+                            <div class="bug-field-label">Labels (optional, comma-separated)</div>
+                            <input id="bug-labels-input" type="text" placeholder="bug, enhancement, help wanted" />
+                        </div>
+                        <menta-widget id="menta-bug" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                    </div>`;
+            }
+
+            body.querySelector('[data-bug-back]')?.addEventListener('click', bugRenderList);
+        }
+
+        function bugBuildFormBody(template) {
+            if (!template || template.type !== 'form') return '';
+            const body = [];
+            let missing = false;
+            if (template.about) {
+                body.push(template.about.trim());
+            }
+            const fields = document.querySelectorAll('#bug-template-fields [data-bug-field-wrapper]');
+            fields.forEach(wrapper => {
+                const type = wrapper.getAttribute('data-bug-field-type') || '';
+                const label = wrapper.getAttribute('data-bug-field-label') || '';
+                const required = wrapper.getAttribute('data-bug-required') === '1';
+                if (type === 'markdown') return;
+                if (type === 'checkboxes') {
+                    const checks = Array.from(wrapper.querySelectorAll('input[type="checkbox"]'));
+                    const checked = checks.filter(c => c.checked).map(c => c.value).filter(Boolean);
+                    if (!checked.length) {
+                        if (required) missing = true;
+                        return;
+                    }
+                    body.push(`### ${label}\n\n${checked.map(v => `- [x] ${v}`).join('\n')}`);
+                    return;
+                }
+                const control = wrapper.querySelector('[data-bug-control="1"]');
+                const value = control ? String(control.value || '').trim() : '';
+                if (!value) {
+                    if (required) missing = true;
+                    return;
+                }
+                body.push(`### ${label}\n\n${value}`);
+            });
+            if (missing) return null;
+            return body.filter(Boolean).join('\n\n');
+        }
 
         function openBugModal() {
             if (document.getElementById('bug-modal-overlay')) return;
             const overlay = document.createElement('div');
             overlay.id = 'bug-modal-overlay';
             overlay.className = 'bug-modal-overlay';
-            const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => (
-                c === '&' ? '&amp;' :
-                c === '<' ? '&lt;'  :
-                c === '>' ? '&gt;'  :
-                c === '"' ? '&quot;': '&#39;'
-            ));
+            const escapeHtml = bugEscapeHtml;
             const safeOwner = escapeHtml(rv.owner || '');
             const safeRepo = escapeHtml(rv.repo || '');
             const repoBase = rv.provider === 'cb'
@@ -3143,27 +3489,12 @@
             const repoLabel = `${safeOwner}/${safeRepo}`;
             overlay.innerHTML = `
                 <div class="bug-modal">
-                    <div>
-                        <div class="bug-modal-title"># Title</div>
-                        <input id="bug-title-input" type="text" placeholder="Summarize the issue in one line" />
+                    <div class="bug-modal-header">
+                        <div class="bug-modal-heading" id="bug-modal-heading">Create new issue</div>
+                        <button type="button" class="bug-modal-close" onclick="closeBugModal()">×</button>
                     </div>
-                    <div>
-                        <div class="bug-modal-title"># Description</div>
-                        <div class="reply-tabs">
-                            <button type="button" class="reply-tab active" data-mode="write" onclick="setReplyTab('bug-desc-input','write')">Write</button>
-                            <button type="button" class="reply-tab" data-mode="preview" onclick="setReplyTab('bug-desc-input','preview')">Preview</button>
-                        </div>
-                        <textarea id="bug-desc-input" placeholder="What happened, what you expected, steps to reproduce..."></textarea>
-                        <div class="reply-preview readme" id="preview-bug-desc-input" hidden></div>
-                    </div>
-                    <div>
-                        <div class="bug-modal-title"># Labels (optional, comma-separated)</div>
-                        <input id="bug-labels-input" type="text" placeholder="bug, enhancement, help wanted" />
-                    </div>
-                    <div>
-                        <menta-widget id="menta-bug" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
-                    </div>
-                    <div class="bug-modal-footer">
+                    <div class="bug-modal-body" id="bug-modal-body"></div>
+                    <div class="bug-modal-footer" id="bug-modal-footer" hidden>
                         <span class="note">Anonymous issue in <a href="${repoHref}" target="_blank">${repoLabel}</a></span>
                         <div class="bug-modal-actions">
                             <span id="bug-status" style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-muted);"></span>
@@ -3174,7 +3505,35 @@
                 </div>`;
             overlay.addEventListener('click', e => { if (e.target === overlay) closeBugModal(); });
             document.body.appendChild(overlay);
-            document.getElementById('bug-title-input').focus();
+
+            if (rv.provider !== 'gh') {
+                _bugTemplates = [];
+                _bugBlankEnabled = true;
+                bugRenderDefaultForm();
+                return;
+            }
+
+            fetch(`/v1/${rv.provider}/${encodeURIComponent(rv.owner || '')}/${encodeURIComponent(rv.repo || '')}/issues/templates`, { headers: { 'X-Gitgost-Key': 'gitgost-anonymous' } })
+                .then(res => {
+                    if (res.ok) return res.json();
+                    if (res.status === 401 || res.status === 403) return { templates: [], blank_issues_enabled: true };
+                    return Promise.reject('failed');
+                })
+                .then(data => {
+                    _bugTemplates = Array.isArray(data.templates) ? data.templates : [];
+                    _bugBlankEnabled = data.blank_issues_enabled !== false;
+                    if (_bugTemplates.length) {
+                        bugRenderList();
+                    } else {
+                        bugRenderDefaultForm();
+                    }
+                })
+                .catch(e => {
+                    console.error('Error fetching templates', e);
+                    _bugTemplates = [];
+                    _bugBlankEnabled = true;
+                    bugRenderDefaultForm();
+                });
         }
 
         function closeBugModal() {
@@ -3183,15 +3542,31 @@
         }
 
         async function submitBug() {
-            const title = document.getElementById('bug-title-input')?.value.trim();
-            const body  = document.getElementById('bug-desc-input')?.value.trim();
+            const template = bugSelectedTemplate();
+            const titleEl = document.getElementById('bug-title-input');
+            const bodyEl = document.getElementById('bug-desc-input');
             const labelsRaw = document.getElementById('bug-labels-input')?.value.trim();
-            if (!title) { document.getElementById('bug-title-input').focus(); return; }
-            if (!body)  { document.getElementById('bug-desc-input').focus(); return; }
             const btn = document.getElementById('bug-submit-btn');
             const statusEl = document.getElementById('bug-status');
             const labels = labelsRaw ? labelsRaw.split(',').map(l => l.trim()).filter(Boolean) : [];
             const captchaToken = document.getElementById('menta-bug')?.token;
+
+            const title = titleEl?.value.trim();
+            if (!title) { if (titleEl) titleEl.focus(); return; }
+
+            let body = bodyEl?.value.trim() || '';
+            if (template && template.type === 'form') {
+                const built = bugBuildFormBody(template);
+                if (built === null) {
+                    if (statusEl) statusEl.textContent = 'Faltan campos requeridos';
+                    return;
+                }
+                body = built;
+            } else if (!body) {
+                if (bodyEl) bodyEl.focus();
+                return;
+            }
+
             if (!captchaToken) { if (statusEl) statusEl.textContent = 'Please complete the captcha'; return; }
             if (btn) btn.disabled = true;
             if (statusEl) statusEl.textContent = 'Sending...';
@@ -3217,7 +3592,6 @@
                 if (btn) btn.disabled = false;
             }
         }
-
         let _prsCache = null;
 
         async function loadPRs() {

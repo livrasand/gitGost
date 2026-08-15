@@ -152,6 +152,10 @@ Create a dedicated GitHub account for gitGost and generate a **Personal Access T
 - `workflow`
 - No expiration
 
+<p align="center">
+  <img src="./web/assets/screenshots/conf_2.png" width="100%" />
+</p>
+
 [Create a GitHub service account token →](https://github.com/settings/tokens/new?scopes=repo,workflow&description=gitGost%20service%20account&expires_in=none)
 
 The link above pre-configures the token with the recommended scopes and no expiration.
@@ -159,6 +163,12 @@ The link above pre-configures the token with the recommended scopes and no expir
 After creating the token, store it securely and configure it in your gitGost deployment.
 
 > **Security:** Treat the token like a password. Never commit it to a repository, expose it in client-side code, or share it publicly.
+
+#### Recommended:
+
+<p align="center">
+  <img src="./web/assets/screenshots/conf_1.png" width="100%" />
+ </p> 
 
 ### GitLab
 

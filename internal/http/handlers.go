@@ -31,6 +31,7 @@ import (
 	cbprovider "github.com/livrasand/gitGost/internal/provider/codeberg"
 	ghprovider "github.com/livrasand/gitGost/internal/provider/github"
 	glprovider "github.com/livrasand/gitGost/internal/provider/gitlab"
+	"github.com/livrasand/gitGost/internal/tokenpool"
 	"github.com/livrasand/gitGost/internal/utils"
 
 	"github.com/gin-gonic/gin"
@@ -1662,7 +1663,7 @@ func GitHubDiscussionsProxyHandler(c *gin.Context) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	ghToken := os.Getenv("GITHUB_TOKEN")
+	ghToken := tokenpool.NextGitHubToken()
 	if ghToken != "" {
 		req.Header.Set("Authorization", "bearer "+ghToken)
 	}
@@ -1782,7 +1783,7 @@ func GitHubDiscussionDetailProxyHandler(c *gin.Context) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	ghToken := os.Getenv("GITHUB_TOKEN")
+	ghToken := tokenpool.NextGitHubToken()
 	if ghToken != "" {
 		req.Header.Set("Authorization", "bearer "+ghToken)
 	}
@@ -3096,7 +3097,7 @@ func searchGitHub(query string) []gin.H {
 	if err != nil {
 		return results
 	}
-	if token := os.Getenv("GITHUB_TOKEN"); token != "" {
+	if token := tokenpool.NextGitHubToken(); token != "" {
 		req.Header.Set("Authorization", "token "+token)
 	}
 	resp, err := client.Do(req)
@@ -3463,7 +3464,7 @@ func CodeSearchHandler(c *gin.Context) {
 	}
 
 	clientToken := strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(c.GetHeader("Authorization"), "token "), "Bearer "))
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		token = clientToken
 	}
@@ -3520,7 +3521,7 @@ func GitHubPackagesHandler(c *gin.Context) {
 		return
 	}
 	clientToken := strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(c.GetHeader("Authorization"), "token "), "Bearer "))
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		token = clientToken
 	}
@@ -3576,7 +3577,7 @@ func searchGitHubUsers(query, clientToken string) []gin.H {
 	if err != nil {
 		return results
 	}
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		token = clientToken
 	}
@@ -3803,7 +3804,7 @@ func gitHubUserProfile(username, clientToken string) profileResult {
 	if err != nil {
 		return profileResult{profile: nil, notFound: false}
 	}
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		token = clientToken
 	}
@@ -3963,7 +3964,7 @@ func UserStarredHandler(c *gin.Context) {
 		return
 	}
 
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		token = clientToken
 	}
@@ -4043,7 +4044,7 @@ func UserOrgsHandler(c *gin.Context) {
 		return
 	}
 
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		token = clientToken
 	}
@@ -4085,7 +4086,7 @@ func UserEventsHandler(c *gin.Context) {
 		return
 	}
 	clientToken := strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(c.GetHeader("Authorization"), "token "), "Bearer "))
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		token = clientToken
 	}
@@ -4142,7 +4143,7 @@ func UserContributionsHandler(c *gin.Context) {
 		return
 	}
 	clientToken := strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(c.GetHeader("Authorization"), "token "), "Bearer "))
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		token = clientToken
 	}
@@ -4808,7 +4809,7 @@ func gitHubUserRepos(username, clientToken string) []gin.H {
 	if err != nil {
 		return nil
 	}
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		token = clientToken
 	}
@@ -5128,7 +5129,7 @@ func getTrendingGitHub(sort string, perPage, page int) []gin.H {
 	if err != nil {
 		return results
 	}
-	if token := os.Getenv("GITHUB_TOKEN"); token != "" {
+	if token := tokenpool.NextGitHubToken(); token != "" {
 		req.Header.Set("Authorization", "token "+token)
 	}
 	resp, err := client.Do(req)
@@ -5375,4 +5376,29 @@ func getTrendingCodeberg(sort string, perPage, page int) []gin.H {
 	}
 
 	return results
+}
+
+// GetIssueTemplatesHandler returns the issue templates for a repository
+func GetIssueTemplatesHandler(c *gin.Context) {
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+
+	prov := providerFromPath(c.Request.URL.Path)
+
+	// Only GitHub supports issue templates via API
+	_, ok := prov.(*ghprovider.GitHubProvider)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "issue templates only supported for GitHub"})
+		return
+	}
+
+	// Use the GitHub package directly since provider interface doesn't have this method yet
+	templates, err := github.GetIssueTemplates(owner, repo)
+	if err != nil {
+		utils.Log("Error fetching issue templates: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, templates)
 }

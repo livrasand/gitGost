@@ -1800,7 +1800,7 @@
                             color: var(--fg-muted);
                         "
                     >
-                        If useful, consider <a href="https://github.com/sponsors/livrasand" style="color:var(--accent);text-decoration:none;">donating</a> or sponsoring us; you can also <a href="https://github.com/livrasand/gitGost" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">forking</a>. AI/LLM scraping prohibited. Git is a trademark of the <a href="http://sfconservancy.org/" style="color:var(--accent);text-decoration:none;">Software Freedom Conservancy</a>.
+                        If useful, consider <a href="https://github.com/sponsors/livrasand" style="color:var(--accent);text-decoration:none;">donating</a> or you can also <a href="https://github.com/livrasand/gitGost" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">forking</a>. AI/LLM scraping prohibited. Git is a trademark of the <a href="http://sfconservancy.org/" style="color:var(--accent);text-decoration:none;">Software Freedom Conservancy</a>.
                     </p>
                 </div>
             </aside>
@@ -4261,6 +4261,12 @@
                             <label for="issue-title">Title</label>
                             <input id="issue-title" type="text" placeholder="Brief description of the issue" autocomplete="off" />
                         </div>
+                        <div class="form-group" id="issue-template-group" style="display:none;">
+                            <label for="issue-template">Template</label>
+                            <select id="issue-template">
+                                <option value="">Blank issue</option>
+                            </select>
+                        </div>
                         <div class="form-group">
                             <label for="issue-body">Description</label>
                             <textarea id="issue-body" placeholder="Detailed description, steps to reproduce, etc."></textarea>
@@ -4445,7 +4451,7 @@
                                     <strong style="color:var(--fg);">gitGost</strong> is a community-led free &amp; open source Git collaboration platform built for privacy, transparency, and developer freedom.
                                 </p>
                                 <p style="font-size:0.85rem;line-height:1.6;color:var(--fg-muted);margin:0;">
-                                    Your commit appears with one of <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">our bots</code> — no your data.
+                                    Your commit appears with one of <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">our services accounts</code> — no your data.
                                 </p>
                             </div>
 
@@ -4647,18 +4653,58 @@
             }
 
             function bindFormHandlers(root) {
-                const issueSubmit = root.querySelector('#issue-submit');
+                let issueTemplates = [];
+                        const issueSubmit = root.querySelector('#issue-submit');
                 if (issueSubmit) {
                     issueSubmit.addEventListener('click', async () => {
                         const provider = root.querySelector('#issue-provider')?.value || 'gh';
                         const owner = root.querySelector('#issue-owner')?.value.trim();
                         const repo = root.querySelector('#issue-repo')?.value.trim();
-                        const title = root.querySelector('#issue-title')?.value.trim();
-                        const body = root.querySelector('#issue-body')?.value.trim();
+                        let title = root.querySelector('#issue-title')?.value.trim();
+                        let body = root.querySelector('#issue-body')?.value.trim();
                         const labelsRaw = root.querySelector('#issue-labels')?.value.trim();
                         const statusEl = root.querySelector('#issue-status');
                         const resultEl = root.querySelector('#issue-result');
-                        if (!owner || !repo || !title || !body) { if (statusEl) statusEl.textContent = 'Campos requeridos'; return; }
+                        if (!owner || !repo) { if (statusEl) statusEl.textContent = 'Owner y repo requeridos'; return; }
+                        // Fetch templates if not already loaded (GitHub only)
+                        if (issueTemplates.length === 0 && provider === 'gh') {
+                            try {
+                                const tmplRes = await fetch(`/v1/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/templates`, { headers: { 'X-Gitgost-Key': 'gitgost-anonymous' } });
+                                if (tmplRes.ok) {
+                                    const tmplData = await tmplRes.json();
+                                    issueTemplates = tmplData.templates || [];
+                                    const tmplSelect = root.querySelector('#issue-template');
+                                    if (tmplSelect) {
+                                        tmplSelect.innerHTML = '<option value="">Blank issue</option>';
+                                        issueTemplates.forEach((t, i) => {
+                                            const opt = document.createElement('option');
+                                            opt.value = i;
+                                            const label = t.name || t.filename || 'Template ' + (i+1);
+                                            const desc = t.description || t.about || '';
+                                            opt.textContent = desc ? label + ' — ' + desc : label;
+                                            opt.title = desc || label;
+                                            tmplSelect.appendChild(opt);
+                                        });
+                                        const group = root.querySelector('#issue-template-group');
+                                        if (group) group.style.display = issueTemplates.length ? 'block' : 'none';
+                                    }
+                                }
+                            } catch (e) { console.error('Error fetching templates', e); }
+                        }
+                        // Apply selected template if any (markdown only)
+                        const selIdx = root.querySelector('#issue-template')?.value;
+                        if (selIdx) {
+                            const tmpl = issueTemplates[selIdx];
+                            if (tmpl && tmpl.type === 'markdown') {
+                                title = tmpl.title || '';
+                                body = tmpl.content || '';
+                                const titleEl = root.querySelector('#issue-title');
+                                const bodyEl = root.querySelector('#issue-body');
+                                if (titleEl) titleEl.value = title;
+                                if (bodyEl) bodyEl.value = body;
+                            }
+                        }
+                        if (!title || !body) { if (statusEl) statusEl.textContent = 'Campos requeridos'; return; }
                         const labels = labelsRaw ? labelsRaw.split(',').map(l => l.trim()).filter(Boolean) : [];
                         issueSubmit.disabled = true;
                         if (statusEl) statusEl.textContent = 'Enviando...';

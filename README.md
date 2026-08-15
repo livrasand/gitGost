@@ -83,7 +83,7 @@ That’s it. No login, token, name, or email required — gitGost provides stron
 
 | Feature                     | Description                                                                 |
 |-----------------------------|-----------------------------------------------------------------------------|
-| **Total Anonymity**         | Strips author name, email, timestamps, and all identifying metadata. PRs created by neutral `@gitgost-anonymous` bot. |
+| **Total Anonymity**         | Strips author name, email, timestamps, and all identifying metadata. PRs created by neutral `@gitgost-anonymous` service account. |
 | **One-Command Setup**       | Just `git remote add gost <url>` – no accounts, tokens, or browser extensions. |
 | **Battle-tested Security**  | Rate limiting, repository size caps, commit validation. Written in pure Go with minimal dependencies – fully auditable. |
 | **Works Everywhere**        | Terminal, CI/CD, Docker, scripts – any public GitHub repo, anywhere Git runs. |
@@ -133,6 +133,58 @@ git push gost my-cool-fix:main
 Done. The PR appears instantly from `@gitgost-anonymous` with your commit message as the PR description.
 
 **Pro tip:** Write detailed commit messages! Your commit message becomes the PR description, allowing you to provide context while staying anonymous.
+
+## Use Your Own Service Account
+
+gitGost works without an account or personal access token. However, you can optionally create a dedicated **service account** on GitHub or GitLab and add its token to the gitGost service.
+
+Using your own service account can provide gitGost with a dedicated API identity and rate limit instead of relying entirely on shared credentials.
+
+> **Important:** Create a dedicated account for gitGost. Do not use your personal GitHub or GitLab account.
+
+### GitHub
+
+Create a dedicated GitHub account for gitGost and generate a **Personal Access Token (classic)** with the required permissions.
+
+**Recommended token:**
+
+- `repo`
+- `workflow`
+- No expiration
+
+[Create a GitHub service account token →](https://github.com/settings/tokens/new?scopes=repo,workflow&description=gitGost%20service%20account&expires_in=none)
+
+The link above pre-configures the token with the recommended scopes and no expiration.
+
+After creating the token, store it securely and configure it in your gitGost deployment.
+
+> **Security:** Treat the token like a password. Never commit it to a repository, expose it in client-side code, or share it publicly.
+
+### GitLab
+
+Create a dedicated GitLab account for gitGost and generate a **Personal Access Token** with the `api` scope.
+
+**Recommended token:**
+
+- `api`
+
+[Create a GitLab service account token →](https://gitlab.com/-/user_settings/personal_access_tokens/legacy/new?scopes=api&name=gitGost%20service%20account)
+
+The link above pre-configures the token with the recommended `api` scope.
+
+After creating the token, store it securely and configure it in your gitGost deployment.
+
+> **Security:** Treat the token like a password. Never commit it to a repository, expose it in client-side code, or share it publicly.
+
+### Why use a service account?
+
+A dedicated service account allows gitGost to:
+
+- Use a separate identity for API requests.
+- Avoid using the maintainer's personal account.
+- Provide an independent API rate limit.
+- Rotate or revoke credentials without affecting personal accounts.
+- Add multiple accounts to a credential pool when operating a larger gitGost deployment.
 
 ## Download Android app
 

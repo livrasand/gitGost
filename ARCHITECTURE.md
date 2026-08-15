@@ -22,7 +22,7 @@ When you push code through gitGost, the system acts as a temporary proxy and tra
            ├─ 3. Strips all personal metadata
            ├─ 4. Creates a temporary fork
            ├─ 5. Pushes anonymized commits to fork
-           ├─ 6. Opens Pull Request via Bot Account
+           ├─ 6. Opens Pull Request via Service Account
            └─ 7. Deletes temporary fork (if applicable)
            │
            ▼
@@ -46,7 +46,7 @@ To understand how anonymity is achieved, here is the exact lifecycle of a `git p
 
 
 4. **Hash Generation:** gitGost generates a cryptographic, anonymous hash (HMAC-SHA256) to represent the session/user without tying it to an identity.
-5. **Infrastructure Proxying:** gitGost creates a temporary fork of the target repository under the neutral `@gitgost-anonymous` bot account.
+5. **Infrastructure Proxying:** gitGost creates a temporary fork of the target repository under the neutral `@gitgost-anonymous` service account.
 6. **Delivery:** The sanitized commits are pushed to the temporary fork, and a Pull Request is opened on the original target repository.
 
 ## Data Storage & Retention
@@ -75,7 +75,7 @@ Anonymity is a spectrum, and gitGost is a tool, not a magic bullet. Here is wher
 
 ### What You Do NOT Need to Trust
 
-* **GitHub:** GitHub only ever sees the `@gitgost-anonymous` bot account and its IP. They do not see your IP, your account, or your email.
+* **GitHub:** GitHub only ever sees the `@gitgost-anonymous` service account and its IP. They do not see your IP, your account, or your email.
 * **Other Users / Target Repositories:** Maintainers receive a pristine PR with no metadata. They cannot trace it back to your GitHub profile.
 
 ### What Can Still Leak Your Identity (Residual Risks)

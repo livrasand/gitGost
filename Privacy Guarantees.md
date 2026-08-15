@@ -36,7 +36,7 @@ A short summary for paranoid folks: what we keep, what we don’t, and what happ
 ## What gitGost cannot know even if it wanted to
 - It cannot know who you are (no accounts or user tokens).
 - It cannot know your IP (it is not recorded).
-- It cannot link commits to your real identity (author stripping + neutral PR bot).
+- It cannot link commits to your real identity (author stripping + neutral PR service account).
 - It cannot reconstruct your usage history: there are no persistent traces.
 
 **Credibility > features:** less data, less risk.

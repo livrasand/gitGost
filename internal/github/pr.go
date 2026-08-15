@@ -10,16 +10,29 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/livrasand/gitGost/internal/tokenpool"
 	"gopkg.in/yaml.v3"
 )
 
 var httpClient = &http.Client{Timeout: 60 * time.Second}
+
+// githubDo executes a request with the given token and marks the token as
+// rate-limited when GitHub returns 403/429 (rate limit exceeded).
+func githubDo(req *http.Request, token string) (*http.Response, error) {
+	if token != "" {
+		req.Header.Set("Authorization", "token "+token)
+	}
+	resp, err := httpClient.Do(req)
+	if err == nil && resp != nil && (resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusTooManyRequests) {
+		tokenpool.MarkGitHubRateLimited(token, resp.Header.Get("X-RateLimit-Reset"))
+	}
+	return resp, err
+}
 
 type Ref struct {
 	Ref    string `json:"ref"`
@@ -36,7 +49,7 @@ func isTimeout(err error) bool {
 }
 
 func UpdateCommentsKarmaByHash(hash string, karma int) error {
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		return fmt.Errorf("GITHUB_TOKEN not set")
 	}
@@ -52,11 +65,10 @@ func UpdateCommentsKarmaByHash(hash string, karma int) error {
 		if err != nil {
 			return err
 		}
-		req.Header.Set("Authorization", "token "+token)
 		req.Header.Set("Accept", "application/vnd.github+json")
 		req.Header.Set("User-Agent", "gitGost")
 
-		resp, err = httpClient.Do(req)
+		resp, err = githubDo(req, token)
 		if err == nil {
 			break
 		}
@@ -82,7 +94,7 @@ func UpdateCommentsKarmaByHash(hash string, karma int) error {
 		return err
 	}
 
-	re := regexp.MustCompile(fmt.Sprintf(`(?m)goster-%s · karma \(\d+\) · \[report\]\(([^)]+)\)`, regexp.QuoteMeta(hash)))
+	re := regexp.MustCompile(fmt.Sprintf(`(?m)goster-%s \u00b7 karma \(\d+\) \u00b7 \[report\]\(([^)]+)\)`, regexp.QuoteMeta(hash)))
 
 	for _, item := range result.Items {
 		parts := strings.Split(item.RepositoryURL, "/")
@@ -97,14 +109,13 @@ func UpdateCommentsKarmaByHash(hash string, karma int) error {
 		if err != nil {
 			continue
 		}
-		creq.Header.Set("Authorization", "token "+token)
 		creq.Header.Set("Accept", "application/vnd.github+json")
 		creq.Header.Set("User-Agent", "gitGost")
 
 		var cresp *http.Response
 		delay := time.Second
 		for attempt := 0; attempt < 3; attempt++ {
-			cresp, err = httpClient.Do(creq)
+			cresp, err = githubDo(creq, token)
 			if err == nil {
 				break
 			}
@@ -140,7 +151,7 @@ func UpdateCommentsKarmaByHash(hash string, karma int) error {
 			if m := re.FindStringSubmatch(cmt.Body); len(m) == 2 {
 				link = m[1]
 			}
-			legend := fmt.Sprintf("goster-%s · karma (%d) · [report](%s)", hash, karma, link)
+			legend := fmt.Sprintf("goster-%s \u00b7 karma (%d) \u00b7 [report](%s)", hash, karma, link)
 			newBody := re.ReplaceAllString(cmt.Body, legend)
 			if newBody == cmt.Body {
 				continue
@@ -157,10 +168,9 @@ func UpdateCommentsKarmaByHash(hash string, karma int) error {
 			if err != nil {
 				continue
 			}
-			preq.Header.Set("Authorization", "token "+token)
 			preq.Header.Set("Content-Type", "application/json")
 
-			presp, err := httpClient.Do(preq)
+			presp, err := githubDo(preq, token)
 			if err != nil {
 				continue
 			}
@@ -172,7 +182,7 @@ func UpdateCommentsKarmaByHash(hash string, karma int) error {
 }
 
 func DeleteCommentsByHash(hash string) error {
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		return fmt.Errorf("GITHUB_TOKEN not set")
 	}
@@ -188,11 +198,10 @@ func DeleteCommentsByHash(hash string) error {
 		if err != nil {
 			return err
 		}
-		req.Header.Set("Authorization", "token "+token)
 		req.Header.Set("Accept", "application/vnd.github+json")
 		req.Header.Set("User-Agent", "gitGost")
 
-		resp, err = httpClient.Do(req)
+		resp, err = githubDo(req, token)
 		if err == nil {
 			break
 		}
@@ -230,10 +239,9 @@ func DeleteCommentsByHash(hash string) error {
 		if err != nil {
 			continue
 		}
-		creq.Header.Set("Authorization", "token "+token)
 		creq.Header.Set("Accept", "application/vnd.github+json")
 		creq.Header.Set("User-Agent", "gitGost")
-		cresp, err := httpClient.Do(creq)
+		cresp, err := githubDo(creq, token)
 		if err != nil {
 			continue
 		}
@@ -259,11 +267,10 @@ func DeleteCommentsByHash(hash string) error {
 			if err != nil {
 				continue
 			}
-			preq.Header.Set("Authorization", "token "+token)
 			preq.Header.Set("Accept", "application/vnd.github+json")
 			preq.Header.Set("User-Agent", "gitGost")
 
-			presp, err := httpClient.Do(preq)
+			presp, err := githubDo(preq, token)
 			if err != nil {
 				continue
 			}
@@ -278,14 +285,14 @@ func DeleteCommentsByHash(hash string) error {
 }
 
 func CreateAnonymousIssue(owner, repo, title, body string, labels []string) (string, int, error) {
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		return "", 0, fmt.Errorf("GITHUB_TOKEN not set")
 	}
 
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues", owner, repo)
 
-	issueBody := fmt.Sprintf("%s\n\n---\n\n*This is an anonymous contribution made via [gitGost](https://gitgost.livrasand.com).*\n\n*The original author's identity has been anonymized to protect their privacy. This is a service account that allows real humans to contribute anonymously.*", body)
+	issueBody := fmt.Sprintf("%s\n\n---\n\n*This is an anonymous contribution made via [gitGost](https://gitgost.livrasand.com).\n\n*The original author's identity has been anonymized to protect their privacy. This is a service account that allows real humans to contribute anonymously.*", body)
 
 	payload := map[string]interface{}{
 		"title":  title,
@@ -303,10 +310,9 @@ func CreateAnonymousIssue(owner, repo, title, body string, labels []string) (str
 		return "", 0, err
 	}
 
-	req.Header.Set("Authorization", "token "+token)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := httpClient.Do(req)
+	resp, err := githubDo(req, token)
 	if err != nil {
 		return "", 0, err
 	}
@@ -330,7 +336,7 @@ func CreateAnonymousIssue(owner, repo, title, body string, labels []string) (str
 }
 
 func CreateAnonymousComment(owner, repo string, number int, body string) (string, error) {
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
@@ -348,10 +354,9 @@ func CreateAnonymousComment(owner, repo string, number int, body string) (string
 		return "", err
 	}
 
-	req.Header.Set("Authorization", "token "+token)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := httpClient.Do(req)
+	resp, err := githubDo(req, token)
 	if err != nil {
 		return "", err
 	}
@@ -374,7 +379,7 @@ func CreateAnonymousComment(owner, repo string, number int, body string) (string
 }
 
 func CreateAnonymousPRComment(owner, repo string, number int, body string) (string, error) {
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
@@ -392,12 +397,11 @@ func CreateAnonymousPRComment(owner, repo string, number int, body string) (stri
 		return "", err
 	}
 
-	req.Header.Set("Authorization", "token "+token)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "gitGost")
 
-	resp, err := httpClient.Do(req)
+	resp, err := githubDo(req, token)
 	if err != nil {
 		return "", err
 	}
@@ -420,7 +424,7 @@ func CreateAnonymousPRComment(owner, repo string, number int, body string) (stri
 }
 
 func CreateAnonymousDiscussionComment(owner, repo string, number int, body string) (string, error) {
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
@@ -440,10 +444,10 @@ func CreateAnonymousDiscussionComment(owner, repo string, number int, body strin
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("Authorization", "bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "bearer "+token)
 
-	resp, err := httpClient.Do(req)
+	resp, err := githubDo(req, token)
 	if err != nil {
 		return "", err
 	}
@@ -491,10 +495,10 @@ func CreateAnonymousDiscussionComment(owner, repo string, number int, body strin
 	if err != nil {
 		return "", err
 	}
-	mreq.Header.Set("Authorization", "bearer "+token)
 	mreq.Header.Set("Content-Type", "application/json")
+	mreq.Header.Set("Authorization", "bearer "+token)
 
-	mresp, err := httpClient.Do(mreq)
+	mresp, err := githubDo(mreq, token)
 	if err != nil {
 		return "", err
 	}
@@ -531,7 +535,7 @@ func (r *Ref) GetSha() string {
 }
 
 func ForkRepo(owner, repo string) (string, error) {
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
@@ -543,7 +547,7 @@ func ForkRepo(owner, repo string) (string, error) {
 	}
 	req.Header.Set("Authorization", "token "+token)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := githubDo(req, token)
 	if err != nil {
 		return "", err
 	}
@@ -566,7 +570,7 @@ func ForkRepo(owner, repo string) (string, error) {
 	}
 	req.Header.Set("Authorization", "token "+token)
 
-	resp, err = http.DefaultClient.Do(req)
+	resp, err = githubDo(req, token)
 	if err != nil {
 		return "", err
 	}
@@ -586,7 +590,7 @@ func ForkRepo(owner, repo string) (string, error) {
 	req.Header.Set("Authorization", "token "+token)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err = http.DefaultClient.Do(req)
+	resp, err = githubDo(req, token)
 	if err != nil {
 		return "", err
 	}
@@ -601,7 +605,7 @@ func ForkRepo(owner, repo string) (string, error) {
 }
 
 func ClosePRByURL(prURL string) error {
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		return fmt.Errorf("GITHUB_TOKEN not set")
 	}
@@ -624,12 +628,11 @@ func ClosePRByURL(prURL string) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Authorization", "token "+token)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "gitGost")
 
-	resp, err := httpClient.Do(req)
+	resp, err := githubDo(req, token)
 	if err != nil {
 		return err
 	}
@@ -642,14 +645,14 @@ func ClosePRByURL(prURL string) error {
 }
 
 func CreatePR(owner, repo, branch, forkOwner, commitMessage string) (string, error) {
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
 
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls", owner, repo)
 
-	prBody := fmt.Sprintf("%s\n\n---\n\n*This is an anonymous contribution made via [gitGost](https://gitgost.livrasand.com).*\n\n*The original author's identity has been anonymized to protect their privacy. This is a service account that allows real humans to contribute anonymously.*", commitMessage)
+	prBody := fmt.Sprintf("%s\n\n---\n\n*This is an anonymous contribution made via [gitGost](https://gitgost.livrasand.com).\n\n*The original author's identity has been anonymized to protect their privacy. This is a service account that allows real humans to contribute anonymously.*", commitMessage)
 
 	data := map[string]interface{}{
 		"title": "Anonymous contribution via gitGost",
@@ -668,10 +671,9 @@ func CreatePR(owner, repo, branch, forkOwner, commitMessage string) (string, err
 		return "", err
 	}
 
-	req.Header.Set("Authorization", "token "+token)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := githubDo(req, token)
 	if err != nil {
 		return "", err
 	}
@@ -699,7 +701,7 @@ func CreatePR(owner, repo, branch, forkOwner, commitMessage string) (string, err
 }
 
 func GetRefs(owner, repo string) ([]Ref, error) {
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		return nil, fmt.Errorf("GITHUB_TOKEN not set")
 	}
@@ -710,9 +712,7 @@ func GetRefs(owner, repo string) ([]Ref, error) {
 		return nil, err
 	}
 
-	req.Header.Set("Authorization", "token "+token)
-
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := githubDo(req, token)
 	if err != nil {
 		return nil, err
 	}
@@ -740,7 +740,7 @@ type RepoPolicy struct {
 }
 
 func GetRepoPolicy(owner, repo string) (*RepoPolicy, error) {
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/.gitgost.yml", owner, repo)
 
 	req, err := http.NewRequest("GET", apiURL, nil)
@@ -753,7 +753,7 @@ func GetRepoPolicy(owner, repo string) (*RepoPolicy, error) {
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "gitGost")
 
-	resp, err := httpClient.Do(req)
+	resp, err := githubDo(req, token)
 	if err != nil {
 		return &RepoPolicy{}, nil
 	}
@@ -849,7 +849,7 @@ func nextPageURL(linkHeader string) string {
 }
 
 func FetchPRTimeline(owner, repo string, number int, etag string) (events []PRTimelineEvent, newETag string, changed bool, err error) {
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		return nil, "", false, fmt.Errorf("GITHUB_TOKEN not set")
 	}
@@ -861,14 +861,13 @@ func FetchPRTimeline(owner, repo string, number int, etag string) (events []PRTi
 		if err != nil {
 			return nil, "", false, err
 		}
-		req.Header.Set("Authorization", "token "+token)
 		req.Header.Set("Accept", "application/vnd.github+json")
 		req.Header.Set("User-Agent", "gitGost")
 		if etag != "" && newETag == "" {
 			req.Header.Set("If-None-Match", etag)
 		}
 
-		resp, err := httpClient.Do(req)
+		resp, err := githubDo(req, token)
 		if err != nil {
 			return nil, "", false, err
 		}
@@ -909,7 +908,7 @@ func FetchPRTimeline(owner, repo string, number int, etag string) (events []PRTi
 }
 
 func FetchPRInfo(owner, repo string, number int) (state, title string, comments int, updatedAt string, err error) {
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		return "", "", 0, "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
@@ -920,11 +919,10 @@ func FetchPRInfo(owner, repo string, number int) (state, title string, comments 
 	if err != nil {
 		return "", "", 0, "", err
 	}
-	req.Header.Set("Authorization", "token "+token)
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "gitGost")
 
-	resp, err := httpClient.Do(req)
+	resp, err := githubDo(req, token)
 	if err != nil {
 		return "", "", 0, "", err
 	}
@@ -955,7 +953,7 @@ func FetchPRInfo(owner, repo string, number int) (state, title string, comments 
 }
 
 func GetExistingPR(owner, repo, forkOwner, branchName string) (string, bool, error) {
-	token := os.Getenv("GITHUB_TOKEN")
+	token := tokenpool.NextGitHubToken()
 	if token == "" {
 		return "", false, fmt.Errorf("GITHUB_TOKEN not set")
 	}
@@ -965,11 +963,10 @@ func GetExistingPR(owner, repo, forkOwner, branchName string) (string, bool, err
 	if err != nil {
 		return "", false, err
 	}
-	req.Header.Set("Authorization", "token "+token)
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "gitGost")
 
-	resp, err := httpClient.Do(req)
+	resp, err := githubDo(req, token)
 	if err != nil {
 		return "", false, err
 	}
@@ -987,11 +984,10 @@ func GetExistingPR(owner, repo, forkOwner, branchName string) (string, bool, err
 	if err != nil {
 		return "", true, err
 	}
-	req.Header.Set("Authorization", "token "+token)
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "gitGost")
 
-	resp, err = httpClient.Do(req)
+	resp, err = githubDo(req, token)
 	if err != nil {
 		return "", true, err
 	}
@@ -1013,4 +1009,345 @@ func GetExistingPR(owner, repo, forkOwner, branchName string) (string, bool, err
 	}
 
 	return prs[0].HTMLURL, true, nil
+}
+
+// IssueTemplate represents a GitHub issue template
+// Supports both Markdown templates (.md) and Issue Forms (.yml/.yaml)
+type IssueTemplate struct {
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
+	Content     string           `json:"content"` // For markdown templates
+	Body        []IssueFormField `json:"body"`    // For issue forms
+	About       string           `json:"about"`
+	Labels      []string         `json:"labels"`
+	Assignees   []string         `json:"assignees"`
+	Title       string           `json:"title"`
+	Filename    string           `json:"filename"`
+	Type        string           `json:"type"` // "markdown" or "form"
+}
+
+// IssueFormField represents a field in a GitHub Issue Form
+type IssueFormField struct {
+	Type        string               `json:"type"` // input, textarea, dropdown, checkboxes, markdown
+	ID          string               `json:"id"`
+	Attributes  IssueFormAttributes  `json:"attributes"`
+	Validations IssueFormValidations `json:"validations"`
+}
+
+// IssueFormAttributes holds the attributes for a form field
+type IssueFormAttributes struct {
+	Label       string   `json:"label"`
+	Description string   `json:"description"`
+	Placeholder string   `json:"placeholder"`
+	Value       string   `json:"value"`
+	Required    bool     `json:"required"`
+	Options     []string `json:"options"`
+	Multiple    bool     `json:"multiple"`
+}
+
+// IssueFormValidations holds validation rules for a form field
+type IssueFormValidations struct {
+	Required bool `json:"required"`
+}
+
+// IssueTemplatesResponse represents the response from GitHub's issue templates API
+type IssueTemplatesResponse struct {
+	Templates          []IssueTemplate `json:"templates"`
+	BlankIssuesEnabled bool            `json:"blank_issues_enabled"`
+	ContactLinks       []ContactLink   `json:"contact_links"`
+}
+
+type ContactLink struct {
+	Name  string `json:"name"`
+	URL   string `json:"url"`
+	About string `json:"about"`
+}
+
+type githubContentItem struct {
+	Name        string `json:"name"`
+	Path        string `json:"path"`
+	Type        string `json:"type"`
+	DownloadURL string `json:"download_url"`
+	Content     string `json:"content"`
+	Encoding    string `json:"encoding"`
+}
+
+type issueTemplatesConfig struct {
+	BlankIssuesEnabled *bool         `yaml:"blank_issues_enabled"`
+	ContactLinks       []ContactLink `yaml:"contact_links"`
+}
+
+func githubContentsURL(owner, repo, p string) string {
+	parts := strings.Split(p, "/")
+	for i := range parts {
+		parts[i] = url.PathEscape(parts[i])
+	}
+	return fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", owner, repo, strings.Join(parts, "/"))
+}
+
+func githubGet(owner, repo, p, token string) (*http.Response, error) {
+	apiURL := githubContentsURL(owner, repo, p)
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", "gitGost")
+	resp, err := githubDo(req, token)
+	if err != nil {
+		return nil, err
+	}
+	if token != "" && (resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden) {
+		resp.Body.Close()
+		req, err = http.NewRequest("GET", apiURL, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Accept", "application/vnd.github+json")
+		req.Header.Set("User-Agent", "gitGost")
+		resp, err = githubDo(req, "")
+		if err != nil {
+			return nil, err
+		}
+	}
+	return resp, nil
+}
+
+func githubGetContentItem(owner, repo, p, token string) (*githubContentItem, error) {
+	resp, err := githubGet(owner, repo, p, token)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to fetch %s: %s", p, resp.Status)
+	}
+	var item githubContentItem
+	if err := json.NewDecoder(resp.Body).Decode(&item); err != nil {
+		return nil, err
+	}
+	return &item, nil
+}
+
+func githubGetContentList(owner, repo, p, token string) ([]githubContentItem, error) {
+	resp, err := githubGet(owner, repo, p, token)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to list %s: %s", p, resp.Status)
+	}
+	var items []githubContentItem
+	if err := json.NewDecoder(resp.Body).Decode(&items); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func githubDecodeContent(item *githubContentItem) string {
+	if item == nil {
+		return ""
+	}
+	if item.Encoding == "base64" {
+		cleaned := strings.ReplaceAll(item.Content, "\n", "")
+		decoded, err := base64.StdEncoding.DecodeString(cleaned)
+		if err == nil {
+			return string(decoded)
+		}
+	}
+	return item.Content
+}
+
+func issueTemplateName(filename string) string {
+	name := strings.TrimSuffix(filename, ".md")
+	name = strings.TrimSuffix(name, ".markdown")
+	name = strings.TrimSuffix(name, ".yml")
+	name = strings.TrimSuffix(name, ".yaml")
+	name = strings.ReplaceAll(name, "-", " ")
+	name = strings.ReplaceAll(name, "_", " ")
+	return strings.TrimSpace(name)
+}
+
+func parseMarkdownIssueTemplate(item githubContentItem, raw string) IssueTemplate {
+	tmpl := IssueTemplate{
+		Filename: item.Name,
+		Type:     "markdown",
+		Name:     issueTemplateName(item.Name),
+		Content:  strings.TrimSpace(raw),
+	}
+
+	content := strings.TrimSpace(raw)
+	if strings.HasPrefix(content, "---\n") {
+		if end := strings.Index(content[4:], "\n---\n"); end >= 0 {
+			front := content[4 : 4+end]
+			body := strings.TrimLeft(content[4+end+5:], "\r\n")
+			var meta struct {
+				Name        string   `yaml:"name"`
+				Description string   `yaml:"description"`
+				About       string   `yaml:"about"`
+				Title       string   `yaml:"title"`
+				Labels      []string `yaml:"labels"`
+				Assignees   []string `yaml:"assignees"`
+			}
+			if err := yaml.Unmarshal([]byte(front), &meta); err == nil {
+				if meta.Name != "" {
+					tmpl.Name = meta.Name
+				}
+				tmpl.Description = meta.Description
+				tmpl.About = meta.About
+				tmpl.Title = meta.Title
+				tmpl.Labels = meta.Labels
+				tmpl.Assignees = meta.Assignees
+			}
+			tmpl.Content = body
+		}
+	}
+	if tmpl.Description == "" {
+		tmpl.Description = tmpl.About
+	}
+	return tmpl
+}
+
+func parseIssueFormTemplate(item githubContentItem, raw string) IssueTemplate {
+	tmpl := IssueTemplate{}
+	if err := yaml.Unmarshal([]byte(raw), &tmpl); err != nil {
+		tmpl.Name = issueTemplateName(item.Name)
+	}
+	tmpl.Filename = item.Name
+	tmpl.Type = "form"
+	if tmpl.Name == "" {
+		tmpl.Name = issueTemplateName(item.Name)
+	}
+	if tmpl.About == "" {
+		tmpl.About = tmpl.Description
+	}
+	return tmpl
+}
+
+func parseIssueTemplatesConfig(raw string) (*issueTemplatesConfig, error) {
+	var cfg issueTemplatesConfig
+	if err := yaml.Unmarshal([]byte(raw), &cfg); err != nil {
+		return nil, err
+	}
+	return &cfg, nil
+}
+
+// GetIssueTemplates fetches the issue templates for a repository
+func GetIssueTemplates(owner, repo string) (*IssueTemplatesResponse, error) {
+	token := tokenpool.NextGitHubToken()
+	items, err := githubGetContentList(owner, repo, ".github/ISSUE_TEMPLATE", token)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &IssueTemplatesResponse{
+		Templates:          []IssueTemplate{},
+		BlankIssuesEnabled: true,
+		ContactLinks:       []ContactLink{},
+	}
+
+	for _, item := range items {
+		if item.Type != "file" {
+			continue
+		}
+		name := strings.ToLower(item.Name)
+		if name == "config.yml" || name == "config.yaml" {
+			cfgItem, err := githubGetContentItem(owner, repo, item.Path, token)
+			if err != nil || cfgItem == nil {
+				continue
+			}
+			cfg, err := parseIssueTemplatesConfig(githubDecodeContent(cfgItem))
+			if err != nil {
+				continue
+			}
+			if cfg.BlankIssuesEnabled != nil {
+				result.BlankIssuesEnabled = *cfg.BlankIssuesEnabled
+			}
+			if len(cfg.ContactLinks) > 0 {
+				result.ContactLinks = cfg.ContactLinks
+			}
+			continue
+		}
+
+		if !strings.HasSuffix(name, ".md") && !strings.HasSuffix(name, ".markdown") && !strings.HasSuffix(name, ".yml") && !strings.HasSuffix(name, ".yaml") {
+			continue
+		}
+
+		contentItem, err := githubGetContentItem(owner, repo, item.Path, token)
+		if err != nil || contentItem == nil {
+			continue
+		}
+		raw := githubDecodeContent(contentItem)
+		if raw == "" {
+			continue
+		}
+
+		if strings.HasSuffix(name, ".md") || strings.HasSuffix(name, ".markdown") {
+			result.Templates = append(result.Templates, parseMarkdownIssueTemplate(item, raw))
+			continue
+		}
+		result.Templates = append(result.Templates, parseIssueFormTemplate(item, raw))
+	}
+
+	return result, nil
+}
+
+// RenderIssueFormBody renders the issue form fields into a markdown body
+func RenderIssueFormBody(template *IssueTemplate, values map[string]string) string {
+	var body strings.Builder
+
+	if template.About != "" {
+		body.WriteString(template.About)
+		body.WriteString("\n\n")
+	}
+
+	for _, field := range template.Body {
+		value := values[field.ID]
+		if value == "" && field.Attributes.Value != "" {
+			value = field.Attributes.Value
+		}
+
+		if field.Type == "markdown" {
+			if field.Attributes.Value != "" {
+				body.WriteString(field.Attributes.Value)
+				body.WriteString("\n\n")
+			}
+			continue
+		}
+
+		label := field.Attributes.Label
+		if label == "" {
+			label = field.ID
+		}
+
+		body.WriteString(fmt.Sprintf("### %s\n\n", label))
+
+		if value != "" {
+			body.WriteString(value)
+		} else if field.Attributes.Placeholder != "" {
+			body.WriteString(fmt.Sprintf("*%s*", field.Attributes.Placeholder))
+		} else {
+			body.WriteString("_(no input provided)_")
+		}
+		body.WriteString("\n\n")
+	}
+
+	return body.String()
+}
+
+// RenderMarkdownTemplateBody renders a markdown template with user values
+func RenderMarkdownTemplateBody(template *IssueTemplate, values map[string]string) string {
+	content := template.Content
+	for key, value := range values {
+		placeholder := fmt.Sprintf("{{%s}}", key)
+		content = strings.ReplaceAll(content, placeholder, value)
+	}
+	return content
 }

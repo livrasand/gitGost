@@ -236,6 +236,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 			gh.GET("/:owner/:repo/info/refs", refsHandler)
 			gh.POST("/:owner/:repo/git-receive-pack", ReceivePackHandler)
 			gh.POST("/:owner/:repo/git-upload-pack", UploadPackHandler)
+			gh.GET("/:owner/:repo/issues/templates", GetIssueTemplatesHandler)
 			gh.POST("/:owner/:repo/issues/anonymous", CreateAnonymousIssueHandler)
 			gh.POST("/:owner/:repo/issues/:number/comments/anonymous", CreateAnonymousCommentHandler)
 			gh.POST("/:owner/:repo/pulls/:number/comments/anonymous", CreateAnonymousPRCommentHandler)

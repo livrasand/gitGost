@@ -3,6 +3,7 @@ package git
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -17,11 +18,14 @@ func min(a, b int) int {
 	return b
 }
 
-func PushToGitHub(owner, repo, tempDir, forkOwner, targetBranch string, pushURL string, tokenEnvVar string) (string, error) {
+func PushToGitHub(owner, repo, tempDir, forkOwner, targetBranch string, pushURL string, tokenEnvVar string, tokenOverride string) (string, error) {
 	if tokenEnvVar == "" {
 		tokenEnvVar = "GITHUB_TOKEN"
 	}
-	token := os.Getenv(tokenEnvVar)
+	token := strings.TrimSpace(tokenOverride)
+	if token == "" {
+		token = os.Getenv(tokenEnvVar)
+	}
 	if token == "" {
 		return "", fmt.Errorf("%s not set", tokenEnvVar)
 	}

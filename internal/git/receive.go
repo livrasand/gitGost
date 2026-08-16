@@ -61,10 +61,11 @@ type RefUpdate struct {
 	Ref    string
 }
 
-func ExtractPackfile(body []byte) ([]byte, *RefUpdate, string, error) {
+func ExtractPackfile(body []byte) ([]byte, *RefUpdate, string, string, error) {
 	reader := bytes.NewReader(body)
 	var refUpdate *RefUpdate
 	var prHash string
+	var githubToken string
 
 	for {
 		line, err := ParsePktLine(reader)
@@ -72,7 +73,7 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, string, error) {
 			if err == io.EOF {
 				break
 			}
-			return nil, nil, "", fmt.Errorf("error parsing pkt-line: %v", err)
+			return nil, nil, "", "", fmt.Errorf("error parsing pkt-line: %v", err)
 		}
 
 		if line == nil {
@@ -80,12 +81,26 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, string, error) {
 		}
 
 		lineStr := string(line)
-		debugf("DEBUG: Command line: %q\n", lineStr)
+		safeLine := lineStr
+		if strings.HasPrefix(lineStr, "push-option=") {
+			if idx := strings.Index(lineStr, "github-token="); idx >= 0 {
+				safeLine = lineStr[:idx+len("github-token=")] + "<redacted>"
+			} else if idx := strings.Index(lineStr, "token="); idx >= 0 {
+				safeLine = lineStr[:idx+len("token=")] + "<redacted>"
+			}
+		}
+		debugf("DEBUG: Command line: %q\n", safeLine)
 
 		if strings.HasPrefix(lineStr, "push-option=pr-hash=") {
 			prHash = strings.TrimPrefix(lineStr, "push-option=pr-hash=")
 			prHash = strings.TrimRight(prHash, "\n")
 			debugf("DEBUG: Found pr-hash push-option: %s\n", prHash)
+			continue
+		}
+		if strings.HasPrefix(lineStr, "push-option=github-token=") {
+			githubToken = strings.TrimPrefix(lineStr, "push-option=github-token=")
+			githubToken = strings.TrimRight(githubToken, "\n")
+			debugf("DEBUG: Found github-token push-option\n")
 			continue
 		}
 
@@ -102,12 +117,12 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, string, error) {
 		if strings.Contains(lineStr, "PACK") {
 			currentPos, err := reader.Seek(0, io.SeekCurrent)
 			if err != nil {
-				return nil, nil, "", fmt.Errorf("failed to determine pack start: %v", err)
+				return nil, nil, "", "", fmt.Errorf("failed to determine pack start: %v", err)
 			}
 			packStart := currentPos - int64(len(line))
 			_, err = reader.Seek(packStart, io.SeekStart)
 			if err != nil {
-				return nil, nil, "", fmt.Errorf("failed to seek pack start: %v", err)
+				return nil, nil, "", "", fmt.Errorf("failed to seek pack start: %v", err)
 			}
 			break
 		}
@@ -115,13 +130,13 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, string, error) {
 
 	packfile, err := io.ReadAll(reader)
 	if err != nil {
-		return nil, nil, "", err
+		return nil, nil, "", "", err
 	}
 
 	if len(packfile) < 4 || !bytes.Equal(packfile[:4], []byte("PACK")) {
 		packStart := bytes.Index(body, []byte("PACK"))
 		if packStart == -1 {
-			return nil, nil, "", fmt.Errorf("no packfile found in body")
+			return nil, nil, "", "", fmt.Errorf("no packfile found in body")
 		}
 		packfile = body[packStart:]
 	}
@@ -129,25 +144,40 @@ func ExtractPackfile(body []byte) ([]byte, *RefUpdate, string, error) {
 	debugf("DEBUG: Extracted packfile: %d bytes, starts with: %x\n",
 		len(packfile), packfile[:min(20, len(packfile))])
 
-	return packfile, refUpdate, prHash, nil
+	return packfile, refUpdate, prHash, githubToken, nil
 }
 
-func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneURL string, tokenEnvVar string) (string, string, string, error) {
+func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneURL string, tokenEnvVar string, tokenOverride string) (string, string, string, string, error) {
 	if cloneURL == "" {
 		cloneURL = fmt.Sprintf("https://github.com/%s/%s.git", owner, repo)
 	}
 	if tokenEnvVar == "" {
 		tokenEnvVar = "GITHUB_TOKEN"
 	}
-	token := os.Getenv(tokenEnvVar)
+	if len(body) == 0 {
+		return "", "", "", "", nil
+	}
+
+	packfile, refUpdate, prHash, githubToken, err := ExtractPackfile(body)
+	if err != nil {
+		return "", "", "", "", fmt.Errorf("failed to extract packfile: %v", err)
+	}
+
+	token := strings.TrimSpace(tokenOverride)
 	if token == "" {
-		return "", "", "", fmt.Errorf("%s not set", tokenEnvVar)
+		token = githubToken
+	}
+	if token == "" {
+		token = os.Getenv(tokenEnvVar)
+	}
+	if token == "" {
+		return "", "", "", "", fmt.Errorf("%s not set", tokenEnvVar)
 	}
 
 	repoURL := cloneURL
 	debugf("DEBUG: Cloning %s/%s...\n", owner, repo)
 
-	_, err := git.PlainClone(tempDir, false, &git.CloneOptions{
+	_, err = git.PlainClone(tempDir, false, &git.CloneOptions{
 		URL: repoURL,
 		Auth: &http.BasicAuth{
 			Username: "x-access-token",
@@ -158,29 +188,20 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 		debugf("DEBUG: Clone failed, initializing empty repo: %v\n", err)
 		_, err = git.PlainInit(tempDir, false)
 		if err != nil {
-			return "", "", "", fmt.Errorf("failed to init repo: %v", err)
+			return "", "", "", "", fmt.Errorf("failed to init repo: %v", err)
 		}
 	}
 
 	packDir := tempDir + "/.git/objects/pack"
 	if err := os.MkdirAll(packDir, 0755); err != nil {
-		return "", "", "", fmt.Errorf("failed to create pack dir: %v", err)
-	}
-
-	if len(body) == 0 {
-		return "", "", "", nil
+		return "", "", "", "", fmt.Errorf("failed to create pack dir: %v", err)
 	}
 
 	debugf("DEBUG: Body length: %d bytes\n", len(body))
 	debugf("DEBUG: First 100 bytes: %x\n", body[:min(100, len(body))])
 
-	packfile, refUpdate, prHash, err := ExtractPackfile(body)
-	if err != nil {
-		return "", "", "", fmt.Errorf("failed to extract packfile: %v", err)
-	}
-
 	if refUpdate == nil {
-		return "", "", "", fmt.Errorf("no ref update found in request")
+		return "", "", "", "", fmt.Errorf("no ref update found in request")
 	}
 
 	debugf("DEBUG: Target SHA: %s\n", refUpdate.NewSHA)
@@ -190,7 +211,7 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 	packfilePath := tempDir + "/pack.tmp"
 	err = os.WriteFile(packfilePath, packfile, 0644)
 	if err != nil {
-		return "", "", "", fmt.Errorf("failed to write packfile: %v", err)
+		return "", "", "", "", fmt.Errorf("failed to write packfile: %v", err)
 	}
 
 	cmd := exec.Command("git", "index-pack", "-v", "--stdin", "--fix-thin")
@@ -210,38 +231,38 @@ func ReceivePack(tempDir string, body []byte, owner string, repo string, cloneUR
 		debugf("DEBUG: git unpack-objects output: %s\n", string(output))
 
 		if err != nil {
-			return "", "", "", fmt.Errorf("failed to unpack objects: %v\nOutput: %s", err, string(output))
+			return "", "", "", "", fmt.Errorf("failed to unpack objects: %v\nOutput: %s", err, string(output))
 		}
 	}
 
 	r, err := git.PlainOpen(tempDir)
 	if err != nil {
-		return "", "", "", fmt.Errorf("failed to open repo: %v", err)
+		return "", "", "", "", fmt.Errorf("failed to open repo: %v", err)
 	}
 
 	newHash := plumbing.NewHash(refUpdate.NewSHA)
 	ref := plumbing.NewHashReference(plumbing.HEAD, newHash)
 	err = r.Storer.SetReference(ref)
 	if err != nil {
-		return "", "", "", fmt.Errorf("failed to update HEAD: %v", err)
+		return "", "", "", "", fmt.Errorf("failed to update HEAD: %v", err)
 	}
 
 	debugf("DEBUG: Updated HEAD to %s\n", refUpdate.NewSHA)
 
 	originalCommit, err := r.CommitObject(newHash)
 	if err != nil {
-		return "", "", "", fmt.Errorf("failed to get original commit: %v", err)
+		return "", "", "", "", fmt.Errorf("failed to get original commit: %v", err)
 	}
 	commitMessage := originalCommit.Message
 	debugf("DEBUG: Original commit message: %s\n", commitMessage)
 
 	anonymizedSHA, err := AnonymizeCommits(r, refUpdate.NewSHA)
 	if err != nil {
-		return "", "", "", fmt.Errorf("failed to anonymize commits: %v", err)
+		return "", "", "", "", fmt.Errorf("failed to anonymize commits: %v", err)
 	}
 
 	debugf("DEBUG: Anonymized commit: %s\n", anonymizedSHA)
-	return anonymizedSHA, commitMessage, prHash, nil
+	return anonymizedSHA, commitMessage, prHash, githubToken, nil
 }
 
 func resolveBaseReference(r *git.Repository) *plumbing.Reference {

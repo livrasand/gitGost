@@ -21,6 +21,13 @@ import (
 
 var httpClient = &http.Client{Timeout: 60 * time.Second}
 
+func resolveGitHubToken(token string) string {
+	if strings.TrimSpace(token) != "" {
+		return strings.TrimSpace(token)
+	}
+	return tokenpool.NextGitHubToken()
+}
+
 // githubDo executes a request with the given token and marks the token as
 // rate-limited when GitHub returns 403/429 (rate limit exceeded).
 func githubDo(req *http.Request, token string) (*http.Response, error) {
@@ -285,7 +292,11 @@ func DeleteCommentsByHash(hash string) error {
 }
 
 func CreateAnonymousIssue(owner, repo, title, body string, labels []string) (string, int, error) {
-	token := tokenpool.NextGitHubToken()
+	return CreateAnonymousIssueWithToken(owner, repo, title, body, labels, "")
+}
+
+func CreateAnonymousIssueWithToken(owner, repo, title, body string, labels []string, token string) (string, int, error) {
+	token = resolveGitHubToken(token)
 	if token == "" {
 		return "", 0, fmt.Errorf("GITHUB_TOKEN not set")
 	}
@@ -336,7 +347,11 @@ func CreateAnonymousIssue(owner, repo, title, body string, labels []string) (str
 }
 
 func CreateAnonymousComment(owner, repo string, number int, body string) (string, error) {
-	token := tokenpool.NextGitHubToken()
+	return CreateAnonymousCommentWithToken(owner, repo, number, body, "")
+}
+
+func CreateAnonymousCommentWithToken(owner, repo string, number int, body string, token string) (string, error) {
+	token = resolveGitHubToken(token)
 	if token == "" {
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
@@ -379,7 +394,11 @@ func CreateAnonymousComment(owner, repo string, number int, body string) (string
 }
 
 func CreateAnonymousPRComment(owner, repo string, number int, body string) (string, error) {
-	token := tokenpool.NextGitHubToken()
+	return CreateAnonymousPRCommentWithToken(owner, repo, number, body, "")
+}
+
+func CreateAnonymousPRCommentWithToken(owner, repo string, number int, body string, token string) (string, error) {
+	token = resolveGitHubToken(token)
 	if token == "" {
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
@@ -424,7 +443,11 @@ func CreateAnonymousPRComment(owner, repo string, number int, body string) (stri
 }
 
 func CreateAnonymousDiscussionComment(owner, repo string, number int, body string) (string, error) {
-	token := tokenpool.NextGitHubToken()
+	return CreateAnonymousDiscussionCommentWithToken(owner, repo, number, body, "")
+}
+
+func CreateAnonymousDiscussionCommentWithToken(owner, repo string, number int, body string, token string) (string, error) {
+	token = resolveGitHubToken(token)
 	if token == "" {
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
@@ -535,7 +558,11 @@ func (r *Ref) GetSha() string {
 }
 
 func ForkRepo(owner, repo string) (string, error) {
-	token := tokenpool.NextGitHubToken()
+	return ForkRepoWithToken(owner, repo, "")
+}
+
+func ForkRepoWithToken(owner, repo string, token string) (string, error) {
+	token = resolveGitHubToken(token)
 	if token == "" {
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
 	}
@@ -645,7 +672,11 @@ func ClosePRByURL(prURL string) error {
 }
 
 func CreatePR(owner, repo, branch, forkOwner, commitMessage string) (string, error) {
-	token := tokenpool.NextGitHubToken()
+	return CreatePRWithToken(owner, repo, branch, forkOwner, commitMessage, "")
+}
+
+func CreatePRWithToken(owner, repo, branch, forkOwner, commitMessage, token string) (string, error) {
+	token = resolveGitHubToken(token)
 	if token == "" {
 		return "", fmt.Errorf("GITHUB_TOKEN not set")
 	}

@@ -136,11 +136,11 @@ Done. The PR appears instantly from `@gitgost-anonymous` with your commit messag
 
 ## Use Your Own Service Account
 
-gitGost works without an account or personal access token. However, you can optionally create a dedicated **service account** on GitHub or GitLab and add its token to the gitGost service.
+gitGost works without an account or personal access token. If you want, you can connect a dedicated **service account** and let gitGost use that identity for GitHub actions instead of the shared operator-managed one.
 
-Using your own service account can provide gitGost with a dedicated API identity and rate limit instead of relying entirely on shared credentials.
+This is optional. It is useful when you want your own rate limit, your own account ownership, or a simpler trust model.
 
-> **Important:** Create a dedicated account for gitGost. Do not use your personal GitHub or GitLab account.
+> **Important:** create a dedicated account for gitGost. Do not use your personal GitHub or GitLab account.
 
 ### GitHub
 
@@ -160,15 +160,23 @@ Create a dedicated GitHub account for gitGost and generate a **Personal Access T
 
 The link above pre-configures the token with the recommended scopes and no expiration.
 
-After creating the token, store it securely and configure it in your gitGost deployment.
+If you are using the CLI, pass the token directly with `git push`:
 
-> **Security:** Treat the token like a password. Never commit it to a repository, expose it in client-side code, or share it publicly.
+```bash
+git push gost fix-typo:main -o github-token=ghp_your_service_account_token
+```
 
-#### Recommended:
+Replace the value with your service account token. gitGost reads that push option and uses that account for the GitHub-side action.
+
+After creating the token, store it securely and configure it in your gitGost deployment or in the web settings if you are using the browser UI.
+
+> **Security:** treat the token like a password. Never commit it to a repository, expose it in client-side code, or share it publicly.
+
+#### Recommended
 
 <p align="center">
   <img src="./web/assets/screenshots/conf_1.png" width="100%" />
- </p> 
+</p>
 
 ### GitLab
 
@@ -184,17 +192,17 @@ The link above pre-configures the token with the recommended `api` scope.
 
 After creating the token, store it securely and configure it in your gitGost deployment.
 
-> **Security:** Treat the token like a password. Never commit it to a repository, expose it in client-side code, or share it publicly.
+> **Security:** treat the token like a password. Never commit it to a repository, expose it in client-side code, or share it publicly.
 
 ### Why use a service account?
 
-A dedicated service account allows gitGost to:
+A dedicated service account lets gitGost:
 
-- Use a separate identity for API requests.
-- Avoid using the maintainer's personal account.
-- Provide an independent API rate limit.
-- Rotate or revoke credentials without affecting personal accounts.
-- Add multiple accounts to a credential pool when operating a larger gitGost deployment.
+- use a separate identity for API requests,
+- avoid using the maintainer's personal account,
+- use an independent API rate limit,
+- rotate or revoke credentials without affecting personal accounts,
+- support larger deployments with multiple pooled accounts.
 
 ## Download Android app
 

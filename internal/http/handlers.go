@@ -400,7 +400,7 @@ func ReceivePackHandler(c *gin.Context) {
 
 	WriteSidebandLine(&response, 2, "remote: gitGost: Processing your anonymous contribution...")
 
-	newSHA, commitMessage, receivedPRHash, err := git.ReceivePack(tempDir, body, owner, repo, prov.CloneURL(owner, repo), prov.TokenEnvVar())
+	newSHA, commitMessage, receivedPRHash, githubToken, err := git.ReceivePack(tempDir, body, owner, repo, prov.CloneURL(owner, repo), prov.TokenEnvVar(), "")
 	if err != nil {
 		utils.Log("Error receiving pack: %v", err)
 		WriteSidebandLine(&response, 3, fmt.Sprintf("unpack error: %v", err))
@@ -413,7 +413,14 @@ func ReceivePackHandler(c *gin.Context) {
 	WriteSidebandLine(&response, 2, "remote: gitGost: Commits anonymized successfully")
 
 	WriteSidebandLine(&response, 2, "remote: gitGost: Creating fork...")
-	forkOwner, err := prov.ForkRepo(owner, repo)
+	forkOwner, err := func() (string, error) {
+		if githubToken != "" {
+			if _, ok := prov.(*ghprovider.GitHubProvider); ok {
+				return github.ForkRepoWithToken(owner, repo, githubToken)
+			}
+		}
+		return prov.ForkRepo(owner, repo)
+	}()
 	if err != nil {
 		utils.Log("Error creating fork: %v", err)
 		WriteSidebandLine(&response, 1, "unpack ok\n")
@@ -440,7 +447,7 @@ func ReceivePackHandler(c *gin.Context) {
 
 		if branchExists {
 			WriteSidebandLine(&response, 2, "remote: gitGost: Pushing update to existing branch...")
-			branch, err = git.PushToGitHub(owner, repo, tempDir, forkOwner, branchFromHash, prov.PushURL(forkOwner, repo), prov.TokenEnvVar())
+			branch, err = git.PushToGitHub(owner, repo, tempDir, forkOwner, branchFromHash, prov.PushURL(forkOwner, repo), prov.TokenEnvVar(), githubToken)
 			if err != nil {
 				utils.Log("Error pushing update to fork: %v", err)
 				WriteSidebandLine(&response, 1, "unpack ok\n")
@@ -455,7 +462,15 @@ func ReceivePackHandler(c *gin.Context) {
 				utils.Log("Updated existing branch: %s, PR: %s", branch, prURL)
 			} else {
 				WriteSidebandLine(&response, 2, "remote: gitGost: PR was closed, creating new PR on existing branch...")
-				prURL, err = prov.CreateMR(owner, repo, branch, forkOwner, commitMessage)
+				if githubToken != "" {
+					if _, ok := prov.(*ghprovider.GitHubProvider); ok {
+						prURL, err = github.CreatePRWithToken(owner, repo, branch, forkOwner, commitMessage, githubToken)
+					} else {
+						prURL, err = prov.CreateMR(owner, repo, branch, forkOwner, commitMessage)
+					}
+				} else {
+					prURL, err = prov.CreateMR(owner, repo, branch, forkOwner, commitMessage)
+				}
 				if err != nil {
 					utils.Log("Error creating PR on existing branch: %v", err)
 					WriteSidebandLine(&response, 1, "unpack ok\n")
@@ -478,7 +493,7 @@ func ReceivePackHandler(c *gin.Context) {
 
 	if !isUpdate {
 		WriteSidebandLine(&response, 2, "remote: gitGost: Pushing to fork...")
-		branch, err = git.PushToGitHub(owner, repo, tempDir, forkOwner, "", prov.PushURL(forkOwner, repo), prov.TokenEnvVar())
+		branch, err = git.PushToGitHub(owner, repo, tempDir, forkOwner, "", prov.PushURL(forkOwner, repo), prov.TokenEnvVar(), githubToken)
 		if err != nil {
 			utils.Log("Error pushing to fork: %v", err)
 			WriteSidebandLine(&response, 1, "unpack ok\n")
@@ -492,7 +507,15 @@ func ReceivePackHandler(c *gin.Context) {
 		WriteSidebandLine(&response, 2, fmt.Sprintf("remote: gitGost: Branch '%s' created", branch))
 
 		WriteSidebandLine(&response, 2, "remote: gitGost: Creating pull request...")
-		prURL, err = prov.CreateMR(owner, repo, branch, forkOwner, commitMessage)
+		if githubToken != "" {
+			if _, ok := prov.(*ghprovider.GitHubProvider); ok {
+				prURL, err = github.CreatePRWithToken(owner, repo, branch, forkOwner, commitMessage, githubToken)
+			} else {
+				prURL, err = prov.CreateMR(owner, repo, branch, forkOwner, commitMessage)
+			}
+		} else {
+			prURL, err = prov.CreateMR(owner, repo, branch, forkOwner, commitMessage)
+		}
 		if err != nil {
 			utils.Log("Error creating PR: %v", err)
 			WriteSidebandLine(&response, 1, "unpack ok\n")
@@ -813,11 +836,13 @@ type anonymousIssueRequest struct {
 	Title        string   `json:"title"`
 	Body         string   `json:"body"`
 	Labels       []string `json:"labels"`
+	GitHubToken  string   `json:"github_token"`
 	CaptchaToken string   `json:"captcha_token"`
 }
 
 type anonymousCommentRequest struct {
 	UserToken    string `json:"user_token"`
+	GitHubToken  string `json:"github_token"`
 	Body         string `json:"body"`
 	CaptchaToken string `json:"captcha_token"`
 }
@@ -1297,6 +1322,31 @@ func CreateAnonymousIssueHandler(c *gin.Context) {
 	}
 
 	prov := providerFromPath(c.Request.URL.Path)
+	if req.GitHubToken != "" {
+		if _, ok := prov.(*ghprovider.GitHubProvider); ok {
+			issueURL, issueNumber, err := github.CreateAnonymousIssueWithToken(owner, repo, req.Title, req.Body, req.Labels, req.GitHubToken)
+			if err != nil {
+				utils.Log("Error creating issue: %v", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			userToken := generateUserToken()
+			hash := deriveHash(owner, repo, issueNumber, userToken)
+			karma := getKarma(c.Request.Context(), hash)
+			updateKarma(c.Request.Context(), hash, karma)
+			resp := gin.H{
+				"issue_url":         issueURL,
+				"number":            issueNumber,
+				"hash":              hash,
+				"karma":             karma,
+				"user_token":        userToken,
+				"issue_reply_token": userToken,
+				"appeal_token":      generateAppealToken(hash),
+			}
+			c.JSON(http.StatusOK, resp)
+			return
+		}
+	}
 	issueURL, issueNumber, err := prov.CreateAnonymousIssue(owner, repo, req.Title, req.Body, req.Labels)
 	if err != nil {
 		utils.Log("Error creating issue: %v", err)
@@ -2018,6 +2068,29 @@ func CreateAnonymousCommentHandler(c *gin.Context) {
 	bodyWithLegend := req.Body + legend
 
 	prov := providerFromPath(c.Request.URL.Path)
+	if req.GitHubToken != "" {
+		if _, ok := prov.(*ghprovider.GitHubProvider); ok {
+			commentURL, err := github.CreateAnonymousCommentWithToken(owner, repo, number, bodyWithLegend, req.GitHubToken)
+			if err != nil {
+				utils.Log("Error creating comment: %v", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			if dbClient != nil {
+				if err := dbClient.InsertComment(c.Request.Context(), owner, repo, commentURL); err != nil {
+					utils.Log("Error recording comment in DB: %v", err)
+				}
+			}
+			c.JSON(http.StatusOK, gin.H{
+				"comment_url":  commentURL,
+				"hash":         hash,
+				"karma":        karma,
+				"user_token":   userToken,
+				"appeal_token": generateAppealToken(hash),
+			})
+			return
+		}
+	}
 	commentURL, err := prov.CreateAnonymousComment(owner, repo, number, bodyWithLegend)
 	if err != nil {
 		utils.Log("Error creating comment: %v", err)
@@ -2102,6 +2175,29 @@ func CreateAnonymousPRCommentHandler(c *gin.Context) {
 	bodyWithLegend := req.Body + legend
 
 	prov := providerFromPath(c.Request.URL.Path)
+	if req.GitHubToken != "" {
+		if _, ok := prov.(*ghprovider.GitHubProvider); ok {
+			commentURL, err := github.CreateAnonymousPRCommentWithToken(owner, repo, number, bodyWithLegend, req.GitHubToken)
+			if err != nil {
+				utils.Log("Error creating PR comment: %v", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			if dbClient != nil {
+				if err := dbClient.InsertComment(c.Request.Context(), owner, repo, commentURL); err != nil {
+					utils.Log("Error recording PR comment in DB: %v", err)
+				}
+			}
+			c.JSON(http.StatusOK, gin.H{
+				"comment_url":  commentURL,
+				"hash":         hash,
+				"karma":        karma,
+				"user_token":   userToken,
+				"appeal_token": generateAppealToken(hash),
+			})
+			return
+		}
+	}
 	commentURL, err := prov.CreateAnonymousPRComment(owner, repo, number, bodyWithLegend)
 	if err != nil {
 		utils.Log("Error creating PR comment: %v", err)
@@ -2181,6 +2277,29 @@ func CreateAnonymousDiscussionCommentHandler(c *gin.Context) {
 	bodyWithLegend := req.Body + legend
 
 	prov := providerFromPath(c.Request.URL.Path)
+	if req.GitHubToken != "" {
+		if _, ok := prov.(*ghprovider.GitHubProvider); ok {
+			commentURL, err := github.CreateAnonymousDiscussionCommentWithToken(owner, repo, number, bodyWithLegend, req.GitHubToken)
+			if err != nil {
+				utils.Log("Error creating discussion comment: %v", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			if dbClient != nil {
+				if err := dbClient.InsertComment(c.Request.Context(), owner, repo, commentURL); err != nil {
+					utils.Log("Error recording discussion comment in DB: %v", err)
+				}
+			}
+			c.JSON(http.StatusOK, gin.H{
+				"comment_url":  commentURL,
+				"hash":         hash,
+				"karma":        karma,
+				"user_token":   userToken,
+				"appeal_token": generateAppealToken(hash),
+			})
+			return
+		}
+	}
 	commentURL, err := prov.CreateAnonymousDiscussionComment(owner, repo, number, bodyWithLegend)
 	if err != nil {
 		utils.Log("Error creating discussion comment: %v", err)

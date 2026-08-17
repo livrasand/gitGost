@@ -226,6 +226,17 @@
             padding: 0.65rem 0.85rem;
             border-bottom: 1px solid var(--border);
         }
+        .gofile-mode {
+            display: inline-flex; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; flex-shrink: 0;
+        }
+        .gofile-mode button {
+            background: none; border: 0; padding: 0.1rem 0.45rem;
+            font: 0.68rem "IBM Plex Mono", monospace; color: var(--fg-muted);
+            cursor: pointer; transition: background 0.08s, color 0.08s;
+        }
+        .gofile-mode button:not(:last-child) { border-right: 1px solid var(--border); }
+        .gofile-mode button.active { background: var(--accent); color: var(--bg); }
+        .gofile-mode button:hover:not(.active) { color: var(--fg); }
         .gofile-input-wrap svg { flex-shrink: 0; color: var(--fg-muted); }
         .gofile-input {
             flex: 1; border: 0; outline: none; background: transparent;
@@ -252,6 +263,8 @@
         .gofile-item-path { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .gofile-item-path .hl { color: var(--accent); font-weight: 600; }
         .gofile-item-dir { font-weight: 500; }
+        .gofile-item-note { font-size: 0.68rem; color: var(--fg-muted); margin-top: 0.15rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .gofile-item-note .hl { color: var(--accent); font-weight: 600; }
         .gofile-footer {
             display: flex; gap: 0.8rem; padding: 0.45rem 0.85rem;
             border-top: 1px solid var(--border);
@@ -2792,12 +2805,17 @@
         <div class="gofile-modal">
             <div class="gofile-input-wrap">
                 <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                <input class="gofile-input" id="gofile-input" type="text" placeholder="Search files..." autocomplete="off" spellcheck="false" aria-label="Go to file">
+                <input class="gofile-input" id="gofile-input" type="text" placeholder="Search files or code..." autocomplete="off" spellcheck="false" aria-label="Go to file">
+                <div class="gofile-mode" id="gofile-mode">
+                    <button class="active" data-mode="files" onclick="_setGoFileMode('files')">files</button>
+                    <button data-mode="code" onclick="_setGoFileMode('code')">code</button>
+                </div>
             </div>
             <div class="gofile-results" id="gofile-results"></div>
             <div class="gofile-footer">
                 <span><kbd>&uarr;</kbd><kbd>&darr;</kbd> navigate</span>
                 <span><kbd>&crarr;</kbd> open</span>
+                <span><kbd>&darr;</kbd> switch mode</span>
                 <span><kbd>esc</kbd> close</span>
             </div>
         </div>
@@ -6865,20 +6883,26 @@
 
         let _codeSearchSubsetNote = false;
 
-        async function _providerCodeSearch(query) {
+        async function _providerCodeSearch(query, signal) {
             if (rv.provider === 'gh') {
                 const token = localStorage.getItem('gh_token');
                 const headers = token ? { 'Authorization': `token ${token}` } : {};
                 const url = `${getApiBase()}/api/code/search?q=${encodeURIComponent(query)}&owner=${encodeURIComponent(rv.owner)}&repo=${encodeURIComponent(rv.repo)}&provider=gh`;
-                const res = await fetch(url, { headers });
-                if (!res.ok) throw new Error(res.status === 401 ? 'Code search is not configured on the server.' : `HTTP ${res.status}`);
+                const res = await fetch(url, { headers, signal });
+                if (!res.ok) {
+                    const body = await res.json().catch(() => ({}));
+                    throw new Error(body.error || `HTTP ${res.status}`);
+                }
                 const data = await res.json();
                 return (data.results || []).map(i => _searchItem(i.name, i.path));
             }
             if (rv.provider === 'gl') {
                 const project = encodeURIComponent(`${rv.owner}/${rv.repo}`);
-                const res = await fetch(`https://gitlab.com/api/v4/projects/${project}/search?scope=blobs&search=${encodeURIComponent(query)}&ref=${encodeURIComponent(currentBranch())}`);
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const res = await fetch(`https://gitlab.com/api/v4/projects/${project}/search?scope=blobs&search=${encodeURIComponent(query)}&ref=${encodeURIComponent(currentBranch())}`, { signal });
+                if (!res.ok) {
+                    const body = await res.json().catch(() => ({}));
+                    throw new Error(body.message || body.error || `HTTP ${res.status}`);
+                }
                 const data = await res.json();
                 return (data || []).map(i => _searchItem(i.filename, i.path || i.filename));
             }
@@ -8005,9 +8029,22 @@
             }
         }, true);
 
-        // ---- Go to file (Cmd/Ctrl+P) ----
+        // ---- Go to file / search code (Cmd/Ctrl+P) ----
         let _gofileCache = null;
         let _gofileIdx = -1;
+        let _gofileMode = 'files';
+        let _gocodeTimer = null;
+        let _gocodeAbort = null;
+        function _setGoFileMode(mode) {
+            _gofileMode = mode;
+            document.querySelectorAll('#gofile-mode button').forEach(b => {
+                b.classList.toggle('active', b.dataset.mode === mode);
+            });
+            const input = document.getElementById('gofile-input');
+            input.placeholder = mode === 'code' ? 'search code in this repo...' : 'search files...';
+            input.focus();
+            _renderGoFileResults(input.value.trim());
+        }
         function _openGoFile() {
             const overlay = document.getElementById('gofile-overlay');
             const input = document.getElementById('gofile-input');
@@ -8023,10 +8060,56 @@
         }
         function _closeGoFile() {
             document.getElementById('gofile-overlay').classList.remove('open');
+            if (_gocodeAbort) { _gocodeAbort.abort(); _gocodeAbort = null; }
+            clearTimeout(_gocodeTimer);
+        }
+        function _gofileHighlight(text, query) {
+            if (!query) return escHtml(text);
+            const safe = escHtml(text);
+            const qEsc = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return safe.replace(new RegExp(`(${qEsc})`, 'gi'), '<span class="hl">$1</span>');
+        }
+        async function _gofileCodeSearch(query) {
+            const results = document.getElementById('gofile-results');
+            results.innerHTML = '<div class="gofile-empty">searching code...</div>';
+            if (_gocodeAbort) { _gocodeAbort.abort(); }
+            _gocodeAbort = new AbortController();
+            try {
+                const items = await _providerCodeSearch(query, _gocodeAbort.signal);
+                if (!document.getElementById('gofile-overlay')?.classList.contains('open')) return;
+                if (!items.length) { results.innerHTML = '<div class="gofile-empty">no matches found</div>'; return; }
+                _gofileIdx = 0;
+                results.innerHTML = items.slice(0, 50).map((f, i) => {
+                    const parts = f.path.split('/');
+                    const name = parts.pop();
+                    const dir = parts.join('/');
+                    return `<div class="gofile-item${i === 0 ? ' active' : ''}" data-gofile-idx="${i}" data-path="${f.path.replace(/"/g, '&quot;')}">
+                        <svg class="gofile-item-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7.5L14.5 2Z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span class="gofile-item-path">${dir ? escHtml(dir) + '/' : ''}${_gofileHighlight(name, query)}</span>
+                        <span class="gofile-item-note">code match</span>
+                    </div>`;
+                }).join('');
+                results.querySelectorAll('.gofile-item').forEach(el => {
+                    el.onclick = () => _openGoFileItem(el.dataset.path);
+                });
+            } catch (e) {
+                if (e.name === 'AbortError') return;
+                results.innerHTML = `<div class="gofile-empty" style="color:var(--accent)">${escHtml(e.message || 'search error')}</div>`;
+            }
         }
         function _renderGoFileResults(query) {
             const results = document.getElementById('gofile-results');
-            if (!query) { results.innerHTML = '<div class="gofile-empty">type to search files</div>'; return; }
+            if (!query) {
+                results.innerHTML = _gofileMode === 'code'
+                    ? '<div class="gofile-empty">type to search code in this repo</div>'
+                    : '<div class="gofile-empty">type to search files</div>';
+                return;
+            }
+            if (_gofileMode === 'code') {
+                clearTimeout(_gocodeTimer);
+                _gocodeTimer = setTimeout(() => _gofileCodeSearch(query), 350);
+                return;
+            }
             if (!_gofileCache) { results.innerHTML = '<div class="gofile-empty">loading file index...</div>'; return; }
             const q = query.toLowerCase();
             const matches = _gofileCache.filter(f => f.path.toLowerCase().includes(q)).slice(0, 50);
@@ -8037,10 +8120,9 @@
                 const parts = f.path.split('/');
                 const name = parts.pop();
                 const dir = parts.join('/');
-                const highlighted = name.replace(new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'), '<span class="hl">$1</span>');
                 return `<div class="gofile-item${i === 0 ? ' active' : ''}" data-gofile-idx="${i}" data-path="${f.path.replace(/"/g, '&quot;')}">
                     <svg class="gofile-item-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${isDir ? '<path d="M4 20h16a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1h-7.5l-2-2H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Z"/>' : '<path d="M14.5 2H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7.5L14.5 2Z"/><polyline points="14 2 14 8 20 8"/>'}</svg>
-                    <span class="gofile-item-path${isDir ? ' gofile-item-dir' : ''}">${dir ? escHtml(dir) + '/' : ''}${highlighted}</span>
+                    <span class="gofile-item-path${isDir ? ' gofile-item-dir' : ''}">${dir ? escHtml(dir) + '/' : ''}${_gofileHighlight(name, query)}</span>
                 </div>`;
             }).join('');
             results.querySelectorAll('.gofile-item').forEach(el => {
@@ -8076,6 +8158,7 @@
             }
             if (!overlay.classList.contains('open')) return;
             if (e.key === 'Escape') { e.preventDefault(); _closeGoFile(); return; }
+            if (e.key === 'Tab') { e.preventDefault(); _setGoFileMode(_gofileMode === 'files' ? 'code' : 'files'); return; }
             if (e.key === 'ArrowDown') { e.preventDefault(); _navigateGoFile(1); return; }
             if (e.key === 'ArrowUp') { e.preventDefault(); _navigateGoFile(-1); return; }
             if (e.key === 'Enter') {

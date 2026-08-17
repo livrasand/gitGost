@@ -3592,7 +3592,10 @@ func CodeSearchHandler(c *gin.Context) {
 		return
 	}
 
-	apiURL := fmt.Sprintf("https://api.github.com/search/code?q=%s&per_page=100", url.QueryEscape(fmt.Sprintf("%s repo:%s/%s", query, owner, repo)))
+	// Quote the user query so GitHub doesn't misinterpret special characters
+	// (parentheses, colons, etc.) as qualifiers.
+	safeQuery := `"` + strings.ReplaceAll(query, `"`, `\"`) + `"`
+	apiURL := fmt.Sprintf("https://api.github.com/search/code?q=%s+repo:%s/%s&per_page=100", url.QueryEscape(safeQuery), url.QueryEscape(owner), url.QueryEscape(repo))
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create GitHub code search request"})
@@ -3609,8 +3612,16 @@ func CodeSearchHandler(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		utils.Log("GitHub code search returned status: %d", resp.StatusCode)
-		c.JSON(http.StatusBadGateway, gin.H{"error": "GitHub code search failed"})
+		var ghErr struct {
+			Message string `json:"message"`
+		}
+		json.NewDecoder(resp.Body).Decode(&ghErr)
+		msg := ghErr.Message
+		if msg == "" {
+			msg = fmt.Sprintf("GitHub returned HTTP %d", resp.StatusCode)
+		}
+		utils.Log("GitHub code search returned status: %d – %s", resp.StatusCode, msg)
+		c.JSON(resp.StatusCode, gin.H{"error": msg})
 		return
 	}
 

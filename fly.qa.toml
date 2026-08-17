@@ -1,14 +1,12 @@
-# fly.toml app configuration file generated for gitgost on 2026-05-14T23:27:43Z
+# fly.toml app configuration file generated for gitgost-qa on 2026-08-17T18:37:03Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'gitgost'
-primary_region = 'arn'
+app = 'gitgost-qa'
+primary_region = 'ams'
 
 [build]
-  [build.args]
-    GO_VERSION = '1.22'
 
 [env]
   PORT = '8080'

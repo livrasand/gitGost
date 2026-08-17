@@ -3393,7 +3393,7 @@
                         const owner = parts[0] || repo.owner || '';
                         const name  = parts[1] || repo.name  || '';
                         if (owner && name) {
-                            window.location.href = `/repo.html?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(name)}&provider=${provider}`;
+                            window.location.href = `/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(name)}`;
                         } else { window.location.href = repo.url; }
                     };
 
@@ -3653,7 +3653,7 @@
                     else if (repo.provider === 'codeberg' || repo.provider === 'cb') provider = 'cb';
                     else provider = 'gh';
                     item.onclick = () => {
-                        window.location.href = `/repo.html?owner=${encodeURIComponent(repo.owner)}&repo=${encodeURIComponent(repo.repo)}&provider=${provider}`;
+                        window.location.href = `/${provider}/${encodeURIComponent(repo.owner)}/${encodeURIComponent(repo.repo)}`;
                     };
                     const ago = timeAgo(repo.starred_at);
                     const forgeIcon = forgeIconHtml(repo.provider);
@@ -3932,7 +3932,8 @@
             function updateStatusbar(section, value = "") {
                 const statusbarPath = document.getElementById("statusbar-path");
                 if (!statusbarPath) return;
-                statusbarPath.textContent = `home > ${section}${value ? " > " + value : ""}`;
+                const homePath = PAGE_TO_PATH['home'] || '/explore';
+                statusbarPath.innerHTML = `<a href="${homePath}" onclick="showPage('home');return false;" style="color:var(--fg-secondary);text-decoration:none;">home</a> &gt; ${section}${value ? " &gt; " + value : ""}`;
             }
 
             const PAGES = {
@@ -4669,13 +4670,27 @@
                 }
             };
 
-            function showPage(name) {
+            const PAGE_TO_PATH = { home: '/explore', cli: '/cli', 'git-extension': '/git-extension', settings: '/settings', issue: '/issue', comment: '/comment', 'pr-comment': '/pr-comment', legal: '/legal', about: '/about', stats: '/stats' };
+            const PATH_TO_PAGE = {};
+            for (const [k, v] of Object.entries(PAGE_TO_PATH)) PATH_TO_PAGE[v] = k;
+            function pageFromPath() {
+                const pp = window.location.pathname.split('/').filter(Boolean);
+                return (pp.length === 1 && PATH_TO_PAGE['/' + pp[0]]) ? PATH_TO_PAGE['/' + pp[0]] : 'home';
+            }
+
+            function showPage(name, push) {
+                if (push === undefined) push = true;
                 document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
                 document.querySelectorAll('.nav-link').forEach(l => {
                     if (l.getAttribute('onclick') && l.getAttribute('onclick').includes(`'${name}'`)) {
                         l.classList.add('active');
                     }
                 });
+
+                if (push) {
+                    const path = PAGE_TO_PATH[name] || PAGE_TO_PATH['home'];
+                    history.pushState({ page: name }, '', path);
+                }
 
                 const repoList = document.getElementById('repo-list');
                 const contentTabs = document.querySelector('.content-tabs');
@@ -5064,7 +5079,7 @@
                     else if (repo.provider === 'codeberg') provider = 'cb';
                     else provider = 'gh';
                     item.onclick = () => {
-                        if (owner && name) window.location.href = `/repo.html?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(name)}&provider=${provider}`;
+                        if (owner && name) window.location.href = `/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(name)}`;
                     };
                     const desc = repo.description ? escapeHtml(repo.description.slice(0, 120)) : '';
                     const stars = repo.stars > 0 ? `(${STAR_ICON_HTML}${formatNumber(repo.stars)})` : '';
@@ -5101,6 +5116,7 @@
             const _initQ   = _initParams.get('q');
             (function init() {
                 const colorsLoaded = loadLanguageColors();
+                const initPage = pageFromPath();
                 if (_initTag) {
                     showTagPage(_initTag);
                 } else if (_initQ && searchInput) {
@@ -5108,11 +5124,23 @@
                     removeSentinel();
                     scrollState.exhausted = true;
                     performSearch(_initQ);
+                } else if (initPage !== 'home') {
+                    showPage(initPage, false);
                 } else {
                     loadTrending();
                 }
                 colorsLoaded.then(loaded => {
                     if (loaded) refreshLanguageBadges();
+                });
+
+                window.addEventListener('popstate', function() {
+                    const p = pageFromPath();
+                    showPage(p, false);
+                });
+
+                document.querySelectorAll('.nav-link[onclick]').forEach(a => {
+                    const m = a.getAttribute('onclick').match(/showPage\('([^']+)'\)/);
+                    if (m) a.href = PAGE_TO_PATH[m[1]] || '/explore';
                 });
             })();
 

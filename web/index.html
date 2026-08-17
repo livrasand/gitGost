@@ -2913,7 +2913,9 @@
                         return true;
                     }
                 } catch (e) {
-                    console.error('Failed to load language colors:', e);
+                    if (e.name !== 'AbortError') {
+                        console.error('Failed to load language colors:', e);
+                    }
                 } finally {
                     clearTimeout(timeout);
                 }
@@ -4592,23 +4594,78 @@
                 stats: {
                     title: 'Stats',
                     html: () => `
-                        <p style="color:var(--fg-secondary);margin-bottom:1rem;">How we count visits without counting people.</p>
-                        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;margin-bottom:1rem;">
-                            <h3 style="margin-top:0;color:var(--accent);">What we collect</h3>
-                            <p>Only pageviews. When a page loads, the embedded <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">ethicalmetrics.js</code> script sends the site key, path, referrer, and coarse browser/OS/device categories to <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">/v1/pageviews</code>. The server increments one counter for the current minute.</p>
-                            <p>The sidebar chart shows the latest 36 one-minute buckets. It is an activity pulse, not a user count.</p>
+                        <div id="ethicalmetrics-dashboard">
+                            <div class="em-summary" role="region" aria-label="Resumen de métricas">
+                                <div class="em-card">
+                                    <span class="em-card-label">Total Pageviews</span>
+                                    <span class="em-card-value" id="em-total-pageviews">—</span>
+                                </div>
+
+                                <div class="em-card">
+                                    <span class="em-card-label">Active Minutes</span>
+                                    <span class="em-card-value" id="em-active-minutes">—</span>
+                                </div>
+                                <div class="em-card">
+                                    <span class="em-card-label">Avg/Minute</span>
+                                    <span class="em-card-value" id="em-avg-minute">—</span>
+                                </div>
+                            </div>
+
+                            <div class="em-chart-section" role="region" aria-label="Gráfico de actividad">
+                                <h3 class="em-section-title">Activity Pulse (Last 36 Minutes)</h3>
+                                <div class="em-chart-wrapper">
+                                    <svg id="em-chart" class="em-chart" aria-hidden="true"></svg>
+                                    <div id="em-chart-empty" class="em-chart-empty" style="display:none;">
+                                        <span>No visits yet</span>
+                                    </div>
+                                </div>
+                                <div class="em-chart-legend">
+                                    <span class="em-legend-item"><span class="em-legend-dot"></span>Pageviews</span>
+                                    <span class="em-legend-item" id="em-peak-time">Peak: —</span>
+                                </div>
+                            </div>
+
+                            <div class="em-privacy-note" role="note">
+                                <svg class="em-privacy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                                <span>EthicalMetrics: no IPs, no cookies, no fingerprints, no personal data. <a href="https://github.com/livrasand/gitGost/blob/main/Privacy%20Guarantees.md" target="_blank" rel="noopener">Privacy Guarantees</a></span>
+                            </div>
                         </div>
-                        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;margin-bottom:1rem;">
-                            <h3 style="margin-top:0;color:var(--accent);">What we do NOT keep</h3>
-                            <ul style="margin:0.4rem 0 0 1.2rem;padding:0;">
-                                <li>IP addresses, cookies, localStorage, or session data.</li>
-                                <li>Browser fingerprints or unique identifiers.</li>
-                                <li>Query strings, events, or click streams.</li>
-                                <li>Names, emails, accounts, or any personal data.</li>
-                            </ul>
-                            <p style="margin-top:0.75rem;margin-bottom:1rem;">The IP is never stored; it is only used for a transient country lookup and then discarded. If your browser sends <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">DNT: 1</code>, the request is ignored.</p>
-                            <p>Read the full <a href="https://github.com/livrasand/gitGost/blob/main/Privacy%20Guarantees.md" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">Privacy Guarantees</a>.</p>
-                        </div>`
+                        <style>
+                            .em-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;margin-bottom:1.5rem}
+                            .em-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem 1.25rem;transition:border-color .2s,box-shadow .2s}
+                            .em-card:hover{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+                            .em-card-label{display:block;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--fg-secondary);margin-bottom:0.25rem}
+                            .em-card-value{font-size:1.5rem;font-weight:600;color:var(--fg);font-family:'IBM Plex Mono',monospace}
+                            .em-chart-section{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:1.5rem}
+                            .em-section-title{margin:0 0 1rem;font-size:0.85rem;font-weight:600;color:var(--fg);text-transform:uppercase;letter-spacing:0.06em}
+                            .em-chart-wrapper{position:relative;height:180px;width:100%}
+                            .em-chart{width:100%;height:100%;display:block}
+                            .em-chart-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--fg-muted);font-size:0.75rem}
+                            .em-chart-legend{display:flex;justify-content:space-between;align-items:center;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);font-size:0.7rem;color:var(--fg-secondary)}
+                            .em-legend-item{display:flex;align-items:center;gap:0.35rem}
+                            .em-legend-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);opacity:.7}
+                            .em-breakdown{margin-bottom:1.5rem}
+                            .em-breakdown-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
+                            .em-breakdown-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem}
+                            .em-breakdown-title{margin:0 0 0.75rem;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--fg-secondary);font-weight:600}
+                            .em-breakdown-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0.5rem}
+                            .em-breakdown-item{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0.625rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);transition:background .2s,border-color .2s}
+                            .em-breakdown-item:hover{background:var(--bg-hover);border-color:var(--accent)}
+                            .em-breakdown-name{font-size:0.75rem;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%}
+                            .em-breakdown-count{font-size:0.75rem;font-weight:600;color:var(--accent);font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+                            .em-breakdown-bar{height:4px;background:var(--accent);border-radius:2px;opacity:.6;margin-top:0.25rem}
+                            .em-loading{color:var(--fg-muted);font-size:0.75rem;text-align:center;padding:1rem}
+                            .em-privacy-note{display:flex;align-items:flex-start;gap:0.5rem;padding:0.875rem 1rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);font-size:0.7rem;color:var(--fg-secondary);line-height:1.5}
+                            .em-privacy-icon{flex-shrink:0;width:16px;height:16px;color:var(--accent);margin-top:0.125rem}
+                            .em-privacy-note a{color:var(--accent);text-decoration:none}
+                            .em-privacy-note a:hover{text-decoration:underline}
+                            @media (max-width: 640px){
+                                .em-summary{grid-template-columns:1fr 1fr}
+                                .em-card-value{font-size:1.25rem}
+                                .em-chart-wrapper{height:140px}
+                                .em-breakdown-grid{grid-template-columns:1fr}
+                            }
+                        </style>`
                 }
             };
 
@@ -4651,6 +4708,10 @@
                     ${page.html()}
                 `;
                 updateStatusbar(name);
+
+                if (name === 'stats') {
+                    loadEthicalMetricsDashboard();
+                }
 
                 pageContent.querySelectorAll('.terminal-tab[data-push-provider]').forEach(tab => {
                     tab.addEventListener('click', function() {
@@ -5433,7 +5494,205 @@
         </script>
         <script src="/ethicalmetrics.js" data-site-key="gitgost-home"></script>
         <script>
-            (async function loadEthicalMetrics() {
+            window.loadEthicalMetricsDashboard = async function() {
+                const siteKey = 'gitgost-home';
+                try {
+                    const response = await fetch('/v1/sites/' + siteKey + '/metrics');
+                    if (!response.ok) throw new Error('metrics request failed');
+                    const data = await response.json();
+                    const buckets = Object.entries(data.buckets || {});
+
+                    if (!buckets.length) {
+                        document.getElementById('em-chart-empty').style.display = 'flex';
+                        document.getElementById('em-total-pageviews').textContent = '0';
+                        document.getElementById('em-active-minutes').textContent = '0';
+                        document.getElementById('em-avg-minute').textContent = '0';
+                        document.getElementById('em-peak-time').textContent = 'Peak: \u2014';
+                        ['em-top-paths', 'em-browsers', 'em-oses', 'em-devices'].forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el) el.innerHTML = '<li class="em-loading">No data</li>';
+                        });
+                        return;
+                    }
+
+                    const values = buckets.map(([, bucket]) => Number(bucket.pageviews) || 0);
+                    const sum = values.reduce((acc, value) => acc + value, 0);
+                    const max = Math.max(...values, 1);
+                    const avg = sum / values.length;
+                    const peakIndex = values.indexOf(max);
+                    const peakTime = buckets[peakIndex]?.[0];
+
+                    document.getElementById('em-total-pageviews').textContent = sum.toLocaleString();
+                    document.getElementById('em-active-minutes').textContent = buckets.length.toLocaleString();
+                    document.getElementById('em-avg-minute').textContent = avg.toFixed(1);
+
+                    if (peakTime) {
+                        const date = new Date(peakTime);
+                        const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        document.getElementById('em-peak-time').textContent = 'Peak: ' + timeStr + ' (' + max + ')';
+                    }
+
+                    renderChart(buckets, values, max);
+                    renderBreakdowns(buckets);
+                } catch (err) {
+                    console.error('Failed to load ethical metrics:', err);
+                    document.getElementById('em-chart-empty').style.display = 'flex';
+                    document.getElementById('em-chart-empty').innerHTML = '<span>Metrics unavailable</span>';
+                }
+            };
+
+            function renderChart(buckets, values, max) {
+                const svg = document.getElementById('em-chart');
+                const empty = document.getElementById('em-chart-empty');
+                if (!svg) return;
+                empty.style.display = 'none';
+
+                const width = svg.clientWidth || svg.parentElement.clientWidth;
+                const height = 180;
+                const padding = { top: 10, right: 10, bottom: 20, left: 40 };
+                const chartWidth = width - padding.left - padding.right;
+                const chartHeight = height - padding.top - padding.bottom;
+
+                const n = values.length;
+                const stepX = n > 1 ? chartWidth / (n - 1) : chartWidth;
+
+                let pathData = '';
+                let areaPathData = '';
+
+                values.forEach((value, i) => {
+                    const x = padding.left + i * stepX;
+                    const y = padding.top + chartHeight - (value / max) * chartHeight;
+                    if (i === 0) {
+                        pathData += 'M ' + x + ' ' + y;
+                        areaPathData += 'M ' + x + ' ' + (padding.top + chartHeight) + ' L ' + x + ' ' + y;
+                    } else {
+                        const prevX = padding.left + (i - 1) * stepX;
+                        const prevY = padding.top + chartHeight - (values[i - 1] / max) * chartHeight;
+                        const cpX = (prevX + x) / 2;
+                        pathData += ' C ' + cpX + ' ' + prevY + ' ' + cpX + ' ' + y + ' ' + x + ' ' + y;
+                        areaPathData += ' C ' + cpX + ' ' + prevY + ' ' + cpX + ' ' + y + ' ' + x + ' ' + y;
+                    }
+                });
+
+                areaPathData += ' L ' + (padding.left + (n - 1) * stepX) + ' ' + (padding.top + chartHeight) + ' Z';
+
+                const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#d16014';
+
+                svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+                svg.innerHTML = '\n                    <defs>\n                        <linearGradient id="em-gradient" x1="0" y1="0" x2="0" y2="1">\n                            <stop offset="0%" stop-color="' + accentColor + '" stop-opacity="0.35"/>\n                            <stop offset="100%" stop-color="' + accentColor + '" stop-opacity="0.02"/>\n                        </linearGradient>\n                    </defs>\n                    <path class="em-area" d="' + areaPathData + '" fill="url(#em-gradient)" stroke="none"/>\n                    <path class="em-line" d="' + pathData + '" fill="none" stroke="' + accentColor + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>\n                    <g class="em-dots">\n                        ' + values.map((value, i) => {
+                            const x = padding.left + i * stepX;
+                            const y = padding.top + chartHeight - (value / max) * chartHeight;
+                            return '<circle cx="' + x + '" cy="' + y + '" r="3" fill="' + accentColor + '" opacity="0" data-value="' + value + '" data-time="' + buckets[i][0] + '" class="em-dot"/>';
+                        }).join('') + '\n                    </g>\n                    <g class="em-y-axis">\n                        <line x1="' + padding.left + '" y1="' + padding.top + '" x2="' + padding.left + '" y2="' + (padding.top + chartHeight) + '" stroke="var(--border)" stroke-width="1"/>\n                        ' + [0, 0.25, 0.5, 0.75, 1].map(pct => {
+                            const y = padding.top + chartHeight - pct * chartHeight;
+                            const val = Math.round(max * pct);
+                            return '<text x="' + (padding.left - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-size="9" fill="var(--fg-muted)" font-family="IBM Plex Mono, monospace">' + val + '</text>';
+                        }).join('') + '\n                    </g>\n                    <g class="em-x-axis">\n                        <line x1="' + padding.left + '" y1="' + (padding.top + chartHeight) + '" x2="' + (width - padding.right) + '" y2="' + (padding.top + chartHeight) + '" stroke="var(--border)" stroke-width="1"/>\n                        ' + [0, Math.floor(n/4), Math.floor(n/2), Math.floor(3*n/4), n-1].map(i => {
+                            const x = padding.left + i * stepX;
+                            const date = new Date(buckets[i][0]);
+                            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            return '<text x="' + x + '" y="' + (padding.top + chartHeight + 14) + '" text-anchor="middle" font-size="9" fill="var(--fg-muted)" font-family="IBM Plex Mono, monospace">' + timeStr + '</text>';
+                        }).join('') + '\n                    </g>\n                ';
+
+                svg.querySelectorAll('.em-dot').forEach(dot => {
+                    dot.addEventListener('mouseenter', () => {
+                        dot.style.opacity = '1';
+                        dot.style.r = '4';
+                    });
+                    dot.addEventListener('mouseleave', () => {
+                        dot.style.opacity = '0';
+                        dot.style.r = '3';
+                    });
+                    dot.addEventListener('mousemove', (e) => {
+                        const value = dot.dataset.value;
+                        const time = new Date(dot.dataset.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        showTooltip(e, time + ': ' + value + ' pageviews');
+                    });
+                    dot.addEventListener('mouseleave', hideTooltip);
+                });
+            }
+
+            function renderBreakdowns(buckets) {
+                const pathCounts = {};
+                const browserCounts = {};
+                const osCounts = {};
+                const deviceCounts = {};
+
+                buckets.forEach(([bucketKey, bucket]) => {
+                    const count = Number(bucket.pageviews) || 0;
+                    const parts = bucketKey.split('|');
+                    if (parts.length >= 3) {
+                        const path = parts[2] || '/';                        pathCounts[path] = (pathCounts[path] || 0) + count;
+                    }
+                    if (parts.length >= 4) {
+                        const browser = parts[3] || 'Unknown';
+                        browserCounts[browser] = (browserCounts[browser] || 0) + count;
+                    }
+                    if (parts.length >= 5) {
+                        const os = parts[4] || 'Unknown';
+                        osCounts[os] = (osCounts[os] || 0) + count;
+                    }
+                    if (parts.length >= 6) {
+                        const device = parts[5] || 'Unknown';
+                        deviceCounts[device] = (deviceCounts[device] || 0) + count;
+                    }
+                });
+
+                renderBreakdownList('em-top-paths', pathCounts, 5);
+                renderBreakdownList('em-browsers', browserCounts, 5);
+                renderBreakdownList('em-oses', osCounts, 5);
+                renderBreakdownList('em-devices', deviceCounts, 5);
+            }
+
+            function renderBreakdownList(elementId, counts, limit) {
+                const el = document.getElementById(elementId);
+                if (!el) return;
+
+                const sorted = Object.entries(counts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, limit);
+
+                if (!sorted.length) {
+                    el.innerHTML = '<li class="em-loading">No data</li>';
+                    return;
+                }
+
+                const total = sorted.reduce((sum, [, v]) => sum + v, 0);
+                const maxCount = sorted[0][1];
+
+                el.innerHTML = sorted.map(([name, count]) => {
+                    const pct = (count / maxCount) * 100;
+                    const displayName = name.length > 30 ? name.slice(0, 27) + '\u2026' : name;
+                    return '\n                        <li class="em-breakdown-item" title="' + name + ': ' + count + ' pageviews">\n                            <span class="em-breakdown-name">' + escapeHtml(displayName) + '</span>\n                            <span class="em-breakdown-count">' + count.toLocaleString() + '</span>\n                            <div class="em-breakdown-bar" style="width: ' + pct + '%"></div>\n                        </li>\n                    ';
+                }).join('');
+            }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            let tooltipEl = null;
+            function showTooltip(e, text) {
+                if (!tooltipEl) {
+                    tooltipEl = document.createElement('div');
+                    tooltipEl.className = 'em-tooltip';
+                    tooltipEl.style.cssText = 'position:fixed;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.375rem 0.625rem;font-size:0.65rem;color:var(--fg);font-family:IBM Plex Mono,monospace;pointer-events:none;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15)';
+                    document.body.appendChild(tooltipEl);
+                }
+                tooltipEl.textContent = text;
+                tooltipEl.style.left = (e.clientX + 12) + 'px';
+                tooltipEl.style.top = (e.clientY - 30) + 'px';
+                tooltipEl.style.display = 'block';
+            }
+
+            function hideTooltip() {
+                if (tooltipEl) tooltipEl.style.display = 'none';
+            }
+
+            // Small bar chart at bottom of page
+            (async function() {
                 const chart = document.getElementById('ethicalmetrics-chart');
                 if (!chart) return;
                 try {

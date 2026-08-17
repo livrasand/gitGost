@@ -957,7 +957,7 @@
             return `
                 <div class="repo-card">
                     <div class="repo-card-head">
-                        <a class="repo-name" href="/repo.html?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(name)}&provider=${PROVIDER}">${safeOwner} / ${safeName}</a>
+                        <a class="repo-name" href="/repo.html?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(name)}&provider=${encodeURIComponent(PROVIDER)}">${safeOwner} / ${safeName}</a>
                         <span class="repo-visibility">${visibility}</span>
                     </div>
                     ${desc ? `<p class="repo-desc">${desc}</p>` : ''}
@@ -981,7 +981,8 @@
                 container.innerHTML = '<div class="repo-empty">no public repositories found</div>';
                 return;
             }
-            container.innerHTML = repos.map(repoCardHtml).join('');
+            const reposHtml = repos.map(repoCardHtml).join('');
+            container.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(reposHtml) : reposHtml;
         }
 
         // ---- Repos con star del usuario (GitHub / Codeberg; GitLab no lo expone) ----
@@ -1109,7 +1110,8 @@
                 return;
             }
             starredTitle.insertAdjacentHTML('beforeend', ` <span class="stars-count">· ${starred.length}</span>`);
-            starredSec.innerHTML = starred.map(repoCardHtml).join('');
+            const starredHtml = starred.map(repoCardHtml).join('');
+            starredSec.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(starredHtml) : starredHtml;
         }
 
         // ---- Projects (GitHub classic) / Packages (vista SPA) ----
@@ -1160,7 +1162,8 @@
                 return;
             }
             titleEl.insertAdjacentHTML('beforeend', ` <span class="stars-count">· ${projects.length}</span>`);
-            listEl.innerHTML = projects.map(projectCardHtml).join('');
+            const projectsHtml = projects.map(projectCardHtml).join('');
+            listEl.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(projectsHtml) : projectsHtml;
         }
 
         async function fetchPackages() {
@@ -1219,7 +1222,8 @@
                 return;
             }
             titleEl.insertAdjacentHTML('beforeend', ` <span class="stars-count">· ${packages.length}</span>`);
-            listEl.innerHTML = packages.map(packageCardHtml).join('');
+            const packagesHtml = packages.map(packageCardHtml).join('');
+            listEl.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(packagesHtml) : packagesHtml;
         }
 
         // ---- Seguidores / siguiendo (vista SPA reutilizada para ambas listas) ----
@@ -1230,12 +1234,13 @@
             const safeName = p.name ? escHtml(p.name) : '';
             const avatar = p.avatar_url ? escHtml(p.avatar_url) : '';
             const href = `/${PROVIDER}/${encodeURIComponent(p.username || '')}`;
+            const safeHref = escHtml(href);
             const initial = escHtml((p.name || p.username || '?').slice(0, 1).toUpperCase());
             return `
                 <div class="repo-card person-card">
-                    <a class="person-avatar" href="${href}" tabindex="-1">${avatar ? `<img src="${avatar}" alt=""/>` : initial}</a>
+                    <a class="person-avatar" href="${safeHref}" tabindex="-1">${avatar ? `<img src="${avatar}" alt=""/>` : initial}</a>
                     <div class="person-info">
-                        <a class="repo-name" href="${href}">${safeUser}</a>
+                        <a class="repo-name" href="${safeHref}">${safeUser}</a>
                         ${safeName ? `<div class="person-name">${safeName}</div>` : ''}
                     </div>
                 </div>
@@ -1316,7 +1321,8 @@
                 listEl.innerHTML = `<div class="repo-empty">no ${label} found</div>`;
                 return;
             }
-            listEl.innerHTML = people.map(personCardHtml).join('');
+            const peopleHtml = people.map(personCardHtml).join('');
+            listEl.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(peopleHtml) : peopleHtml;
         }
 
         async function fetchOrgs() {

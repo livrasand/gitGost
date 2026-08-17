@@ -6499,7 +6499,9 @@
                     return true;
                 }
             } catch (e) {
-                console.error('Failed to load language colors:', e);
+                if (e.name !== 'AbortError') {
+                    console.error('Failed to load language colors:', e);
+                }
             } finally {
                 clearTimeout(timeout);
             }

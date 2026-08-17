@@ -473,6 +473,52 @@ Community instances are listed here. Submit a patchset to add your own self-host
 
 Hopefully a more comprehensive guide will be written at some point, but for now feel free to reach out to the [Issues](https://github.com/livrasand/gitGost/issues) if you have any questions.
 
+## Testing Locally and in QA
+
+Before contributing to gitGost, you can test your changes against either a local instance or the QA environment.
+
+### Local development
+
+When running gitGost locally, the application is available at:
+
+```text
+http://localhost:8080/
+```
+
+For example:
+
+```bash
+git remote add gost http://localhost:8080/v1/gh/livrasand/gitGost
+git push gost my-feature:main
+```
+
+<p align="center">
+  <img src="./web/assets/screenshots/local-badge.png" width="100%" />
+</p>
+
+### QA environment
+
+For testing against the shared QA deployment, use:
+
+```text
+https://gitgost-qa.fly.dev/
+```
+
+For example:
+
+```bash
+git remote add gost-qa https://gitgost-qa.fly.dev/v1/gh/livrasand/gitGost
+git push gost-qa my-feature:main
+```
+
+The QA instance is intended for testing changes before they are deployed to the official instance.
+
+<p align="center">
+  <img src="./web/assets/screenshots/qa-badge.png" width="100%" />
+</p>
+
+> **Note:** Do not use the QA instance for production repositories or sensitive data. It is a testing environment and may be reset or changed at any time.
+
 ### Contributing Anonymously
 
 ```bash

@@ -135,6 +135,14 @@
             rel="stylesheet"
         />
         <script src="https://cdn.jsdelivr.net/npm/marked@4/marked.min.js"></script>
+        <script src="https://unpkg.com/environment-badge@^1.0.0/dist/bundle.js"></script>
+        <script>
+            environmentBadge([
+                { displayName: 'local', host: /(^localhost$|\.test$)/, backgroundColor: '#1a1a2e', foregroundColor: '#00d4ff' },
+                { displayName: 'qa', host: /(^qa\.|.*-qa\.)/, backgroundColor: '#4a1942', foregroundColor: '#ff6ec7' },
+                { displayName: 'preview', host: /(^preview\.|.*-preview\.)/, backgroundColor: '#1b2838', foregroundColor: '#66c0f4' },
+            ]);
+        </script>
         <script src="https://cdn.jsdelivr.net/npm/jdenticon@3.3.0/dist/jdenticon.min.js" async
                 integrity="sha384-LfouGM03m83ArVtne1JPk926e3SGD0Tz8XHtW2OKGsgeBU/UfR0Fa8eX+UlwSSAZ" crossorigin="anonymous">
         </script>

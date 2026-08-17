@@ -322,11 +322,33 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.GET("/api/status", ServiceStatusHandler)
 
 	r.NoRoute(func(c *gin.Context) {
-		// Rutas limpias de perfil de usuario/organización: /gh/:username, /gl/:username, /cb/:username
 		if c.Request.Method == http.MethodGet {
 			parts := strings.Split(strings.Trim(c.Request.URL.Path, "/"), "/")
-			if len(parts) == 2 && (parts[0] == "gh" || parts[0] == "gl" || parts[0] == "cb") {
-				c.File("./web/profile.html")
+			isProvider := len(parts) > 0 && (parts[0] == "gh" || parts[0] == "gl" || parts[0] == "cb")
+			if isProvider && len(parts) >= 2 {
+				if len(parts) == 2 {
+					c.File("./web/profile.html")
+					return
+				}
+				profileViews := map[string]bool{
+					"stars": true, "followers": true, "following": true,
+					"members": true, "projects": true, "packages": true,
+				}
+				if len(parts) == 3 && profileViews[parts[2]] {
+					c.File("./web/profile.html")
+					return
+				}
+				c.File("./web/repo.html")
+				return
+			}
+			knownPages := map[string]bool{
+				"explore": true, "cli": true, "git-extension": true,
+				"settings": true, "issue": true, "comment": true,
+				"pr-comment": true, "legal": true, "about": true,
+				"stats": true,
+			}
+			if len(parts) == 1 && knownPages[parts[0]] {
+				c.File("./web/index.html")
 				return
 			}
 		}

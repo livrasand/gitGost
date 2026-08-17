@@ -2793,18 +2793,45 @@
                 .replace(/\u2028/g, '\\u2028')
                 .replace(/\u2029/g, '\\u2029');
         }
+
+        const _pathParts = window.location.pathname.split('/').filter(Boolean);
+        const _isCleanPath = _pathParts.length >= 3 && (_pathParts[0] === 'gh' || _pathParts[0] === 'gl' || _pathParts[0] === 'cb');
         const rv = {
-            owner:    params.get('owner') || '',
-            repo:     params.get('repo')  || '',
-            provider: params.get('provider') || 'gh',
+            owner:    _isCleanPath ? decodeURIComponent(_pathParts[1] || '') : (params.get('owner') || ''),
+            repo:     _isCleanPath ? decodeURIComponent(_pathParts[2] || '') : (params.get('repo')  || ''),
+            provider: _isCleanPath ? _pathParts[0] : (params.get('provider') || 'gh'),
             branch:   params.get('branch') || '',
             path:     [],
         };
+        if (!_isCleanPath) {
+            if (rv.provider === 'github') rv.provider = 'gh';
+            else if (rv.provider === 'gitlab') rv.provider = 'gl';
+            else if (rv.provider === 'codeberg') rv.provider = 'cb';
+        }
 
-        // Normalize provider to match index page format (github->gh, gitlab->gl, codeberg->cb)
-        if (rv.provider === 'github') rv.provider = 'gh';
-        else if (rv.provider === 'gitlab') rv.provider = 'gl';
-        else if (rv.provider === 'codeberg') rv.provider = 'cb';
+        const VIEW_TO_PATH = {
+            home: '', files: 'tree', commits: 'commits', branches: 'branches',
+            packages: 'packages', bugs: 'issues', reviews: 'pulls',
+            discussions: 'discussions', wiki: 'wiki', releases: 'releases',
+            tags: 'tags', deployments: 'deployments', contributors: 'contributors',
+        };
+        const PATH_TO_VIEW = {};
+        for (const [k, v] of Object.entries(VIEW_TO_PATH)) {
+            if (v) PATH_TO_VIEW[v] = k;
+        }
+        function repoBasePath() {
+            return `/${rv.provider}/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}`;
+        }
+        function buildViewUrl(view) {
+            const suffix = VIEW_TO_PATH[view] || '';
+            return suffix ? `${repoBasePath()}/${suffix}` : repoBasePath();
+        }
+        function viewFromPath() {
+            if (_isCleanPath && _pathParts.length >= 4) {
+                return PATH_TO_VIEW[_pathParts[3]] || 'home';
+            }
+            return 'home';
+        }
 
         function profileLink(username, label, className = '') {
             const name = String(username || '').trim();
@@ -2824,7 +2851,7 @@
             el.innerHTML =
                 `<a href="/${encodeURIComponent(rv.provider)}/${encodeURIComponent(rv.owner)}" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.owner)}</a>`+
                 `<span style="color:var(--fg-muted);">/</span>`+
-                `<a href="#" onclick="showView('home');return false;" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.repo)}</a>`+
+                `<a href="${repoBasePath()}" onclick="showView('home');return false;" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.repo)}</a>`+
                 (branchName ? `<span style="color:var(--fg-muted);">/</span><span style="color:var(--fg-muted);display:inline-flex;align-items:center;gap:0.25rem;">${BRANCH_SVG}${branchName}</span>` : '');
         }
 
@@ -2858,15 +2885,32 @@
             checkPackages();
             const codePanel = document.getElementById('code-panel');
             if (codePanel) codePanel.addEventListener('click', handlePanelLinkClick);
-            showView('home');
+            showView(viewFromPath(), false);
+
+            window.addEventListener('popstate', function() {
+                const v = viewFromPath();
+                if (v) showView(v, false);
+            });
+
+            document.querySelectorAll('a[onclick]').forEach(a => {
+                const m = a.getAttribute('onclick').match(/showView\('([^']+)'\)/);
+                if (m) {
+                    a.href = buildViewUrl(m[1]);
+                }
+            });
         }
 
-        function showView(view) {
+        function showView(view, push) {
+            if (push === undefined) push = true;
             _disposePierreDiffs();
             const navLinks = document.querySelectorAll('.left-nav a');
             navLinks.forEach(a => a.classList.remove('active'));
             const idx = ['home','files','commits','branches','packages','bugs','reviews','discussions','wiki'].indexOf(view);
             if (idx >= 0 && navLinks[idx]) navLinks[idx].classList.add('active');
+
+            if (push) {
+                history.pushState({ view: view }, '', buildViewUrl(view));
+            }
 
             const fileTree = document.getElementById('file-tree');
             const codePanel = document.getElementById('code-panel');
@@ -5977,7 +6021,7 @@
                 const img = `<img src="${escAttr(avatar)}" alt="${escAttr(username)}" loading="lazy">`;
                 const title = `${escAttr(username)} · ${commits} commits${top ? ' · top contributor' : ''}`;
                 if (!login) return `<span class="sb-contributor${top ? ' top' : ''}" title="${title}">${img}</span>`;
-                return `<a class="sb-contributor${top ? ' top' : ''}" href="/profile.html?provider=${encodeURIComponent(rv.provider)}&user=${encodeURIComponent(login)}" title="${title}">${img}</a>`;
+                return `<a class="sb-contributor${top ? ' top' : ''}" href="/${encodeURIComponent(rv.provider)}/${encodeURIComponent(login)}" title="${title}">${img}</a>`;
             }).join('');
             if (!html) return;
             box.innerHTML = html;
@@ -6080,10 +6124,10 @@
                     ? `<img src="${escAttr(avatar)}" alt="${escAttr(username)}" loading="lazy" style="width:2rem;height:2rem;border-radius:50%;object-fit:cover;background:var(--accent);flex:none;">`
                     : `<span style="width:2rem;height:2rem;border-radius:50%;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:0.7rem;color:#fff;flex:none;">${escHtml((username || '?')[0].toUpperCase())}</span>`;
                 const avatarHtml = login
-                    ? `<a href="/profile.html?provider=${encodeURIComponent(rv.provider)}&user=${encodeURIComponent(login)}" aria-label="${escAttr(username)} profile">${img}</a>`
+                    ? `<a href="/${encodeURIComponent(rv.provider)}/${encodeURIComponent(login)}" aria-label="${escAttr(username)} profile">${img}</a>`
                     : img;
                 const nameHtml = login
-                    ? `<a href="/profile.html?provider=${encodeURIComponent(rv.provider)}&user=${encodeURIComponent(login)}" style="color:var(--fg);text-decoration:none;font-weight:500;">${escHtml(username)}</a>`
+                    ? `<a href="/${encodeURIComponent(rv.provider)}/${encodeURIComponent(login)}" style="color:var(--fg);text-decoration:none;font-weight:500;">${escHtml(username)}</a>`
                     : `<span style="color:var(--fg);font-weight:500;">${escHtml(username)}</span>`;
                 const meta = `${escHtml(commits)} commit${commits !== 1 ? 's' : ''}`;
                 const metaHtml = top

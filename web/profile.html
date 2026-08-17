@@ -726,6 +726,16 @@
         if (_qpProvider) PROVIDER = (_qpProvider === 'gl' || _qpProvider === 'cb') ? _qpProvider : 'gh';
         if (_qpUser) USERNAME = _qpUser;
 
+        const PROFILE_VIEWS = { stars: 'stars', followers: 'followers', following: 'following', members: 'members', projects: 'projects', packages: 'packages' };
+        const _viewPart = (_pathParts.length >= 3) ? _pathParts[2] : '';
+        const _initialView = PROFILE_VIEWS[_viewPart] || 'overview';
+
+        function profileViewUrl(view) {
+            const base = `/${encodeURIComponent(PROVIDER)}/${encodeURIComponent(USERNAME)}`;
+            const suffix = PROFILE_VIEWS[view] || '';
+            return suffix ? `${base}/${suffix}` : base;
+        }
+
         const STAR_ICON_HTML = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" style="vertical-align:-0.125em;"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.704 4.325a1.5 1.5 0 0 1 2.592 0l1.818 3.12a1.5 1.5 0 0 0 .978.712l3.53.764a1.5 1.5 0 0 1 .8 2.465l-2.405 2.693a1.5 1.5 0 0 0-.374 1.15l.363 3.593a1.5 1.5 0 0 1-2.097 1.524l-3.304-1.456a1.5 1.5 0 0 0-1.21 0l-3.304 1.456a1.5 1.5 0 0 1-2.097-1.524l.363-3.593a1.5 1.5 0 0 0-.373-1.15l-2.406-2.693a1.5 1.5 0 0 1 .8-2.465l3.53-.764a1.5 1.5 0 0 0 .979-.711z"/></svg>`;
         const X_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="1em" height="1em" role="img" style="vertical-align:-0.125em;"><path fill="currentColor" d="M9.332 6.925 14.544 1h-1.235L8.783 6.145 5.17 1H1l5.466 7.78L1 14.993h1.235l4.78-5.433 3.816 5.433H15L9.332 6.925ZM7.64 8.848l-.554-.775L2.68 1.91h1.897l3.556 4.975.554.775 4.622 6.466h-1.897L7.64 8.848Z"></path></svg>`;
         const MAIL_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="1em" height="1em" role="img" style="vertical-align:-0.125em;"><path fill="currentColor" d="M1.75 2h12.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 14.25 14H1.75A1.75 1.75 0 0 1 0 12.25v-8.5C0 2.784.784 2 1.75 2ZM1.5 12.251c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V5.809L8.38 9.397a.75.75 0 0 1-.76 0L1.5 5.809v6.442Zm13-8.181v-.32a.25.25 0 0 0-.25-.25H1.75a.25.25 0 0 0-.25.25v.32L8 7.88Z"></path></svg>`;
@@ -957,7 +967,7 @@
             return `
                 <div class="repo-card">
                     <div class="repo-card-head">
-                        <a class="repo-name" href="/repo.html?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(name)}&provider=${encodeURIComponent(PROVIDER)}">${safeOwner} / ${safeName}</a>
+                        <a class="repo-name" href="/${encodeURIComponent(PROVIDER)}/${encodeURIComponent(owner)}/${encodeURIComponent(name)}">${safeOwner} / ${safeName}</a>
                         <span class="repo-visibility">${visibility}</span>
                     </div>
                     ${desc ? `<p class="repo-desc">${desc}</p>` : ''}
@@ -1052,7 +1062,8 @@
             switchView('packages');
         }
 
-        function switchView(view) {
+        function switchView(view, push) {
+            if (push === undefined) push = true;
             if (_currentView === view) return;
             const prev = _currentView;
             const isOverview = view === 'overview';
@@ -1061,6 +1072,10 @@
             const isProjects = view === 'projects';
             const isPackages = view === 'packages';
             _currentView = view;
+
+            if (push) {
+                history.pushState({ view: view }, '', profileViewUrl(view));
+            }
 
             if (!isOverview && prev === 'overview') _prevTitle = document.title;
             if (isOverview) {
@@ -1101,7 +1116,7 @@
             const starredTitle = document.getElementById('starred-section-title');
             const starredSec = document.getElementById('starred-section');
             if (!starredTitle || !starredSec) return;
-            starredTitle.innerHTML = '<a class="stars-back" href="#" onclick="switchView(\'overview\'); return false;">‹ back to profile</a>';
+            starredTitle.innerHTML = '<a class="stars-back" href="' + profileViewUrl('overview') + '" onclick="switchView(\'overview\'); return false;">&#x2039; back to profile</a>';
             const starred = _starredCache || (_starredCache = await fetchStarred());
             const navStars = document.getElementById('nav-star-count');
             if (navStars && starred.length > 0) navStars.textContent = formatNumber(starred.length);
@@ -1153,7 +1168,7 @@
             const titleEl = document.getElementById('projects-section-title');
             const listEl = document.getElementById('projects-section');
             if (!titleEl || !listEl) return;
-            titleEl.innerHTML = '<a class="stars-back" href="#" onclick="switchView(\'overview\'); return false;">‹ back to profile</a>';
+            titleEl.innerHTML = '<a class="stars-back" href="' + profileViewUrl('overview') + '" onclick="switchView(\'overview\'); return false;">&#x2039; back to profile</a>';
             const projects = _projectsCache || (_projectsCache = await fetchProjects());
             const navCount = document.getElementById('nav-projects-count');
             if (navCount && projects.length > 0) navCount.textContent = formatNumber(projects.length);
@@ -1213,7 +1228,7 @@
             const titleEl = document.getElementById('packages-section-title');
             const listEl = document.getElementById('packages-section');
             if (!titleEl || !listEl) return;
-            titleEl.innerHTML = '<a class="stars-back" href="#" onclick="switchView(\'overview\'); return false;">‹ back to profile</a>';
+            titleEl.innerHTML = '<a class="stars-back" href="' + profileViewUrl('overview') + '" onclick="switchView(\'overview\'); return false;">&#x2039; back to profile</a>';
             const packages = _packagesCache || (_packagesCache = await fetchPackages());
             const navCount = document.getElementById('nav-packages-count');
             if (navCount && packages.length > 0) navCount.textContent = formatNumber(packages.length);
@@ -1306,7 +1321,7 @@
             const listEl = document.getElementById('people-section');
             if (!titleEl || !listEl) return;
             const label = kind === 'followers' ? 'followers' : kind === 'following' ? 'following' : 'members';
-            titleEl.innerHTML = `<a class="stars-back" href="#" onclick="switchView('overview'); return false;">‹ back to profile</a> <span class="stars-count">${label}</span>`;
+            titleEl.innerHTML = '<a class="stars-back" href="' + profileViewUrl('overview') + '" onclick="switchView(\'overview\'); return false;">&#x2039; back to profile</a> <span class="stars-count">' + label + '</span>';
             // Los miembros de una organización de Codeberg ya vienen en el perfil (public_members).
             let people;
             if (kind === 'members') {
@@ -1661,6 +1676,29 @@
             if (readme.text) renderReadme(readme.text, readme.baseUrl);
 
             checkServiceStatus();
+
+            if (_initialView !== 'overview') {
+                switchView(_initialView, false);
+            }
+
+            window.addEventListener('popstate', function() {
+                const vp = window.location.pathname.split('/').filter(Boolean);
+                const sv = (vp.length >= 3) ? PROFILE_VIEWS[vp[2]] || 'overview' : 'overview';
+                if (sv !== _currentView) switchView(sv, false);
+            });
+
+            document.querySelectorAll('.left-nav a[onclick]').forEach(a => {
+                const onclick = a.getAttribute('onclick');
+                const m = onclick.match(/navOverview|navRepos|openStars|openProjects|openPackages|openPeople/);
+                if (m) {
+                    const map = { navOverview: 'overview', navRepos: 'overview', openStars: 'stars', openProjects: 'projects', openPackages: 'packages' };
+                    if (map[m[0]]) a.href = profileViewUrl(map[m[0]]);
+                    else if (m[0] === 'openPeople') {
+                        const km = onclick.match(/openPeople\('(\w+)'\)/);
+                        if (km) a.href = profileViewUrl(km[1]);
+                    }
+                }
+            });
         }
 
         // ---- Markdown (simplificado de repo.html) ----

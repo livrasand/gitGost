@@ -406,7 +406,6 @@
             font-size: 0.9rem;
             line-height: 1.75;
             color: var(--fg);
-            max-width: 860px;
             /* Parte URLs largas, fingerprints, permisos y tablas en vez de desbordar el panel. */
             overflow-wrap: anywhere;
         }
@@ -530,7 +529,7 @@
         }
         .left-nav a {
             display: block;
-            padding: 0.35rem 1rem;
+            padding: 0.65rem 1rem;
             font-size: 0.78rem;
             font-family: "IBM Plex Mono", monospace;
             color: var(--fg-muted);
@@ -2733,6 +2732,23 @@
             return window.location.origin;
         }
         const API_BASE = getApiBase();
+
+        const nativeFetch = window.fetch.bind(window);
+        function proxiedProviderFetch(input, opts = {}) {
+            const target = new URL(typeof input === 'string' ? input : input.url, window.location.href);
+            let proxyPath = '';
+            if (target.hostname === 'gitlab.com' && (target.pathname.startsWith('/api/v4/') || target.pathname.includes('/-/raw/'))) {
+                proxyPath = '/api/gl-proxy' + target.pathname;
+            } else if (target.hostname === 'codeberg.org' && (target.pathname.startsWith('/api/v1/') || target.pathname.includes('/raw/branch/'))) {
+                proxyPath = '/api/cb-proxy' + target.pathname;
+            }
+            if (proxyPath) {
+                const proxyURL = new URL(proxyPath + target.search, API_BASE);
+                return nativeFetch(proxyURL, opts);
+            }
+            return nativeFetch(input, opts);
+        }
+        window.fetch = proxiedProviderFetch;
 
         async function checkServiceStatus() {
             try {

@@ -3186,6 +3186,53 @@ func CodebergProxyHandler(c *gin.Context) {
 	}
 }
 
+// GitHubAPIProxyHandler keeps browser requests to api.github.com on the server.
+func GitHubAPIProxyHandler(c *gin.Context) {
+	path := strings.TrimPrefix(c.Request.URL.Path, "/api/gh-proxy/")
+	if path == "" || strings.Contains(path, "..") {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid GitHub API path"})
+		return
+	}
+
+	target := "https://api.github.com/" + path
+	if c.Request.URL.RawQuery != "" {
+		target += "?" + c.Request.URL.RawQuery
+	}
+	req, err := http.NewRequestWithContext(c.Request.Context(), c.Request.Method, target, nil)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to build request"})
+		return
+	}
+
+	token := tokenpool.NextGitHubToken()
+	if token == "" {
+		token = strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(c.GetHeader("Authorization"), "token "), "Bearer "))
+	}
+	if token != "" {
+		req.Header.Set("Authorization", "token "+token)
+	}
+	req.Header.Set("Accept", c.GetHeader("Accept"))
+	req.Header.Set("User-Agent", "gitGost")
+
+	resp, err := (&http.Client{Timeout: 15 * time.Second}).Do(req)
+	if err != nil {
+		utils.Log("GitHub API proxy error: %v", err)
+		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "failed to reach GitHub"})
+		return
+	}
+	defer resp.Body.Close()
+
+	for _, header := range []string{"Content-Type", "Cache-Control", "ETag", "Link", "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"} {
+		if value := resp.Header.Get(header); value != "" {
+			c.Writer.Header().Set(header, value)
+		}
+	}
+	c.Writer.WriteHeader(resp.StatusCode)
+	if _, err := io.Copy(c.Writer, resp.Body); err != nil {
+		utils.Log("GitHub API proxy copy error: %v", err)
+	}
+}
+
 func SearchHandler(c *gin.Context) {
 	query := c.Query("q")
 	provider := c.Query("provider")

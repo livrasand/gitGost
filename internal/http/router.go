@@ -310,6 +310,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/users/orgs", prCheckLimiter(), UserOrgsHandler)
 		api.GET("/users/events", prCheckLimiter(), UserEventsHandler)
 		api.GET("/users/contributions", prCheckLimiter(), UserContributionsHandler)
+		api.GET("/gh-proxy/*path", prCheckLimiter(), GitHubAPIProxyHandler)
 		api.GET("/trending/:provider", TrendingHandler)
 		api.GET("/cb-proxy/*path", prCheckLimiter(), CodebergProxyHandler)
 		api.GET("/gl-notes/:owner/:repo/:number", GitLabIssueNotesProxyHandler)

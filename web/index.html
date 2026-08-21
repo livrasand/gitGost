@@ -10,6 +10,7 @@
         />
         <link rel="icon" href="/assets/logos/gitgost-logo.svg" type="image/svg+xml" />
         <title>gitGost — Anonymous Git Contributions</title>
+        <link rel="stylesheet" href="/assets/winui-scrollbar.css" />
         <link
             rel="apple-touch-icon"
             sizes="57x57"
@@ -137,7 +138,7 @@
         <script src="https://cdn.jsdelivr.net/npm/marked@4/marked.min.js"></script>
         <script src="https://unpkg.com/environment-badge@^1.0.0/dist/bundle.js"></script>
         <script>
-            environmentBadge([
+            if (typeof environmentBadge === 'function') environmentBadge([
                 { displayName: 'local', host: /(^localhost$|\.test$)/, backgroundColor: '#1a1a2e', foregroundColor: '#00d4ff' },
                 { displayName: 'qa', host: /(^qa\.|.*-qa\.)/, backgroundColor: '#4a1942', foregroundColor: '#ff6ec7' },
                 { displayName: 'preview', host: /(^preview\.|.*-preview\.)/, backgroundColor: '#1b2838', foregroundColor: '#66c0f4' },
@@ -3212,6 +3213,43 @@
                 }
             });
 
+            // Filas clicables (data-href): click normal navega; Ctrl/Cmd+click
+            // abre en pestaña nueva (las filas son divs, sin comportamiento nativo).
+            document.addEventListener('click', function(e) {
+                if (e.button !== 0) return;
+                if (e.target.closest('a')) return;
+                const el = e.target.closest('[data-href]');
+                if (!el) return;
+                const href = el.getAttribute('data-href');
+                if (!href || href === '#') return;
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+                    e.preventDefault();
+                    window.open(href, '_blank', 'noopener');
+                    return;
+                }
+                window.location.href = href;
+            });
+
+            document.addEventListener('auxclick', function(e) {
+                if (e.button !== 1) return;
+                if (e.target.closest('a')) return;
+                const el = e.target.closest('[data-href]');
+                if (!el) return;
+                const href = el.getAttribute('data-href');
+                if (!href || href === '#') return;
+                e.preventDefault();
+                window.open(href, '_blank', 'noopener');
+            });
+
+            // Ctrl/Cmd+click sobre enlaces con onclick propio: corta la propagación
+            // en fase de captura para que el handler inline no haga preventDefault y
+            // el navegador aplique su comportamiento nativo (pestaña/ventana nueva).
+            document.addEventListener('click', function(e) {
+                if (!(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)) return;
+                if (!e.target.closest('a[href]')) return;
+                e.stopPropagation();
+            }, true);
+
             // Normaliza y fusiona topics/tags/tag_list de cualquier provider en un array unico de tags en minusculas.
             function repoTagList(repo) {
                 const tags = [];
@@ -3255,6 +3293,8 @@
             async function performSearch(query) {
                 const container = document.getElementById("repo-list");
                 if (container) container.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">Searching...</p>';
+                // Refleja la búsqueda en la URL (?q=...).
+                pushHomeParams({ q: query, tag: null });
                 try {
                     const response = await fetch(
                         `${API_BASE}/api/search?q=${encodeURIComponent(query)}&provider=all`,
@@ -3396,18 +3436,13 @@
                     if (repo.provider === 'gitlab') provider = 'gl';
                     else if (repo.provider === 'codeberg') provider = 'cb';
                     else provider = 'gh';
-                    item.onclick = () => {
-                        const parts = (repo.full_name || '').split('/');
-                        const owner = parts[0] || repo.owner || '';
-                        const name  = parts[1] || repo.name  || '';
-                        if (owner && name) {
-                            window.location.href = `/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(name)}`;
-                        } else { window.location.href = repo.url; }
-                    };
+                    const parts = (repo.full_name || '').split('/');
+                    const owner = parts[0] || repo.owner || '';
+                    const name  = parts[1] || repo.name  || '';
+                    item.setAttribute('data-href', owner && name
+                        ? `/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(name)}`
+                        : (repo.url || '#'));
 
-                    const parts = (repo.full_name || "").split("/");
-                    const owner = parts[0] || repo.owner || "";
-                    const name = parts[1] || repo.name || "";
                     const ownerHtml = escapeHtml(owner);
                     const nameHtml = escapeHtml(name);
                     const desc = repo.description
@@ -3463,6 +3498,7 @@
             async function searchUsers(query) {
                 const container = document.getElementById("repo-list");
                 if (container) container.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">Searching...</p>';
+                pushHomeParams({ q: query, tab: 'users', tag: null });
                 let anyFailed = false;
                 try {
                     const [gh, gl, cb] = await Promise.all([
@@ -3537,10 +3573,8 @@
                     if (user.provider === 'gitlab') providerLabel = gitlabBadgeIcon();
                     else if (user.provider === 'codeberg') providerLabel = codebergBadgeIcon();
                     else providerLabel = githubBadgeIcon();
-                    item.onclick = () => {
-                        const p = user.provider === 'gitlab' ? 'gl' : user.provider === 'codeberg' ? 'cb' : 'gh';
-                        window.location.href = `/${p}/${encodeURIComponent(user.username || '')}`;
-                    };
+                    const p = user.provider === 'gitlab' ? 'gl' : user.provider === 'codeberg' ? 'cb' : 'gh';
+                    item.setAttribute('data-href', `/${p}/${encodeURIComponent(user.username || '')}`);
                     item.innerHTML = `
                         <div class="user-item-left">
                             ${safeAvatar ? `<img class="user-avatar" src="${safeAvatar}" alt="" loading="lazy"/>` : `<span class="user-avatar">${safeUsername.slice(0, 1).toUpperCase()}</span>`}
@@ -3617,13 +3651,7 @@
                 `;
             }
 
-            function switchTab(tab, el) {
-                document
-                    .querySelectorAll(".content-tab")
-                    .forEach((t) => t.classList.remove("active"));
-                el.classList.add("active");
-                removeSentinel();
-                resetScrollState(tab);
+            function activateTabContent(tab) {
                 if (tab === "trending") {
                     loadTrending();
                 } else if (tab === "new") {
@@ -3636,6 +3664,32 @@
                     loadPopular();
                 } else if (tab === "users") {
                     loadUsersTab();
+                } else {
+                    loadTrending();
+                }
+            }
+
+            function switchTab(tab, el) {
+                document
+                    .querySelectorAll(".content-tab")
+                    .forEach((t) => t.classList.remove("active"));
+                el.classList.add("active");
+                removeSentinel();
+                resetScrollState(tab);
+                activateTabContent(tab);
+                // Refleja la pestaña activa en la URL (?tab=new&hellip;).
+                pushHomeParams({ tab: tab, q: null, tag: null });
+            }
+
+            function pushHomeParams(patch) {
+                const u = new URL(window.location.href);
+                Object.entries(patch).forEach(([k, v]) => {
+                    if (v === null || v === undefined || v === '') u.searchParams.delete(k);
+                    else u.searchParams.set(k, v);
+                });
+                const url = u.pathname.replace(/\/index\.html$/, '/') + u.search;
+                if (window.location.pathname + window.location.search !== url) {
+                    history.pushState({}, '', url);
                 }
             }
 
@@ -3660,9 +3714,7 @@
                     if (repo.provider === 'gl' || repo.provider === 'gitlab') provider = 'gl';
                     else if (repo.provider === 'codeberg' || repo.provider === 'cb') provider = 'cb';
                     else provider = 'gh';
-                    item.onclick = () => {
-                        window.location.href = `/${provider}/${encodeURIComponent(repo.owner)}/${encodeURIComponent(repo.repo)}`;
-                    };
+                    item.setAttribute('data-href', `/${provider}/${encodeURIComponent(repo.owner)}/${encodeURIComponent(repo.repo)}`);
                     const ago = timeAgo(repo.starred_at);
                     const forgeIcon = forgeIconHtml(repo.provider);
                     const langBadge = languageBadgeHtml(repo.language);
@@ -4713,8 +4765,11 @@
                     pageContent.innerHTML = '';
                     updateStatusbar('home');
                     removeSentinel();
-                    resetScrollState('trending');
-                    loadTrending();
+                    const urlTab = new URLSearchParams(window.location.search).get('tab');
+                    const tab = ["trending","new","popular","updated","users","stars"].includes(urlTab) ? urlTab : 'trending';
+                    document.querySelectorAll('.content-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+                    resetScrollState(tab);
+                    activateTabContent(tab);
                     return;
                 }
 
@@ -4982,7 +5037,9 @@
                     .replace(/'/g, '&#39;');
             }
 
-            async function showTagPage(tag) {
+            async function showTagPage(tag, push) {
+                if (push === undefined) push = true;
+                if (push) pushHomeParams({ tag: tag, q: null });
                 const container = document.getElementById('repo-list');
                 const iconSlug = tag.toLowerCase().replace(/[^a-z0-9]/g, '');
                 const iconUrl  = `https://cdn.simpleicons.org/${iconSlug}/6b7280`;
@@ -5086,9 +5143,7 @@
                     if (repo.provider === 'gitlab') provider = 'gl';
                     else if (repo.provider === 'codeberg') provider = 'cb';
                     else provider = 'gh';
-                    item.onclick = () => {
-                        if (owner && name) window.location.href = `/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(name)}`;
-                    };
+                    if (owner && name) item.setAttribute('data-href', `/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(name)}`);
                     const desc = repo.description ? escapeHtml(repo.description.slice(0, 120)) : '';
                     const stars = repo.stars > 0 ? `(${STAR_ICON_HTML}${formatNumber(repo.stars)})` : '';
                     					const langBadge = languageBadgeHtml(repo.language);
@@ -5126,7 +5181,7 @@
                 const colorsLoaded = loadLanguageColors();
                 const initPage = pageFromPath();
                 if (_initTag) {
-                    showTagPage(_initTag);
+                    showTagPage(_initTag, false);
                 } else if (_initQ && searchInput) {
                     searchInput.value = _initQ;
                     removeSentinel();
@@ -5143,7 +5198,22 @@
 
                 window.addEventListener('popstate', function() {
                     const p = pageFromPath();
-                    showPage(p, false);
+                    if (p !== 'home') { showPage(p, false); return; }
+                    const params = new URLSearchParams(window.location.search);
+                    const tag = params.get('tag');
+                    const q = params.get('q');
+                    if (tag) { showTagPage(tag, false); return; }
+                    showPage('home', false);
+                    // showPage('home') ya restaura la pestaña desde ?tab=; si hay
+                    // búsqueda pendiente en la URL, se re-ejecuta.
+                    if (q && searchInput) {
+                        searchInput.value = q;
+                        removeSentinel();
+                        scrollState.exhausted = true;
+                        const t = params.get('tab');
+                        if (t === 'users') searchUsers(q);
+                        else performSearch(q);
+                    }
                 });
 
                 document.querySelectorAll('.nav-link[onclick]').forEach(a => {

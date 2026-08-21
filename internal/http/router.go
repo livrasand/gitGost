@@ -83,21 +83,38 @@ func adminLimiter() gin.HandlerFunc {
 }
 
 var (
-	prCheckLimiterStore = newBoundedMap[[]time.Time](prCheckLimiterStoreMax, prCheckLimiterWin)
-	prCheckLimiterMax   = 30
-	prCheckLimiterWin   = time.Minute
+	prCheckLimiterMax = 30
+	prCheckLimiterWin = time.Minute
 )
 
-func prCheckLimiter() gin.HandlerFunc {
+// Los proxies de forge (gh/cb/gl) sirven todas las peticiones del frontend
+// (vista código, commits, README, sidebar...), que disparan ráfagas de decenas
+// de llamadas al abrir una página. Compartir el limitador estricto de
+// prCheckLimiter provocaba 429 inmediatos, así que tienen uno propio más alto.
+var (
+	proxyLimiterMax = 240
+	proxyLimiterWin = time.Minute
+)
+
+func proxyLimiter() gin.HandlerFunc {
+	return prCheckWindowLimiter("proxy rate limit exceeded", proxyLimiterMax, proxyLimiterWin)
+}
+
+func prCheckWindowLimiter(message string, max int, win time.Duration) gin.HandlerFunc {
+	store := newBoundedMap[[]time.Time](prCheckLimiterStoreMax, win)
 	return func(c *gin.Context) {
 		ip := c.ClientIP()
-		count := windowAdd(prCheckLimiterStore, ip, time.Now(), prCheckLimiterWin, prCheckLimiterMax)
-		if count > prCheckLimiterMax {
-			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "PR check rate limit exceeded"})
+		count := windowAdd(store, ip, time.Now(), win, max)
+		if count > max {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": message})
 			return
 		}
 		c.Next()
 	}
+}
+
+func prCheckLimiter() gin.HandlerFunc {
+	return prCheckWindowLimiter("PR check rate limit exceeded", prCheckLimiterMax, prCheckLimiterWin)
 }
 
 var (
@@ -310,10 +327,11 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/users/orgs", prCheckLimiter(), UserOrgsHandler)
 		api.GET("/users/events", prCheckLimiter(), UserEventsHandler)
 		api.GET("/users/contributions", prCheckLimiter(), UserContributionsHandler)
-		api.GET("/gh-proxy/*path", prCheckLimiter(), GitHubAPIProxyHandler)
+		api.GET("/gh-proxy/*path", proxyLimiter(), GitHubAPIProxyHandler)
+		api.GET("/blame/:provider/:owner/:repo", proxyLimiter(), BlameHandler)
 		api.GET("/trending/:provider", TrendingHandler)
-		api.GET("/cb-proxy/*path", prCheckLimiter(), CodebergProxyHandler)
-		api.GET("/gl-proxy/*path", prCheckLimiter(), GitLabProxyHandler)
+		api.GET("/cb-proxy/*path", proxyLimiter(), CodebergProxyHandler)
+		api.GET("/gl-proxy/*path", proxyLimiter(), GitLabProxyHandler)
 		api.GET("/gl-notes/:owner/:repo/:number", GitLabIssueNotesProxyHandler)
 		api.GET("/gl-commit-count/:owner/:repo", GitLabCommitCountHandler)
 		api.GET("/gl-avatar", GitLabAvatarHandler)
@@ -344,6 +362,13 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.GET("/api/status", ServiceStatusHandler)
 
 	r.NoRoute(func(c *gin.Context) {
+		// Las rutas de API desconocidas deben fallar con 404 JSON; servir el
+		// índice HTML aquí hacía que el frontend intentase parsear HTML como
+		// JSON cuando el cliente hablaba con un backend más antiguo.
+		if strings.HasPrefix(c.Request.URL.Path, "/api/") {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "unknown API endpoint"})
+			return
+		}
 		if c.Request.Method == http.MethodGet {
 			parts := strings.Split(strings.Trim(c.Request.URL.Path, "/"), "/")
 			isProvider := len(parts) > 0 && (parts[0] == "gh" || parts[0] == "gl" || parts[0] == "cb")

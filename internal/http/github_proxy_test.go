@@ -82,6 +82,52 @@ func TestGitHubAPIProxyHandlerRotatesRateLimitedToken(t *testing.T) {
 	}
 }
 
+func TestGitHubAPIProxyHandlerServesCacheWhenRateLimited(t *testing.T) {
+	oldTransport := http.DefaultTransport
+	requests := 0
+	http.DefaultTransport = roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		requests++
+		if requests == 1 {
+			header := http.Header{}
+			header.Set("Content-Type", "application/json")
+			header.Set("ETag", `"abc"`)
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     header,
+				Body:       io.NopCloser(strings.NewReader(`{"id":1}`)),
+				Request:    req,
+			}, nil
+		}
+		if revalid := req.Header.Get("If-None-Match"); revalid != `"abc"` {
+			t.Fatalf("If-None-Match = %q", revalid)
+		}
+		return &http.Response{
+			StatusCode: http.StatusTooManyRequests,
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+			Body:       io.NopCloser(strings.NewReader(`{"message":"rate limit exceeded"}`)),
+			Request:    req,
+		}, nil
+	})
+	defer func() { http.DefaultTransport = oldTransport }()
+	t.Setenv("GITHUB_TOKEN", "")
+
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	r.GET("/api/gh-proxy/*path", GitHubAPIProxyHandler)
+
+	for i := 0; i < 2; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/api/gh-proxy/repos/owner/repo/languages", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		if w.Code != http.StatusOK || w.Body.String() != `{"id":1}` {
+			t.Fatalf("request %d: response = %d %q", i+1, w.Code, w.Body.String())
+		}
+	}
+	if requests != 2 {
+		t.Fatalf("upstream requests = %d, want 2 (initial + revalidation)", requests)
+	}
+}
+
 func TestGitLabProxyHandler(t *testing.T) {
 	oldTransport := http.DefaultTransport
 	http.DefaultTransport = roundTripperFunc(func(req *http.Request) (*http.Response, error) {

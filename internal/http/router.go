@@ -118,6 +118,24 @@ func v2Limiter() gin.HandlerFunc {
 	}
 }
 
+var (
+	captchaLimiterStore = newBoundedMap[[]time.Time](prCheckLimiterStoreMax, captchaLimiterWin)
+	captchaLimiterMax   = 30
+	captchaLimiterWin   = time.Minute
+)
+
+func captchaLimiter() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ip := c.ClientIP()
+		count := windowAdd(captchaLimiterStore, ip, time.Now(), captchaLimiterWin, captchaLimiterMax)
+		if count > captchaLimiterMax {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "captcha rate limit exceeded"})
+			return
+		}
+		c.Next()
+	}
+}
+
 const maxPushSize = 100 * 1024 * 1024
 
 func sizeLimitMiddleware() gin.HandlerFunc {
@@ -303,6 +321,8 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/gh-discussion/:owner/:repo/:number", GitHubDiscussionDetailProxyHandler)
 		api.GET("/gh-wiki/:owner/:repo/:page", GitHubWikiProxyHandler)
 		api.GET("/gl-wiki/:owner/:repo", GitLabWikiProxyHandler)
+		api.GET("/captcha/*path", captchaLimiter(), MentaCaptchaProxyHandler)
+		api.POST("/captcha/*path", captchaLimiter(), MentaCaptchaProxyHandler)
 	}
 
 	r.GET("/appeal", AppealStartHandler)

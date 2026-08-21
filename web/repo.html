@@ -3195,7 +3195,7 @@
                                     </div>
                                     <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
                                     <div class="reply-preview readme" id="preview-${replyId}" hidden></div>
-                                    <menta-widget id="${captchaId}" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                                    <menta-widget id="${captchaId}" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                     <div class="reply-footer">
                                         <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                         <span class="reply-status" id="${statusId}"></span>
@@ -3427,7 +3427,7 @@
                             <input id="bug-labels-input" type="text" placeholder="bug, enhancement, help wanted" />
                         </div>
                     </div>
-                    <menta-widget id="menta-bug" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                    <menta-widget id="menta-bug" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                 </div>`;
         }
 
@@ -3465,7 +3465,7 @@
                             <div class="bug-field-label">Labels (optional, comma-separated)</div>
                             <input id="bug-labels-input" type="text" placeholder="bug, enhancement, help wanted" />
                         </div>
-                        <menta-widget id="menta-bug" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                        <menta-widget id="menta-bug" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                     </div>`;
             } else {
                 const fields = Array.isArray(template.body) ? template.body.map((field, index) => bugRenderField(_bugSelectedIndex || 0, index, field)).join('') : '';
@@ -3482,7 +3482,7 @@
                             <div class="bug-field-label">Labels (optional, comma-separated)</div>
                             <input id="bug-labels-input" type="text" placeholder="bug, enhancement, help wanted" />
                         </div>
-                        <menta-widget id="menta-bug" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                        <menta-widget id="menta-bug" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                     </div>`;
             }
 
@@ -3952,7 +3952,7 @@
                                     <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                                     <div class="reply-box">
                                         <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
-                                        <menta-widget id="${captchaId}" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                                        <menta-widget id="${captchaId}" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                         <div class="reply-footer">
                                             <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                             <span class="reply-status" id="${statusId}"></span>
@@ -5447,7 +5447,7 @@
                                     </div>
                                     <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
                                     <div class="reply-preview readme" id="preview-${replyId}" hidden></div>
-                                    <menta-widget id="${captchaId}" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                                    <menta-widget id="${captchaId}" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                     <div class="reply-footer">
                                         <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                         <span class="reply-status" id="${statusId}"></span>

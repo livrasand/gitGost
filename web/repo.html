@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link
             rel="shortcut icon"
-            href="assets/logos/gitgost-logo.svg"
+            href="/assets/logos/gitgost-logo.svg"
             type="image/svg+xml"
         />
-    <link rel="icon" href="assets/logos/gitgost-logo.svg" type="image/svg+xml" />
+    <link rel="icon" href="/assets/logos/gitgost-logo.svg" type="image/svg+xml" />
     <title>gitGost — repo</title>
     <link id="hljs-theme-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github.min.css" />
     <link id="hljs-theme-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github-dark.min.css" disabled />
@@ -2764,7 +2764,20 @@
             if (token) {
                 opts.headers = { ...(opts.headers || {}), 'Authorization': `token ${token}` };
             }
-            return fetch(url, opts).then(res => {
+            const target = new URL(url, window.location.href);
+            if (target.hostname === 'api.github.com') {
+                const proxyBase = new URL(`${API_BASE}/api/gh-proxy`);
+                return fetch(new URL(`${proxyBase.pathname}${target.pathname}${target.search}`, proxyBase.origin), opts).then(res => {
+                    if (res.status === 403 || res.status === 429) {
+                        return res.json().catch(() => ({})).then(body => {
+                            const msg = body.message || `rate limit exceeded (${res.status})`;
+                            throw new Error(msg + ' — set a GitHub token in settings to fix this');
+                        });
+                    }
+                    return res;
+                });
+            }
+            return fetch(target.toString(), opts).then(res => {
                 if (res.status === 403 || res.status === 429) {
                     return res.json().catch(() => ({})).then(body => {
                         const msg = body.message || `rate limit exceeded (${res.status})`;
@@ -3187,7 +3200,7 @@
                         <ul class="comment-list" id="${listId}"></ul>
                         <div class="reply-section">
                             <div class="reply-row">
-                                <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
+                                <div class="reply-avatar"><img src="/assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                                 <div class="reply-box">
                                     <div class="reply-tabs">
                                         <button type="button" class="reply-tab active" data-mode="write" onclick="setReplyTab('${escJsStr(replyId)}','write')">Write</button>
@@ -3258,7 +3271,7 @@
                     li.innerHTML = `
                         ${cAvatar
                             ? `<img class="comment-avatar" src="${escAttr(cAvatar)}" />`
-                            : `<div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>`}
+                            : `<div class="reply-avatar"><img src="/assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>`}
                         <div class="comment-bubble">
                             <div class="comment-meta"><strong style="color:var(--fg);">${profileLink(cUser)}</strong> &middot; ${cDate}</div>
                             <div class="readme" style="font-size:0.8rem;">${renderMd(cBody)}</div>
@@ -3920,7 +3933,7 @@
                     const cBody = c.body || '';
                     const answerBadge = c.isAnswer ? '<span class="disc-answer-badge">✓ answer</span>' : '';
                     return `<li class="comment-item">
-                        <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
+                        <div class="reply-avatar"><img src="/assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                         <div class="comment-bubble">
                             <div class="comment-meta"><strong style="color:var(--fg);">${profileLink(cUser)}</strong> ${answerBadge} · ${cDate}</div>
                             <div class="readme" style="font-size:0.8rem;">${renderMd(cBody)}</div>
@@ -3949,7 +3962,7 @@
                             <ul class="comment-list">${comments}</ul>
                             <div class="reply-section">
                                 <div class="reply-row">
-                                    <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
+                                    <div class="reply-avatar"><img src="/assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                                     <div class="reply-box">
                                         <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
                                         <menta-widget id="${captchaId}" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
@@ -4031,7 +4044,7 @@
                     const li = document.createElement('li');
                     li.className = 'comment-item';
                     li.innerHTML = `
-                        <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
+                        <div class="reply-avatar"><img src="/assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                         <div class="comment-bubble">
                             <div class="comment-meta">you · just now${data.hash ? ` · <span style="color:var(--accent)">${escHtml(data.hash)}</span>` : ''}</div>
                             <div>${escHtml(commentBody).replace(/\n/g, '<br>')}</div>
@@ -5332,7 +5345,7 @@
                     const li = document.createElement('li');
                     li.className = 'comment-item';
                     li.innerHTML = `
-                        <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
+                        <div class="reply-avatar"><img src="/assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                         <div class="comment-bubble">
                             <div class="comment-meta">you &middot; just now${data.hash ? ` &middot; <span style="color:var(--accent)">${escHtml(data.hash)}</span>` : ''}</div>
                             <div>${escHtml(commentBody).replace(/\n/g, '<br>')}</div>
@@ -5439,7 +5452,7 @@
                         <div class="issue-detail-body readme">${renderedBody}</div>
                         <div class="reply-section">
                             <div class="reply-row">
-                                <div class="reply-avatar"><img src="assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
+                                <div class="reply-avatar"><img src="/assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                                 <div class="reply-box">
                                     <div class="reply-tabs">
                                         <button type="button" class="reply-tab active" data-mode="write" onclick="setReplyTab('${escJsStr(replyId)}','write')">Write</button>
@@ -6633,7 +6646,7 @@
             } catch {}
         }
 
-        const ICON_BASE = 'assets/MaterialIconTheme/material-icon-theme--';
+        const ICON_BASE = '/assets/MaterialIconTheme/material-icon-theme--';
 
         // extension -> nombre del svg del tema (fallback: document)
         const _iconExtMap = {

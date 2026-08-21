@@ -5,85 +5,85 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link
             rel="shortcut icon"
-            href="assets/logos/gitgost-logo.svg"
+            href="/assets/logos/gitgost-logo.svg"
             type="image/svg+xml"
         />
-        <link rel="icon" href="assets/logos/gitgost-logo.svg" type="image/svg+xml" />
+        <link rel="icon" href="/assets/logos/gitgost-logo.svg" type="image/svg+xml" />
         <title>gitGost — Anonymous Git Contributions</title>
         <link
             rel="apple-touch-icon"
             sizes="57x57"
-            href="assets/logos/apple-icon-57x57.png"
+            href="/assets/logos/apple-icon-57x57.png"
         />
         <link
             rel="apple-touch-icon"
             sizes="60x60"
-            href="assets/logos/apple-icon-60x60.png"
+            href="/assets/logos/apple-icon-60x60.png"
         />
         <link
             rel="apple-touch-icon"
             sizes="72x72"
-            href="assets/logos/apple-icon-72x72.png"
+            href="/assets/logos/apple-icon-72x72.png"
         />
         <link
             rel="apple-touch-icon"
             sizes="76x76"
-            href="assets/logos/apple-icon-76x76.png"
+            href="/assets/logos/apple-icon-76x76.png"
         />
         <link
             rel="apple-touch-icon"
             sizes="114x114"
-            href="assets/logos/apple-icon-114x114.png"
+            href="/assets/logos/apple-icon-114x114.png"
         />
         <link
             rel="apple-touch-icon"
             sizes="120x120"
-            href="assets/logos/apple-icon-120x120.png"
+            href="/assets/logos/apple-icon-120x120.png"
         />
         <link
             rel="apple-touch-icon"
             sizes="144x144"
-            href="assets/logos/apple-icon-144x144.png"
+            href="/assets/logos/apple-icon-144x144.png"
         />
         <link
             rel="apple-touch-icon"
             sizes="152x152"
-            href="assets/logos/apple-icon-152x152.png"
+            href="/assets/logos/apple-icon-152x152.png"
         />
         <link
             rel="apple-touch-icon"
             sizes="180x180"
-            href="assets/logos/apple-icon-180x180.png"
+            href="/assets/logos/apple-icon-180x180.png"
         />
         <link
             rel="icon"
             type="image/png"
             sizes="192x192"
-            href="assets/logos/android-icon-192x192.png"
+            href="/assets/logos/android-icon-192x192.png"
         />
         <link
             rel="icon"
             type="image/png"
             sizes="32x32"
-            href="assets/logos/favicon-32x32.png"
+            href="/assets/logos/favicon-32x32.png"
         />
         <link
             rel="icon"
             type="image/png"
             sizes="96x96"
-            href="assets/logos/favicon-96x96.png"
+            href="/assets/logos/favicon-96x96.png"
         />
         <link
             rel="icon"
             type="image/png"
             sizes="16x16"
-            href="assets/logos/favicon-16x16.png"
+            href="/assets/logos/favicon-16x16.png"
         />
-        <link rel="manifest" href="assets/logos/manifest.json" />
+        <link rel="manifest" href="/assets/logos/manifest.json" />
         <meta name="msapplication-TileColor" content="#d16014" />
         <meta
             name="msapplication-TileImage"
-            content="assets/logos/ms-icon-144x144.png"
+            content="/assets/logos/ms-icon-144x144.png"
         />
         <meta name="theme-color" content="#d16014" />
         <script>
@@ -4510,7 +4510,7 @@
                             </div>
 
                             <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:1.5rem 0 2rem;border-bottom:1px solid var(--border);">
-                                <img src="assets/logos/gitgost-logo.svg" width="72" height="72" style="margin-bottom:1rem;" alt="gitGost logo" />
+                                <img src="/assets/logos/gitgost-logo.svg" width="72" height="72" style="margin-bottom:1rem;" alt="gitGost logo" />
                                 <h2 style="font-size:1.75rem;font-weight:700;margin:0 0 0.5rem;color:var(--fg);font-family:'IBM Plex Mono',monospace;">gitGost</h2>
                                 <p style="font-size:1rem;color:var(--fg-muted);margin:0 0 1.5rem;max-width:520px;">Contribute to any Git repository without exposing your identity.</p>
                                 <a href="#" onclick="showPage('cli'); return false;" class="btn primary" style="text-decoration:none;display:inline-block;">Start Contributing Anonymously</a>
@@ -5298,7 +5298,8 @@
             const token = localStorage.getItem('gh_token');
             if (token) {
                 try {
-                    const res = await fetch('https://api.github.com/rate_limit', { headers: { 'Authorization': `token ${token}` } });
+                    const proxyURL = `${API_BASE}/api/gh-proxy/rate_limit`;
+                    const res = await fetch(proxyURL, { headers: { 'Authorization': `token ${token}` } });
                     if (res.ok) {
                         const core = (await res.json()).rate;
                         const pct  = core.limit > 0 ? Math.round((core.remaining / core.limit) * 100) : 0;

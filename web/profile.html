@@ -845,6 +845,15 @@
             return token ? { 'Authorization': 'token ' + token } : {};
         }
 
+        function ghFetch(url, opts = {}) {
+            const target = new URL(url, window.location.href);
+            if (target.hostname === 'api.github.com') {
+                const proxyBase = new URL(`${API_BASE}/api/gh-proxy`);
+                return fetch(new URL(`${proxyBase.pathname}${target.pathname}${target.search}`, proxyBase.origin), opts);
+            }
+            return fetch(target.toString(), opts);
+        }
+
         async function apiGet(path) {
             try {
                 const res = await fetch(`${API_BASE}${path}`, { headers: authHeaders() });
@@ -1145,10 +1154,10 @@
             const headers = authHeaders();
             headers['Accept'] = 'application/vnd.github+json';
             try {
-                let res = await fetch(`https://api.github.com/users/${encodeURIComponent(USERNAME)}/projects?per_page=100`, { headers });
+                let res = await ghFetch(`https://api.github.com/users/${encodeURIComponent(USERNAME)}/projects?per_page=100`, { headers });
                 // Los projects de una organización usan la ruta /orgs/...
                 if (res.status === 404) {
-                    res = await fetch(`https://api.github.com/orgs/${encodeURIComponent(USERNAME)}/projects?per_page=100`, { headers });
+                    res = await ghFetch(`https://api.github.com/orgs/${encodeURIComponent(USERNAME)}/projects?per_page=100`, { headers });
                 }
                 if (!res.ok) return [];
                 const data = await res.json();
@@ -1277,7 +1286,7 @@
                 if (PROVIDER === 'gh') {
                     const headers = authHeaders();
                     for (let page = 1; page <= 10; page++) {
-                        const res = await fetch(`https://api.github.com/users/${encodeURIComponent(USERNAME)}/${path}?per_page=100&page=${page}`, { headers });
+                        const res = await ghFetch(`https://api.github.com/users/${encodeURIComponent(USERNAME)}/${path}?per_page=100&page=${page}`, { headers });
                         if (!res.ok) break;
                         const items = await res.json();
                         if (!Array.isArray(items) || items.length === 0) break;
@@ -1363,7 +1372,7 @@
                     }));
                 }
                 if (PROVIDER === 'gh') {
-                    const res = await fetch(`https://api.github.com/users/${encodeURIComponent(USERNAME)}/orgs?per_page=100`, { headers: authHeaders() });
+                    const res = await ghFetch(`https://api.github.com/users/${encodeURIComponent(USERNAME)}/orgs?per_page=100`, { headers: authHeaders() });
                     if (!res.ok) return [];
                     const items = await res.json();
                     if (!Array.isArray(items)) return [];

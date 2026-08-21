@@ -313,6 +313,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/gh-proxy/*path", prCheckLimiter(), GitHubAPIProxyHandler)
 		api.GET("/trending/:provider", TrendingHandler)
 		api.GET("/cb-proxy/*path", prCheckLimiter(), CodebergProxyHandler)
+		api.GET("/gl-proxy/*path", prCheckLimiter(), GitLabProxyHandler)
 		api.GET("/gl-notes/:owner/:repo/:number", GitLabIssueNotesProxyHandler)
 		api.GET("/gl-commit-count/:owner/:repo", GitLabCommitCountHandler)
 		api.GET("/gl-avatar", GitLabAvatarHandler)

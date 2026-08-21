@@ -39,6 +39,38 @@ import (
 
 var uploadPackClient = &http.Client{Timeout: 10 * time.Minute}
 
+func doGitHubWithTokenRotation(client *http.Client, buildRequest func(string) (*http.Request, error), fallbackToken string) (*http.Response, error) {
+	tokens := tokenpool.GitHubTokens()
+	if len(tokens) == 0 {
+		req, err := buildRequest(fallbackToken)
+		if err != nil {
+			return nil, err
+		}
+		return client.Do(req)
+	}
+
+	var resp *http.Response
+	for attempt := 0; attempt < len(tokens); attempt++ {
+		token := tokenpool.NextGitHubToken()
+		req, err := buildRequest(token)
+		if err != nil {
+			return nil, err
+		}
+		resp, err = client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		if resp.StatusCode != http.StatusForbidden && resp.StatusCode != http.StatusTooManyRequests {
+			return resp, nil
+		}
+
+		tokenpool.MarkGitHubRateLimited(token, resp.Header.Get("X-RateLimit-Reset"))
+		resp.Body.Close()
+	}
+
+	return resp, nil
+}
+
 const (
 	karmaStoreMax           = 10000
 	reportStoreMax          = 10000
@@ -1736,20 +1768,18 @@ func GitHubDiscussionsProxyHandler(c *gin.Context) {
 		return
 	}
 
-	req, err := http.NewRequest("POST", "https://api.github.com/graphql", bytes.NewBuffer(jsonBody))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "proxy error"})
-		return
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	ghToken := tokenpool.NextGitHubToken()
-	if ghToken != "" {
-		req.Header.Set("Authorization", "bearer "+ghToken)
-	}
-
 	client := &http.Client{Timeout: 15 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := doGitHubWithTokenRotation(client, func(token string) (*http.Request, error) {
+		req, requestErr := http.NewRequestWithContext(c.Request.Context(), "POST", "https://api.github.com/graphql", bytes.NewReader(jsonBody))
+		if requestErr != nil {
+			return nil, requestErr
+		}
+		req.Header.Set("Content-Type", "application/json")
+		if token != "" {
+			req.Header.Set("Authorization", "bearer "+token)
+		}
+		return req, nil
+	}, "")
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{"error": "github unreachable"})
 		return
@@ -3186,6 +3216,57 @@ func CodebergProxyHandler(c *gin.Context) {
 	}
 }
 
+func GitLabProxyHandler(c *gin.Context) {
+	if c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead {
+		c.AbortWithStatusJSON(http.StatusMethodNotAllowed, gin.H{"error": "only GET/HEAD allowed"})
+		return
+	}
+
+	escapedPath := c.Request.URL.EscapedPath()
+	if c.Request.URL.RawPath != "" {
+		escapedPath = c.Request.URL.RawPath
+	}
+	path := strings.TrimPrefix(escapedPath, "/api/gl-proxy/")
+	if path == "" || strings.Contains(path, "..") || (!strings.HasPrefix(path, "api/v4/") && !strings.Contains(path, "/-/raw/")) {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid GitLab API path"})
+		return
+	}
+
+	target := "https://gitlab.com/" + path
+	if c.Request.URL.RawQuery != "" {
+		target += "?" + c.Request.URL.RawQuery
+	}
+	req, err := http.NewRequestWithContext(c.Request.Context(), c.Request.Method, target, nil)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to build request"})
+		return
+	}
+	if token := os.Getenv("GITLAB_TOKEN"); token != "" {
+		req.Header.Set("PRIVATE-TOKEN", token)
+	} else if auth := c.GetHeader("Authorization"); auth != "" {
+		req.Header.Set("PRIVATE-TOKEN", strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(auth, "token "), "Bearer ")))
+	}
+	req.Header.Set("Accept", c.GetHeader("Accept"))
+	req.Header.Set("User-Agent", "gitGost/1.0")
+
+	resp, err := (&http.Client{Timeout: 45 * time.Second}).Do(req)
+	if err != nil {
+		utils.Log("GitLab proxy error: %v", err)
+		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "failed to reach GitLab"})
+		return
+	}
+	defer resp.Body.Close()
+	for _, header := range []string{"Content-Type", "Cache-Control", "ETag", "Link", "X-Total", "X-Total-Pages", "X-Page", "X-Per-Page"} {
+		if value := resp.Header.Get(header); value != "" {
+			c.Writer.Header().Set(header, value)
+		}
+	}
+	c.Writer.WriteHeader(resp.StatusCode)
+	if _, err := io.Copy(c.Writer, resp.Body); err != nil {
+		utils.Log("GitLab proxy copy error: %v", err)
+	}
+}
+
 // GitHubAPIProxyHandler keeps browser requests to api.github.com on the server.
 func GitHubAPIProxyHandler(c *gin.Context) {
 	path := strings.TrimPrefix(c.Request.URL.Path, "/api/gh-proxy/")
@@ -3198,23 +3279,19 @@ func GitHubAPIProxyHandler(c *gin.Context) {
 	if c.Request.URL.RawQuery != "" {
 		target += "?" + c.Request.URL.RawQuery
 	}
-	req, err := http.NewRequestWithContext(c.Request.Context(), c.Request.Method, target, nil)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to build request"})
-		return
-	}
-
-	token := tokenpool.NextGitHubToken()
-	if token == "" {
-		token = strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(c.GetHeader("Authorization"), "token "), "Bearer "))
-	}
-	if token != "" {
-		req.Header.Set("Authorization", "token "+token)
-	}
-	req.Header.Set("Accept", c.GetHeader("Accept"))
-	req.Header.Set("User-Agent", "gitGost")
-
-	resp, err := (&http.Client{Timeout: 15 * time.Second}).Do(req)
+	fallbackToken := strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(c.GetHeader("Authorization"), "token "), "Bearer "))
+	resp, err := doGitHubWithTokenRotation(&http.Client{Timeout: 15 * time.Second}, func(token string) (*http.Request, error) {
+		req, requestErr := http.NewRequestWithContext(c.Request.Context(), c.Request.Method, target, nil)
+		if requestErr != nil {
+			return nil, requestErr
+		}
+		if token != "" {
+			req.Header.Set("Authorization", "token "+token)
+		}
+		req.Header.Set("Accept", c.GetHeader("Accept"))
+		req.Header.Set("User-Agent", "gitGost")
+		return req, nil
+	}, fallbackToken)
 	if err != nil {
 		utils.Log("GitHub API proxy error: %v", err)
 		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "failed to reach GitHub"})

@@ -128,7 +128,7 @@
             display: flex;
             align-items: center;
             gap: 0.55rem;
-            padding: 0.45rem 1rem;
+            padding: 0.65rem 1rem;
             color: var(--fg-muted);
             text-decoration: none;
             font-size: 0.8rem;
@@ -145,7 +145,6 @@
             flex: 1;
             min-width: 0;
             padding: 1.5rem 2rem;
-            max-width: 860px;
         }
 
         .right-sidebar {
@@ -715,6 +714,23 @@
             return window.location.origin;
         }
         const API_BASE = getApiBase();
+
+        const nativeFetch = window.fetch.bind(window);
+        function proxiedProviderFetch(input, opts = {}) {
+            const target = new URL(typeof input === 'string' ? input : input.url, window.location.href);
+            let proxyPath = '';
+            if (target.hostname === 'gitlab.com' && (target.pathname.startsWith('/api/v4/') || target.pathname.includes('/-/raw/'))) {
+                proxyPath = '/api/gl-proxy' + target.pathname;
+            } else if (target.hostname === 'codeberg.org' && (target.pathname.startsWith('/api/v1/') || target.pathname.includes('/raw/branch/'))) {
+                proxyPath = '/api/cb-proxy' + target.pathname;
+            }
+            if (proxyPath) {
+                const proxyURL = new URL(proxyPath + target.search, API_BASE);
+                return nativeFetch(proxyURL, opts);
+            }
+            return nativeFetch(input, opts);
+        }
+        window.fetch = proxiedProviderFetch;
 
         // Ruta limpia: /gh|gl|cb/{username}
         const _pathParts = window.location.pathname.split('/').filter(Boolean);

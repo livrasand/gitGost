@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>gitGost - profile</title>
+    <link rel="stylesheet" href="/assets/winui-scrollbar.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js" integrity="sha384-GdEWAbCjn+ghjX0gLx7/N1hyTVmPAjdC2OvoAA0RyNcAOhqwtT8qnbCxWle2+uJX" crossorigin="anonymous"></script>
     <script>if (typeof hljs !== 'undefined') hljs.configure({ ignoreUnescapedHTML: true });</script>
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js" integrity="sha384-QsSpx6a0USazT7nK7w8qXDgpSAPhFsb2XtpoLFQ5+X2yFN6hvCKnwEzN8M5FWaJb" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/environment-badge@^1.0.0/dist/bundle.js"></script>
     <script>
-        environmentBadge([
+        if (typeof environmentBadge === 'function') environmentBadge([
             { displayName: 'local', host: /(^localhost$|\.test$)/, backgroundColor: '#1a1a2e', foregroundColor: '#00d4ff' },
             { displayName: 'qa', host: /(^qa\.|.*-qa\.)/, backgroundColor: '#4a1942', foregroundColor: '#ff6ec7' },
             { displayName: 'preview', host: /(^preview\.|.*-preview\.)/, backgroundColor: '#1b2838', foregroundColor: '#66c0f4' },
@@ -931,8 +932,8 @@
             const sbAbout = document.getElementById('sb-about');
             if (sbAbout) {
                 const stats = [];
-                if (p.followers !== undefined && p.followers !== null) stats.push(`<div class="stat stat-link" onclick="openPeople('followers'); return false;"><span class="v">${formatNumber(p.followers)}</span><span class="l">followers</span></div>`);
-                if (p.following !== undefined && p.following !== null) stats.push(`<div class="stat stat-link" onclick="openPeople('following'); return false;"><span class="v">${formatNumber(p.following)}</span><span class="l">following</span></div>`);
+                if (p.followers !== undefined && p.followers !== null) stats.push(`<div class="stat stat-link" data-href="${escAttr(profileViewUrl('followers'))}"><span class="v">${formatNumber(p.followers)}</span><span class="l">followers</span></div>`);
+                if (p.following !== undefined && p.following !== null) stats.push(`<div class="stat stat-link" data-href="${escAttr(profileViewUrl('following'))}"><span class="v">${formatNumber(p.following)}</span><span class="l">following</span></div>`);
                 if (p.public_repos !== undefined && p.public_repos !== null) stats.push(`<div class="stat"><span class="v">${formatNumber(p.public_repos)}</span><span class="l">public repos</span></div>`);
                 if (p.packages !== undefined && p.packages !== null && p.packages > 0) stats.push(`<div class="stat"><span class="v">${formatNumber(p.packages)}</span><span class="l">packages</span></div>`);
                 sbAbout.innerHTML = `
@@ -1718,6 +1719,45 @@
                 const vp = window.location.pathname.split('/').filter(Boolean);
                 const sv = (vp.length >= 3) ? PROFILE_VIEWS[vp[2]] || 'overview' : 'overview';
                 if (sv !== _currentView) switchView(sv, false);
+            });
+
+            // Ctrl/Cmd+click sobre enlaces con onclick propio: corta la propagación
+            // en fase de captura para que el navegador abra pestaña nueva de forma nativa.
+            document.addEventListener('click', function(e) {
+                if (!(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)) return;
+                if (!e.target.closest('a[href]')) return;
+                e.stopPropagation();
+            }, true);
+
+            // Filas clicables (data-href): click normal navega; Ctrl/Cmd+click
+            // abre en pestaña nueva (las filas son divs, sin comportamiento nativo).
+            document.addEventListener('click', function(e) {
+                if (e.button !== 0) return;
+                if (e.target.closest('a')) return;
+                const el = e.target.closest('[data-href]');
+                if (!el) return;
+                const href = el.getAttribute('data-href');
+                if (!href || href === '#') return;
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+                    e.preventDefault();
+                    window.open(href, '_blank', 'noopener');
+                    return;
+                }
+                if (href !== window.location.pathname) history.pushState({}, '', href);
+                const vp = href.split('/').filter(Boolean);
+                const sv = (vp.length >= 3) ? PROFILE_VIEWS[vp[2]] || 'overview' : 'overview';
+                if (sv !== _currentView) switchView(sv, false);
+            });
+
+            document.addEventListener('auxclick', function(e) {
+                if (e.button !== 1) return;
+                if (e.target.closest('a')) return;
+                const el = e.target.closest('[data-href]');
+                if (!el) return;
+                const href = el.getAttribute('data-href');
+                if (!href || href === '#') return;
+                e.preventDefault();
+                window.open(href, '_blank', 'noopener');
             });
 
             document.querySelectorAll('.left-nav a[onclick]').forEach(a => {

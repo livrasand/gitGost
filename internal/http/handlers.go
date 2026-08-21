@@ -3267,7 +3267,50 @@ func GitLabProxyHandler(c *gin.Context) {
 	}
 }
 
+type ghProxyCacheEntry struct {
+	body        []byte
+	contentType string
+	etag        string
+	cachedAt    time.Time
+}
+
+const (
+	ghProxyCacheMaxEntries = 1000
+	ghProxyCacheMaxBody    = 2 << 20
+)
+
+var (
+	ghProxyCacheMu sync.Mutex
+	ghProxyCache   = map[string]ghProxyCacheEntry{}
+)
+
+func ghProxyCacheGet(key string) (ghProxyCacheEntry, bool) {
+	ghProxyCacheMu.Lock()
+	defer ghProxyCacheMu.Unlock()
+	e, ok := ghProxyCache[key]
+	return e, ok
+}
+
+func ghProxyCachePut(key string, e ghProxyCacheEntry) {
+	ghProxyCacheMu.Lock()
+	defer ghProxyCacheMu.Unlock()
+	if len(ghProxyCache) >= ghProxyCacheMaxEntries {
+		var oldestKey string
+		var oldest time.Time
+		for k, v := range ghProxyCache {
+			if oldestKey == "" || v.cachedAt.Before(oldest) {
+				oldestKey, oldest = k, v.cachedAt
+			}
+		}
+		delete(ghProxyCache, oldestKey)
+	}
+	ghProxyCache[key] = e
+}
+
 // GitHubAPIProxyHandler keeps browser requests to api.github.com on the server.
+// Successful GET responses are cached and revalidated with If-None-Match so
+// repeat visits don't burn the shared rate limit; when upstream is still
+// rate-limited, a cached copy is served instead of a 429.
 func GitHubAPIProxyHandler(c *gin.Context) {
 	path := strings.TrimPrefix(c.Request.URL.Path, "/api/gh-proxy/")
 	if path == "" || strings.Contains(path, "..") {
@@ -3280,6 +3323,12 @@ func GitHubAPIProxyHandler(c *gin.Context) {
 		target += "?" + c.Request.URL.RawQuery
 	}
 	fallbackToken := strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(c.GetHeader("Authorization"), "token "), "Bearer "))
+	cacheKey := target
+	if fallbackToken != "" {
+		sum := sha256.Sum256([]byte(fallbackToken))
+		cacheKey += "|" + hex.EncodeToString(sum[:8])
+	}
+	entry, hasEntry := ghProxyCacheGet(cacheKey)
 	resp, err := doGitHubWithTokenRotation(&http.Client{Timeout: 15 * time.Second}, func(token string) (*http.Request, error) {
 		req, requestErr := http.NewRequestWithContext(c.Request.Context(), c.Request.Method, target, nil)
 		if requestErr != nil {
@@ -3287,6 +3336,9 @@ func GitHubAPIProxyHandler(c *gin.Context) {
 		}
 		if token != "" {
 			req.Header.Set("Authorization", "token "+token)
+		}
+		if hasEntry && entry.etag != "" {
+			req.Header.Set("If-None-Match", entry.etag)
 		}
 		req.Header.Set("Accept", c.GetHeader("Accept"))
 		req.Header.Set("User-Agent", "gitGost")
@@ -3299,14 +3351,40 @@ func GitHubAPIProxyHandler(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
+	if hasEntry && (resp.StatusCode == http.StatusNotModified ||
+		resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusTooManyRequests) {
+		if resp.StatusCode != http.StatusNotModified {
+			utils.Log("GitHub API proxy rate-limited for %s; serving cached copy from %s", path, entry.cachedAt.Format(time.RFC3339))
+		}
+		c.Writer.Header().Set("Content-Type", entry.contentType)
+		c.Writer.Header().Set("X-GitGost-Cache", "hit")
+		c.Writer.WriteHeader(http.StatusOK)
+		c.Writer.Write(entry.body)
+		return
+	}
+
+	body, readErr := io.ReadAll(io.LimitReader(resp.Body, ghProxyCacheMaxBody+1))
+	if readErr == nil && resp.StatusCode == http.StatusOK && len(body) <= ghProxyCacheMaxBody {
+		ghProxyCachePut(cacheKey, ghProxyCacheEntry{
+			body:        body,
+			contentType: resp.Header.Get("Content-Type"),
+			etag:        resp.Header.Get("ETag"),
+			cachedAt:    time.Now(),
+		})
+	}
+
 	for _, header := range []string{"Content-Type", "Cache-Control", "ETag", "Link", "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"} {
 		if value := resp.Header.Get(header); value != "" {
 			c.Writer.Header().Set(header, value)
 		}
 	}
 	c.Writer.WriteHeader(resp.StatusCode)
-	if _, err := io.Copy(c.Writer, resp.Body); err != nil {
-		utils.Log("GitHub API proxy copy error: %v", err)
+	if readErr != nil {
+		io.Copy(c.Writer, resp.Body)
+		return
+	}
+	if _, err := c.Writer.Write(body); err != nil {
+		utils.Log("GitHub API proxy write error: %v", err)
 	}
 }
 

@@ -10,6 +10,7 @@
         />
     <link rel="icon" href="/assets/logos/gitgost-logo.svg" type="image/svg+xml" />
     <title>gitGost — repo</title>
+    <link rel="stylesheet" href="/assets/winui-scrollbar.css" />
     <link id="hljs-theme-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github.min.css" />
     <link id="hljs-theme-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github-dark.min.css" disabled />
     <script src="https://mentacaptchaeu.eu.pythonanywhere.com/menta-captcha.js"></script>
@@ -18,7 +19,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js" integrity="sha384-QsSpx6a0USazT7nK7w8qXDgpSAPhFsb2XtpoLFQ5+X2yFN6hvCKnwEzN8M5FWaJb" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/environment-badge@^1.0.0/dist/bundle.js"></script>
     <script>
-        environmentBadge([
+        if (typeof environmentBadge === 'function') environmentBadge([
             { displayName: 'local', host: /(^localhost$|\.test$)/, backgroundColor: '#1a1a2e', foregroundColor: '#00d4ff' },
             { displayName: 'qa', host: /(^qa\.|.*-qa\.)/, backgroundColor: '#4a1942', foregroundColor: '#ff6ec7' },
             { displayName: 'preview', host: /(^preview\.|.*-preview\.)/, backgroundColor: '#1b2838', foregroundColor: '#66c0f4' },
@@ -166,37 +167,8 @@
             flex-shrink: 0;
             background: var(--bg);
             padding: 0.4rem 0;
+            transition: width 0.2s ease, flex-basis 0.2s ease;
         }
-        .repo-search {
-            padding: 0.45rem;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg);
-            position: sticky;
-            top: 0;
-            z-index: 1;
-        }
-        .repo-search-input {
-            width: 100%;
-            padding: 0.38rem 0.5rem;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            background: var(--bg-secondary);
-            color: var(--fg);
-            font: 0.75rem "IBM Plex Mono", monospace;
-        }
-        .repo-search-input:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
-        .repo-search-actions { display: flex; gap: 0.3rem; margin-top: 0.35rem; }
-        .repo-search-btn {
-            flex: 1;
-            border: 1px solid var(--border);
-            border-radius: 3px;
-            background: transparent;
-            color: var(--fg-muted);
-            cursor: pointer;
-            padding: 0.25rem;
-            font: 0.67rem "IBM Plex Mono", monospace;
-        }
-        .repo-search-btn:hover { color: var(--accent); border-color: var(--accent); }
         .search-results { padding: 0.9rem 1.25rem; }
         .search-results h2 { margin: 0 0 0.7rem; font: 600 0.88rem "IBM Plex Mono", monospace; }
         .search-result { display: block; width: 100%; text-align: left; padding: 0.55rem 0.65rem; margin: 0; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--fg); cursor: pointer; font: 0.76rem "IBM Plex Mono", monospace; }
@@ -378,6 +350,62 @@
         }
         .file-toolbar .ft-btn:hover { border-color: var(--fg-secondary); }
         .file-toolbar .ft-btn.active { color: var(--accent); border-color: var(--accent); }
+        .blame-panel { overflow: auto; background: var(--code-bg); }
+        .blame-group-header {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.28rem 0.55rem;
+            background: color-mix(in srgb, var(--bg-secondary) 60%, transparent);
+            border-top: 1px solid color-mix(in srgb, var(--border) 45%, transparent);
+            font: 0.7rem/1.5 'IBM Plex Mono', monospace;
+            min-width: 42rem;
+        }
+        .blame-group-header:first-child { border-top: none; }
+        .blame-msg {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--fg-secondary);
+        }
+        .blame-diff-toggle {
+            flex-shrink: 0;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            background: transparent;
+            color: var(--fg-muted);
+            font: 0.62rem 'IBM Plex Mono', monospace;
+            padding: 0.1rem 0.5rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .blame-diff-toggle:hover,
+        .blame-diff-toggle.active { color: var(--accent); border-color: var(--accent); }
+        .blame-diff-toggle:disabled { opacity: 0.6; cursor: default; }
+        .blame-diff-box { padding: 0.4rem 0.55rem; }
+        .blame-row {
+            display: grid;
+            grid-template-columns: 3rem minmax(0, 1fr);
+            min-width: 42rem;
+            min-height: 1.65rem;
+            border-bottom: 1px solid color-mix(in srgb, var(--border) 25%, transparent);
+            font: 0.72rem/1.65 'IBM Plex Mono', monospace;
+        }
+        .blame-row:hover { background: var(--bg-hover); }
+        .blame-cell { padding: 0 0.55rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .blame-author, .blame-date { color: var(--fg-muted); }
+        .blame-commit { color: var(--accent); text-decoration: none; }
+        .blame-line { color: var(--fg-secondary); text-align: right; user-select: none; }
+        .blame-code { color: var(--fg); white-space: pre; }
+        .blame-header {
+            padding: 0.65rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--fg-muted);
+            font: 0.7rem 'IBM Plex Mono', monospace;
+        }
         /* Botón "volver al árbol" de la vista de archivos: visible solo en móvil con archivo abierto. */
         .file-back-btn {
             display: none;
@@ -519,16 +547,21 @@
         }
         .repo-info span { display: flex; align-items: center; gap: 0.3rem; }
         .repo-info .stars { color: var(--accent); }
-
+        
         .left-nav {
             width: 300px;
             border-right: 1px solid var(--border);
             flex-shrink: 0;
             background: var(--bg);
             padding: 0.5rem 0;
+            transition: width 0.2s ease;
+            overflow-x: hidden;
         }
+
         .left-nav a {
-            display: block;
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
             padding: 0.65rem 1rem;
             font-size: 0.78rem;
             font-family: "IBM Plex Mono", monospace;
@@ -536,9 +569,57 @@
             text-decoration: none;
             border-left: 2px solid transparent;
             transition: background 0.1s, color 0.1s;
+            white-space: nowrap;
         }
-        .left-nav a:hover { background: var(--bg-hover); color: var(--fg); }
-        .left-nav a.active { border-left-color: var(--accent); color: var(--fg); background: var(--nav-active-bg); font-weight: 500; }
+
+        .left-nav a svg {
+            width: 1.2rem;
+            height: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .left-nav a:hover {
+            background: var(--bg-hover);
+            color: var(--fg);
+        }
+
+        .left-nav a.active {
+            border-left-color: var(--accent);
+            color: var(--fg);
+            background: var(--nav-active-bg);
+            font-weight: 500;
+        }
+
+        .left-nav.collapsed {
+            width: 64px;
+        }
+
+        .left-nav.collapsed a {
+            justify-content: center;
+            padding: 0.7rem 0;
+            gap: 0;
+            border-left-width: 2px;
+        }
+
+        .left-nav.collapsed a svg {
+            width: 1.3rem;
+            height: 1.3rem;
+        }
+
+        .left-nav.collapsed + .file-tree {
+            width: 436px;
+            flex-basis: 436px;
+        }
+
+        /* Ocultar texto */
+        .left-nav.collapsed a > span:not(.val) {
+            display: none;
+        }
+
+        /* Los números como "6,922" también */
+        .left-nav.collapsed .val {
+            display: none;
+        }
 
         .right-sidebar {
             width: 300px;
@@ -1543,14 +1624,64 @@
             background: var(--bg);
             border-bottom: 1px solid var(--border);
             padding: 0.5rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(220px, 420px) minmax(0, 1fr);
             align-items: center;
             font-family: 'IBM Plex Mono', monospace;
             font-size: 0.75rem;
         }
         .statusbar-left { display: flex; align-items: center; gap: 0.5rem; }
-        .statusbar-right { display: flex; align-items: center; gap: 0.5rem; }
+        .statusbar-center { position: relative; width: 100%; }
+        .statusbar-file-search {
+            width: 100%;
+            padding: 0.3rem 0.55rem 0.3rem 1.7rem;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            background: var(--bg-secondary);
+            color: var(--fg);
+            font: 0.7rem 'IBM Plex Mono', monospace;
+        }
+        .statusbar-file-search::placeholder { color: var(--fg-secondary); }
+        .statusbar-file-search:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+        .statusbar-file-search-icon {
+            position: absolute;
+            left: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--fg-secondary);
+            pointer-events: none;
+        }
+        .statusbar-file-results {
+            display: none;
+            position: absolute;
+            top: calc(100% + 0.35rem);
+            left: 0;
+            right: 0;
+            max-height: 280px;
+            overflow-y: auto;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            box-shadow: 0 5px 16px rgba(0, 0, 0, 0.18);
+        }
+        .statusbar-file-results.open { display: block; }
+        .statusbar-file-result,
+        .statusbar-file-empty {
+            display: block;
+            width: 100%;
+            padding: 0.45rem 0.6rem;
+            border: 0;
+            border-bottom: 1px solid var(--border);
+            background: transparent;
+            color: var(--fg);
+            text-align: left;
+            font: 0.68rem 'IBM Plex Mono', monospace;
+        }
+        .statusbar-file-result { cursor: pointer; }
+        .statusbar-file-result:hover,
+        .statusbar-file-result:focus,
+        .statusbar-file-result.active { background: var(--bg-hover); color: var(--accent); outline: 0; }
+        .statusbar-file-empty { color: var(--fg-muted); }
+        .statusbar-right { display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; }
         .statusbar a { color: var(--accent); text-decoration: none; }
         .statusbar a:hover { text-decoration: underline; }
 
@@ -1990,23 +2121,106 @@
                     border-bottom: 1px solid var(--border);
                     flex-wrap: wrap;
                 }
-                .commit-diff-file .cdf-header .cdf-name {
-                    color: var(--accent);
+                .commit-diff-file .cdf-toggle {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 1.25rem;
+                    height: 1.25rem;
+                    padding: 0;
+                    border: none;
+                    background: transparent;
+                    color: var(--fg-muted);
+                    cursor: pointer;
+                    border-radius: 3px;
+                    flex-shrink: 0;
+                }
+                .commit-diff-file .cdf-toggle:hover {
+                    color: var(--fg);
+                    background: var(--border);
+                }
+                .commit-diff-file .cdf-chevron {
+                    transition: transform 0.12s ease;
+                }
+                .commit-diff-file.collapsed .cdf-chevron { transform: rotate(-90deg); }
+                .commit-diff-file.collapsed .cdf-body { display: none; }
+                .commit-diff-file .cdf-path {
                     flex: 1;
                     min-width: 0;
                     overflow: hidden;
                     text-overflow: ellipsis;
                     white-space: nowrap;
+                    direction: rtl;
+                    text-align: left;
                 }
-                .commit-diff-file .cdf-header .cdf-status {
+                .commit-diff-file .cdf-path > span { direction: ltr; unicode-bidi: embed; }
+                .commit-diff-file .cdf-dir {
                     color: var(--fg-muted);
-                    font-size: 0.65rem;
                 }
+                .commit-diff-file .cdf-name,
+                .commit-diff-file .cdf-file {
+                    color: var(--accent);
+                    font-weight: 600;
+                }
+                .commit-diff-file .cdf-oldname {
+                    color: var(--fg-muted);
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: 30%;
+                    white-space: nowrap;
+                    font-size: 0.68rem;
+                }
+                .commit-diff-file .cdf-status {
+                    font-size: 0.62rem;
+                    padding: 0.05rem 0.35rem;
+                    border-radius: 999px;
+                    border: 1px solid var(--border);
+                    color: var(--fg-muted);
+                    flex-shrink: 0;
+                }
+                .commit-diff-file .cdf-status.st-added { color: #2da44e; border-color: rgba(45,164,78,0.5); background: rgba(45,164,78,0.08); }
+                .commit-diff-file .cdf-status.st-removed { color: #cf222e; border-color: rgba(207,34,46,0.5); background: rgba(207,34,46,0.08); }
+                .commit-diff-file .cdf-status.st-renamed { color: #8250df; border-color: rgba(130,80,223,0.5); background: rgba(130,80,223,0.08); }
+                .commit-diff-file .cdf-statbars {
+                    display: inline-flex;
+                    gap: 2px;
+                    align-items: center;
+                    flex-shrink: 0;
+                }
+                .commit-diff-file .cdf-statbars i {
+                    display: inline-block;
+                    width: 6px;
+                    height: 6px;
+                    border-radius: 2px;
+                }
+                .commit-diff-file .cdf-statbars i.add { background: #2da44e; }
+                .commit-diff-file .cdf-statbars i.del { background: #cf222e; }
+                .commit-diff-file .cdf-statbars i.pad { background: var(--border); opacity: 0.6; }
                 .commit-diff-file .cdf-header .cdf-stat {
                     font-size: 0.65rem;
                 }
                 .commit-diff-file .cdf-header .cdf-stat.add { color: #2da44e; }
                 .commit-diff-file .cdf-header .cdf-stat.del { color: #cf222e; }
+                .commit-diff-file .cdf-copy {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 1.4rem;
+                    height: 1.4rem;
+                    padding: 0;
+                    border: 1px solid transparent;
+                    background: transparent;
+                    color: var(--fg-muted);
+                    cursor: pointer;
+                    border-radius: 3px;
+                    flex-shrink: 0;
+                }
+                .commit-diff-file .cdf-copy:hover {
+                    color: var(--fg);
+                    border-color: var(--border);
+                    background: var(--code-bg);
+                }
+                .commit-diff-file .cdf-copy.copied { color: #2da44e; }
                 .commit-diff-file pre {
                     margin: 0;
                     padding: 0.5rem 0.75rem;
@@ -2320,8 +2534,17 @@
                     .statusbar {
                         padding: 0.35rem 0.75rem;
                         font-size: 0.68rem;
-                        flex-wrap: wrap;
+                        grid-template-columns: minmax(0, 1fr) auto;
                         gap: 0.25rem;
+                    }
+
+                    .statusbar-center {
+                        grid-column: 1 / -1;
+                        grid-row: 2;
+                    }
+
+                    .statusbar-file-search {
+                        min-width: 0;
                     }
 
                     .statusbar-left,
@@ -2473,6 +2696,11 @@
             <span style="color:var(--fg-muted);">›</span>
             <span id="statusbar-path" style="font-family:'IBM Plex Mono',monospace;display:flex;align-items:center;gap:0.2rem;"></span>
         </div>
+        <div class="statusbar-center" role="search">
+            <span class="statusbar-file-search-icon" aria-hidden="true">⌕</span>
+            <input class="statusbar-file-search" id="statusbar-file-search" type="search" placeholder="Go to file or search code..." aria-label="Search files or code in repository" autocomplete="off">
+            <div class="statusbar-file-results" id="statusbar-file-results" role="listbox"></div>
+        </div>
         <div class="statusbar-right">
             <span style="color:var(--fg-muted);">browsing as goster</span>
             <!--span style="color:var(--accent);">(signup)</span-->
@@ -2481,49 +2709,48 @@
     </div>
 
         <div class="repo-layout">
-            <nav class="left-nav">
+            <nav class="left-nav" id="left-nav">
             <a href="#" class="active" onclick="showView('home'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.75 7.21a2 2 0 0 1 2-2H8.5a3.5 3.5 0 0 1 3.5 3.5v10.885l-1.015-.721a4 4 0 0 0-2.318-.74H4.75a2 2 0 0 1-2-2zm18.5 0a2 2 0 0 0-2-2H15.5a3.5 3.5 0 0 0-3.5 3.5v10.885l1.015-.721a4 4 0 0 1 2.317-.74h3.918a2 2 0 0 0 2-2z" />
-</svg> overview</a>
-            <a href="#" onclick="showView('files'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+</svg> <span class="nav-label">overview</span></a>
+            <a href="#" onclick="showView('files'); toggleLeftNav(); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.75 6.5L3.25 12l5.5 5.5m6.5-11l5.5 5.5l-5.5 5.5" />
-</svg> code</a>
+</svg> <span class="nav-label">code</span></a>
             <a href="#" onclick="showView('commits'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
             		<path d="M0 0h24v24H0z" fill="none" />
             		<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
             			<path d="M4.281 14.385a8.25 8.25 0 1 0 .824-6.26l-.477.88m-.523-4.63v3.75a1 1 0 0 0 .523.88m4.227.12h-3.75a1 1 0 0 1-.477-.12" />
             			<path d="M12.25 8v4.25l3.685 2.117" />
             		</g>
-            	</svg> <span class="val" id="sb-commits"></span> commits</a>
+            	</svg> <span class="val" id="sb-commits"></span> <span class="nav-label">commits</span></a>
             <a href="#" onclick="showView('branches'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
                 <path d="M0 0h24v24H0z" fill="none" />
                 <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8.25a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0v7.5m0-7.5c0 2.9 2.35 5.25 5.25 5.25h2M7 15.75a2.75 2.75 0 1 0 0 5.5a2.75 2.75 0 0 0 0-5.5m7.25-2.25a2.75 2.75 0 1 0 5.5 0a2.75 2.75 0 0 0-5.5 0" />
-            </svg> branches</a>
+            </svg> <span class="nav-label">branches</span></a>
             <a href="#" id="nav-packages" style="display:none;" onclick="showView('packages'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.5" d="m12 12l8.073-4.625M12 12v9.25M12 12L7.963 9.688m12.11-2.313a3.17 3.17 0 0 0-1.165-1.156L16.25 4.696m3.823 2.679c.275.472.427 1.015.427 1.58v6.09a3.15 3.15 0 0 1-1.592 2.736l-5.316 3.046A3.2 3.2 0 0 1 12 21.25M3.926 7.375a3.14 3.14 0 0 0-.426 1.58v6.09c0 1.13.607 2.172 1.592 2.736l5.316 3.046A3.2 3.2 0 0 0 12 21.25M3.926 7.375a3.17 3.17 0 0 1 1.166-1.156l5.316-3.046a3.2 3.2 0 0 1 3.184 0l2.658 1.523M3.926 7.375l4.037 2.313m0 0l8.287-4.992" />
-            </svg>
- packages</a>
+            </svg> <span class="nav-label">packages</span></a>
             <a href="#" onclick="showView('bugs'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7.5 9.08a3.23 3.23 0 0 1 3.23-3.23h2.54a3.23 3.23 0 0 1 3.23 3.23v6.27a4.5 4.5 0 0 1-4.5 4.5v0a4.5 4.5 0 0 1-4.5-4.5zm9 3.77h4.75m-18.5 0H7.5m2.25-9.7v.45A2.25 2.25 0 0 0 12 5.85v0a2.25 2.25 0 0 0 2.25-2.25v-.45M16.5 16.6h1.253a2.5 2.5 0 0 1 2.5 2.5v1.75M7.5 16.6H6.247a2.5 2.5 0 0 0-2.5 2.5v1.75M16.5 9.1h1.253a2.5 2.5 0 0 0 2.5-2.5V4.85M7.5 9.1H6.247a2.5 2.5 0 0 1-2.5-2.5V4.85" />
-</svg> issues</a>
+</svg> <span class="nav-label">issues</span></a>
             <a href="#" onclick="showView('reviews'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 		<path d="M0 0h24v24H0z" fill="none" />
 		<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
 			<path d="M8.25 5.5a2.75 2.75 0 1 1-5.5 0a2.75 2.75 0 0 1 5.5 0m13 13a2.75 2.75 0 1 1-5.5 0a2.75 2.75 0 0 1 5.5 0m-13 0a2.75 2.75 0 1 1-5.5 0a2.75 2.75 0 0 1 5.5 0M5.5 8.25v7.5" />
 			<path d="M18.5 15.75V8.5a3 3 0 0 0-3-3h-4.336M13.25 8l-1.793-1.793a1 1 0 0 1-.293-.707M13.25 3l-1.793 1.793a1 1 0 0 0-.293.707" />
 		</g>
-	</svg> pull requests</a>
+	</svg> <span class="nav-label">pull requests</span></a>
             <a href="#" id="nav-discussions" style="display:none;" onclick="showView('discussions'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
 		<path d="M5.985 5.76a3 3 0 0 0-3 3v5.982a3 3 0 0 0 3 3h.446v3.017a.5.5 0 0 0 .839.367l3.67-3.385h4.045a3 3 0 0 0 3-3V8.76a3 3 0 0 0-3-3z" />
 		<path d="M6.985 2.76h8a6 6 0 0 1 6 6v4.982" />
 	</g>
-            </svg> discussions</a>
+            </svg> <span class="nav-label">discussions</span></a>
             <a href="#" id="nav-wiki" style="display:none;" onclick="showView('wiki'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<g fill="none">
@@ -2532,13 +2759,13 @@
 		<path stroke="currentColor" stroke-linecap="round" stroke-width="1.5" d="M12 9.45v3.79" />
 		<circle cx="12" cy="6.217" r="1.197" fill="currentColor" />
 	</g>
-            </svg> wiki</a>
+            </svg> <span class="nav-label">wiki</span></a>
             <a href="#" id="mobile-sidebar-toggle-btn" class="mobile-sidebar-toggle" onclick="toggleMobileSidebar(); return false;" title="About this repository" aria-expanded="false" aria-controls="mobile-sidebar-panel"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 11v6" />
 	<circle cx="12" cy="12" r="9.25" />
 	<circle cx="12" cy="7.5" r="0.5" fill="currentColor" />
-</svg> about</a>
+</svg> <span class="nav-label">about</span></a>
                     </nav>
 
         <div class="file-tree" id="file-tree" style="display:none;"></div>
@@ -2863,11 +3090,111 @@
             const suffix = VIEW_TO_PATH[view] || '';
             return suffix ? `${repoBasePath()}/${suffix}` : repoBasePath();
         }
-        function viewFromPath() {
-            if (_isCleanPath && _pathParts.length >= 4) {
-                return PATH_TO_VIEW[_pathParts[3]] || 'home';
+        function encSeg(s) { return encodeURIComponent(String(s == null ? '' : s)); }
+
+        // URL de una vista de detalle: /gh|gl|cb/owner/repo/<kind>/<id>
+        function buildDetailUrl(kind, id) {
+            return `${repoBasePath()}/${kind}/${encSeg(id)}`;
+        }
+
+        // URL de árbol o archivo: /gh|gl|cb/owner/repo/tree|blob/<ref>/<ruta...>
+        function buildFilesUrl(mode, ref, segs) {
+            let url = `${repoBasePath()}/${mode === 'blob' ? 'blob' : 'tree'}`;
+            if (ref) url += `/${encSeg(ref)}`;
+            const rest = (segs || []).map(encSeg).join('/');
+            if (rest) url += `/${rest}`;
+            return url;
+        }
+
+        // Convierte un pathname (/gh/o/r/...) en una ruta de la app.
+        // Devuelve null si el path no pertenece a este esquema (p.ej. ?owner=&repo=).
+        function parseRepoRoute(pathname) {
+            const parts = String(pathname || '').split('/').filter(Boolean);
+            if (parts.length < 3 || !['gh', 'gl', 'cb'].includes(parts[0])) return null;
+            const route = { provider: parts[0], owner: parts[1], repo: parts[2] };
+            try {
+                route.owner = decodeURIComponent(parts[1]);
+                route.repo = decodeURIComponent(parts[2]);
+            } catch(_) {}
+            let rest;
+            try {
+                rest = parts.slice(3).map(decodeURIComponent).filter(Boolean);
+            } catch(_) { rest = parts.slice(3).filter(Boolean); }
+            if (!rest.length) return { ...route, kind: 'view', view: 'home' };
+            const head = rest[0];
+            // Las rutas de detalle van antes que las vistas de lista:
+            // /releases/v1.0 es el detalle de una release, /releases la lista.
+            if (rest.length >= 2 && rest[1]) {
+                if (head === 'issues')      return { ...route, kind: 'issue', num: rest[1] };
+                if (head === 'pulls')       return { ...route, kind: 'pr', num: rest[1] };
+                if (head === 'discussions') return { ...route, kind: 'discussion', num: rest[1] };
+                if (head === 'commit')      return { ...route, kind: 'commit', sha: rest[1] };
+                if (head === 'releases')    return { ...route, kind: 'release', tag: rest[1] };
+                if (head === 'packages')    return { ...route, kind: 'package', id: rest[1] };
             }
-            return 'home';
+            if ((head === 'tree' || head === 'blob')) {
+                if (rest.length >= 2 && rest[1]) {
+                    return { ...route, kind: 'files', mode: head, ref: rest[1], segs: rest.slice(2) };
+                }
+                return { ...route, kind: 'view', view: 'files' };
+            }
+            if (PATH_TO_VIEW[head]) return { ...route, kind: 'view', view: PATH_TO_VIEW[head] };
+            return { ...route, kind: 'view', view: 'home' };
+        }
+
+        function routeUrl(route) {
+            switch (route.kind) {
+                case 'files':      return buildFilesUrl(route.mode, route.ref, route.segs);
+                case 'issue':      return buildDetailUrl('issues', route.num);
+                case 'pr':         return buildDetailUrl('pulls', route.num);
+                case 'discussion': return buildDetailUrl('discussions', route.num);
+                case 'commit':     return buildDetailUrl('commit', route.sha);
+                case 'release':    return buildDetailUrl('releases', route.tag);
+                case 'package':    return buildDetailUrl('packages', route.id);
+                default:           return buildViewUrl(route.view || 'home');
+            }
+        }
+
+        // Empuja la URL de la ruta en el historial si es distinta a la actual.
+        function go(route) {
+            const url = routeUrl(route);
+            if (window.location.pathname !== url) history.pushState({ route }, '', url);
+            else history.replaceState({ route }, '', url);
+        }
+
+        // Ejecuta una ruta sin tocar la URL (popstate / carga inicial).
+        function navigateTo(route, push) {
+            switch (route.kind) {
+                case 'view':       showView(route.view, push); break;
+                case 'files':      openFilesRoute(route, push); break;
+                case 'issue':      gotoIssueDetail(route.num, push); break;
+                case 'pr':         gotoPRDetail(route.num, push); break;
+                case 'discussion': gotoDiscussionDetail(route.num, push); break;
+                case 'commit':     gotoCommitDetail(route.sha, push); break;
+                case 'release':    gotoReleaseDetail(route.tag, push); break;
+                case 'package':    gotoPackageDetail(route.id, push); break;
+            }
+        }
+
+        function isCurrentRepo(route) {
+            return route && route.provider === rv.provider && route.owner === rv.owner && route.repo === rv.repo;
+        }
+
+        function setActiveNav(viewName) {
+            const navLinks = document.querySelectorAll('.left-nav a');
+            navLinks.forEach(a => a.classList.remove('active'));
+            const idx = ['home','files','commits','branches','packages','bugs','reviews','discussions','wiki'].indexOf(viewName);
+            if (idx >= 0 && navLinks[idx]) navLinks[idx].classList.add('active');
+        }
+
+        function hideFileTreePanel(loadingText) {
+            const fileTree = document.getElementById('file-tree');
+            const panel = document.getElementById('code-panel');
+            fileTree.style.display = 'none';
+            panel.style.display = '';
+            document.querySelector('.repo-layout')?.classList.remove('mobile-file-open');
+            if (loadingText) panel.innerHTML = `<div class="code-loading">${escHtml(loadingText)}</div>`;
+            return panel;
         }
 
         function profileLink(username, label, className = '') {
@@ -2895,6 +3222,7 @@
         function init() {
             document.title = `${rv.owner}/${rv.repo} · gitGost`;
             updateStatusbarPath();
+            initStatusbarFileSearch();
 
             const forkLink = document.getElementById('fork-link');
             if (forkLink) {
@@ -2922,11 +3250,55 @@
             checkPackages();
             const codePanel = document.getElementById('code-panel');
             if (codePanel) codePanel.addEventListener('click', handlePanelLinkClick);
-            showView(viewFromPath(), false);
+
+            const initialRoute = parseRepoRoute(window.location.pathname);
+            if (initialRoute) navigateTo(initialRoute, false);
+            else showView('home', false);
 
             window.addEventListener('popstate', function() {
-                const v = viewFromPath();
-                if (v) showView(v, false);
+                const route = parseRepoRoute(window.location.pathname);
+                if (route) navigateTo(route, false);
+            });
+
+            // Ctrl/Cmd+click y shift+click: deja que el navegador abra la pestaña/ventana
+            // nueva. Se corta la propagación en fase de captura para que los onclick que
+            // hacen preventDefault (navegación SPA) no cancelen el comportamiento nativo.
+            document.addEventListener('click', function(e) {
+                if (!(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)) return;
+                if (!e.target.closest('a[href]')) return;
+                e.stopPropagation();
+            }, true);
+
+            // Filas clicables (data-goto): click normal navega dentro de la SPA;
+            // Ctrl/Cmd+click abre en pestaña nueva (las filas son divs, sin
+            // comportamiento nativo del navegador).
+            document.addEventListener('click', function(e) {
+                if (e.button !== 0) return;
+                if (e.target.closest('a')) return;
+                const el = e.target.closest('[data-goto]');
+                if (!el) return;
+                const href = el.getAttribute('data-goto') || '';
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+                    if (!href || href === '#') return;
+                    e.preventDefault();
+                    window.open(href, '_blank', 'noopener');
+                    return;
+                }
+                let route = null;
+                try { route = parseRepoRoute(new URL(href, window.location.origin).pathname); } catch(_) {}
+                e.preventDefault();
+                if (isCurrentRepo(route)) navigateTo(route, true);
+                else window.location.href = href;
+            });
+
+            // Botón central sobre filas data-goto: abre en pestaña nueva.
+            document.addEventListener('auxclick', function(e) {
+                if (e.button !== 1) return;
+                if (e.target.closest('a')) return;
+                const el = e.target.closest('[data-goto]');
+                if (!el) return;
+                e.preventDefault();
+                window.open(el.getAttribute('data-goto'), '_blank', 'noopener');
             });
 
             document.querySelectorAll('a[onclick]').forEach(a => {
@@ -2940,10 +3312,8 @@
         function showView(view, push) {
             if (push === undefined) push = true;
             _disposePierreDiffs();
-            const navLinks = document.querySelectorAll('.left-nav a');
-            navLinks.forEach(a => a.classList.remove('active'));
-            const idx = ['home','files','commits','branches','packages','bugs','reviews','discussions','wiki'].indexOf(view);
-            if (idx >= 0 && navLinks[idx]) navLinks[idx].classList.add('active');
+            setActiveNav(view);
+            document.title = `${rv.owner}/${rv.repo} · gitGost`;
 
             if (push) {
                 history.pushState({ view: view }, '', buildViewUrl(view));
@@ -3006,6 +3376,147 @@
             } else {
                 fileTree.style.display = 'none';
                 codePanel.innerHTML = `<div class="code-loading" style="color:var(--fg-secondary)">/${view} &mdash; coming soon</div>`;
+            }
+        }
+
+        // ---- Rutas de detalle (deep-linking con URL compartible) ----
+
+        // Abre la vista de archivos en un ref y ruta concretos (/tree/... o /blob/...).
+        async function openFilesRoute(route, push) {
+            if (push) go(route);
+            setActiveNav('files');
+            document.title = `${rv.owner}/${rv.repo} · gitGost`;
+            rv.branch = route.ref || '';
+            updateStatusbarPath();
+            const fileTree = document.getElementById('file-tree');
+            const codePanel = document.getElementById('code-panel');
+            fileTree.style.display = '';
+            if (_isMobileFiles()) {
+                // En móvil el panel se muestra al tocar un archivo (o si la ruta es un blob).
+                codePanel.style.display = 'none';
+                document.querySelector('.repo-layout')?.classList.remove('mobile-file-open');
+            }
+            const blobPath = route.mode === 'blob' ? (route.segs || []).join('/') : null;
+            const dirSegs = route.mode === 'blob' ? (route.segs || []).slice(0, -1) : (route.segs || []);
+            rv.path = dirSegs;
+            await loadDir(dirSegs, { blobPath });
+            if (blobPath && _isMobileFiles()) _openMobileFile();
+        }
+
+        async function fetchIssueByNumber(num) {
+            if (rv.provider === 'gh') {
+                const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/issues/${num}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
+            }
+            if (rv.provider === 'cb') {
+                const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/issues/${num}?type=issues`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
+            }
+            const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+            const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/issues/${num}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return await res.json();
+        }
+
+        async function fetchPRByNumber(num) {
+            if (rv.provider === 'gh') {
+                const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/pulls/${num}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
+            }
+            if (rv.provider === 'cb') {
+                const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/pulls/${num}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
+            }
+            const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+            const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/merge_requests/${num}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return await res.json();
+        }
+
+        // Issue por URL directa: usa la caché si existe; si no, lo busca en la API.
+        async function gotoIssueDetail(num, push) {
+            if (push !== false) go({ kind: 'issue', num });
+            const panel = hideFileTreePanel('loading issue...');
+            try {
+                let issue = null;
+                const all = [...(_bugsCache.open||[]), ...(_bugsCache.closed||[])];
+                issue = all.find(i => String(i.number || i.iid) === String(num));
+                if (!issue) issue = await fetchIssueByNumber(num);
+                showIssueDetail(issue.number || issue.iid || num, issue);
+            } catch(e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">issue #${escHtml(num)} not found (${escHtml(e.message)})</div>`;
+            }
+        }
+
+        async function gotoPRDetail(num, push) {
+            if (push !== false) go({ kind: 'pr', num });
+            const panel = hideFileTreePanel('loading pull request...');
+            try {
+                let pr = null;
+                const all = [...((_prsCache||{}).open||[]), ...((_prsCache||{}).closed||[])];
+                pr = all.find(i => String(i.number || i.iid) === String(num));
+                if (!pr) pr = await fetchPRByNumber(num);
+                showPRDetail(pr.number || pr.iid || num, pr);
+            } catch(e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">PR #${escHtml(num)} not found (${escHtml(e.message)})</div>`;
+            }
+        }
+
+        async function gotoDiscussionDetail(num, push) {
+            if (push !== false) go({ kind: 'discussion', num });
+            setActiveNav('discussions');
+            document.title = `Discussion #${num} · ${rv.owner}/${rv.repo} · gitGost`;
+            hideFileTreePanel(null);
+            await showDiscussionDetail(num);
+        }
+
+        async function gotoCommitDetail(sha, push) {
+            if (push !== false) go({ kind: 'commit', sha });
+            setActiveNav('commits');
+            hideFileTreePanel(null);
+            await showCommitDetail(sha);
+        }
+
+        async function gotoReleaseDetail(tag, push) {
+            if (push !== false) go({ kind: 'release', tag });
+            setActiveNav('releases');
+            const panel = hideFileTreePanel('loading release...');
+            try {
+                if (!_releasesCache) _releasesCache = await fetchReleases();
+                const idx = _releasesCache.findIndex(r => (r.tag_name || r.tag) === tag);
+                if (idx < 0) {
+                    _currentReleaseView = 'list';
+                    renderReleasesView();
+                    return;
+                }
+                _currentReleaseView = 'detail';
+                showReleaseDetail(idx);
+            } catch(e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${escHtml(e.message)}</div>`;
+            }
+        }
+
+        async function gotoPackageDetail(id, push) {
+            if (push !== false) go({ kind: 'package', id });
+            setActiveNav('packages');
+            const panel = hideFileTreePanel('loading package...');
+            try {
+                if (!_packagesCache || !_packagesCache.length) _packagesCache = await fetchPackagesList();
+                const at = id.lastIndexOf('@');
+                const name = at > 0 ? id.slice(0, at) : id;
+                const version = at > 0 ? id.slice(at + 1) : '';
+                const idx = _packagesCache.findIndex(p => (p.name || '') === name && (p.version || '') === version);
+                if (idx < 0) {
+                    renderPackagesView();
+                    return;
+                }
+                showPackageDetail(idx);
+            } catch(e) {
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${escHtml(e.message)}</div>`;
             }
         }
 
@@ -3158,7 +3669,7 @@
                 const url  = i.html_url || i.web_url || '#';
                 const assignee = i.assignees?.[0]?.login || i.assignee?.login || i.assignee?.username || '';
                 const num = i.number || i.iid;
-                return `<div class="issue-item" style="cursor:pointer;" onclick="showIssueDetail(${escJsStr(num)})">
+                return `<div class="issue-item" style="cursor:pointer;" data-goto="${escAttr(buildDetailUrl('issues', num))}">
                     <span class="issue-num">#${escHtml(num)}</span>
                     <span class="issue-title">${escHtml(i.title)}${labels}</span>
                     <span class="issue-meta">${assignee ? profileLink(assignee) + ' · ' : ''}${profileLink(user)} · ${date}</span>
@@ -3168,10 +3679,11 @@
             panel.innerHTML = toolbar + `<div class="issue-list">${list}</div>`;
         }
 
-        async function showIssueDetail(num) {
+        async function showIssueDetail(num, preloaded) {
             const all = [...(_bugsCache.open||[]), ...(_bugsCache.closed||[])];
-            const issue = all.find(i => (i.number || i.iid) === num);
+            const issue = preloaded || all.find(i => String(i.number || i.iid) === String(num));
             if (!issue) return;
+            document.title = `${issue.title || ('Issue #'+num)} · #${num} · ${rv.owner}/${rv.repo} · gitGost`;
 
             const panel = document.getElementById('code-panel');
             const user   = issue.user?.login || issue.author?.username || '';
@@ -3781,7 +4293,7 @@
                     : '';
 
                 const num = i.number || i.iid;
-                return `<div class="issue-item" style="align-items:flex-start;padding:0.6rem 0;cursor:pointer;" onclick="showPRDetail(${escJsStr(num)})">
+                return `<div class="issue-item" style="align-items:flex-start;padding:0.6rem 0;cursor:pointer;" data-goto="${escAttr(buildDetailUrl('pulls', num))}">
                     <span class="issue-num">#${escHtml(num)}</span>
                     <span class="issue-title" style="display:flex;flex-direction:column;gap:0.25rem;">
                         <span>${escHtml(i.title)}${stateBadge}</span>
@@ -3902,7 +4414,7 @@
                     : '';
                 const comments = d.commentCount ? `<span style="color:var(--fg-muted);font-size:0.72rem;margin-left:0.4rem;">💬 ${escHtml(d.commentCount)}</span>` : '';
 
-                return `<div class="issue-item" style="cursor:pointer;" onclick="showDiscussionDetail(${escJsStr(num)})">
+                return `<div class="issue-item" style="cursor:pointer;" data-goto="${escAttr(buildDetailUrl('discussions', num))}">
                     <span class="issue-num">#${escHtml(num)}</span>
                     <span class="issue-title">${escHtml(title)}${cat}${comments}</span>
                     <span class="issue-meta" style="display:flex;flex-direction:column;align-items:flex-end;gap:0.2rem;flex-shrink:0;">
@@ -3926,6 +4438,7 @@
                 if (!res.ok) throw new Error(data.message || data.error || `HTTP ${res.status}`);
 
                 const title = data.title || cached?.title || `Discussion #${num}`;
+                document.title = `${title} · #${num} · ${rv.owner}/${rv.repo} · gitGost`;
                 const body = data.body || '';
                 const user = data.author?.login || cached?.author || 'anonymous';
                 const created = data.createdAt ? new Date(data.createdAt).toLocaleDateString('en', {year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
@@ -4372,7 +4885,7 @@
                 } else {
                     avatarHtml = `<span class="commit-avatar-placeholder">${initial}</span>`;
                 }
-                return `<div class="commit-item" onclick="showCommitDetail('${escJsStr(fullSha)}')">
+                return `<div class="commit-item" style="cursor:pointer;" data-goto="${escAttr(buildDetailUrl('commit', fullSha))}">
                     <div class="commit-avatar">${avatarHtml}</div>
                     <div class="commit-body">
                         <div class="commit-msg">${escHtml(firstLine)}</div>
@@ -4427,38 +4940,39 @@
             };
         }
 
+        async function fetchReleases() {
+            let releases = [];
+            if (rv.provider === 'gh') {
+                const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/releases?per_page=30`);
+                if (!res.ok) throw new Error(`releases unavailable (HTTP ${res.status})${res.status === 404 ? ' - repo not found or private' : ''}`);
+                releases = await res.json();
+            } else if (rv.provider === 'cb') {
+                let page = 1;
+                while (true) {
+                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/releases?limit=50&page=${page}`);
+                    if (!res.ok) break;
+                    const data = await res.json();
+                    if (!Array.isArray(data) || data.length === 0) break;
+                    releases.push(...data);
+                    const link = res.headers.get('Link') || '';
+                    if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                    page++;
+                }
+            } else {
+                const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/releases?per_page=30`);
+                if (res.ok) releases = await res.json();
+            }
+            return releases.map(normalizeRelease);
+        }
+
         async function loadReleases() {
             const panel = document.getElementById('code-panel');
             _releasesCache = null;
             _currentReleaseView = 'list';
             panel.innerHTML = '<div class="code-loading">loading releases...</div>';
             try {
-                let releases = [];
-                if (rv.provider === 'gh') {
-                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/releases?per_page=30`);
-                    if (!res.ok) {
-                        panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">releases unavailable (HTTP ${escHtml(res.status)})${res.status === 404 ? ' - repo not found or private' : ''}</div>`;
-                        return;
-                    }
-                    releases = await res.json();
-                } else if (rv.provider === 'cb') {
-                    let page = 1;
-                    while (true) {
-                        const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/releases?limit=50&page=${page}`);
-                        if (!res.ok) break;
-                        const data = await res.json();
-                        if (!Array.isArray(data) || data.length === 0) break;
-                        releases.push(...data);
-                        const link = res.headers.get('Link') || '';
-                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
-                        page++;
-                    }
-                } else {
-                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
-                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/releases?per_page=30`);
-                    if (res.ok) releases = await res.json();
-                }
-                _releasesCache = releases.map(normalizeRelease);
+                _releasesCache = await fetchReleases();
                 renderReleasesView();
             } catch(e) {
                 panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
@@ -4619,7 +5133,7 @@
                 const badge = i === 0 ? ' <span class="release-latest-badge">Latest</span>' : '';
                 return `<div class="issue-item" style="cursor:default;align-items:flex-start;">
                     <span class="issue-title" style="display:flex;align-items:center;flex-wrap:wrap;gap:0.3rem;">
-                        <a href="#" data-tag="${escAttr(name)}" onclick="openTag(this.dataset.tag); return false;" style="color:var(--accent);text-decoration:none;font-family:'IBM Plex Mono',monospace;">${escHtml(name)}</a>${badge}
+                        <a href="${escAttr(buildFilesUrl('tree', name, []))}" data-tag="${escAttr(name)}" onclick="openTag(this.dataset.tag); return false;" style="color:var(--accent);text-decoration:none;font-family:'IBM Plex Mono',monospace;">${escHtml(name)}</a>${badge}
                     </span>
                     <span class="issue-meta" style="display:flex;align-items:center;gap:0.35rem;font-family:'IBM Plex Mono',monospace;">
                         <span>${escHtml(sha)}${dateStr}</span>
@@ -4633,9 +5147,10 @@
         // Abre el contenido del repo en la ref de un tag (árbol de archivos interno).
         function openTag(tagName) {
             if (!tagName) return;
+            go({ kind: 'files', mode: 'tree', ref: tagName, segs: [] });
             rv.branch = tagName;
             updateStatusbarPath();
-            showView('files');
+            showView('files', false);
         }
 
         let _packagesCache = [];
@@ -4678,42 +5193,46 @@
             } catch(_) {}
         }
 
+        async function fetchPackagesList() {
+            let packages = [];
+            if (rv.provider === 'cb') {
+                let page = 1;
+                while (true) {
+                    const res = await cbFetch(`${CB_BASE}/packages/${rv.owner}?limit=50&page=${page}`);
+                    if (!res.ok) break;
+                    const data = await res.json();
+                    if (!Array.isArray(data) || data.length === 0) break;
+                    packages.push(...data.filter(p => p.repository?.name === rv.repo || ((p.full_name || '').split('/').pop() === rv.repo)));
+                    const link = res.headers.get('Link') || '';
+                    if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                    page++;
+                }
+            } else if (rv.provider === 'gl') {
+                const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                let page = 1;
+                while (true) {
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/packages?per_page=100&page=${page}`);
+                    if (!res.ok) break;
+                    const data = await res.json();
+                    if (!Array.isArray(data) || data.length === 0) break;
+                    packages.push(...data);
+                    const link = res.headers.get('Link') || '';
+                    if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                    page++;
+                }
+            } else if (rv.provider === 'gh') {
+                const data = await _githubPackages();
+                packages = (data || []).filter(p => p.repository?.name === rv.repo);
+            }
+            return packages;
+        }
+
         async function loadPackages() {
             const panel = document.getElementById('code-panel');
             _packagesCache = [];
             panel.innerHTML = '<div class="code-loading">loading packages...</div>';
             try {
-                let packages = [];
-                if (rv.provider === 'cb') {
-                    let page = 1;
-                    while (true) {
-                        const res = await cbFetch(`${CB_BASE}/packages/${rv.owner}?limit=50&page=${page}`);
-                        if (!res.ok) break;
-                        const data = await res.json();
-                        if (!Array.isArray(data) || data.length === 0) break;
-                        packages.push(...data.filter(p => p.repository?.name === rv.repo || ((p.full_name || '').split('/').pop() === rv.repo)));
-                        const link = res.headers.get('Link') || '';
-                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
-                        page++;
-                    }
-                } else if (rv.provider === 'gl') {
-                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
-                    let page = 1;
-                    while (true) {
-                        const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/packages?per_page=100&page=${page}`);
-                        if (!res.ok) break;
-                        const data = await res.json();
-                        if (!Array.isArray(data) || data.length === 0) break;
-                        packages.push(...data);
-                        const link = res.headers.get('Link') || '';
-                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
-                        page++;
-                    }
-                } else if (rv.provider === 'gh') {
-                    const data = await _githubPackages();
-                    packages = (data || []).filter(p => p.repository?.name === rv.repo);
-                }
-                _packagesCache = packages;
+                _packagesCache = await fetchPackagesList();
                 renderPackagesView();
             } catch(e) {
                 panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
@@ -4735,7 +5254,7 @@
                 const version = p.version || '';
                 const type = p.type || p.package_type || '';
                 const date = p.created_at ? new Date(p.created_at).toLocaleDateString('en', {month:'short', day:'numeric', year:'numeric'}) : '';
-                return `<div class="issue-item" style="cursor:pointer;" onclick="showPackageDetail(${idx})">
+                return `<div class="issue-item" style="cursor:pointer;" data-goto="${escAttr(buildDetailUrl('packages', `${name}@${version}`))}">
                     <span class="issue-title" style="font-family:'IBM Plex Mono',monospace;">${escHtml(name)}:${escHtml(version)}</span>
                     <span class="issue-meta">${type}${date ? ' · ' + date : ''}</span>
                 </div>`;
@@ -4748,6 +5267,7 @@
             const pkg = _packagesCache[idx];
             if (!pkg) return;
             panel.innerHTML = '<div class="code-loading">loading package...</div>';
+            document.title = `${pkg.name || ''}:${pkg.version || ''} · ${rv.owner}/${rv.repo} · gitGost`;
             try {
                 let files = [];
                 if (rv.provider === 'cb') {
@@ -4782,6 +5302,12 @@
             }
         }
 
+        function backToReleases() {
+            go({ kind: 'view', view: 'releases' });
+            _currentReleaseView = 'list';
+            renderReleasesView();
+        }
+
         function renderReleasesView() {
             const panel = document.getElementById('code-panel');
             if (!_releasesCache) return;
@@ -4810,7 +5336,7 @@
                 if (isLatest) badges.push('<span class="release-latest-badge">Latest</span>');
                 if (isPrerelease) badges.push('<span class="release-prerelease-badge">Pre-release</span>');
 
-                return `<div class="release-item" onclick="showReleaseDetail(${idx})">
+                return `<div class="release-item" style="cursor:pointer;" data-goto="${escAttr(buildDetailUrl('releases', tag))}">
                     <div style="display:flex;flex-direction:column;gap:0.25rem;min-width:0;flex:1;">
                         <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;">
                             <span class="release-tag-badge">${escHtml(tag)}</span>
@@ -4831,6 +5357,7 @@
             _currentReleaseView = 'detail';
             const r = _releasesCache[idx];
             const tag = r.tag_name || r.tag || '';
+            document.title = `${r.name || tag} (${tag}) · ${rv.owner}/${rv.repo} · gitGost`;
             const name = r.name || tag;
             const date = r.published_at || r.released_at || r.created_at || '';
             const dateStr = date ? new Date(date).toLocaleDateString('en', {month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
@@ -4869,7 +5396,7 @@
 
             panel.innerHTML = `<div class="release-detail">
                 <div class="release-detail-header">
-                    <button class="release-back-btn" onclick="renderReleasesView()">← Back to releases</button>
+                    <button class="release-back-btn" onclick="backToReleases()">← Back to releases</button>
                     <span class="release-tag-badge">${escHtml(tag)}</span>
                     ${badges.join(' ')}
                 </div>
@@ -4936,6 +5463,7 @@
                 }
                 files.push({
                     filename,
+                    old_path: status === 'renamed' ? m[1] : '',
                     status,
                     additions,
                     deletions,
@@ -4949,6 +5477,7 @@
             const panel = document.getElementById('code-panel');
             _disposePierreDiffs();
             panel.innerHTML = '<div class="code-loading">loading commit...</div>';
+            document.title = `${String(sha).substring(0, 7)} · ${rv.owner}/${rv.repo} · gitGost`;
             try {
                 let commit, files;
                 if (rv.provider === 'gh') {
@@ -5070,7 +5599,8 @@
             for (const pre of pres) {
                 const code = pre.textContent || '';
                 if (!code.trim()) continue;
-                const filename = pre.closest('.commit-diff-file')?.querySelector('.cdf-name')?.textContent || '';
+                const filename = pre.closest('.commit-diff-file')?.getAttribute('data-filename')
+                    || pre.closest('.commit-diff-file')?.querySelector('.cdf-name')?.textContent || '';
                 const lang = _detectDiffLang(filename);
                 try {
                     const highlighted = hi.codeToHtml(code, { lang, theme });
@@ -5151,6 +5681,84 @@
             return lines.join('\n');
         }
 
+        // ---- Header de archivo estilo GitHub para los diffs ----
+        // Almacena el patch crudo por clave pierreKey para el botón "copiar patch".
+        const _cdfPatchStore = {};
+
+        function _cdfSplitPath(filename) {
+            const idx = String(filename || '').lastIndexOf('/');
+            return idx === -1
+                ? { dir: '', name: filename }
+                : { dir: filename.slice(0, idx + 1), name: filename.slice(idx + 1) };
+        }
+
+        // Barras de stat estilo GitHub: 5 bloques proporcionales +/−.
+        function _cdfStatBars(adds, dels) {
+            const total = (adds || 0) + (dels || 0);
+            if (!total) return '';
+            let green = Math.max(adds ? 1 : 0, Math.round((adds / total) * 5));
+            let red = Math.max(dels ? 1 : 0, 5 - green);
+            while (green + red > 5) {
+                if (red > green && red > 1) red--;
+                else if (green > 1) green--;
+                else break;
+            }
+            const pad = 5 - green - red;
+            let html = '';
+            for (let i = 0; i < green; i++) html += '<i class="add"></i>';
+            for (let i = 0; i < red; i++) html += '<i class="del"></i>';
+            for (let i = 0; i < pad; i++) html += '<i class="pad"></i>';
+            return html;
+        }
+
+        function _cdfFileHtml(f, key, patch) {
+            const adds = f.additions || 0;
+            const dels = f.deletions || 0;
+            const status = f.status || 'modified';
+            if (patch) _cdfPatchStore[key] = patch;
+            const { dir, name } = _cdfSplitPath(f.filename);
+            const oldPath = f.previous_filename || f.old_path || '';
+            return `<div class="commit-diff-file" data-pierre-key="${key}" data-filename="${escAttr(f.filename)}">
+                        <div class="cdf-header">
+                            <button type="button" class="cdf-toggle" aria-expanded="true" title="Toggle file diff">
+                                <svg class="cdf-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg>
+                            </button>
+                            <span class="cdf-path">${dir ? `<span class="cdf-dir">${escHtml(dir)}</span>` : ''}<span class="cdf-name">${escHtml(name)}</span></span>
+                            ${oldPath && oldPath !== f.filename ? `<span class="cdf-oldname" title="${escAttr(oldPath)}">${escHtml(oldPath)} &rarr;</span>` : ''}
+                            <span class="cdf-status st-${escHtml(status)}">${escHtml(status)}</span>
+                            <span class="cdf-statbars" title="${adds} additions &amp; ${dels} deletions">${_cdfStatBars(adds, dels)}</span>
+                            ${adds ? `<span class="cdf-stat add">+${escHtml(adds)}</span>` : ''}
+                            ${dels ? `<span class="cdf-stat del">&minus;${escHtml(dels)}</span>` : ''}
+                            ${patch ? `<button type="button" class="cdf-copy" data-cdf-copy="${key}" title="Copy raw patch">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-4M5 9h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2"/></svg>
+                            </button>` : ''}
+                        </div>
+                        <div class="cdf-body">
+                        ${patch ? `<pre>${escHtml(patch)}</pre>` : ''}
+                        </div>
+                    </div>`;
+        }
+
+        // Delegación global: colapsar/expandir archivo y copiar patch.
+        document.addEventListener('click', e => {
+            const toggle = e.target.closest('.cdf-toggle');
+            if (toggle) {
+                const fileEl = toggle.closest('.commit-diff-file');
+                if (!fileEl) return;
+                const collapsed = fileEl.classList.toggle('collapsed');
+                toggle.setAttribute('aria-expanded', String(!collapsed));
+                return;
+            }
+            const copyBtn = e.target.closest('[data-cdf-copy]');
+            if (copyBtn) {
+                const patch = _cdfPatchStore[copyBtn.getAttribute('data-cdf-copy')] || '';
+                navigator.clipboard.writeText(patch).then(() => {
+                    copyBtn.classList.add('copied');
+                    setTimeout(() => copyBtn.classList.remove('copied'), 1200);
+                }).catch(() => {});
+            }
+        });
+
         // Sustituye el <pre> plano de cada .commit-diff-file por el render de
         // @pierre/diffs. Si el CDN o el parseo fallan, el <pre> queda como fallback
         // y _highlightDiffs lo resalta con Shiki.
@@ -5166,13 +5774,14 @@
                 if (!patch) continue;
                 const pre = el.querySelector('pre');
                 if (!pre) continue;
+                const body = el.querySelector('.cdf-body') || el;
                 try {
                     const parsed = mod.parsePatchFiles(patch);
                     const files = (parsed || []).flatMap(p => (p.files || []));
                     if (!files.length) continue;
                     const host = document.createElement('div');
                     host.className = 'pierre-diff-host';
-                    el.appendChild(host);
+                    body.appendChild(host);
                     if (files.length === 1) {
                         const fc = document.createElement('diffs-container');
                         host.appendChild(fc);
@@ -5253,20 +5862,9 @@
             if (files && files.length) {
                 diffsHtml = '<div class="commit-diff-list">' + files.map((f, i) => {
                     const patch = f.patch || '';
-                    const status = f.status || 'modified';
-                    const adds = f.additions || 0;
-                    const dels = f.deletions || 0;
                     const pierreKey = `commit-${fullSha}-${i}`;
                     if (patch) patchByKey.set(pierreKey, _gitPatchForFile(f));
-                    return `<div class="commit-diff-file" data-pierre-key="${pierreKey}">
-                        <div class="cdf-header">
-                            <span class="cdf-name">${escHtml(f.filename)}</span>
-                            <span class="cdf-status">${escHtml(status)}</span>
-                            ${adds ? `<span class="cdf-stat add">+${escHtml(adds)}</span>` : ''}
-                            ${dels ? `<span class="cdf-stat del">-${escHtml(dels)}</span>` : ''}
-                        </div>
-                        ${patch ? `<pre>${escHtml(patch)}</pre>` : ''}
-                    </div>`;
+                    return _cdfFileHtml(f, pierreKey, patch);
                 }).join('') + '</div>';
             } else {
                 diffsHtml = '<div style="padding:0.5rem 0;color:var(--fg-muted);font-size:0.75rem;">no file changes to display</div>';
@@ -5413,11 +6011,12 @@
 
         let _currentPRsTab = 'all';
 
-        function showPRDetail(num) {
+        function showPRDetail(num, preloaded) {
             _disposePierreDiffs();
-            const all = [...(_prsCache?.open||[]), ...(_prsCache?.closed||[])];
-            const pr = all.find(i => (i.number || i.iid) === num);
+            const all = [...((_prsCache||{}).open||[]), ...((_prsCache||{}).closed||[])];
+            const pr = preloaded || all.find(i => String(i.number || i.iid) === String(num));
             if (!pr) return;
+            document.title = `${pr.title || ('PR #'+num)} · #${num} · ${rv.owner}/${rv.repo} · gitGost`;
 
             const panel = document.getElementById('code-panel');
             const user    = pr.user?.login || pr.author?.username || '';
@@ -5588,15 +6187,7 @@
                 const pierreKey = `pr-${num}-${i}`;
                 const patch = f.patch || f.diff || '';
                 if (patch) patchByKey.set(pierreKey, _gitPatchForFile(f));
-                return `<div class="commit-diff-file pr-file" data-pierre-key="${pierreKey}">
-                    <div class="cdf-header">
-                        <span class="cdf-name">${escHtml(f.filename)}</span>
-                        <span class="cdf-status">${escHtml(f.status || 'modified')}</span>
-                        ${(f.additions) ? `<span class="cdf-stat add">+${escHtml(f.additions)}</span>` : ''}
-                        ${(f.deletions) ? `<span class="cdf-stat del">-${escHtml(f.deletions)}</span>` : ''}
-                    </div>
-                    ${patch ? `<pre>${escHtml(patch)}</pre>` : ''}
-                </div>`;
+                return _cdfFileHtml(f, pierreKey, patch);
             }).join('');
             _upgradeDiffsWithPierre(listEl, patchByKey);
             _highlightDiffs(listEl);
@@ -6430,7 +7021,7 @@
                             const tag = latest.tag_name || latest.name || '';
                             const name = latest.name || tag;
                             const ago = timeAgo(latest.published_at || latest.created_at);
-                            latestEl.innerHTML = `<a href="#" onclick="showView('releases'); return false;" style="color:var(--fg);text-decoration:none;display:block;padding:0.3rem 0;">
+                            latestEl.innerHTML = `<a href="${buildViewUrl('releases')}" onclick="showView('releases'); return false;" style="color:var(--fg);text-decoration:none;display:block;padding:0.3rem 0;">
                                 <div style="font-size:0.82rem;font-weight:500;line-height:1.3;">${escHtml(name)}  <span class="release-latest-badge">Latest</span></div>
                                 ${ago ? `<div style="font-size:0.7rem;color:var(--fg-muted);margin-top:0.15rem;">${ago}</div>` : ''}
                             </a>`;
@@ -6454,7 +7045,7 @@
                                 const tag = latest.tag_name || latest.tag || '';
                                 const name = latest.name || tag;
                                 const ago = timeAgo(latest.released_at || latest.created_at);
-                                latestEl.innerHTML = `<a href="#" onclick="showView('releases'); return false;" style="color:var(--fg);text-decoration:none;display:block;padding:0.3rem 0;">
+                                latestEl.innerHTML = `<a href="${buildViewUrl('releases')}" onclick="showView('releases'); return false;" style="color:var(--fg);text-decoration:none;display:block;padding:0.3rem 0;">
                                     <div style="font-size:0.82rem;font-weight:500;line-height:1.3;">${escHtml(name)}  <span class="release-latest-badge">Latest</span></div>
                                     ${ago ? `<div style="font-size:0.7rem;color:var(--fg-muted);margin-top:0.15rem;">${ago}</div>` : ''}
                                 </a>`;
@@ -6480,7 +7071,7 @@
                             const tag = latest.tag_name || latest.tag || '';
                             const name = latest.name || tag;
                             const ago = timeAgo(latest.published_at || latest.created_at);
-                            latestEl.innerHTML = `<a href="#" onclick="showView('releases'); return false;" style="color:var(--fg);text-decoration:none;display:block;padding:0.3rem 0;">
+                            latestEl.innerHTML = `<a href="${buildViewUrl('releases')}" onclick="showView('releases'); return false;" style="color:var(--fg);text-decoration:none;display:block;padding:0.3rem 0;">
                                 <div style="font-size:0.82rem;font-weight:500;line-height:1.3;">${escHtml(name)}  <span class="release-latest-badge">Latest</span></div>
                                 ${ago ? `<div style="font-size:0.7rem;color:var(--fg-muted);margin-top:0.15rem;">${ago}</div>` : ''}
                             </a>`;
@@ -6543,7 +7134,7 @@
                     if (listEl) {
                         // Solo la última tag (más reciente) se muestra destacada, como Latest en Releases.
                         const latestName = tags[0].name || '';
-                        const latestHtml = `<a href="#" data-tag="${escAttr(latestName)}" onclick="openTag(this.dataset.tag); return false;" style="display:block;padding:0.3rem 0;color:var(--fg);text-decoration:none;">
+                        const latestHtml = `<a href="${escAttr(buildFilesUrl('tree', latestName, []))}" data-tag="${escAttr(latestName)}" onclick="openTag(this.dataset.tag); return false;" style="display:block;padding:0.3rem 0;color:var(--fg);text-decoration:none;">
                             <div style="font-size:0.82rem;font-weight:500;line-height:1.3;font-family:'IBM Plex Mono',monospace;">${escHtml(latestName)} <span class="release-latest-badge">Latest</span></div>
                         </a>`;
                         listEl.innerHTML = latestHtml;
@@ -6765,16 +7356,116 @@
             }
         }
 
-        const _fileTreeSearch = `<div class="repo-search">
-            <input class="repo-search-input" id="repo-search-input" type="search" placeholder="search files or code" aria-label="Search repository" autocomplete="off" onkeydown="if(event.key==='Enter') searchRepository('files')">
-            <div class="repo-search-actions">
-                <button class="repo-search-btn" type="button" onclick="searchRepository('files')">Files</button>
-                <button class="repo-search-btn" type="button" onclick="searchRepository('code')">Code</button>
-            </div>
-        </div>`;
-        function _fileTreeShell(content) { return _fileTreeSearch + content; }
+        let _statusbarFileCache = null;
+        let _statusbarFileMatches = [];
+        let _statusbarFileIndex = -1;
+        let _statusbarFileSearchTimer = null;
 
-        // Shell inicial del árbol: el buscador vive solo en _fileTreeSearch, sin copia duplicada.
+        function _closeStatusbarFileSearch() {
+            const results = document.getElementById('statusbar-file-results');
+            if (results) results.classList.remove('open');
+            _statusbarFileIndex = -1;
+        }
+
+        function _selectStatusbarFile(item) {
+            const input = document.getElementById('statusbar-file-search');
+            if (input) input.value = item.path || item.name || '';
+            _closeStatusbarFileSearch();
+            // Sin push aquí: loadFile ya refleja el archivo en la URL (/blob/...).
+            showView('files', false);
+            loadFile(item);
+        }
+
+        function _renderStatusbarFileResults(query, items) {
+            const results = document.getElementById('statusbar-file-results');
+            if (!results) return;
+            results.innerHTML = '';
+            _statusbarFileMatches = items.slice(0, 20);
+            _statusbarFileIndex = -1;
+            if (!items.length) {
+                const empty = document.createElement('div');
+                empty.className = 'statusbar-file-empty';
+                empty.textContent = query ? 'no files found' : 'type a file path';
+                results.appendChild(empty);
+            } else {
+                _statusbarFileMatches.forEach((item, index) => {
+                    const button = document.createElement('button');
+                    button.className = 'statusbar-file-result';
+                    button.type = 'button';
+                    button.setAttribute('role', 'option');
+                    button.textContent = item.path || item.name;
+                    button.addEventListener('click', (e) => {
+                        // Ctrl/Cmd+click: abre el archivo en pestaña nueva.
+                        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+                            e.preventDefault();
+                            window.open(buildFilesUrl('blob', currentBranch(), String(item.path || item.name || '').split('/').filter(Boolean)), '_blank', 'noopener');
+                            return;
+                        }
+                        _selectStatusbarFile(item);
+                    });
+                    button.addEventListener('mouseenter', () => { _statusbarFileIndex = index; });
+                    results.appendChild(button);
+                });
+            }
+            results.classList.add('open');
+        }
+
+        async function _searchStatusbarFiles(query) {
+            const input = document.getElementById('statusbar-file-search');
+            const results = document.getElementById('statusbar-file-results');
+            if (!results) return;
+            if (!query) {
+                _renderStatusbarFileResults('', []);
+                return;
+            }
+            results.innerHTML = '<div class="statusbar-file-empty">searching...</div>';
+            results.classList.add('open');
+            try {
+                if (!_statusbarFileCache) _statusbarFileCache = _allRepositoryFiles();
+                const files = await _statusbarFileCache;
+                if (!input || input.value.trim().toLowerCase() !== query) return;
+                const terms = query.split(/\s+/).filter(Boolean);
+                const matches = files
+                    .filter(item => terms.every(term => item.path.toLowerCase().includes(term)))
+                    .sort((a, b) => a.path.length - b.path.length || a.path.localeCompare(b.path));
+                _renderStatusbarFileResults(query, matches);
+            } catch (error) {
+                results.innerHTML = `<div class="statusbar-file-empty">${escHtml(error.message || String(error))}</div>`;
+                results.classList.add('open');
+            }
+        }
+
+        function initStatusbarFileSearch() {
+            const input = document.getElementById('statusbar-file-search');
+            if (!input) return;
+            input.addEventListener('input', () => {
+                clearTimeout(_statusbarFileSearchTimer);
+                const query = input.value.trim().toLowerCase();
+                _statusbarFileSearchTimer = setTimeout(() => _searchStatusbarFiles(query), 120);
+            });
+            input.addEventListener('keydown', event => {
+                if (event.key === 'Escape') { input.value = ''; _closeStatusbarFileSearch(); return; }
+                if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    if (!_statusbarFileMatches.length) return;
+                    _statusbarFileIndex = (event.key === 'ArrowDown' ? _statusbarFileIndex + 1 : _statusbarFileIndex - 1 + _statusbarFileMatches.length) % _statusbarFileMatches.length;
+                    document.querySelectorAll('.statusbar-file-result').forEach((button, index) => button.classList.toggle('active', index === _statusbarFileIndex));
+                } else if (event.key === 'Enter' && _statusbarFileMatches[_statusbarFileIndex]) {
+                    event.preventDefault();
+                    _selectStatusbarFile(_statusbarFileMatches[_statusbarFileIndex]);
+                } else if (event.key === 'Enter') {
+                    event.preventDefault();
+                    _closeStatusbarFileSearch();
+                    searchRepository('code');
+                }
+            });
+            document.addEventListener('click', event => {
+                if (!event.target.closest('.statusbar-center')) _closeStatusbarFileSearch();
+            });
+        }
+
+        function _fileTreeShell(content) { return content; }
+
         const _fileTreeEl = document.getElementById('file-tree');
         if (_fileTreeEl && !_fileTreeEl.childElementCount) {
             _fileTreeEl.innerHTML = _fileTreeShell('<div class="tree-loading">loading...</div>');
@@ -6892,14 +7583,27 @@
                     note.textContent = 'open file';
                     button.appendChild(note);
                 }
-                button.onclick = () => loadFile(item);
+                button.onclick = (e) => {
+                    // Ctrl/Cmd+click o botón central: abre el archivo en pestaña nueva.
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+                        e.preventDefault();
+                        window.open(buildFilesUrl('blob', currentBranch(), String(item.path || item.name || '').split('/').filter(Boolean)), '_blank', 'noopener');
+                        return;
+                    }
+                    loadFile(item);
+                };
+                button.addEventListener('auxclick', (e) => {
+                    if (e.button !== 1) return;
+                    e.preventDefault();
+                    window.open(buildFilesUrl('blob', currentBranch(), String(item.path || item.name || '').split('/').filter(Boolean)), '_blank', 'noopener');
+                });
                 wrap.appendChild(button);
             });
             panel.appendChild(wrap);
         }
 
         async function searchRepository(mode) {
-            const input = document.getElementById('repo-search-input');
+            const input = document.getElementById('statusbar-file-search');
             const query = (input && input.value || '').trim();
             if (!query) { input && input.focus(); return; }
             const panel = document.getElementById('code-panel');
@@ -6928,6 +7632,8 @@
         function _buildTreeNode(item, pathParts, depth) {
             const isDir = item.type === 'dir' || item.type === 'tree';
             const indent = depth * 14;
+            // URL compartible del nodo (para abrir en pestaña nueva).
+            const nodeUrl = buildFilesUrl(isDir ? 'tree' : 'blob', currentBranch(), [...pathParts, item.name]);
 
             const wrapper = document.createElement('div');
 
@@ -6952,6 +7658,13 @@
             row.appendChild(name);
             wrapper.appendChild(row);
 
+            // Las filas del árbol son divs: el navegador no les da comportamiento
+            // nativo, así que Ctrl/Cmd+click y botón central se gestionan aquí.
+            const openNodeInNewTab = (e) => {
+                e.preventDefault();
+                window.open(nodeUrl, '_blank', 'noopener');
+            };
+
             if (isDir) {
                 const children = document.createElement('div');
                 children.className = 'tree-children';
@@ -6960,7 +7673,8 @@
                 let loaded = false;
                 let open = false;
 
-                row.onclick = async () => {
+                row.onclick = async (e) => {
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return openNodeInNewTab(e);
                     open = !open;
                     chevron.className = 'tree-chevron ' + (open ? 'open' : 'closed');
                     children.className = 'tree-children ' + (open ? 'open' : '');
@@ -6980,7 +7694,8 @@
                     }
                 };
             } else {
-                row.onclick = () => {
+                row.onclick = (e) => {
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return openNodeInNewTab(e);
                     if (_treeActiveEl) _treeActiveEl.classList.remove('active');
                     row.classList.add('active');
                     _treeActiveEl = row;
@@ -6988,6 +7703,10 @@
                     if (_isMobileFiles()) _openMobileFile();
                 };
             }
+            row.addEventListener('auxclick', (e) => {
+                if (e.button !== 1) return;
+                openNodeInNewTab(e);
+            });
 
             return wrapper;
         }
@@ -7013,7 +7732,8 @@
             if (layout) layout.classList.remove('mobile-file-open');
         }
 
-        async function loadDir(pathParts) {
+        async function loadDir(pathParts, opts) {
+            opts = opts || {};
             rv.path = pathParts;
             updateBreadcrumb();
             const tree = document.getElementById('file-tree');
@@ -7028,9 +7748,15 @@
                     tree.appendChild(_buildTreeNode(item, pathParts, 0));
                 });
 
-                if (pathParts.length === 0) {
+                if (opts.blobPath != null) {
+                    // Ruta /blob/<ref>/<ruta>: abre el archivo indicado sin tocar la URL.
+                    const target = items.find(i => (i.path || i.name) === opts.blobPath)
+                        || items.find(i => i.name === opts.blobPath.split('/').pop());
+                    if (target) loadFile(target, { silentUrl: true });
+                    else document.getElementById('code-panel').innerHTML = '<div class="code-loading">file not found</div>';
+                } else if (pathParts.length === 0) {
                     const readme = items.find(i => i.name.toLowerCase() === 'readme.md');
-                    if (readme) loadFile(readme);
+                    if (readme) loadFile(readme, { silentUrl: true });
                     else document.getElementById('code-panel').innerHTML = '<div class="code-loading">select a file from the tree</div>';
                 } else {
                     document.getElementById('code-panel').innerHTML = '<div class="code-loading">select a file</div>';
@@ -7042,6 +7768,10 @@
 
         async function loadFile(item, opts) {
             opts = opts || {};
+            if (!opts.silentUrl) {
+                // Refleja el archivo abierto en la URL: /blob/<ref>/<ruta>.
+                go({ kind: 'files', mode: 'blob', ref: currentBranch(), segs: String(item.path || item.name || '').split('/').filter(Boolean) });
+            }
             const panel = document.getElementById('code-panel');
             panel.innerHTML = '<div class="code-loading">loading file...</div>';
             try {
@@ -7164,6 +7894,7 @@
 		<path d="M19.75 6.75v8.5a6 6 0 0 1-6 6h-5.5" />
 	</g>
                     </svg></button>` +
+                    `<button class="ft-btn" id="ft-blame-btn" onclick="loadBlame()" title="Blame this file" aria-label="Blame this file">blame</button>` +
                     `<button class="ft-btn" id="ft-download-btn" onclick="downloadFile()"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12.074 3.25v12.478M6.19 10.465l4.822 4.822c.293.293.677.44 1.06.44m5.883-5.262l-4.822 4.822c-.293.293-.677.44-1.06.44m8.677.788v.935a3.3 3.3 0 0 1-3.3 3.3H6.55a3.3 3.3 0 0 1-3.3-3.3v-.935" />
@@ -7171,6 +7902,200 @@
                 `</div>` +
                 `<div class="file-body" id="file-body">${f.previewHtml}</div>`;
             if (f.path) _loadLastCommit(f.path, f.lastCommitScope);
+        }
+
+        function _blameCommit(commit) {
+            const c = commit || {};
+            const objAuthor = (c.author && typeof c.author === 'object') ? c.author : null;
+            const objCommitter = (c.committer && typeof c.committer === 'object') ? c.committer : null;
+            const loginOf = (o) => o ? (o.login || o.username || (o.user && (o.user.login || o.user.name)) || '') : '';
+            // El campo "author" varía por proveedor: objeto {name,user} en GitHub,
+            // author_name plano en GitLab/Gitea; si falta, se cae al committer.
+            const name =
+                (objAuthor && (objAuthor.name || loginOf(objAuthor))) ||
+                (typeof c.author === 'string' && c.author) ||
+                c.author_name ||
+                (objCommitter && (objCommitter.name || loginOf(objCommitter))) ||
+                c.committer_name ||
+                '';
+            return {
+                sha: c.oid || c.id || c.sha || '',
+                author: String(name || ''),
+                date: c.committedDate || c.committed_date || c.authored_date || c.created_at || c.timestamp || '',
+                message: c.messageHeadline || c.title || (typeof c.message === 'string' ? c.message.split('\n')[0] : ''),
+            };
+        }
+
+        // Reintenta ante 429 (rate limit del proveedor) esperando Retry-After.
+        async function _apiFetchRetry429(doFetch, maxRetries = 2) {
+            let res = await doFetch();
+            for (let attempt = 0; res && res.status === 429 && attempt < maxRetries; attempt++) {
+                const ra = Number(res.headers && res.headers.get('Retry-After')) || 2 ** attempt;
+                await new Promise(resolve => setTimeout(resolve, Math.min(ra, 15) * 1000));
+                res = await doFetch();
+            }
+            return res;
+        }
+
+        // Blame unificado: el backend (/api/blame) reconstruye la atribución de
+        // líneas caminando el historial de commits, así que funciona igual para
+        // GitHub, GitLab y Codeberg sin depender de endpoints propios por forja.
+        async function _fetchBlame(path) {
+            const q = new URLSearchParams({ path, ref: currentBranch() || '' });
+            const url = `${API_BASE}/api/blame/${rv.provider}/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}?${q}`;
+            const res = await _apiFetchRetry429(() => fetch(url));
+            // Parseo defensivo: si el backend responde HTML (p. ej. un build
+            // sin el endpoint), JSON.parse falla y en Safari eso se manifiesta
+            // como "The string did not match the expected pattern".
+            const text = await res.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (_) {
+                throw new Error(`blame endpoint returned ${res.status} with non-JSON response — is the server up to date?`);
+            }
+            if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+            return Array.isArray(data.ranges) ? data.ranges : [];
+        }
+
+        function _blameRangeForLine(ranges, line) {
+            return ranges.find(range => line >= Number(range.start) && line <= Number(range.end)) || {};
+        }
+
+        // Patch que un commit aplicó a un archivo concreto (para el diff en blame).
+        async function _fetchCommitFilePatch(sha, filePath) {
+            if (!sha) return '';
+            if (rv.provider === 'gh') {
+                const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/commits/${sha}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const d = await res.json();
+                const f = (d.files || []).find(x => x.filename === filePath || x.previous_filename === filePath);
+                return f ? (f.patch || '') : '';
+            }
+            if (rv.provider === 'cb') {
+                const [resDiff, resCommit] = await Promise.all([
+                    cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/git/commits/${sha}.diff`),
+                    cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/git/commits/${sha}`)
+                ]);
+                if (resDiff.ok) {
+                    const f = parseGitDiff(await resDiff.text()).find(x => x.filename === filePath);
+                    if (f && f.patch) return f.patch;
+                }
+                if (resCommit.ok) {
+                    const d = await resCommit.json();
+                    const f = (d.files || []).find(x => x.filename === filePath);
+                    if (f) return f.patch || '';
+                }
+                return '';
+            }
+            const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+            const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/commits/${encodeURIComponent(sha)}/diff`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const diffs = await res.json();
+            const f = (Array.isArray(diffs) ? diffs : []).find(x => x.new_path === filePath || x.old_path === filePath);
+            return f ? (f.diff || '') : '';
+        }
+
+        function _renderBlame(path, content, ranges) {
+            const body = document.getElementById('file-body');
+            if (!body) return;
+            const lines = String(content || '').split('\n');
+            const lang = detectLang(path || '');
+            const highlight = line => {
+                if (lang && typeof hljs !== 'undefined' && hljs.getLanguage(lang)) return hljs.highlight(line, { language: lang }).value;
+                return escHtml(line);
+            };
+            const fmtDate = d => d ? new Date(d).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+            // Agrupa líneas consecutivas por commit: cabecera con autor/sha/fecha
+            // y diff desplegable del cambio introducido por ese commit.
+            const groups = [];
+            lines.forEach((line, i) => {
+                const lineNumber = i + 1;
+                const commit = _blameRangeForLine(ranges, lineNumber);
+                const key = commit.sha || `\u0000line-${lineNumber}`;
+                const last = groups[groups.length - 1];
+                if (last && last.key === key) last.entries.push({ line, lineNumber });
+                else groups.push({ key, commit, entries: [{ line, lineNumber }] });
+            });
+            const rows = groups.map(g => {
+                const c = g.commit;
+                const shortSha = c.sha ? c.sha.substring(0, 7) : '—';
+                const body_ = g.entries.map(({ line, lineNumber }) =>
+                    `<div class="blame-row"><span class="blame-cell blame-line">${lineNumber}</span><span class="blame-cell blame-code">${highlight(line) || ' '}</span></div>`
+                ).join('');
+                const headerMeta = c.sha
+                    ? `<span class="blame-author" title="${escAttr(c.author || '')}">${escHtml(c.author || 'unknown')}</span>` +
+                      `<a class="blame-commit" href="${escAttr(buildDetailUrl('commit', c.sha))}" onclick="gotoCommitDetail('${escJsStr(c.sha)}');return false;" title="${escAttr(c.sha)}">${escHtml(shortSha)}</a>`
+                    : '<span class="blame-author">uncommitted</span>';
+                const diffBtn = c.sha
+                    ? `<button type="button" class="blame-diff-toggle" data-blame-sha="${escAttr(c.sha)}" title="Show the changes this commit made to this file">diff</button>`
+                    : '';
+                const diffBox = c.sha ? `<div class="blame-diff-box" data-blame-diff hidden></div>` : '';
+                return `<div class="blame-group">` +
+                    `<div class="blame-group-header">${headerMeta}<span class="blame-date">${escHtml(fmtDate(c.date))}</span><span class="blame-msg">${escHtml(c.message || '')}</span>${diffBtn}</div>` +
+                    `${diffBox}` +
+                    `${body_}</div>`;
+            }).join('');
+            body.innerHTML = `<div class="blame-header">blame / ${escHtml(path)} · ${lines.length} lines</div><div class="blame-panel">${rows}</div>`;
+
+            // Diff perezoso: se descarga el patch del commit al expandir por primera vez.
+            body.querySelectorAll('.blame-diff-toggle').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const groupEl = btn.closest('.blame-group');
+                    const diffEl = groupEl.querySelector('.blame-diff-box[data-blame-diff]');
+                    if (!diffEl) return;
+                    if (!diffEl.hidden) { diffEl.hidden = true; btn.classList.remove('active'); return; }
+                    if (!diffEl.dataset.loaded) {
+                        btn.disabled = true;
+                        btn.textContent = 'loading…';
+                        const sha = btn.getAttribute('data-blame-sha') || '';
+                        try {
+                            const patch = await _fetchCommitFilePatch(sha, path);
+                            if (patch) {
+                                const key = `blame-${sha}`;
+                                diffEl.innerHTML =
+                                    `<div class="commit-diff-file" data-pierre-key="${escAttr(key)}">` +
+                                    `<div class="cdf-header"><span class="cdf-name">${escHtml(path)}</span></div>` +
+                                    `<pre>${escHtml(patch)}</pre></div>`;
+                                _upgradeDiffsWithPierre(diffEl, new Map([[key, _gitPatchForFile({ filename: path, patch })]]));
+                                _highlightDiffs(diffEl);
+                            } else {
+                                diffEl.innerHTML = '<div class="code-loading" style="padding:0.4rem 0;">no diff available for this file in this commit</div>';
+                            }
+                            diffEl.dataset.loaded = '1';
+                        } catch (e) {
+                            diffEl.innerHTML = `<div class="code-loading" style="padding:0.4rem 0;color:var(--accent)">diff error: ${escHtml(e.message || String(e))}</div>`;
+                        }
+                        btn.disabled = false;
+                        btn.textContent = 'diff';
+                    }
+                    diffEl.hidden = false;
+                    btn.classList.add('active');
+                });
+            });
+        }
+
+        async function loadBlame() {
+            const file = _activeFile;
+            const panel = document.getElementById('code-panel');
+            if (!file?.path || !panel) return;
+            const blameButton = document.getElementById('ft-blame-btn');
+            if (blameButton?.classList.contains('active')) {
+                toggleFileView('code');
+                blameButton.classList.remove('active');
+                return;
+            }
+            const body = document.getElementById('file-body');
+            if (body) body.innerHTML = '<div class="code-loading">loading blame...</div>';
+            try {
+                const ranges = await _fetchBlame(file.path);
+                _renderBlame(file.path, file.content, ranges);
+                blameButton?.classList.add('active');
+            } catch (error) {
+                const msg = String(error.message || error);
+                const friendly = /429/.test(msg) ? 'rate limited by the provider — try again in a moment' : msg;
+                if (body) body.innerHTML = `<div class="code-loading" style="color:var(--accent)">blame unavailable: ${escHtml(friendly)}</div>`;
+            }
         }
 
         // Consulta el último commit (del repositorio en la vista home, del archivo al abrirlo)
@@ -7237,7 +8162,7 @@
                         `<span class="flc-msg" title="${escAttr(msg)}">${escHtml(msg)}</span>` +
                         `<span class="flc-meta">` +
                             (author ? `<span class="flc-author">${profileLink(authorUsername, author)}</span>` : '') +
-                            (fullSha ? `<a class="flc-sha" title="${escAttr(fullSha)}" onclick="showCommitDetail('${escJsStr(fullSha)}')">${escHtml(fullSha.substring(0, 7))}</a>` : '') +
+                            (fullSha ? `<a class="flc-sha" href="${escAttr(buildDetailUrl('commit', fullSha))}" title="${escAttr(fullSha)}" onclick="gotoCommitDetail('${escJsStr(fullSha)}');return false;">${escHtml(fullSha.substring(0, 7))}</a>` : '') +
                             (dateLabel ? `<span class="flc-time" title="${escAttr(new Date(dateStr).toLocaleString('en'))}">${escHtml(dateLabel)}</span>` : '') +
                         `</span>` +
                     `</span>`;
@@ -7361,12 +8286,22 @@
                 { label: rv.repo, path: [] },
                 ...rv.path.map((p, i) => ({ label: p, path: rv.path.slice(0, i + 1) }))
             ];
+            const ref = currentBranch();
             bc.innerHTML = parts.map((p, i) => {
                 if (i < parts.length - 1) {
-                    return `<span class="crumb" onclick='loadDir(${JSON.stringify(p.path).replace(/'/g, "\\u0027")})' style="cursor:pointer;color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(p.label)}</span><span style="color:var(--fg-muted);margin:0 0.2rem;">/</span>`;
+                    return `<a class="crumb" href="${escAttr(buildFilesUrl('tree', ref, p.path))}" onclick='openTreeDir(${JSON.stringify(p.path).replace(/'/g, "\\u0027")});return false;' style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(p.label)}</a><span style="color:var(--fg-muted);margin:0 0.2rem;">/</span>`;
                 }
                 return `<span style="color:var(--fg);">${escHtml(p.label)}</span>`;
             }).join('');
+        }
+
+        // Navega a un directorio del breadcrumb actualizando también la URL.
+        function openTreeDir(pathPartsJson) {
+            let pp = [];
+            try { pp = JSON.parse(pathPartsJson) || []; } catch(_) { pp = []; }
+            if (!Array.isArray(pp)) pp = [];
+            go({ kind: 'files', mode: 'tree', ref: currentBranch(), segs: pp });
+            loadDir(pp);
         }
 
         function _starKey() { return `star:${rv.provider}:${rv.owner}/${rv.repo}`; }
@@ -7527,6 +8462,9 @@
         function handlePanelLinkClick(e) {
             const a = e.target.closest('a');
             if (!a) return;
+            // Con modificadores (Ctrl/Cmd/shift) o botón central se deja el
+            // comportamiento nativo del navegador intacto.
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
             const wiki = a.getAttribute('data-wiki');
             const anchor = a.getAttribute('data-anchor');
             if (wiki) {
@@ -7959,6 +8897,32 @@
         } else {
             init();
         }
+
+        function toggleLeftNav() {
+            const nav = document.getElementById('left-nav');
+            if (!nav) return;
+            nav.classList.toggle('collapsed');
+            localStorage.setItem('gitgost-nav-collapsed', nav.classList.contains('collapsed') ? '1' : '');
+        }
+
+        // Restaura el estado colapsado persistido de la navegación lateral.
+        if (localStorage.getItem('gitgost-nav-collapsed')) {
+            document.getElementById('left-nav')?.classList.add('collapsed');
+        }
+
+        function expandLeftNav() {
+            const nav = document.getElementById('left-nav');
+            if (!nav) return;
+            nav.classList.remove('collapsed');
+            localStorage.removeItem('gitgost-nav-collapsed');
+        }
+
+        // Cualquier enlace del nav distinto de "code" (el que alterna el
+        // colapso) devuelve la barra a su estado expandido.
+        document.querySelectorAll('.left-nav a').forEach(a => {
+            if ((a.getAttribute('onclick') || '').includes('toggleLeftNav')) return;
+            a.addEventListener('click', expandLeftNav);
+        });
     </script>
     <script src="/ethicalmetrics.js" data-site-key="gitgost-repo"></script>
 </body>

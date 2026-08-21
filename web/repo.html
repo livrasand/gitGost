@@ -79,7 +79,7 @@
             margin: 0;
             background: var(--bg);
             color: var(--fg);
-            font-family: "IBM Plex Sans", system-ui, sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
             font-size: 0.9rem;
             height: 100vh;
             height: 100dvh;
@@ -100,14 +100,14 @@
             z-index: 10;
         }
         .topbar-logo {
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-weight: 700;
             font-size: 0.88rem;
             color: var(--accent);
             text-decoration: none;
         }
         .topbar-title {
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.88rem;
             color: var(--fg);
             flex: 1;
@@ -123,7 +123,7 @@
             color: var(--fg);
             font-size: 0.75rem;
             cursor: pointer;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             transition: all 0.15s;
             text-decoration: none;
             display: inline-flex;
@@ -136,7 +136,7 @@
         .rv-btn.back { color: var(--fg-muted); }
 
         .breadcrumb {
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.75rem;
             color: var(--fg-muted);
             padding: 0.4rem 1.25rem;
@@ -170,8 +170,8 @@
             transition: width 0.2s ease, flex-basis 0.2s ease;
         }
         .search-results { padding: 0.9rem 1.25rem; }
-        .search-results h2 { margin: 0 0 0.7rem; font: 600 0.88rem "IBM Plex Mono", monospace; }
-        .search-result { display: block; width: 100%; text-align: left; padding: 0.55rem 0.65rem; margin: 0; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--fg); cursor: pointer; font: 0.76rem "IBM Plex Mono", monospace; }
+        .search-results h2 { margin: 0 0 0.7rem; font: 600 0.88rem ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+        .search-result { display: block; width: 100%; text-align: left; padding: 0.55rem 0.65rem; margin: 0; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--fg); cursor: pointer; font: 0.76rem ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
         .search-result:hover { background: var(--bg-hover); }
         .search-result-path { color: var(--accent); display: block; }
         .search-result-note { color: var(--fg-muted); font-size: 0.68rem; margin-top: 0.2rem; display: block; }
@@ -181,7 +181,7 @@
             gap: 0.3rem;
             padding: 0.2rem 0.5rem;
             font-size: 0.78rem;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             cursor: pointer;
             color: var(--fg);
             white-space: nowrap;
@@ -216,7 +216,7 @@
         .tree-name.file { color: var(--fg); }
         .tree-children { display: none; }
         .tree-children.open { display: block; }
-        .tree-loading { padding: 1rem; font-size: 0.78rem; color: var(--fg-secondary); font-family: "IBM Plex Mono", monospace; }
+        .tree-loading { padding: 1rem; font-size: 0.78rem; color: var(--fg-secondary); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
         .tree-badge {
             font-size: 0.65rem;
             color: var(--fg-secondary);
@@ -239,7 +239,7 @@
             margin: 0;
             padding: 1.25rem 1.5rem;
             font-size: 0.78rem;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             line-height: 1.65;
             color: var(--fg);
             white-space: pre-wrap;
@@ -254,7 +254,7 @@
             border-bottom: 1px solid var(--border);
             background: var(--bg);
             font-size: 0.72rem;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             color: var(--fg-secondary);
             min-height: 2.1rem;
         }
@@ -322,7 +322,7 @@
         .file-toolbar .ft-name {
             font-size: 0.72rem;
             color: var(--fg-muted);
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -332,7 +332,7 @@
         .file-toolbar .ft-size {
             font-size: 0.68rem;
             color: var(--fg-secondary);
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             white-space: nowrap;
         }
         .file-toolbar .ft-spacer { flex: 1; }
@@ -344,7 +344,7 @@
             color: var(--fg);
             font-size: 0.7rem;
             cursor: pointer;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             transition: all 0.15s;
             white-space: nowrap;
         }
@@ -358,7 +358,7 @@
             padding: 0.28rem 0.55rem;
             background: color-mix(in srgb, var(--bg-secondary) 60%, transparent);
             border-top: 1px solid color-mix(in srgb, var(--border) 45%, transparent);
-            font: 0.7rem/1.5 'IBM Plex Mono', monospace;
+            font: 0.7rem/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             min-width: 42rem;
         }
         .blame-group-header:first-child { border-top: none; }
@@ -376,7 +376,7 @@
             border-radius: 3px;
             background: transparent;
             color: var(--fg-muted);
-            font: 0.62rem 'IBM Plex Mono', monospace;
+            font: 0.62rem ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             padding: 0.1rem 0.5rem;
             cursor: pointer;
             white-space: nowrap;
@@ -391,7 +391,7 @@
             min-width: 42rem;
             min-height: 1.65rem;
             border-bottom: 1px solid color-mix(in srgb, var(--border) 25%, transparent);
-            font: 0.72rem/1.65 'IBM Plex Mono', monospace;
+            font: 0.72rem/1.65 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
         .blame-row:hover { background: var(--bg-hover); }
         .blame-cell { padding: 0 0.55rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -404,8 +404,55 @@
             border-bottom: 1px solid var(--border);
             background: var(--bg-secondary);
             color: var(--fg-muted);
-            font: 0.7rem 'IBM Plex Mono', monospace;
+            font: 0.7rem ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
+        /* Historial de archivo: paginación "load more" y layout de fila con diff. */
+        .fh-more { display: flex; justify-content: center; padding: 0.6rem; }
+        .fh-load-more { border: 1px solid var(--border); }
+        .commit-item.fh-commit { flex-wrap: wrap; align-items: center; gap: 0.35rem; cursor: default; }
+        .commit-item.fh-commit .blame-diff-box { flex-basis: 100%; }
+        /* Vista de código con permalinks por línea (#L5, #L5-L20). */
+        .code-lines {
+            margin: 0;
+            padding: 0.75rem 0;
+            font-size: 0.78rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            line-height: 1.65;
+            background: var(--code-bg);
+            color: var(--fg);
+        }
+        .cl-row { display: flex; padding-right: 0.75rem; }
+        .cl-row.cl-hl { background: rgba(255, 214, 0, 0.12); box-shadow: inset 2px 0 0 var(--accent); }
+        .cl-num {
+            flex: 0 0 auto;
+            min-width: 3ch;
+            padding: 0 0.75rem;
+            text-align: right;
+            color: var(--fg-muted);
+            opacity: 0.7;
+            text-decoration: none;
+            user-select: none;
+            cursor: pointer;
+        }
+        .cl-row:hover .cl-num { color: var(--accent); opacity: 1; }
+        .cl-code {
+            flex: 1 1 auto;
+            padding-left: 0.75rem;
+            border-left: 1px solid var(--border);
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        /* Assets de release: filas con tamaño, contador de descargas y acciones. */
+        .rel-asset-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0;
+            font-size: 0.8rem;
+        }
+        .rel-asset-icon { color: var(--fg-muted); flex-shrink: 0; display: inline-flex; }
+        .rel-asset-name { color: var(--accent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+        .rel-asset-meta { color: var(--fg-muted); font-size: 0.7rem; display: inline-flex; gap: 0.4rem; white-space: nowrap; }
         /* Botón "volver al árbol" de la vista de archivos: visible solo en móvil con archivo abierto. */
         .file-back-btn {
             display: none;
@@ -417,7 +464,7 @@
             color: var(--fg);
             font-size: 0.7rem;
             cursor: pointer;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             padding: 0.22rem 0.5rem;
             flex-shrink: 0;
             white-space: nowrap;
@@ -427,7 +474,7 @@
             padding: 2rem;
             font-size: 0.78rem;
             color: var(--fg-secondary);
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
         .readme {
             padding: 1.5rem 2rem;
@@ -452,7 +499,7 @@
             background: var(--code-bg);
             padding: 0.2em 0.45em;
             border-radius: 4px;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.83em;
             border: 1px solid var(--border);
         }
@@ -470,7 +517,7 @@
         /* Diagramas Mermaid: el bloque sin renderizar se muestra como código y el gráfico ya renderizado permite scroll horizontal. */
         .mermaid {
             white-space: pre;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.82rem;
             background: var(--code-bg);
             border: 1px solid var(--border);
@@ -564,7 +611,7 @@
             gap: 0.65rem;
             padding: 0.65rem 1rem;
             font-size: 0.78rem;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             color: var(--fg-muted);
             text-decoration: none;
             border-left: 2px solid transparent;
@@ -635,7 +682,7 @@
         }
         .sidebar-label {
             font-size: 0.68rem;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             color: var(--fg-secondary);
             text-transform: uppercase;
             letter-spacing: 0.05em;
@@ -656,7 +703,7 @@
         }
         .sidebar-row .val {
             color: var(--fg);
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.72rem;
         }
         .sidebar-row .val.pub { color: #22c55e; }
@@ -677,7 +724,7 @@
             background: transparent;
             color: var(--fg);
             font-size: 0.74rem;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             cursor: pointer;
             text-decoration: none;
             transition: background 0.1s, border-color 0.1s;
@@ -693,7 +740,7 @@
             margin-top: 0.4rem;
         }
         .sidebar-tag {
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.68rem;
             color: var(--accent);
             text-decoration: none;
@@ -752,7 +799,7 @@
             min-width: 0;
             color: var(--accent);
             text-decoration: none;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.72rem;
         }
         .sb-home-link svg { flex: none; }
@@ -768,7 +815,7 @@
         .sb-deploy-env {
             flex: 1 1 auto;
             min-width: 0;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.72rem;
             color: var(--fg);
             overflow: hidden;
@@ -777,7 +824,7 @@
         }
         .sb-deploy-status {
             flex: none;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.62rem;
             text-transform: uppercase;
         }
@@ -838,7 +885,7 @@
                     display: inline-flex; align-items: center; gap: 0.3rem;
                     padding: 0.15rem 0.5rem; border-radius: 9999px;
                     font-size: 0.7rem; font-weight: 600;
-                    font-family: 'IBM Plex Mono', monospace;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                     background: var(--bg-secondary); color: var(--accent);
                     border: 1px solid var(--accent); white-space: nowrap;
                 }
@@ -921,7 +968,7 @@
         .issue-item:last-child { border-bottom: none; }
         .issue-item:hover .issue-title { color: var(--accent); }
         .issue-num {
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.72rem;
             color: var(--fg-secondary);
             flex-shrink: 0;
@@ -932,19 +979,19 @@
             font-size: 0.72rem;
             color: var(--fg-secondary);
             flex-shrink: 0;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
         .issue-label {
             display: inline-block;
             font-size: 0.65rem;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             padding: 0.1em 0.4em;
             border-radius: 2px;
             margin-left: 0.3rem;
             vertical-align: middle;
         }
         .issue-list-header {
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.72rem;
             color: var(--fg-secondary);
             padding: 0.75rem 1.25rem 0.4rem;
@@ -960,7 +1007,7 @@
             gap: 1.25rem;
         }
         .bugs-tab {
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.75rem;
             color: var(--fg-muted);
             cursor: pointer;
@@ -975,7 +1022,7 @@
         .bugs-tab:hover:not(.active) { color: var(--fg); }
         .bugs-spacer { flex: 1; }
         .bugs-new-btn {
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.72rem;
             color: var(--accent);
             background: none;
@@ -989,7 +1036,7 @@
         .bugs-empty {
             padding: 3rem 1.25rem;
             text-align: center;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.78rem;
             color: var(--fg-muted);
         }
@@ -997,7 +1044,7 @@
         .disc-category {
             display: inline-block;
             font-size: 0.65rem;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             padding: 0.1em 0.4em;
             border-radius: 2px;
             background: var(--bg-secondary);
@@ -1009,7 +1056,7 @@
         .disc-answer-badge {
             color: #2da44e;
             font-size: 0.65rem;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             margin-left: 0.3rem;
         }
 
@@ -1043,7 +1090,7 @@
             background: var(--bg);
         }
         .bug-modal-heading {
-            font: 600 0.9rem "IBM Plex Sans", system-ui, sans-serif;
+            font: 600 0.9rem system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
             color: var(--fg);
         }
         .bug-modal-close {
@@ -1071,7 +1118,7 @@
         }
         .bug-modal-title {
             font-size: 0.78rem;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             color: var(--fg-muted);
             margin-bottom: 0.1rem;
         }
@@ -1081,7 +1128,7 @@
             border: none;
             border-bottom: 1px solid var(--border);
             padding: 0.35rem 0;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.82rem;
             color: var(--fg);
             outline: none;
@@ -1101,7 +1148,7 @@
         .bug-modal-footer .note {
             font-size: 0.7rem;
             color: var(--fg-muted);
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
         .bug-modal-footer .note a { color: var(--accent); }
         .bug-modal-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; }
@@ -1121,12 +1168,12 @@
         .bug-template-item:hover { background: var(--bg-hover); }
         .bug-template-item-main { min-width: 0; }
         .bug-template-item-title {
-            font: 600 0.92rem "IBM Plex Sans", system-ui, sans-serif;
+            font: 600 0.92rem system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
             color: var(--fg);
             margin-bottom: 0.2rem;
         }
         .bug-template-item-desc {
-            font: 0.78rem "IBM Plex Sans", system-ui, sans-serif;
+            font: 0.78rem system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
             color: var(--fg-muted);
         }
         .bug-template-item-arrow {
@@ -1137,11 +1184,11 @@
         .bug-form-section { display: flex; flex-direction: column; gap: 0.85rem; }
         .bug-field-group { display: flex; flex-direction: column; gap: 0.35rem; }
         .bug-field-label {
-            font: 600 0.8rem "IBM Plex Sans", system-ui, sans-serif;
+            font: 600 0.8rem system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
             color: var(--fg);
         }
         .bug-field-desc {
-            font: 0.74rem "IBM Plex Sans", system-ui, sans-serif;
+            font: 0.74rem system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
             color: var(--fg-muted);
         }
         .bug-field-markdown {
@@ -1155,7 +1202,7 @@
             white-space: pre-wrap;
         }
         .bug-field-checklist { display: flex; flex-direction: column; gap: 0.45rem; }
-        .bug-field-check { display: flex; align-items: flex-start; gap: 0.5rem; font: 0.8rem "IBM Plex Sans", system-ui, sans-serif; color: var(--fg); }
+        .bug-field-check { display: flex; align-items: flex-start; gap: 0.5rem; font: 0.8rem system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif; color: var(--fg); }
         .bug-field-check input { width: auto; margin-top: 0.18rem; }
         .bug-template-back {
             align-self: flex-start;
@@ -1165,11 +1212,11 @@
             border-radius: 999px;
             padding: 0.3rem 0.7rem;
             cursor: pointer;
-            font: 0.75rem "IBM Plex Mono", monospace;
+            font: 0.75rem ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
         .bug-template-back:hover { color: var(--fg); border-color: var(--fg-secondary); }
         .bug-cancel-btn {
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.75rem;
             background: none;
             border: 1px solid var(--border);
@@ -1179,7 +1226,7 @@
             color: var(--fg-muted);
         }
         .bug-submit-btn {
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.75rem;
             background: var(--accent);
             border: none;
@@ -1209,7 +1256,7 @@
             flex-wrap: wrap;
         }
         .issue-detail-num {
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 1rem;
             color: var(--fg-muted);
         }
@@ -1228,7 +1275,7 @@
             flex-wrap: wrap;
             font-size: 0.75rem;
             color: var(--fg-muted);
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             margin-bottom: 1.25rem;
             padding-bottom: 0.75rem;
             border-bottom: 1px solid var(--border);
@@ -1256,7 +1303,7 @@
             background: var(--code-bg);
             padding: 0.15em 0.4em;
             border-radius: 3px;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.83em;
             border: 1px solid var(--border);
         }
@@ -1274,7 +1321,7 @@
             flex-shrink: 0;
             border-left: 1px solid var(--border);
             padding: 1.25rem 1rem;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.72rem;
             display: flex;
             flex-direction: column;
@@ -1295,7 +1342,7 @@
             display: inline-flex;
             align-items: center;
             gap: 0.3rem;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.72rem;
             color: var(--fg-muted);
             background: none;
@@ -1306,7 +1353,7 @@
         }
         .issue-back-btn:hover { color: var(--accent); }
         .issue-ext-link {
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.68rem;
             color: var(--accent);
             text-decoration: none;
@@ -1358,7 +1405,7 @@
             border: none;
             outline: none;
             resize: vertical;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.78rem;
             color: var(--fg);
             line-height: 1.5;
@@ -1375,7 +1422,7 @@
             background: none;
             border: none;
             cursor: pointer;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.68rem;
             color: var(--fg-muted);
             padding: 0.1rem 0.45rem;
@@ -1401,7 +1448,7 @@
             gap: 0.5rem;
         }
         .reply-token {
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.68rem;
             background: none;
             border: 1px solid var(--border);
@@ -1425,7 +1472,7 @@
         }
         .reply-send-btn:disabled { opacity: 0.5; cursor: default; }
         .reply-status {
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.65rem;
             color: var(--fg-muted);
         }
@@ -1467,7 +1514,7 @@
             overflow-x: auto;
         }
         .comment-meta {
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.63rem;
             color: var(--fg-muted);
             margin-bottom: 0.25rem;
@@ -1489,7 +1536,7 @@
             padding: 1.5rem;
             max-width: 340px;
             width: 90%;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             box-shadow: 0 8px 32px rgba(0,0,0,0.18);
         }
         .hash-modal-title {
@@ -1520,7 +1567,7 @@
             justify-content: flex-end;
         }
         .hash-modal-btn {
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.72rem;
             padding: 0.35rem 0.75rem;
             border-radius: 4px;
@@ -1552,7 +1599,7 @@
             padding: 1.25rem 1.5rem;
             width: 420px;
             max-width: 95vw;
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             box-shadow: 0 8px 32px rgba(0,0,0,0.18);
         }
         .clone-modal-title {
@@ -1587,7 +1634,7 @@
             text-overflow: ellipsis;
         }
         .clone-copy-btn {
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.68rem;
             padding: 0.3rem 0.55rem;
             border: 1px solid var(--border);
@@ -1606,7 +1653,7 @@
             border-top: 1px solid var(--border);
         }
         .clone-close-btn {
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.75rem;
             padding: 0.35rem 0.75rem;
             border: 1px solid var(--border);
@@ -1627,7 +1674,7 @@
             display: grid;
             grid-template-columns: minmax(0, 1fr) minmax(220px, 420px) minmax(0, 1fr);
             align-items: center;
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.75rem;
         }
         .statusbar-left { display: flex; align-items: center; gap: 0.5rem; }
@@ -1639,7 +1686,7 @@
             border-radius: 3px;
             background: var(--bg-secondary);
             color: var(--fg);
-            font: 0.7rem 'IBM Plex Mono', monospace;
+            font: 0.7rem ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
         .statusbar-file-search::placeholder { color: var(--fg-secondary); }
         .statusbar-file-search:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
@@ -1674,7 +1721,7 @@
             background: transparent;
             color: var(--fg);
             text-align: left;
-            font: 0.68rem 'IBM Plex Mono', monospace;
+            font: 0.68rem ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
         .statusbar-file-result { cursor: pointer; }
         .statusbar-file-result:hover,
@@ -1692,7 +1739,7 @@
             border-radius: 4px;
             padding: 0.75rem 1rem;
             margin-bottom: 1rem;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.78rem;
             color: #856404;
             align-items: center;
@@ -1785,7 +1832,7 @@
                 }
                 .mobile-sidebar-panel .msb-header-title {
                     font-size: 0.8rem;
-                    font-family: "IBM Plex Mono", monospace;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                     font-weight: 600;
                     color: var(--fg);
                 }
@@ -1842,7 +1889,7 @@
                 }
                 .mobile-sidebar-panel .msb-label {
                     font-size: 0.62rem;
-                    font-family: "IBM Plex Mono", monospace;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                     color: var(--fg-secondary);
                     text-transform: uppercase;
                     letter-spacing: 0.05em;
@@ -1860,7 +1907,7 @@
                     gap: 0.25rem;
                 }
                 .mobile-sidebar-panel .msb-tag {
-                    font-family: "IBM Plex Mono", monospace;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                     font-size: 0.62rem;
                     color: var(--accent);
                     text-decoration: none;
@@ -1879,7 +1926,7 @@
                 }
                 .mobile-sidebar-panel .msb-row .val {
                     color: var(--fg);
-                    font-family: "IBM Plex Mono", monospace;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                     font-size: 0.68rem;
                 }
                 .mobile-sidebar-panel .msb-row .val.mirror { color: var(--fg-muted); }
@@ -1898,7 +1945,7 @@
                     background: transparent;
                     color: var(--fg);
                     font-size: 0.7rem;
-                    font-family: "IBM Plex Mono", monospace;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                     cursor: pointer;
                     text-decoration: none;
                     transition: background 0.1s, border-color 0.1s;
@@ -1968,7 +2015,7 @@
                     justify-content: center;
                     width: 100%;
                     height: 100%;
-                    font-family: "IBM Plex Mono", monospace;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                     font-size: 0.72rem;
                     color: var(--fg-muted);
                     background: var(--bg-hover);
@@ -1991,7 +2038,7 @@
                     display: flex;
                     align-items: center;
                     gap: 0.5rem;
-                    font-family: "IBM Plex Mono", monospace;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                     font-size: 0.7rem;
                     color: var(--fg-secondary);
                     flex-wrap: wrap;
@@ -2030,7 +2077,7 @@
                     cursor: pointer;
                     padding: 0.25rem 0.5rem;
                     font-size: 0.72rem;
-                    font-family: 'IBM Plex Mono', monospace;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 }
                 .commit-detail-header .commit-back-btn:hover {
                     color: var(--accent);
@@ -2040,14 +2087,14 @@
                     color: var(--accent);
                     font-weight: 600;
                     font-size: 0.82rem;
-                    font-family: 'IBM Plex Mono', monospace;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 }
                 .commit-detail-header .commit-ext-link {
                     margin-left: auto;
                     color: var(--fg-muted);
                     text-decoration: none;
                     font-size: 0.7rem;
-                    font-family: 'IBM Plex Mono', monospace;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 }
                 .commit-detail-header .commit-ext-link:hover {
                     color: var(--accent);
@@ -2083,7 +2130,7 @@
                     display: flex;
                     gap: 0.75rem;
                     font-size: 0.72rem;
-                    font-family: 'IBM Plex Mono', monospace;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 }
                 .commit-detail-meta .cd-stats span.add { color: #2da44e; }
                 .commit-detail-meta .cd-stats span.del { color: #cf222e; }
@@ -2094,7 +2141,7 @@
                     margin-bottom: 1rem;
                     white-space: pre-wrap;
                     word-break: break-word;
-                    font-family: 'IBM Plex Mono', monospace;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                     background: var(--code-bg);
                     padding: 0.75rem 1rem;
                     border-radius: 4px;
@@ -2117,7 +2164,7 @@
                     padding: 0.4rem 0.75rem;
                     background: var(--bg-hover);
                     font-size: 0.75rem;
-                    font-family: 'IBM Plex Mono', monospace;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                     border-bottom: 1px solid var(--border);
                     flex-wrap: wrap;
                 }
@@ -2225,7 +2272,7 @@
                     margin: 0;
                     padding: 0.5rem 0.75rem;
                     font-size: 0.7rem;
-                    font-family: 'IBM Plex Mono', monospace;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                     line-height: 1.5;
                     overflow-x: auto;
                     background: var(--code-bg);
@@ -2257,7 +2304,7 @@
                     font-size: 0.7rem;
                     color: var(--fg-muted);
                     font-weight: 400;
-                    font-family: 'IBM Plex Mono', monospace;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 }
                 .pr-files-list {
                     padding: 0.4rem 1.25rem 1.25rem;
@@ -2692,9 +2739,9 @@
 
     <div class="statusbar">
         <div class="statusbar-left">
-            <a href="/" style="color:var(--accent);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.78rem;">gitGost</a>
+            <a href="/" style="color:var(--accent);text-decoration:none;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-weight:700;font-size:0.78rem;">gitGost</a>
             <span style="color:var(--fg-muted);">›</span>
-            <span id="statusbar-path" style="font-family:'IBM Plex Mono',monospace;display:flex;align-items:center;gap:0.2rem;"></span>
+            <span id="statusbar-path" style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;display:flex;align-items:center;gap:0.2rem;"></span>
         </div>
         <div class="statusbar-center" role="search">
             <span class="statusbar-file-search-icon" aria-hidden="true">⌕</span>
@@ -3774,7 +3821,7 @@
         async function loadIssueComments(num, listId) {
             const list = document.getElementById(listId);
             if (!list) return;
-            list.innerHTML = '<li style="list-style:none;font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;color:var(--fg-muted);padding:0.5rem 0;">loading comments...</li>';
+            list.innerHTML = '<li style="list-style:none;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.7rem;color:var(--fg-muted);padding:0.5rem 0;">loading comments...</li>';
             try {
                 let comments = [];
                 if (rv.provider === 'gh') {
@@ -3809,7 +3856,7 @@
                 list.querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
             } catch(e) {
                 const errMsg = escHtml((e && e.message) ? e.message : String(e));
-                if (list) list.innerHTML = `<li style="list-style:none;font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--accent);">error loading comments: ${errMsg}</li>`;
+                if (list) list.innerHTML = `<li style="list-style:none;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.7rem;color:var(--accent);">error loading comments: ${errMsg}</li>`;
             }
         }
 
@@ -4090,7 +4137,7 @@
                     <div class="bug-modal-footer" id="bug-modal-footer" hidden>
                         <span class="note">Anonymous issue in <a href="${repoHref}" target="_blank">${repoLabel}</a></span>
                         <div class="bug-modal-actions">
-                            <span id="bug-status" style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-muted);"></span>
+                            <span id="bug-status" style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--fg-muted);"></span>
                             <button class="bug-cancel-btn" onclick="closeBugModal()">Cancel</button>
                             <button class="bug-submit-btn" id="bug-submit-btn" onclick="submitBug()">Create</button>
                         </div>
@@ -4289,7 +4336,7 @@
                     : '';
 
                 const reviewState = i.review_comments > 0
-                    ? `<span style="font-size:0.68rem;color:var(--fg-muted);font-family:'IBM Plex Mono',monospace;flex-shrink:0;display:inline-flex;align-items:center;gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7.09 2.75a4 4 0 0 0-4 4v6.208a4 4 0 0 0 4 4h.093v3.792a.5.5 0 0 0 .839.368l4.52-4.16h4.369a4 4 0 0 0 4-4V6.75a4 4 0 0 0-4-4z"/></svg> ${escHtml(i.review_comments)}</span>`
+                    ? `<span style="font-size:0.68rem;color:var(--fg-muted);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;flex-shrink:0;display:inline-flex;align-items:center;gap:0.25rem;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7.09 2.75a4 4 0 0 0-4 4v6.208a4 4 0 0 0 4 4h.093v3.792a.5.5 0 0 0 .839.368l4.52-4.16h4.369a4 4 0 0 0 4-4V6.75a4 4 0 0 0-4-4z"/></svg> ${escHtml(i.review_comments)}</span>`
                     : '';
 
                 const num = i.number || i.iid;
@@ -4362,7 +4409,7 @@
                 const wrap = document.createElement('div');
                 wrap.style.padding = '1rem';
                 wrap.style.color = 'var(--fg-secondary)';
-                wrap.style.fontFamily = "'IBM Plex Mono',monospace";
+                wrap.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
                 wrap.style.fontSize = '0.78rem';
                 wrap.appendChild(document.createTextNode(`error loading discussions: ${msg}`));
 
@@ -4623,7 +4670,7 @@
 
                     let pageText = await fetchWikiRaw(pageSlug);
                     if (pageText === null && pageSlug === 'Home') {
-                        panel.innerHTML = `<div style="padding:1rem;color:var(--fg-secondary);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;">
+                        panel.innerHTML = `<div style="padding:1rem;color:var(--fg-secondary);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.78rem;">
                             This repository has no wiki content yet.
                             <div style="margin-top:0.5rem;font-size:0.72rem;color:var(--fg-muted);">
                                 <a href="${rv.provider === 'cb' ? `https://codeberg.org/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/wiki` : rv.provider === 'gh' ? `https://github.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/wiki` : `https://gitlab.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/-/wikis`}" target="_blank" style="color:var(--accent);">${rv.provider === 'cb' ? 'Open wiki on Codeberg' : rv.provider === 'gh' ? 'Open wiki on GitHub' : 'Open wiki on GitLab'} ↗</a>
@@ -4671,7 +4718,7 @@
                     const safeRepo = encodeURIComponent(rv.repo || '');
                     let navHtml = '';
                     if (navPages.length > 0) {
-                        navHtml = `<div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-family:'IBM Plex Mono',monospace;color:var(--fg-muted);display:flex;gap:0.5rem;flex-wrap:wrap;">
+                        navHtml = `<div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;color:var(--fg-muted);display:flex;gap:0.5rem;flex-wrap:wrap;">
                             ${navPages.map(p => {
                                 const active = p.slug === pageSlug && (p.anchor || '') === anchor;
                                 const target = p.slug + (p.anchor ? '#' + p.anchor : '');
@@ -4680,7 +4727,7 @@
                             <a href="https://github.com/${safeOwner}/${safeRepo}/wiki" target="_blank" style="color:var(--accent);text-decoration:none;padding:0.15rem 0.4rem;">Open on GitHub ↗</a>
                         </div>`;
                     } else {
-                        navHtml = `<div style="padding:0.5rem 1.25rem 1rem;font-size:0.72rem;font-family:'IBM Plex Mono',monospace;color:var(--fg-muted);">
+                        navHtml = `<div style="padding:0.5rem 1.25rem 1rem;font-size:0.72rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;color:var(--fg-muted);">
                             <a href="https://github.com/${safeOwner}/${safeRepo}/wiki" target="_blank" style="color:var(--accent);">Open wiki on GitHub ↗</a>
                         </div>`;
                     }
@@ -4730,7 +4777,7 @@
                         });
                     }
 
-                    const sidebar = `<div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-family:'IBM Plex Mono',monospace;color:var(--fg-muted);display:flex;gap:0.5rem;flex-wrap:wrap;">
+                    const sidebar = `<div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;color:var(--fg-muted);display:flex;gap:0.5rem;flex-wrap:wrap;">
                         ${navPages.map(p => {
                             const active = p.slug === targetSubUrl && (p.anchor || '') === anchor;
                             const target = p.slug + (p.anchor ? '#' + p.anchor : '');
@@ -4756,7 +4803,7 @@
                     const targetSlug = wikiPage ? pageSlug : (pages[0]?.slug || '');
                     if (!wikiPage) wikiPage = pages[0];
 
-                    const sidebar = `<div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-family:'IBM Plex Mono',monospace;color:var(--fg-muted);display:flex;gap:0.5rem;flex-wrap:wrap;">
+                    const sidebar = `<div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;color:var(--fg-muted);display:flex;gap:0.5rem;flex-wrap:wrap;">
                         ${pages.map(p => {
                             const active = p.slug === targetSlug;
                             return `<a href="#" data-wiki="${escAttr(p.slug)}" style="color:${active ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${active ? 'var(--accent)' : 'var(--border)'};border-radius:3px;">${escHtml(p.title)}</a>`;
@@ -4776,7 +4823,7 @@
                 const wrapper = document.createElement('div');
                 wrapper.style.padding = '1rem';
                 wrapper.style.color = 'var(--fg-secondary)';
-                wrapper.style.fontFamily = "'IBM Plex Mono',monospace";
+                wrapper.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
                 wrapper.style.fontSize = '0.78rem';
                 wrapper.textContent = `error loading wiki: ${e && e.message ? e.message : 'unknown error'}`;
 
@@ -4903,6 +4950,46 @@
         let _releasesCache = null;
         let _currentReleaseView = 'list';
 
+        // Normaliza un asset de release al mismo shape en las tres forjas,
+        // conservando todos los metadatos disponibles para la vista dedicada.
+        function _normAsset(a) {
+            return {
+                id: String(a.id || ''),
+                name: a.name || '',
+                label: a.label || '',
+                content_type: a.content_type || a.contentType || '',
+                state: a.state || '',
+                size: Number(a.size) || 0,
+                download_count: Number(a.download_count) || 0,
+                created_at: a.created_at || '',
+                updated_at: a.updated_at || '',
+                browser_download_url: a.browser_download_url || a.direct_asset_url || a.url || ''
+            };
+        }
+
+        // Etiqueta legible del tipo de asset: content-type de la API o deducido
+        // por la extensión del nombre de archivo.
+        function _assetTypeLabel(a) {
+            const extMap = {
+                zip: 'application/zip', '7z': 'application/x-7z-compressed',
+                rar: 'application/vnd.rar', gz: 'application/gzip', tgz: 'application/gzip',
+                bz2: 'application/x-bzip2', xz: 'application/x-xz', tar: 'application/x-tar',
+                apk: 'application/vnd.android.package-archive', ipa: 'application/octet-stream',
+                dmg: 'application/x-apple-diskimage', exe: 'application/vnd.microsoft.portable-executable',
+                msi: 'application/x-msdownload', deb: 'application/vnd.debian.binary-package',
+                rpm: 'application/x-rpm', appimage: 'application/x-executable',
+                pdf: 'application/pdf', txt: 'text/plain', md: 'text/markdown',
+                json: 'application/json', xml: 'application/xml', csv: 'text/csv',
+                sig: 'text/plain', asc: 'text/plain', sbom: 'application/json',
+                png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif',
+                svg: 'image/svg+xml', webp: 'image/webp', ico: 'image/x-icon'
+            };
+            const ext = (String(a.name || '').split('.').pop() || '').toLowerCase();
+            const guess = extMap[ext] || '';
+            const ct = a.content_type || '';
+            return ct || (guess ? guess + ' (deduced from .' + ext + ')' : (ext ? '.' + ext + ' file' : 'unknown type'));
+        }
+
         function normalizeRelease(r) {
             if (!r) return r;
             const assets = r.assets || {};
@@ -4912,7 +4999,10 @@
                     glAssets.push({
                         name: s.format ? `Source code (${s.format})` : 'Source code',
                         browser_download_url: s.url || '',
-                        size: 0
+                        size: 0,
+                        download_count: 0,
+                        created_at: '',
+                        content_type: ''
                     });
                 });
             }
@@ -4921,7 +5011,10 @@
                     glAssets.push({
                         name: a.name || '',
                         browser_download_url: a.direct_asset_url || a.url || '',
-                        size: a.size || 0
+                        size: a.size || 0,
+                        download_count: 0,
+                        created_at: '',
+                        content_type: a.link_type || ''
                     });
                 });
             }
@@ -5050,10 +5143,10 @@
                 const defaultBadge = name === defaultName ? `<span class="issue-label" style="background:#2da44e22;border:1px solid #2da44e;color:#2da44e;margin-left:0.4rem;">default</span>` : '';
                 return `<div class="issue-item" style="cursor:default;align-items:flex-start;">
                     <span class="issue-title" style="display:flex;align-items:center;flex-wrap:wrap;gap:0.3rem;">
-                        <a href="${baseUrl}${escAttr(name)}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-family:'IBM Plex Mono',monospace;">${escHtml(name)}</a>
+                        <a href="${baseUrl}${escAttr(name)}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">${escHtml(name)}</a>
                         ${defaultBadge}${protectedBadge}
                     </span>
-                    <span class="issue-meta" style="font-family:'IBM Plex Mono',monospace;">${escHtml(sha)}</span>
+                    <span class="issue-meta" style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">${escHtml(sha)}</span>
                 </div>`;
             }).join('');
             panel.innerHTML = header + '<div class="commit-list">' + list + '</div>';
@@ -5133,9 +5226,9 @@
                 const badge = i === 0 ? ' <span class="release-latest-badge">Latest</span>' : '';
                 return `<div class="issue-item" style="cursor:default;align-items:flex-start;">
                     <span class="issue-title" style="display:flex;align-items:center;flex-wrap:wrap;gap:0.3rem;">
-                        <a href="${escAttr(buildFilesUrl('tree', name, []))}" data-tag="${escAttr(name)}" onclick="openTag(this.dataset.tag); return false;" style="color:var(--accent);text-decoration:none;font-family:'IBM Plex Mono',monospace;">${escHtml(name)}</a>${badge}
+                        <a href="${escAttr(buildFilesUrl('tree', name, []))}" data-tag="${escAttr(name)}" onclick="openTag(this.dataset.tag); return false;" style="color:var(--accent);text-decoration:none;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">${escHtml(name)}</a>${badge}
                     </span>
-                    <span class="issue-meta" style="display:flex;align-items:center;gap:0.35rem;font-family:'IBM Plex Mono',monospace;">
+                    <span class="issue-meta" style="display:flex;align-items:center;gap:0.35rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">
                         <span>${escHtml(sha)}${dateStr}</span>
                         <a href="${baseUrl}${escAttr(name)}" target="_blank" rel="noopener" title="open in ${escAttr(rv.provider)}" style="color:var(--fg-muted);text-decoration:none;font-size:0.7rem;">↗</a>
                     </span>
@@ -5255,7 +5348,7 @@
                 const type = p.type || p.package_type || '';
                 const date = p.created_at ? new Date(p.created_at).toLocaleDateString('en', {month:'short', day:'numeric', year:'numeric'}) : '';
                 return `<div class="issue-item" style="cursor:pointer;" data-goto="${escAttr(buildDetailUrl('packages', `${name}@${version}`))}">
-                    <span class="issue-title" style="font-family:'IBM Plex Mono',monospace;">${escHtml(name)}:${escHtml(version)}</span>
+                    <span class="issue-title" style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">${escHtml(name)}:${escHtml(version)}</span>
                     <span class="issue-meta">${type}${date ? ' · ' + date : ''}</span>
                 </div>`;
             }).join('');
@@ -5287,7 +5380,7 @@
                     : '<li style="color:var(--fg-muted);">no files listed</li>';
                 panel.innerHTML = `
                     <div class="commit-detail-header" style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);">
-                        <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;">${escHtml(pkg.name || '')}:${escHtml(pkg.version || '')}</span>
+                        <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-weight:600;">${escHtml(pkg.name || '')}:${escHtml(pkg.version || '')}</span>
                         ${pkg.html_url ? `<a class="commit-ext-link" href="${escAttr(pkg.html_url)}" target="_blank" rel="noopener">Open Original</a>` : ''}
                     </div>
                     <div style="padding:1rem 1.25rem;">
@@ -5295,7 +5388,7 @@
                             ${pkg.type || pkg.package_type || ''}${date ? ' · ' + date : ''}
                         </div>
                         <div style="font-size:0.85rem;font-weight:600;margin-bottom:0.5rem;">Files</div>
-                        <ul style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.4rem;">${fileList}</ul>
+                        <ul style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.78rem;list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.4rem;">${fileList}</ul>
                     </div>`;
             } catch(e) {
                 panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
@@ -5343,7 +5436,7 @@
                             ${badges.join(' ')}
                         </div>
                         <span class="release-title">${escHtml(name)}</span>
-                            <span class="release-meta">${author ? profileLink(author) + ' · ' : ''}${dateStr}</span>
+                            <span class="release-meta">${author ? profileLink(author) + ' · ' : ''}${dateStr}${Array.isArray(r.assets) && r.assets.length ? ' · ' + r.assets.length + ' asset' + (r.assets.length !== 1 ? 's' : '') : ''}</span>
                     </div>
                 </div>`;
             }).join('');
@@ -5375,19 +5468,35 @@
 
             let assetsHtml = '';
             if (assets.length > 0) {
+                const totalSize = assets.reduce((acc, a) => acc + (Number(a.size) || 0), 0);
+                const fmtDate = d => {
+                    if (!d) return '';
+                    const dt = new Date(d);
+                    return isNaN(dt.getTime()) ? '' : dt.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' });
+                };
                 const items = assets.map(a => {
-                    const size = a.size ? (a.size / 1024).toFixed(1) + ' KB' : '';
-                    return `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;font-size:0.8rem;">
-                        <span style="color:var(--fg-muted);"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                    const size = Number(a.size) ? formatBytes(Number(a.size)) : '';
+                    const downloads = typeof a.download_count === 'number' && a.download_count > 0
+                        ? `<span title="${a.download_count.toLocaleString('en')} downloads">${a.download_count.toLocaleString('en')} downloads</span>`
+                        : '';
+                    const dateLabel = fmtDate(a.created_at || a.updated_at);
+                    const meta = [size, downloads, dateLabel].filter(Boolean)
+                        .join('<span style="opacity:0.5;">·</span>');
+                    const url = a.browser_download_url || '';
+                    return `<div class="rel-asset-row">
+                        <span class="rel-asset-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12.074 3.25v12.478M6.19 10.465l4.822 4.822c.293.293.677.44 1.06.44m5.883-5.262l-4.822 4.822c-.293.293-.677.44-1.06.44m8.677.788v.935a3.3 3.3 0 0 1-3.3 3.3H6.55a3.3 3.3 0 0 1-3.3-3.3v-.935" />
 </svg></span>
-                        <a href="${escAttr(a.browser_download_url || '#')}" style="color:var(--accent);text-decoration:none;" target="_blank" rel="noopener">${escHtml(a.name)}</a>
-                        <span style="color:var(--fg-muted);font-size:0.7rem;">${escHtml(size)}</span>
+                        <span class="rel-asset-name" title="${escAttr(url)}">${escHtml(a.name)}</span>
+                        <span class="rel-asset-meta">${meta}</span>
+                        ${url ? `<button type="button" class="ft-btn rel-dl-btn" data-url="${escAttr(url)}" title="Download this asset">download</button>` +
+                                `<button type="button" class="ft-btn rel-copy-btn" data-url="${escAttr(url)}" title="Copy the direct download URL">copy link</button>` : ''}
                     </div>`;
                 }).join('');
                 assetsHtml = `<div style="margin-top:1rem;">
-                    <div style="font-size:0.75rem;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.4rem;">Assets (${assets.length})</div>
+                    <div style="font-size:0.75rem;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.4rem;">` +
+                        `Assets (${assets.length})${totalSize > 0 ? ' · ' + formatBytes(totalSize) : ''}</div>
                     ${items}
                 </div>`;
             }
@@ -5412,20 +5521,69 @@
                 </div>
                 ${assetsHtml}
                 <div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
-                    ${zipball ? `<a href="${escAttr(zipball)}" style="font-size:0.75rem;color:var(--accent);text-decoration:none;border:1px solid var(--border);padding:0.25rem 0.5rem;border-radius:6px;" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                    ${zipball ? `<button type="button" class="ft-btn rel-src-btn" data-url="${escAttr(zipball)}" title="Download the source code as zip"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.5" d="m12 12l8.073-4.625M12 12v9.25M12 12L7.963 9.688m12.11-2.313a3.17 3.17 0 0 0-1.165-1.156L16.25 4.696m3.823 2.679c.275.472.427 1.015.427 1.58v6.09a3.15 3.15 0 0 1-1.592 2.736l-5.316 3.046A3.2 3.2 0 0 1 12 21.25M3.926 7.375a3.14 3.14 0 0 0-.426 1.58v6.09c0 1.13.607 2.172 1.592 2.736l5.316 3.046A3.2 3.2 0 0 0 12 21.25M3.926 7.375a3.17 3.17 0 0 1 1.166-1.156l5.316-3.046a3.2 3.2 0 0 1 3.184 0l2.658 1.523M3.926 7.375l4.037 2.313m0 0l8.287-4.992" />
-</svg> Source (zip)</a>` : ''}
-                    ${tarball ? `<a href="${escAttr(tarball)}" style="font-size:0.75rem;color:var(--accent);text-decoration:none;border:1px solid var(--border);padding:0.25rem 0.5rem;border-radius:6px;" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+</svg> Source (zip)</button>` : ''}
+                    ${tarball ? `<button type="button" class="ft-btn rel-src-btn" data-url="${escAttr(tarball)}" title="Download the source code as tar.gz"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.5" d="m12 12l8.073-4.625M12 12v9.25M12 12L7.963 9.688m12.11-2.313a3.17 3.17 0 0 0-1.165-1.156L16.25 4.696m3.823 2.679c.275.472.427 1.015.427 1.58v6.09a3.15 3.15 0 0 1-1.592 2.736l-5.316 3.046A3.2 3.2 0 0 1 12 21.25M3.926 7.375a3.14 3.14 0 0 0-.426 1.58v6.09c0 1.13.607 2.172 1.592 2.736l5.316 3.046A3.2 3.2 0 0 0 12 21.25M3.926 7.375a3.17 3.17 0 0 1 1.166-1.156l5.316-3.046a3.2 3.2 0 0 1 3.184 0l2.658 1.523M3.926 7.375l4.037 2.313m0 0l8.287-4.992" />
-</svg> Source (tar.gz)</a>` : ''}
+</svg> Source (tar.gz)</button>` : ''}
                 </div>
             </div>`;
+
+            panel.querySelectorAll('.rel-dl-btn, .rel-src-btn').forEach(btn => {
+                btn.addEventListener('click', () => _downloadReleaseAsset(btn.getAttribute('data-url') || ''));
+            });
+            panel.querySelectorAll('.rel-copy-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const ok = await _copyTextToClipboard(btn.getAttribute('data-url') || '');
+                    const orig = btn.textContent;
+                    btn.textContent = ok ? 'copied!' : 'copy failed';
+                    setTimeout(() => { btn.textContent = orig; }, 1500);
+                });
+            });
 
             panel.querySelectorAll('.release-detail-body pre code').forEach(b => {
                 try { hljs.highlightElement(b); } catch(_) {}
             });
+        }
+
+        // Descarga de assets de release a través del proxy del backend
+        // (/api/release-asset): misma origen, Content-Disposition: attachment,
+        // sin navegaciones externas (importante en el WebView de Capacitor).
+        function _downloadReleaseAsset(url) {
+            if (!url) return;
+            const proxied = `${API_BASE}/api/release-asset/${rv.provider}/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}?url=${encodeURIComponent(url)}`;
+            const a = document.createElement('a');
+            a.href = proxied;
+            a.rel = 'noopener';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+
+        async function _copyTextToClipboard(text) {
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                }
+            } catch (e) { /* fallback a execCommand */ }
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = text || '';
+                ta.setAttribute('readonly', '');
+                ta.style.position = 'fixed';
+                ta.style.top = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                const ok = document.execCommand('copy');
+                document.body.removeChild(ta);
+                return ok;
+            } catch (e) {
+                return false;
+            }
         }
 
         function parseGitDiff(diffText) {
@@ -7135,7 +7293,7 @@
                         // Solo la última tag (más reciente) se muestra destacada, como Latest en Releases.
                         const latestName = tags[0].name || '';
                         const latestHtml = `<a href="${escAttr(buildFilesUrl('tree', latestName, []))}" data-tag="${escAttr(latestName)}" onclick="openTag(this.dataset.tag); return false;" style="display:block;padding:0.3rem 0;color:var(--fg);text-decoration:none;">
-                            <div style="font-size:0.82rem;font-weight:500;line-height:1.3;font-family:'IBM Plex Mono',monospace;">${escHtml(latestName)} <span class="release-latest-badge">Latest</span></div>
+                            <div style="font-size:0.82rem;font-weight:500;line-height:1.3;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">${escHtml(latestName)} <span class="release-latest-badge">Latest</span></div>
                         </a>`;
                         listEl.innerHTML = latestHtml;
                     }
@@ -7895,6 +8053,7 @@
 	</g>
                     </svg></button>` +
                     `<button class="ft-btn" id="ft-blame-btn" onclick="loadBlame()" title="Blame this file" aria-label="Blame this file">blame</button>` +
+                    `<button class="ft-btn" id="ft-history-btn" onclick="loadFileHistory()" title="File history" aria-label="File history">history</button>` +
                     `<button class="ft-btn" id="ft-download-btn" onclick="downloadFile()"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12.074 3.25v12.478M6.19 10.465l4.822 4.822c.293.293.677.44 1.06.44m5.883-5.262l-4.822 4.822c-.293.293-.677.44-1.06.44m8.677.788v.935a3.3 3.3 0 0 1-3.3 3.3H6.55a3.3 3.3 0 0 1-3.3-3.3v-.935" />
@@ -7902,6 +8061,7 @@
                 `</div>` +
                 `<div class="file-body" id="file-body">${f.previewHtml}</div>`;
             if (f.path) _loadLastCommit(f.path, f.lastCommitScope);
+            _applyLineAnchors();
         }
 
         function _blameCommit(commit) {
@@ -8085,6 +8245,7 @@
                 blameButton.classList.remove('active');
                 return;
             }
+            document.getElementById('ft-history-btn')?.classList.remove('active');
             const body = document.getElementById('file-body');
             if (body) body.innerHTML = '<div class="code-loading">loading blame...</div>';
             try {
@@ -8095,6 +8256,160 @@
                 const msg = String(error.message || error);
                 const friendly = /429/.test(msg) ? 'rate limited by the provider — try again in a moment' : msg;
                 if (body) body.innerHTML = `<div class="code-loading" style="color:var(--accent)">blame unavailable: ${escHtml(friendly)}</div>`;
+            }
+        }
+
+        // Historial completo de un archivo (vista tipo GitHub): lista paginada de
+        // commits que tocaron el archivo, servida por el backend (/api/file-history),
+        // con diff desplegable por commit y botón "load more".
+        let _fhState = null;
+
+        async function _fetchFileHistory(path, page) {
+            const q = new URLSearchParams({ path, ref: currentBranch() || '', page: String(page || 1) });
+            const url = `${API_BASE}/api/file-history/${rv.provider}/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}?${q}`;
+            const res = await _apiFetchRetry429(() => fetch(url));
+            const text = await res.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (_) {
+                throw new Error(`file-history endpoint returned ${res.status} with non-JSON response — is the server up to date?`);
+            }
+            if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+            return { commits: Array.isArray(data.commits) ? data.commits : [], hasMore: !!data.hasMore, truncated: !!data.truncated };
+        }
+
+        function _renderFileHistory(path) {
+            const body = document.getElementById('file-body');
+            if (!body || !_fhState || _fhState.path !== path) return;
+            const st = _fhState;
+            const fmtDate = d => {
+                if (!d) return '';
+                const dt = new Date(d);
+                return isNaN(dt.getTime()) ? '' : dt.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' });
+            };
+            const items = st.commits.map(c => {
+                const sha = c.sha || '';
+                const shortSha = sha ? sha.substring(0, 7) : '—';
+                const author = c.author || '';
+                const initial = escHtml((author[0] || '?').toUpperCase());
+                const dateLabel = fmtDate(c.date);
+                return `<div class="commit-item fh-commit" data-fh-sha="${escAttr(sha)}">` +
+                    `<div class="commit-avatar"><span class="commit-avatar-placeholder">${initial}</span></div>` +
+                    `<div class="commit-body">` +
+                        `<div class="commit-msg">${escHtml(c.message || '')}</div>` +
+                        `<div class="commit-meta">` +
+                            (sha ? `<a class="commit-sha" href="${escAttr(buildDetailUrl('commit', sha))}" title="${escAttr(sha)}" onclick="gotoCommitDetail('${escJsStr(sha)}');event.stopPropagation();return false;">${escHtml(shortSha)}</a>` : `<span class="commit-sha">${escHtml(shortSha)}</span>`) +
+                            (author ? `<span class="commit-author">${escHtml(author)}</span>` : '') +
+                            (dateLabel ? `<span class="commit-time" title="${escAttr(new Date(c.date).toLocaleString('en'))}">${escHtml(dateLabel)}</span>` : '') +
+                        `</div>` +
+                    `</div>` +
+                    (sha ? `<button type="button" class="blame-diff-toggle" data-fh-sha="${escAttr(sha)}" title="Show the changes this commit made to this file">diff</button>` : '') +
+                    (sha ? `<div class="blame-diff-box" data-fh-diff hidden></div>` : '') +
+                `</div>`;
+            }).join('');
+            let listEl = body.querySelector('.commit-list');
+            if (!listEl) {
+                listEl = document.createElement('div');
+                listEl.className = 'commit-list';
+                listEl.innerHTML = `<div class="blame-header">history / ${escHtml(path)}</div>`;
+                body.innerHTML = '';
+                body.appendChild(listEl);
+            } else {
+                listEl.querySelector('.fh-more')?.remove();
+            }
+            listEl.insertAdjacentHTML('beforeend', items);
+            if (st.hasMore && !st.truncated) {
+                listEl.insertAdjacentHTML('beforeend', `<div class="fh-more"><button type="button" class="ft-btn fh-load-more" onclick="_fhLoadMore()">load more</button></div>`);
+            } else if (!st.commits.length) {
+                listEl.insertAdjacentHTML('beforeend', '<div class="code-loading">no commits found</div>');
+            }
+
+            // Diff perezoso por commit, igual que en el blame.
+            listEl.querySelectorAll('.blame-diff-toggle[data-fh-sha]').forEach(btn => {
+                btn.addEventListener('click', async (ev) => {
+                    ev.stopPropagation();
+                    const itemEl = btn.closest('.fh-commit');
+                    const diffEl = itemEl?.querySelector('.blame-diff-box[data-fh-diff]');
+                    if (!diffEl) return;
+                    if (!diffEl.hidden) { diffEl.hidden = true; btn.classList.remove('active'); return; }
+                    if (!diffEl.dataset.loaded) {
+                        btn.disabled = true;
+                        btn.textContent = 'loading…';
+                        const sha = btn.getAttribute('data-fh-sha') || '';
+                        try {
+                            const patch = await _fetchCommitFilePatch(sha, path);
+                            if (patch) {
+                                const key = `fh-${sha}`;
+                                diffEl.innerHTML =
+                                    `<div class="commit-diff-file" data-pierre-key="${escAttr(key)}">` +
+                                    `<div class="cdf-header"><span class="cdf-name">${escHtml(path)}</span></div>` +
+                                    `<pre>${escHtml(patch)}</pre></div>`;
+                                _upgradeDiffsWithPierre(diffEl, new Map([[key, _gitPatchForFile({ filename: path, patch })]]));
+                                _highlightDiffs(diffEl);
+                            } else {
+                                diffEl.innerHTML = '<div class="code-loading" style="padding:0.4rem 0;">no diff available for this file in this commit</div>';
+                            }
+                            diffEl.dataset.loaded = '1';
+                        } catch (e) {
+                            diffEl.innerHTML = `<div class="code-loading" style="padding:0.4rem 0;color:var(--accent)">diff error: ${escHtml(e.message || String(e))}</div>`;
+                        }
+                        btn.disabled = false;
+                        btn.textContent = 'diff';
+                    }
+                    diffEl.hidden = false;
+                    btn.classList.add('active');
+                });
+            });
+        }
+
+        async function _fhLoadMore() {
+            if (!_fhState || !_fhState.hasMore || _fhState.loading) return;
+            _fhState.loading = true;
+            const btn = document.querySelector('#file-body .fh-load-more');
+            if (btn) { btn.disabled = true; btn.textContent = 'loading…'; }
+            try {
+                const next = (_fhState.page || 1) + 1;
+                const data = await _fetchFileHistory(_fhState.path, next);
+                _fhState.page = next;
+                _fhState.commits.push(...data.commits);
+                _fhState.hasMore = data.hasMore;
+                _fhState.truncated = data.truncated;
+                _renderFileHistory(_fhState.path);
+            } catch (e) {
+                if (btn) btn.textContent = 'load more';
+            } finally {
+                _fhState.loading = false;
+                if (btn) { btn.disabled = false; }
+            }
+        }
+
+        async function loadFileHistory() {
+            const file = _activeFile;
+            const panel = document.getElementById('code-panel');
+            if (!file?.path || !panel) return;
+            const historyButton = document.getElementById('ft-history-btn');
+            if (historyButton?.classList.contains('active')) {
+                toggleFileView('code');
+                historyButton.classList.remove('active');
+                return;
+            }
+            document.getElementById('ft-blame-btn')?.classList.remove('active');
+            const body = document.getElementById('file-body');
+            if (body) body.innerHTML = '<div class="code-loading">loading history...</div>';
+            _fhState = { path: file.path, page: 1, commits: [], hasMore: false, loading: false };
+            try {
+                const data = await _fetchFileHistory(file.path, 1);
+                if (!_activeFile || _activeFile.path !== file.path) return;
+                _fhState.commits = data.commits;
+                _fhState.hasMore = data.hasMore;
+                _fhState.truncated = data.truncated;
+                _renderFileHistory(file.path);
+                historyButton?.classList.add('active');
+            } catch (error) {
+                const msg = String(error.message || error);
+                const friendly = /429/.test(msg) ? 'rate limited by the provider — try again in a moment' : msg;
+                if (body) body.innerHTML = `<div class="code-loading" style="color:var(--accent)">history unavailable: ${escHtml(friendly)}</div>`;
             }
         }
 
@@ -8182,18 +8497,118 @@
             return '';
         }
 
+        // Vista de código con una fila por línea para permitir permalinks
+        // (#L10 o #L10-L20) tipo GitHub: número de línea clicable que copia
+        // la URL permanente; Shift+clic extiende el rango desde el ancla.
         function _buildCodeHtml(text, name) {
             const lang = detectLang(name || '');
-            let highlighted;
-            if (lang && typeof hljs !== 'undefined' && hljs.getLanguage(lang)) {
-                highlighted = hljs.highlight(text, { language: lang }).value;
-            } else if (typeof hljs !== 'undefined') {
-                highlighted = hljs.highlightAuto(text).value;
-            } else {
-                highlighted = escHtml(text);
-            }
-            return `<pre class="hljs" style="margin:0;padding:1.25rem 1.5rem;font-size:0.78rem;font-family:'IBM Plex Mono',monospace;line-height:1.65;background:var(--code-bg);color:var(--fg);white-space:pre-wrap;word-break:break-all;"><code>${highlighted}</code></pre>`;
+            const lines = String(text || '').split('\n');
+            const hl = line => {
+                if (lang && typeof hljs !== 'undefined' && hljs.getLanguage(lang)) {
+                    try { return hljs.highlight(line, { language: lang }).value; } catch (_) {}
+                }
+                return escHtml(line);
+            };
+            const rows = lines.map((line, i) => {
+                const n = i + 1;
+                return `<span class="cl-row" id="L${n}" data-line="${n}">` +
+                    `<a class="cl-num" href="#L${n}" data-line="${n}" title="Copy link to this line (Shift+click for a range)">${n}</a>` +
+                    `<span class="cl-code">${hl(line) || ' '}</span></span>`;
+            }).join('');
+            return `<pre class="hljs code-lines"><code>${rows}</code></pre>`;
         }
+
+        let _lineAnchor = null;
+
+        function _parseLineHash() {
+            const m = /^L(\d+)(?:-L(\d+))?$/.exec(String(window.location.hash || '').replace(/^#/, ''));
+            if (!m) return null;
+            const a = parseInt(m[1], 10);
+            const b = m[2] ? parseInt(m[2], 10) : a;
+            if (!a || !b || a < 1 || b < 1) return null;
+            return { start: Math.min(a, b), end: Math.max(a, b) };
+        }
+
+        function _clearLineHighlights() {
+            document.querySelectorAll('#file-body .cl-row.cl-hl').forEach(el => el.classList.remove('cl-hl'));
+        }
+
+        function _highlightCodeLines(start, end) {
+            for (let n = start; n <= end; n++) {
+                document.getElementById(`L${n}`)?.classList.add('cl-hl');
+            }
+        }
+
+        function _linePermalinkUrl(start, end) {
+            const frag = start === end ? `L${start}` : `L${start}-L${end}`;
+            return `${window.location.pathname}${window.location.search}#${frag}`;
+        }
+
+        async function _copyLinePermalink(start, end) {
+            const url = window.location.origin + _linePermalinkUrl(start, end);
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(url);
+                    return true;
+                }
+            } catch (e) { /* fallback a execCommand */ }
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = url;
+                ta.setAttribute('readonly', '');
+                ta.style.position = 'fixed';
+                ta.style.top = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                const ok = document.execCommand('copy');
+                document.body.removeChild(ta);
+                return ok;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function _selectLines(start, end, scroll) {
+            if (end < start) { const t = start; start = end; end = t; }
+            _clearLineHighlights();
+            _highlightCodeLines(start, end);
+            history.replaceState(null, '', _linePermalinkUrl(start, end));
+            _copyLinePermalink(start, end);
+            if (scroll) {
+                setTimeout(() => document.getElementById(`L${start}`)?.scrollIntoView({ block: 'center' }), 50);
+            }
+        }
+
+        // Aplica el permalink del hash actual (#L5 / #L5-L20) tras renderizar código.
+        function _applyLineAnchors() {
+            if (!document.querySelector('#file-body .cl-row')) return;
+            const sel = _parseLineHash();
+            _clearLineHighlights();
+            if (!sel) return;
+            const max = document.querySelectorAll('#file-body .cl-row').length;
+            const start = Math.min(sel.start, max);
+            const end = Math.min(sel.end, max);
+            if (!start) return;
+            _highlightCodeLines(start, end);
+            setTimeout(() => document.getElementById(`L${start}`)?.scrollIntoView({ block: 'center' }), 50);
+        }
+
+        document.addEventListener('click', e => {
+            const a = e.target.closest('.cl-num');
+            if (!a) return;
+            e.preventDefault();
+            const n = parseInt(a.dataset.line, 10);
+            if (!n) return;
+            let start = n;
+            let end = n;
+            if (e.shiftKey && _lineAnchor != null) {
+                start = Math.min(_lineAnchor, n);
+                end = Math.max(_lineAnchor, n);
+            } else {
+                _lineAnchor = n;
+            }
+            _selectLines(start, end, false);
+        });
 
         function toggleFileView(mode) {
             const f = _activeFile;
@@ -8204,6 +8619,7 @@
                     body.innerHTML = `<div class="code-loading">binary image — no text code (${escHtml(f.name)})</div>`;
                 } else {
                     body.innerHTML = _buildCodeHtml(f.content, f.name);
+                    _applyLineAnchors();
                 }
             } else {
                 body.innerHTML = DOMPurify.sanitize(f.previewHtml, { USE_PROFILES: { html: true } });
@@ -8473,6 +8889,18 @@
             } else if (anchor) {
                 e.preventDefault();
                 scrollToAnchor(anchor);
+            } else {
+                // Enlaces internos de la app (issues, PRs, commits enlazados
+                // desde el markdown): navegación SPA como GitHub.
+                const href = a.getAttribute('href') || '';
+                if (/^\//.test(href)) {
+                    let route = null;
+                    try { route = parseRepoRoute(new URL(href, window.location.origin).pathname); } catch (_) {}
+                    if (isCurrentRepo(route)) {
+                        e.preventDefault();
+                        navigateTo(route, true);
+                    }
+                }
             }
         }
 
@@ -8659,6 +9087,30 @@
             document.body.classList.remove('panel-open');
         }
 
+        // Autolinks estilo GitHub sobre el markdown crudo, solo fuera de bloques
+        // de código, código inline y URLs: menciones @usuario, referencias a
+        // issue/PR #123 y SHAs de commit (7-40 hex con al menos una letra a-f).
+        function _mdAutolinkGitHub(md) {
+            const profileBase = rv.provider === 'gh' ? 'https://github.com/'
+                : rv.provider === 'gl' ? 'https://gitlab.com/'
+                : 'https://codeberg.org/';
+            const base = repoBasePath();
+            // Segmenta preservando bloques cercados, código inline y URLs planas intactos.
+            const segments = String(md || '').split(/(```[\s\S]*?(?:```|$)|~~~[\s\S]*?(?:~~~|$)|`[^`\n]*`|https?:\/\/[^\s<>()]+)/g);
+            return segments.map((seg, i) => {
+                if (i % 2 === 1) return seg;
+                return seg
+                    .replace(/(^|[^\w@.])@([a-zA-Z0-9][a-zA-Z0-9-]{0,38})\b/g,
+                        (m, pre, user) => `${pre}[@${user}](${profileBase}${user})`)
+                    .replace(/(^|[^\w&#])#(\d+)\b(?!\d)/g,
+                        (m, pre, num) => `${pre}[#${num}](${base}/issues/${num})`)
+                    .replace(/\b([0-9a-f]{7,40})\b/g,
+                        (m, sha) => /[a-f]/.test(sha)
+                            ? `[${sha}](${base}/commit/${sha})`
+                            : m);
+            }).join('');
+        }
+
         function renderMd(md, baseUrl, isWiki) {
             if (typeof marked === 'undefined') return `<pre>${escHtml(md)}</pre>`;
             marked.setOptions({ gfm: true, breaks: false, headerIds: true, headerPrefix: '' });
@@ -8751,7 +9203,7 @@
                     inner +
                     `</div>\n`;
             };
-            const emojified = md.replace(/:([a-z0-9_+-]+):/g, (match, name) => {
+            const emojified = _mdAutolinkGitHub(md).replace(/:([a-z0-9_+-]+):/g, (match, name) => {
                 const map = { 'smile':'😄','grin':'😁','joy':'😂','heart_eyes':'😍','sunglasses':'😎','thumbsup':'👍','+1':'👍','thumbsdown':'👎','-1':'👎','clap':'👏','rocket':'🚀','fire':'🔥','star':'⭐','star2':'🌟','sparkles':'✨','warning':'⚠️','x':'❌','white_check_mark':'✅','heavy_check_mark':'✔️','exclamation':'❗','question':'❓','bulb':'💡','wrench':'🔧','hammer':'🔨','gear':'⚙️','lock':'🔒','unlock':'🔓','key':'🔑','mag':'🔍','bug':'🐛','tada':'🎉','construction':'🚧','memo':'📝','pencil':'📝','book':'📖','books':'📚','package':'📦','link':'🔗','computer':'💻','desktop_computer':'🖥️','iphone':'📱','email':'📧','mailbox':'📫','inbox_tray':'📥','outbox_tray':'📤','chart_with_upwards_trend':'📈','chart_with_downwards_trend':'📉','bar_chart':'📊','calendar':'📆','clock1':'🕐','hourglass':'⌛','zap':'⚡','umbrella':'☂️','sunny':'☀️','cloud':'☁️','snowflake':'❄️','rainbow':'🌈','earth_americas':'🌎','globe_with_meridians':'🌐','wave':'👋','eyes':'👀','100':'💯','speech_balloon':'💬','thought_balloon':'💭','zzz':'💤','muscle':'💪','pray':'🙏','point_right':'👉','point_left':'👈','point_up':'☝️','point_down':'👇','raised_hands':'🙌','ok_hand':'👌','v':'✌️','skull':'💀','ghost':'👻','robot':'🤖','alien':'👽','see_no_evil':'🙈','hear_no_evil':'🙉','speak_no_evil':'🙊','rotating_light':'🚨','no_entry':'⛔','stop_sign':'🛑','recycle':'♻️','heart':'❤️','broken_heart':'💔','blue_heart':'💙','green_heart':'💚','yellow_heart':'💛','purple_heart':'💜','orange_heart':'🧡','black_heart':'🖤','white_heart':'🤍','thinking':'🤔','facepalm':'🤦','shrug':'🤷','information_source':'ℹ️','new':'🆕','free':'🆓','cool':'🆒','ok':'🆗','sos':'🆘','up':'🆙','vs':'🆚','abc':'🔤','1234':'🔢','symbols':'🔣','arrow_right':'➡️','arrow_left':'⬅️','arrow_up':'⬆️','arrow_down':'⬇️','back':'🔙','end':'🔚','on':'🔛','soon':'🔜','top':'🔝','repeat':'🔁','fast_forward':'⏩','rewind':'⏪','twisted_rightwards_arrows':'🔀','loud_sound':'🔊','mute':'🔇','bell':'🔔','no_bell':'🔕','mega':'📣','loudspeaker':'📢','dart':'🎯','trophy':'🏆','medal_sports':'🏅','1st_place_medal':'🥇','2nd_place_medal':'🥈','3rd_place_medal':'🥉','video_game':'🎮','joystick':'🕹️','art':'🎨','musical_note':'🎵','notes':'🎶','microphone':'🎤','headphones':'🎧','guitar':'🎸','pizza':'🍕','hamburger':'🍔','coffee':'☕','beer':'🍺','cake':'🎂','birthday':'🎂','apple':'🍎','banana':'🍌','grapes':'🍇','strawberry':'🍓','dog':'🐶','cat':'🐱','mouse':'🐭','bear':'🐻','panda_face':'🐼','fox_face':'🦊','wolf':'🐺','lion':'🦁','tiger':'🐯','cow':'🐮','pig':'🐷','frog':'🐸','monkey_face':'🐵','chicken':'🐔','penguin':'🐧','bird':'🐦','fish':'🐟','whale':'🐳','dolphin':'🐬','turtle':'🐢','snake':'🐍','bug':'🐛','ant':'🐜','bee':'🐝','butterfly':'🦋','crab':'🦀','shark':'🦈','whale2':'🐋','elephant':'🐘','gorilla':'🦍','unicorn':'🦄','zebra':'🦓' };
                 return map[name] || match;
             });

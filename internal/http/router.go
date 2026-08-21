@@ -329,6 +329,8 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/users/contributions", prCheckLimiter(), UserContributionsHandler)
 		api.GET("/gh-proxy/*path", proxyLimiter(), GitHubAPIProxyHandler)
 		api.GET("/blame/:provider/:owner/:repo", proxyLimiter(), BlameHandler)
+		api.GET("/file-history/:provider/:owner/:repo", proxyLimiter(), FileHistoryHandler)
+		api.GET("/release-asset/:provider/:owner/:repo", proxyLimiter(), ReleaseAssetDownloadHandler)
 		api.GET("/trending/:provider", TrendingHandler)
 		api.GET("/cb-proxy/*path", proxyLimiter(), CodebergProxyHandler)
 		api.GET("/gl-proxy/*path", proxyLimiter(), GitLabProxyHandler)

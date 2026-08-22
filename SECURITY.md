@@ -1,4 +1,6 @@
-# Security and Vulnerability Reporting
+<!-- BEGIN GITGOST SECURITY.MD V0.0.2 BLOCK -->
+
+# gitGost Security
 
 gitGost takes security seriously, particularly given its focus on privacy and anonymity. We welcome responsible vulnerability reports to maintain trust with our users.
 
@@ -6,12 +8,7 @@ gitGost takes security seriously, particularly given its focus on privacy and an
 
 We accept vulnerability reports responsibly. To protect your anonymity, we provide multiple channels:
 
-### Anonymous Channels
-- **Via gitGost itself**: Submit an anonymous PR to this repository reporting the vulnerability (dogfooding).
-- **Anonymous Email**: Send an email to `gitGos@proton.me` (preferably encrypted if possible).
-
-### Non-Anonymous Reports
-- Open an issue in this repository with the prefix `[SECURITY]` if you prefer public reporting.
+To report a security issue, please [open a security advisory](https://github.com/livrasand/gitGost/security/advisories/new) on GitHub with a detailed description of the issue, the steps you took to create the issue, affected versions, and, if known, mitigations for the issue.
 
 ## What to Include in the Report
 - Clear description of the vulnerability.
@@ -36,4 +33,10 @@ We accept vulnerability reports responsibly. To protect your anonymity, we provi
 
 If you have questions, contact us anonymously.
 
+## Preferred Languages
+
+We prefer all communications to be in Spanish.
+
 Thank you for helping keep gitGost secure.
+
+<!-- END GITGOST SECURITY.MD BLOCK -->

@@ -80,7 +80,7 @@
             margin: 0;
             background: var(--bg);
             color: var(--fg);
-            font-family: "IBM Plex Sans", system-ui, sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
             font-size: 0.9rem;
             min-height: 100vh;
             min-height: 100dvh;
@@ -98,7 +98,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.75rem;
         }
         .statusbar-left { display: flex; align-items: center; gap: 0.5rem; }
@@ -133,7 +133,7 @@
             color: var(--fg-muted);
             text-decoration: none;
             font-size: 0.8rem;
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             white-space: nowrap;
             border-left: 2px solid transparent;
             transition: background 0.1s, color 0.1s;
@@ -158,7 +158,7 @@
         }
 
         .section-title {
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.7rem;
             letter-spacing: 0.06em;
             text-transform: uppercase;
@@ -192,11 +192,11 @@
         }
         .profile-header .avatar img { width: 100%; height: 100%; object-fit: cover; }
         .profile-header .id .fullname { font-weight: 700; font-size: 1.1rem; }
-        .profile-header .id .username { color: var(--fg-muted); font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; }
+        .profile-header .id .username { color: var(--fg-muted); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.78rem; }
         .profile-header .id .badges { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.35rem; }
 
         .provider-badge {
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.65rem;
             border: 1px solid;
             border-radius: var(--radius-pill);
@@ -210,7 +210,7 @@
         .provider-badge svg { display: block; }
 
         .type-badge {
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.65rem;
             border: 1px solid var(--border);
             border-radius: var(--radius-pill);
@@ -230,7 +230,7 @@
             padding: 0.5rem 1rem;
             border-bottom: 1px solid var(--border);
             background: var(--bg-secondary);
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.68rem;
             color: var(--fg-muted);
         }
@@ -251,7 +251,7 @@
             background: var(--code-bg);
             border-radius: 3px;
             padding: 0.15em 0.35em;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.82em;
         }
         .readme pre {
@@ -261,7 +261,7 @@
             padding: 0.75rem 1rem;
             overflow-x: auto;
             margin: 1em 0;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.78rem;
             line-height: 1.5;
         }
@@ -320,11 +320,11 @@
             font-weight: 600;
             font-size: 0.85rem;
             text-decoration: none;
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
         .repo-name:hover { text-decoration: underline; }
         .repo-visibility {
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.62rem;
             color: var(--fg-muted);
             border: 1px solid var(--border);
@@ -343,7 +343,7 @@
             display: flex;
             gap: 0.9rem;
             color: var(--fg-secondary);
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.68rem;
             flex-wrap: wrap;
         }
@@ -351,7 +351,7 @@
         .lang-dot { width: 0.6em; height: 0.6em; border-radius: 50%; display: inline-block; }
         .repo-empty {
             color: var(--fg-secondary);
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.75rem;
             padding: 1rem 0;
         }
@@ -393,7 +393,7 @@
             margin-bottom: 1.25rem;
         }
         .orgs-label {
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.7rem;
             color: var(--fg-muted);
             text-transform: uppercase;
@@ -418,7 +418,7 @@
         .org-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .profile-error {
             color: var(--fg-secondary);
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.8rem;
             padding: 2rem;
         }
@@ -441,7 +441,7 @@
         .sb-about .sb-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .sb-about .sb-head { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.8rem; }
         .sb-about .sb-name { font-weight: 700; font-size: 0.95rem; }
-        .sb-about .sb-user { color: var(--fg-muted); font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; }
+        .sb-about .sb-user { color: var(--fg-muted); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.72rem; }
         .sb-about .sb-bio { color: var(--fg-muted); font-size: 0.78rem; line-height: 1.5; margin: 0 0 0.8rem; }
 
         .stats-grid {
@@ -450,7 +450,7 @@
             margin: 0.8rem 0;
         }
         .stat { display: flex; flex-direction: column; }
-        .stat .v { font-family: 'IBM Plex Mono', monospace; font-size: 0.9rem; font-weight: 600; }
+        .stat .v { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.9rem; font-weight: 600; }
         .stat .l { color: var(--fg-secondary); font-size: 0.65rem; }
         .stat-link { cursor: pointer; }
         .stat-link:hover .v { color: var(--accent); text-decoration: underline; }
@@ -464,7 +464,7 @@
             border-radius: 3px;
             background: transparent;
             color: var(--fg);
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.72rem;
             text-decoration: none;
             cursor: pointer;
@@ -479,7 +479,7 @@
             padding: 0.9rem 0 0;
             border-top: 1px solid var(--border);
             color: var(--fg-muted);
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.7rem;
             display: flex;
             flex-direction: column;
@@ -495,7 +495,7 @@
             margin-top: 0.9rem;
             padding-top: 0.9rem;
             border-top: 1px solid var(--border);
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
         .sb-contrib .hm-head {
             display: flex;
@@ -569,7 +569,7 @@
             border-radius: 4px;
             padding: 0.75rem 1rem;
             margin-bottom: 1rem;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.78rem;
             color: #856404;
             align-items: center;
@@ -614,7 +614,7 @@
 
     <div class="statusbar">
         <div class="statusbar-left">
-            <a href="/" style="color:var(--accent);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.78rem;">gitGost</a>
+            <a href="/" style="color:var(--accent);text-decoration:none;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-weight:700;font-size:0.78rem;">gitGost</a>
             <span style="color:var(--fg-muted);">›</span>
             <span class="crumb provider" id="sb-provider">—</span>
             <span style="color:var(--fg-muted);">›</span>

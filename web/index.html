@@ -130,11 +130,6 @@
             property="twitter:image"
             content="https://gitgost.fly.dev/assets/logos/gitgost-logo.svg"
         />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
-            rel="stylesheet"
-        />
         <script src="https://cdn.jsdelivr.net/npm/marked@4/marked.min.js"></script>
         <script src="https://unpkg.com/environment-badge@^1.0.0/dist/bundle.js"></script>
         <script>
@@ -269,7 +264,7 @@
                 width: 100%;
                 height: 100%;
                 border-radius: 50%;
-                font-family: "IBM Plex Sans", sans-serif;
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
                 font-size: 0.65rem;
                 font-weight: 700;
             }
@@ -307,7 +302,7 @@
                 border-radius: var(--radius-lg);
                 background: var(--card);
                 box-shadow: 0 12px 36px rgb(0 0 0 / 25%);
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             }
 
             .rate-limit-modal-close {
@@ -354,11 +349,7 @@
 
             body {
                 margin: 0;
-                font-family:
-                    "IBM Plex Sans",
-                    system-ui,
-                    -apple-system,
-                    sans-serif;
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
                 background: var(--bg);
                 color: var(--fg);
                 font-size: 13px;
@@ -391,7 +382,7 @@
             .sidebar::-webkit-scrollbar { display: none; }
 
             .logo {
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 1.1rem;
                 font-weight: 700;
                 color: var(--accent);
@@ -403,7 +394,7 @@
             .nav-link {
                 color: var(--fg-muted);
                 text-decoration: none;
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.78rem;
                 padding: 0.28rem 0;
                 transition: color 0.1s;
@@ -463,7 +454,7 @@
             .right-sidebar::-webkit-scrollbar { display: none; }
 
             .section-title {
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.72rem;
                 font-weight: 400;
                 color: var(--fg-muted);
@@ -561,7 +552,7 @@
                 align-items: center;
                 gap: 0.5rem;
                 padding: 0.35rem 0.6rem;
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.75rem;
                 color: var(--fg-muted);
                 cursor: pointer;
@@ -585,7 +576,7 @@
             }
 
             .content-tab {
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.82rem;
                 color: var(--fg-secondary);
                 cursor: pointer;
@@ -612,7 +603,7 @@
                 background: var(--bg-secondary);
                 padding: 0.3rem 0.5rem;
                 margin-bottom: 0.75rem;
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.78rem;
                 color: var(--fg);
                 outline: none;
@@ -711,7 +702,7 @@
             }
 
             .repo-count {
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.72rem;
                 color: var(--fg-muted);
                 flex-shrink: 0;
@@ -721,7 +712,7 @@
             }
 
             .repo-lang {
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.7rem;
                 color: var(--fg-muted);
                 display: inline-flex;
@@ -738,7 +729,7 @@
             }
 
             .repo-ago {
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.7rem;
                 color: var(--fg-muted);
                 flex-shrink: 0;
@@ -761,7 +752,7 @@
                 background: transparent;
                 color: var(--fg);
                 font-size: 0.7rem;
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 cursor: pointer;
                 text-decoration: none;
                 transition: background 0.1s, border-color 0.1s;
@@ -798,7 +789,7 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.9rem;
                 color: var(--fg);
                 background: var(--bg-secondary);
@@ -815,7 +806,7 @@
                 white-space: nowrap;
             }
             .user-username {
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.7rem;
                 color: var(--fg-muted);
             }
@@ -837,7 +828,7 @@
                 color: var(--fg);
             }
             .user-profile-username {
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.75rem;
                 color: var(--fg-muted);
                 margin-bottom: 0.35rem;
@@ -868,7 +859,7 @@
                 padding: 0.4rem 0.7rem;
             }
             .user-stat-value {
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.85rem;
                 font-weight: 600;
                 color: var(--fg);
@@ -879,7 +870,7 @@
             }
             .user-profile-link {
                 display: inline-block;
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.72rem;
                 color: var(--accent);
                 text-decoration: none;
@@ -893,7 +884,7 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.72rem;
                 color: var(--fg-secondary);
                 position: fixed;
@@ -1021,7 +1012,7 @@
                 background: #1a1b26;
                 border: 1px solid #2d2f3f;
                 border-radius: var(--radius-md);
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.9rem;
                 overflow-x: auto;
                 margin: 1rem 0;
@@ -1090,7 +1081,7 @@
                 border-radius: 3px;
                 background: transparent;
                 color: var(--fg-secondary);
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.78rem;
                 cursor: pointer;
                 white-space: nowrap;
@@ -1139,7 +1130,7 @@
             }
 
             .command-shortcut {
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.72rem;
                 color: var(--fg-secondary);
             }
@@ -1185,7 +1176,7 @@
             input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
 
             .page-header {
-                font-family: "IBM Plex Mono", monospace;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.72rem;
                 color: var(--fg-secondary);
                 margin-bottom: 1.25rem;
@@ -1557,7 +1548,7 @@
                     font-size: 0.62rem !important;
                 }
 
-                #page-content [style*="margin-top:0.6rem"] > div[style*="font-family:'IBM Plex Mono',monospace"][style*="font-size:0.68rem"] {
+                #page-content [style*="margin-top:0.6rem"] > div[style*="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"][style*="font-size:0.68rem"] {
                     font-size: 0.62rem !important;
                 }
 
@@ -1591,7 +1582,7 @@
             border-radius: 4px;
             padding: 0.75rem 1rem;
             margin-bottom: 1rem;
-            font-family: "IBM Plex Mono", monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.78rem;
             color: #856404;
             align-items: center;
@@ -1718,7 +1709,7 @@
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7.05 6.462a2 2 0 0 0 2.63-1.519l.32-1.72a9 9 0 0 1 3.998 0l.322 1.72a2 2 0 0 0 2.63 1.519l1.649-.58a9 9 0 0 1 2.001 3.46l-1.33 1.14a2 2 0 0 0 0 3.037l1.33 1.139a9 9 0 0 1-2.001 3.46l-1.65-.58a2 2 0 0 0-2.63 1.519L14 20.777a9 9 0 0 1-3.998 0l-.322-1.72a2 2 0 0 0-2.63-1.519l-1.649.58a9 9 0 0 1-2.001-3.46l1.33-1.14a2 2 0 0 0 0-3.036L3.4 9.342a9 9 0 0 1 2-3.46zM12 9a3 3 0 1 1 0 6a3 3 0 0 1 0-6" clip-rule="evenodd" />
                 </svg> settings</a>
-                <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin:1.5rem 0 0.5rem;">create a</div>
+                <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin:1.5rem 0 0.5rem;">create a</div>
                 <a href="#" onclick="showPage('issue'); return false;" class="nav-link" style="padding-left:1rem;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<g fill="none">
@@ -3474,7 +3465,7 @@
                                 ${ago ? `<span class="repo-ago">${ago}</span>` : ""}
                                 ${count ? `<span class="repo-count">${count}</span>` : ""}
                                 ${langBadge}
-                                <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:${providerColor};border:1px solid ${providerColor};border-radius:3px;padding:0.1em 0.4em;opacity:0.8;flex-shrink:0;display:inline-flex;align-items:center;">${providerLabel}</span>
+                                <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.65rem;color:${providerColor};border:1px solid ${providerColor};border-radius:3px;padding:0.1em 0.4em;opacity:0.8;flex-shrink:0;display:inline-flex;align-items:center;">${providerLabel}</span>
                             </div>
                         </div>
                         <div class="repo-card">${repoCardSvgHtml(repo, owner, name, provider)}</div>
@@ -3583,7 +3574,7 @@
                                 <div class="user-username">${safeUsername}</div>
                             </div>
                         </div>
-                        <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:${badgeColor};border:1px solid ${badgeColor};border-radius:3px;padding:0.1em 0.4em;opacity:0.8;flex-shrink:0;display:inline-flex;align-items:center;">${providerLabel}</span>
+                        <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.65rem;color:${badgeColor};border:1px solid ${badgeColor};border-radius:3px;padding:0.1em 0.4em;opacity:0.8;flex-shrink:0;display:inline-flex;align-items:center;">${providerLabel}</span>
                     `;
                     container.appendChild(item);
                 });
@@ -3639,13 +3630,13 @@
                             <div class="user-profile-id">
                                 <div class="user-profile-name">${safeName || safeUsername}</div>
                                 <div class="user-profile-username">${safeUsername}</div>
-                                <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:${badgeColor};border:1px solid ${badgeColor};border-radius:3px;padding:0.1em 0.4em;opacity:0.8;display:inline-flex;align-items:center;">${providerLabel}</span>
+                                <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.65rem;color:${badgeColor};border:1px solid ${badgeColor};border-radius:3px;padding:0.1em 0.4em;opacity:0.8;display:inline-flex;align-items:center;">${providerLabel}</span>
                             </div>
                         </div>
                         ${safeBio ? `<p class="user-profile-bio">${safeBio}</p>` : ''}
                         ${safeLocation ? `<p class="user-profile-location">location: ${safeLocation}</p>` : ''}
                         ${stats.length ? `<div class="user-profile-stats">${stats.join('')}</div>` : ''}
-                        ${members.length ? `<div style="margin-top:0.85rem;padding-top:0.85rem;border-top:1px solid var(--border);"><div style="font-size:0.7rem;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">${members.length} member${members.length === 1 ? '' : 's'}</div><div style="display:flex;flex-wrap:wrap;gap:0.4rem;">${members.map(m => `<span style="display:inline-flex;align-items:center;gap:0.3rem;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--fg);border:1px solid var(--border);border-radius:999px;padding:0.15em 0.6em;">${m.avatar_url ? `<img src="${escapeHtml(m.avatar_url)}" style="width:1rem;height:1rem;border-radius:50%;" alt=""/>` : ''}${escapeHtml(m.login)}</span>`).join('')}</div></div>` : ''}
+                        ${members.length ? `<div style="margin-top:0.85rem;padding-top:0.85rem;border-top:1px solid var(--border);"><div style="font-size:0.7rem;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">${members.length} member${members.length === 1 ? '' : 's'}</div><div style="display:flex;flex-wrap:wrap;gap:0.4rem;">${members.map(m => `<span style="display:inline-flex;align-items:center;gap:0.3rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;color:var(--fg);border:1px solid var(--border);border-radius:999px;padding:0.15em 0.6em;">${m.avatar_url ? `<img src="${escapeHtml(m.avatar_url)}" style="width:1rem;height:1rem;border-radius:50%;" alt=""/>` : ''}${escapeHtml(m.login)}</span>`).join('')}</div></div>` : ''}
                         ${safeUsername ? `<a class="user-profile-link" href="/${p.provider === 'gitlab' ? 'gl' : p.provider === 'codeberg' ? 'cb' : 'gh'}/${encodeURIComponent(p.username || '')}">open profile in gitGost</a>` : ''}
                     </div>
                 `;
@@ -3736,7 +3727,7 @@
                             <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
                                 ${starCountLabel ? `<span class="repo-count">${starCountLabel}</span>` : ''}
                                 ${langBadge}
-                                <span style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:${starBadgeColor};border:1px solid ${starBadgeBorder};border-radius:3px;padding:0.1em 0.35em;display:inline-flex;align-items:center;">${starBadgeLabel}</span>
+                                <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:${starBadgeColor};border:1px solid ${starBadgeBorder};border-radius:3px;padding:0.1em 0.35em;display:inline-flex;align-items:center;">${starBadgeLabel}</span>
                             </div>
                         </div>
                         <div class="repo-card">${repoCardSvgHtml(cardRepo, repo.owner, repo.repo, provider)}</div>
@@ -4004,15 +3995,15 @@
                         <div style="display:flex;flex-direction:column;gap:2.5rem;">
 
                             <div>
-                                <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Base URL</div>
-                                <code style="display:block;background:var(--code-bg);border:1px solid var(--border);border-radius:4px;padding:0.5rem 0.75rem;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;color:var(--fg);">https://gitgost.fly.dev/v1/{provider}/{owner}/{repo}</code>
+                                <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Base URL</div>
+                                <code style="display:block;background:var(--code-bg);border:1px solid var(--border);border-radius:4px;padding:0.5rem 0.75rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.82rem;color:var(--fg);">https://gitgost.fly.dev/v1/{provider}/{owner}/{repo}</code>
                                 <p style="font-size:0.78rem;color:var(--fg-secondary);margin:0.5rem 0 0;"><code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">provider</code> is <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">gh</code> for GitHub, <code style="color:#fc6d26;background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">gl</code> for GitLab or <code style="color:#20883d;background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">cb</code> for Codeberg.</p>
                             </div>
 
                             <div>
                                 <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;">
-                                    <code style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;background:var(--accent);color:#fff;border-radius:3px;padding:0.15em 0.5em;">POST</code>
-                                    <span style="font-family:'IBM Plex Mono',monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">push</span>
+                                    <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;background:var(--accent);color:#fff;border-radius:3px;padding:0.15em 0.5em;">POST</code>
+                                    <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">push</span>
                                     <span style="font-size:0.75rem;color:var(--fg-secondary);">— create an anonymous PR/MR</span>
                                 </div>
                                 <div class="terminal">
@@ -4052,15 +4043,15 @@
 <span class="success">→</span> PR Hash: <span class="hl">a3f8c1d2</span> ← save this to update the PR later</div>
                                 </div>
                                 <div style="margin-top:0.6rem;">
-                                    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-secondary);margin-bottom:0.35rem;">Returns</div>
-                                    <code style="display:block;background:var(--code-bg);border:1px solid var(--border);border-radius:4px;padding:0.5rem 0.75rem;font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--fg);">{ pr_url, hash, karma, user_token }</code>
+                                    <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--fg-secondary);margin-bottom:0.35rem;">Returns</div>
+                                    <code style="display:block;background:var(--code-bg);border:1px solid var(--border);border-radius:4px;padding:0.5rem 0.75rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.78rem;color:var(--fg);">{ pr_url, hash, karma, user_token }</code>
                                 </div>
                             </div>
 
                             <div>
                                 <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;">
-                                    <code style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;background:var(--accent);color:#fff;border-radius:3px;padding:0.15em 0.5em;">POST</code>
-                                    <span style="font-family:'IBM Plex Mono',monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">update PR</span>
+                                    <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;background:var(--accent);color:#fff;border-radius:3px;padding:0.15em 0.5em;">POST</code>
+                                    <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">update PR</span>
                                     <span style="font-size:0.75rem;color:var(--fg-secondary);">— push a follow-up commit to an existing PR</span>
                                 </div>
                                 <div class="terminal">
@@ -4079,8 +4070,8 @@
 
                             <div>
                                 <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;">
-                                    <code style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;background:#22c55e;color:#fff;border-radius:3px;padding:0.15em 0.5em;">GET</code>
-                                    <span style="font-family:'IBM Plex Mono',monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">clone / fetch</span>
+                                    <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;background:#22c55e;color:#fff;border-radius:3px;padding:0.15em 0.5em;">GET</code>
+                                    <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">clone / fetch</span>
                                     <span style="font-size:0.75rem;color:var(--fg-secondary);">— read repos with zero identity exposure</span>
                                 </div>
                                 <div class="terminal">
@@ -4120,8 +4111,8 @@
 
                             <div>
                                 <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;">
-                                    <code style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;background:#6e40c9;color:#fff;border-radius:3px;padding:0.15em 0.5em;">OPT</code>
-                                    <span style="font-family:'IBM Plex Mono',monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">push via Tor</span>
+                                    <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;background:#6e40c9;color:#fff;border-radius:3px;padding:0.15em 0.5em;">OPT</code>
+                                    <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">push via Tor</span>
                                     <span style="font-size:0.75rem;color:var(--fg-secondary);">— maximum privacy, route through Tor first</span>
                                 </div>
                                 <div class="terminal">
@@ -4141,8 +4132,8 @@
 
                             <div>
                                 <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;">
-                                    <code style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;background:#6b7280;color:#fff;border-radius:3px;padding:0.15em 0.5em;">OPT</code>
-                                    <span style="font-family:'IBM Plex Mono',monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">strip metadata</span>
+                                    <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;background:#6b7280;color:#fff;border-radius:3px;padding:0.15em 0.5em;">OPT</code>
+                                    <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">strip metadata</span>
                                     <span style="font-size:0.75rem;color:var(--fg-secondary);">— remove EXIF/GPS from binaries before commit</span>
                                 </div>
                                 <div class="terminal">
@@ -4163,28 +4154,28 @@
 
                             <div>
                                 <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;">
-                                    <code style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;background:var(--accent);color:#fff;border-radius:3px;padding:0.15em 0.5em;">GET</code>
-                                    <span style="font-family:'IBM Plex Mono',monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">PR notifications</span>
+                                    <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;background:var(--accent);color:#fff;border-radius:3px;padding:0.15em 0.5em;">GET</code>
+                                    <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">PR notifications</span>
                                     <span style="font-size:0.75rem;color:var(--fg-secondary);">— anonymous push alerts via ntfy.sh</span>
                                 </div>
                                 <p style="font-size:0.78rem;color:var(--fg-secondary);margin:0 0 0.75rem;">Subscribe to your PR topic on <a href="https://ntfy.sh" target="_blank" rel="noreferrer" style="color:var(--accent);">ntfy.sh</a> — no account, no email required.</p>
                                 <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;padding:1rem;">
-                                    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--fg-secondary);margin-bottom:0.5rem;">Look up your notification topic</div>
+                                    <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;color:var(--fg-secondary);margin-bottom:0.5rem;">Look up your notification topic</div>
                                     <div class="ntfy-lookup-row" style="display:flex;gap:0.6rem;align-items:flex-end;flex-wrap:wrap;">
                                         <div style="flex:1;min-width:160px;">
-                                            <input id="ntfy-hash-input" type="text" placeholder="PR hash (e.g. a3f8c1d2)" autocomplete="off" style="width:100%;padding:0.45rem 0.6rem;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--fg);font-family:'IBM Plex Mono',monospace;font-size:0.8rem;" />
+                                            <input id="ntfy-hash-input" type="text" placeholder="PR hash (e.g. a3f8c1d2)" autocomplete="off" style="width:100%;padding:0.45rem 0.6rem;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--fg);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.8rem;" />
                                         </div>
-                                        <button onclick="lookupNtfyTopic()" style="margin-top:0;width:auto;padding:0.45rem 0.9rem;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;">Get Topic</button>
+                                        <button onclick="lookupNtfyTopic()" style="margin-top:0;width:auto;padding:0.45rem 0.9rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.8rem;">Get Topic</button>
                                     </div>
                                     <div id="ntfy-result" style="margin-top:0.75rem;display:none;">
                                         <div style="font-size:0.78rem;color:var(--fg-secondary);margin-bottom:0.35rem;">Your ntfy topic:</div>
                                         <div class="ntfy-result-row" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
                                             <code id="ntfy-topic-display" style="background:var(--code-bg);border:1px solid var(--border);border-radius:3px;padding:0.35rem 0.6rem;font-size:0.78rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></code>
-                                            <a id="ntfy-subscribe-link" href="#" target="_blank" rel="noreferrer" style="padding:0.35rem 0.7rem;border-radius:3px;background:var(--accent);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;text-decoration:none;white-space:nowrap;">Open in ntfy ↗</a>
-                                            <button id="ntfy-copy-btn" onclick="copyNtfyTopic()" style="margin-top:0;width:auto;padding:0.35rem 0.6rem;background:transparent;border:1px solid var(--border);color:var(--fg);font-family:'IBM Plex Mono',monospace;font-size:0.75rem;">Copy</button>
+                                            <a id="ntfy-subscribe-link" href="#" target="_blank" rel="noreferrer" style="padding:0.35rem 0.7rem;border-radius:3px;background:var(--accent);color:#fff;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.75rem;text-decoration:none;white-space:nowrap;">Open in ntfy ↗</a>
+                                            <button id="ntfy-copy-btn" onclick="copyNtfyTopic()" style="margin-top:0;width:auto;padding:0.35rem 0.6rem;background:transparent;border:1px solid var(--border);color:var(--fg);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.75rem;">Copy</button>
                                         </div>
                                     </div>
-                                    <div id="ntfy-error" style="margin-top:0.5rem;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--accent);display:none;"></div>
+                                    <div id="ntfy-error" style="margin-top:0.5rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.75rem;color:var(--accent);display:none;"></div>
                                 </div>
                             </div>
 
@@ -4196,7 +4187,7 @@
                         <div style="display:flex;flex-direction:column;gap:2.5rem;">
 
                             <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.5rem 1.6rem;">
-                                <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;">gitGost / git extension</div>
+                                <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;">gitGost / git extension</div>
                                 <h3 style="margin:0 0 0.5rem;color:var(--fg);font-size:1.15rem;">An open source Git extension for resilient networking.</h3>
                                 <p style="font-size:0.85rem;color:var(--fg-muted);margin:0 0 1rem;max-width:660px;">Git manages the repository. gitGost manages the network. The <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">git-gost</code> client pauses, resumes, queues and retries Git operations in the background — without replacing Git itself.</p>
                                 <div class="terminal">
@@ -4214,7 +4205,7 @@
                             </div>
 
                             <div>
-                                <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Download git-gost</div>
+                                <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Download git-gost</div>
                                 <p style="font-size:0.78rem;color:var(--fg-secondary);margin:0 0 1rem;max-width:660px;">Each release publishes a binary per platform with its SHA-256 and a Sigstore attestation. Download yours, verify the hash, and run the auto-installer.</p>
                                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1rem;">
                                     <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.1rem 1.2rem;">
@@ -4251,7 +4242,7 @@
                             </div>
 
                             <div>
-                                <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Getting started</div>
+                                <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Getting started</div>
                                 <div class="terminal">
                                     <div class="terminal-titlebar">
                                         <span class="terminal-btn close"></span>
@@ -4272,35 +4263,35 @@
                             </div>
 
                             <div>
-                                <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Features</div>
+                                <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Features</div>
                                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;">
                                     <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
-                                        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Pause &amp; resume</div>
+                                        <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Pause &amp; resume</div>
                                         <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Checkpoints per layer</h3>
                                         <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Clones download in commit blocks; each completed block is a checkpoint. A dropped connection resumes from the last block, not from zero.</p>
                                     </div>
                                     <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
-                                        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Background queue</div>
+                                        <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Background queue</div>
                                         <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Keep working while it downloads</h3>
                                         <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Each clone, fetch or push is a job in a local SQLite queue. Run them in the background and follow progress with <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">git gost watch</code>.</p>
                                     </div>
                                     <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
-                                        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Automatic retries</div>
+                                        <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Automatic retries</div>
                                         <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Retrying state with backoff</h3>
                                         <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Network failures are detected and retried with exponential backoff. Pause, resume and cancel any job at any time.</p>
                                     </div>
                                     <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
-                                        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Same Git workflow</div>
+                                        <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Same Git workflow</div>
                                         <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">No new commands to learn</h3>
                                         <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);"><code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">git gost clone</code>, <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">fetch</code>, <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">pull</code> and <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">push</code> work like Git; <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">status</code>, <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">log</code> and <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">branch</code> pass through to Git.</p>
                                     </div>
                                     <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
-                                        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Any repository</div>
+                                        <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Any repository</div>
                                         <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Works with any Git remote</h3>
                                         <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">No fork of Git required: the resulting repository is a normal Git repo whose <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">origin</code> points to the original URL.</p>
                                     </div>
                                     <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
-                                        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Open source</div>
+                                        <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Open source</div>
                                         <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Auditable and copyleft</h3>
                                         <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">AGPL-3.0 licensed. The job queue is local to your machine and every binary ships with SHA-256 and Sigstore attestation.</p>
                                     </div>
@@ -4563,7 +4554,7 @@
 
                             <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:1.5rem 0 2rem;border-bottom:1px solid var(--border);">
                                 <img src="/assets/logos/gitgost-logo.svg" width="72" height="72" style="margin-bottom:1rem;" alt="gitGost logo" />
-                                <h2 style="font-size:1.75rem;font-weight:700;margin:0 0 0.5rem;color:var(--fg);font-family:'IBM Plex Mono',monospace;">gitGost</h2>
+                                <h2 style="font-size:1.75rem;font-weight:700;margin:0 0 0.5rem;color:var(--fg);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">gitGost</h2>
                                 <p style="font-size:1rem;color:var(--fg-muted);margin:0 0 1.5rem;max-width:520px;">Contribute to any Git repository without exposing your identity.</p>
                                 <a href="#" onclick="showPage('cli'); return false;" class="btn primary" style="text-decoration:none;display:inline-block;">Start Contributing Anonymously</a>
                             </div>
@@ -4576,32 +4567,32 @@
 
                             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;">
                                 <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
-                                    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Strip Metadata</div>
+                                    <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Strip Metadata</div>
                                     <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">No name, email, or timestamps</h3>
                                     <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Author, committer, and timestamp fields are removed before anything reaches the target platform.</p>
                                 </div>
                                 <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
-                                    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">No Accounts</div>
+                                    <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">No Accounts</div>
                                     <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Zero signup required</h3>
                                     <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">No tokens or logins by default. If you choose to connect your own account, it stays in this browser until you clear it.</p>
                                 </div>
                                 <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
-                                    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Open Source</div>
+                                    <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Open Source</div>
                                     <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Auditable and copyleft</h3>
                                     <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">AGPL-3.0 licensed with reproducible builds and signed attestations. Don't trust, verify.</p>
                                 </div>
                                 <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
-                                    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Push via Tor</div>
+                                    <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Push via Tor</div>
                                     <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Network-layer privacy</h3>
                                     <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Route your git push through Tor or a VPN so the server never sees your real IP.</p>
                                 </div>
                                 <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
-                                    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Rate Limits</div>
+                                    <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Rate Limits</div>
                                     <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Abuse-resistant by design</h3>
                                     <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Caps on PRs, repo size, and commit size keep the service sustainable and fair.</p>
                                 </div>
                                 <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
-                                    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Issues / Discussions / Reviews</div>
+                                    <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Issues / Discussions / Reviews</div>
                                     <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Participate beyond PRs</h3>
                                     <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Open anonymous issues and comment on issues, pull requests, and GitHub Discussions.</p>
                                 </div>
@@ -4696,7 +4687,7 @@
                             .em-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem 1.25rem;transition:border-color .2s,box-shadow .2s}
                             .em-card:hover{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
                             .em-card-label{display:block;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--fg-secondary);margin-bottom:0.25rem}
-                            .em-card-value{font-size:1.5rem;font-weight:600;color:var(--fg);font-family:'IBM Plex Mono',monospace}
+                            .em-card-value{font-size:1.5rem;font-weight:600;color:var(--fg);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace}
                             .em-chart-section{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:1.5rem}
                             .em-section-title{margin:0 0 1rem;font-size:0.85rem;font-weight:600;color:var(--fg);text-transform:uppercase;letter-spacing:0.06em}
                             .em-chart-wrapper{position:relative;height:180px;width:100%}
@@ -4713,7 +4704,7 @@
                             .em-breakdown-item{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0.625rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);transition:background .2s,border-color .2s}
                             .em-breakdown-item:hover{background:var(--bg-hover);border-color:var(--accent)}
                             .em-breakdown-name{font-size:0.75rem;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%}
-                            .em-breakdown-count{font-size:0.75rem;font-weight:600;color:var(--accent);font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+                            .em-breakdown-count{font-size:0.75rem;font-weight:600;color:var(--accent);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;white-space:nowrap}
                             .em-breakdown-bar{height:4px;background:var(--accent);border-radius:2px;opacity:.6;margin-top:0.25rem}
                             .em-loading{color:var(--fg-muted);font-size:0.75rem;text-align:center;padding:1rem}
                             .em-privacy-note{display:flex;align-items:flex-start;gap:0.5rem;padding:0.875rem 1rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);font-size:0.7rem;color:var(--fg-secondary);line-height:1.5}
@@ -5047,15 +5038,15 @@
                 container.innerHTML = `
                     <div style="margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border);">
                         <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.5rem;">
-                            <span id="tag-icon-wrap" style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--fg-muted);background:var(--bg-secondary);border:1px solid var(--border);border-radius:3px;padding:0.15em 0.4em;display:inline-flex;align-items:center;justify-content:center;width:1.6rem;height:1.6rem;">
+                            <span id="tag-icon-wrap" style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.75rem;color:var(--fg-muted);background:var(--bg-secondary);border:1px solid var(--border);border-radius:3px;padding:0.15em 0.4em;display:inline-flex;align-items:center;justify-content:center;width:1.6rem;height:1.6rem;">
                                 <img id="tag-icon-img" src="${iconUrl}" alt="" width="14" height="14" style="display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='';" />
                                 <span id="tag-icon-fallback" style="display:none;">#</span>
                             </span>
-                            <span style="font-family:'IBM Plex Mono',monospace;font-size:1.1rem;font-weight:600;color:var(--fg);">${safeTag}</span>
+                            <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:1.1rem;font-weight:600;color:var(--fg);">${safeTag}</span>
                         </div>
-                        <div id="tag-wiki-desc" style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--fg-muted);line-height:1.6;margin-bottom:0.5rem;"></div>
-                        <div id="tag-wiki-links" style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;margin-bottom:0.6rem;"></div>
-                        <div id="tag-repo-count" style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--fg-secondary);">Repositories</div>
+                        <div id="tag-wiki-desc" style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.75rem;color:var(--fg-muted);line-height:1.6;margin-bottom:0.5rem;"></div>
+                        <div id="tag-wiki-links" style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;margin-bottom:0.6rem;"></div>
+                        <div id="tag-repo-count" style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--fg-secondary);">Repositories</div>
                     </div>
                     <div id="tag-repo-list"></div>`;
 
@@ -5165,7 +5156,7 @@
                             <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
                                 ${stars ? `<span class="repo-count">${stars}</span>` : ''}
                                 ${langBadge}
-                                <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:${providerColor};border:1px solid ${providerColor};border-radius:3px;padding:0.1em 0.4em;opacity:0.8;flex-shrink:0;">${providerLabel}</span>
+                                <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.65rem;color:${providerColor};border:1px solid ${providerColor};border-radius:3px;padding:0.1em 0.4em;opacity:0.8;flex-shrink:0;">${providerLabel}</span>
                             </div>
                         </div>
                         <div class="repo-card">${repoCardSvgHtml(repo, owner, name, provider)}</div>
@@ -5569,19 +5560,19 @@
                     ${defs}
                     <title>${safeOwner}/${safeName}</title>
                     <desc>${desc.slice(0, 200)}</desc>
-                    <text x="24" y="35" font-family="IBM Plex Sans, system-ui, -apple-system, sans-serif" font-size="20" font-weight="600">
+                    <text x="24" y="35" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif" font-size="20" font-weight="600">
                         <tspan fill="var(--fg)">${safeOwner}</tspan>
                         <tspan fill="var(--fg-muted)">/</tspan>
                         <tspan fill="var(--fg)">${safeName}</tspan>
                     </text>
-                    <text x="24" y="62" font-family="IBM Plex Sans, system-ui, -apple-system, sans-serif" font-size="14" fill="var(--fg-muted)">
+                    <text x="24" y="62" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif" font-size="14" fill="var(--fg-muted)">
                         ${descTspans}
                     </text>
                     <g transform="translate(456, 15)">
                         <rect width="120" height="120" rx="12" fill="var(--bg-secondary)" stroke="var(--border)" stroke-width="1"/>
                         ${avatarHref ? avatarImage : identiconSvg}
                     </g>
-                    <g transform="translate(24, 125)" fill="var(--fg-muted)" font-family="IBM Plex Mono, monospace" font-size="14">
+                    <g transform="translate(24, 125)" fill="var(--fg-muted)" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="14">
                         <g>
                             <svg x="0" y="-8" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--fg-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
@@ -5693,12 +5684,12 @@
                         }).join('') + '\n                    </g>\n                    <g class="em-y-axis">\n                        <line x1="' + padding.left + '" y1="' + padding.top + '" x2="' + padding.left + '" y2="' + (padding.top + chartHeight) + '" stroke="var(--border)" stroke-width="1"/>\n                        ' + [0, 0.25, 0.5, 0.75, 1].map(pct => {
                             const y = padding.top + chartHeight - pct * chartHeight;
                             const val = Math.round(max * pct);
-                            return '<text x="' + (padding.left - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-size="9" fill="var(--fg-muted)" font-family="IBM Plex Mono, monospace">' + val + '</text>';
+                            return '<text x="' + (padding.left - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-size="9" fill="var(--fg-muted)" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace">' + val + '</text>';
                         }).join('') + '\n                    </g>\n                    <g class="em-x-axis">\n                        <line x1="' + padding.left + '" y1="' + (padding.top + chartHeight) + '" x2="' + (width - padding.right) + '" y2="' + (padding.top + chartHeight) + '" stroke="var(--border)" stroke-width="1"/>\n                        ' + [0, Math.floor(n/4), Math.floor(n/2), Math.floor(3*n/4), n-1].map(i => {
                             const x = padding.left + i * stepX;
                             const date = new Date(buckets[i][0]);
                             const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                            return '<text x="' + x + '" y="' + (padding.top + chartHeight + 14) + '" text-anchor="middle" font-size="9" fill="var(--fg-muted)" font-family="IBM Plex Mono, monospace">' + timeStr + '</text>';
+                            return '<text x="' + x + '" y="' + (padding.top + chartHeight + 14) + '" text-anchor="middle" font-size="9" fill="var(--fg-muted)" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace">' + timeStr + '</text>';
                         }).join('') + '\n                    </g>\n                ';
 
                 svg.querySelectorAll('.em-dot').forEach(dot => {
@@ -5785,7 +5776,7 @@
                 if (!tooltipEl) {
                     tooltipEl = document.createElement('div');
                     tooltipEl.className = 'em-tooltip';
-                    tooltipEl.style.cssText = 'position:fixed;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.375rem 0.625rem;font-size:0.65rem;color:var(--fg);font-family:IBM Plex Mono,monospace;pointer-events:none;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15)';
+                    tooltipEl.style.cssText = 'position:fixed;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.375rem 0.625rem;font-size:0.65rem;color:var(--fg);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;pointer-events:none;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15)';
                     document.body.appendChild(tooltipEl);
                 }
                 tooltipEl.textContent = text;

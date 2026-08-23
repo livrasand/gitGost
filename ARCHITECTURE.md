@@ -124,6 +124,17 @@ For gitGost to be truly trustworthy, you shouldn't have to take our word that th
 
 ```
 
+## Zero-Knowledge Authentication API
+
+Clients that need proof-of-possession authentication can use the Schnorr API:
+
+1. Generate a P-256 key pair locally and keep the private key on the client.
+2. `POST /api/zkp/register` with a fresh random `identity` and the base64url-encoded public key.
+3. `POST /api/zkp/challenge` with that identity.
+4. Sign the returned challenge locally and `POST /api/zkp/verify` with the commitment and response.
+
+Challenges expire after two minutes and are single-use. The server stores only the public key and short-lived challenge state; it never receives the private key. This API is separate from the existing legacy `user_token` flow, which remains available for compatibility.
+
 **How to verify the deployment:**
 
 1. **Check the Attestations:** Every release includes a cryptographic attestation mapping the compiled binary back to a specific commit hash in this repository.

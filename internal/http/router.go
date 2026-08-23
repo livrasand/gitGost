@@ -377,6 +377,9 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	}
 
 	r.GET("/api/status", ServiceStatusHandler)
+	r.POST("/api/zkp/register", ZKPRegisterHandler)
+	r.POST("/api/zkp/challenge", ZKPChallengeHandler)
+	r.POST("/api/zkp/verify", ZKPVerifyHandler)
 
 	r.NoRoute(func(c *gin.Context) {
 		// Las rutas de API desconocidas deben fallar con 404 JSON; servir el

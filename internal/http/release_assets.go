@@ -86,7 +86,21 @@ func ReleaseAssetDownloadHandler(c *gin.Context) {
 		return
 	}
 	req.Header.Set("User-Agent", "gitGost/1.0")
-	client := &http.Client{Timeout: 10 * time.Minute}
+	client := &http.Client{
+		Timeout: 10 * time.Minute,
+		// El allowlist solo se comprueba en la primera petición; sin esta
+		// política un asset controlado podría 302 a una dirección interna
+		// (SSRF vía redirect) o degradar a HTTP en claro.
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 5 {
+				return fmt.Errorf("too many redirects")
+			}
+			if req.URL.Scheme != "https" || !releaseAssetHostAllowed(provider, req.URL.Host) {
+				return fmt.Errorf("redirect to disallowed destination")
+			}
+			return nil
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "failed to reach the forge"})

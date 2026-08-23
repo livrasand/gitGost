@@ -79,7 +79,7 @@ func BlameHandler(c *gin.Context) {
 		return
 	}
 
-	client := &http.Client{Timeout: blameHTTPTimeout}
+	client := newSafeHTTPClient(blameHTTPTimeout)
 
 	commits, err := listPathCommits(client, provider, owner, repo, path, ref, blameMaxCommits, 1)
 	if err != nil {

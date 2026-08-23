@@ -4,7 +4,6 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
-	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
 	"html/template"
@@ -32,6 +31,55 @@ var (
 )
 
 var appealStartTmpl = template.Must(template.New("appealStart").Parse(appealHTML))
+
+// Sesiones de administrador en memoria: la contraseña nunca viaja en el HTML
+// ni se persiste en cookies; el navegador solo recibe un token de sesión
+// aleatorio de un solo uso de propósito, revocable y con TTL.
+const (
+	adminSessionCookie = "admin_session"
+	adminSessionTTL    = time.Hour
+)
+
+var (
+	adminSessionsMu sync.Mutex
+	adminSessions   = make(map[string]time.Time)
+)
+
+func createAdminSession() string {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return ""
+	}
+	token := hex.EncodeToString(b)
+	adminSessionsMu.Lock()
+	pruneAdminSessionsLocked()
+	adminSessions[token] = time.Now().Add(adminSessionTTL)
+	adminSessionsMu.Unlock()
+	return token
+}
+
+func validAdminSession(token string) bool {
+	if token == "" {
+		return false
+	}
+	adminSessionsMu.Lock()
+	defer adminSessionsMu.Unlock()
+	expiry, ok := adminSessions[token]
+	if !ok || time.Now().After(expiry) {
+		delete(adminSessions, token)
+		return false
+	}
+	return true
+}
+
+func pruneAdminSessionsLocked() {
+	now := time.Now()
+	for t, expiry := range adminSessions {
+		if now.After(expiry) {
+			delete(adminSessions, t)
+		}
+	}
+}
 
 const appealHTML = `<!DOCTYPE html>
 <html lang="en">
@@ -125,6 +173,15 @@ func AppealStartHandler(c *gin.Context) {
 			})
 			return
 		}
+		if !isValidContentHash(hash) {
+			_ = appealStartTmpl.Execute(c.Writer, gin.H{
+				"Title":    "Invalid hash",
+				"Subtitle": "The hash format is not valid.",
+				"Hash":     hash,
+				"Error":    "El formato del hash no es válido. Debe contener solo caracteres hexadecimales (8-64).",
+			})
+			return
+		}
 		if !isBlockedHash(hash) {
 			_ = appealStartTmpl.Execute(c.Writer, gin.H{
 				"Title":    "Hash not blocked",
@@ -151,6 +208,16 @@ func AppealStartHandler(c *gin.Context) {
 			"Subtitle": "Both hash and appeal token are required.",
 			"Hash":     hash,
 			"Error":    "Hash and appeal token are required.",
+		})
+		return
+	}
+
+	if !isValidContentHash(hash) {
+		_ = appealStartTmpl.Execute(c.Writer, gin.H{
+			"Title":    "Invalid hash",
+			"Subtitle": "The hash format is not valid.",
+			"Hash":     hash,
+			"Error":    "El formato del hash no es válido. Debe contener solo caracteres hexadecimales (8-64).",
 		})
 		return
 	}
@@ -309,14 +376,31 @@ func notifyAdminAppeal(ticketID, hash string) {
 }
 
 func AdminAppealsHandler(c *gin.Context) {
-	password := c.Query("password")
-	if password == "" {
-		password, _ = c.Cookie("admin_pass")
-	}
-	if password == "" || panicPassword == "" || subtle.ConstantTimeCompare([]byte(password), []byte(panicPassword)) != 1 {
-		c.String(http.StatusUnauthorized, "Unauthorized")
+	// Autenticación solo por POST (formulario de login) o por cookie de
+	// sesión. Nunca por query string: la contraseña acabaría en logs de
+	// acceso y proxies intermedios.
+	if c.Request.Method == http.MethodPost {
+		password := c.PostForm("password")
+		if !verifyAdminPassword(password) {
+			renderAdminLogin(c, "Invalid password.")
+			return
+		}
+		token := createAdminSession()
+		if token == "" {
+			c.String(http.StatusInternalServerError, "Error creating session")
+			return
+		}
+		c.SetCookie(adminSessionCookie, token, int(adminSessionTTL.Seconds()), "/admin/", "", true, true)
+		c.Redirect(http.StatusSeeOther, "/admin/appeals")
 		return
 	}
+
+	sessionToken, _ := c.Cookie(adminSessionCookie)
+	if !validAdminSession(sessionToken) {
+		renderAdminLogin(c, "")
+		return
+	}
+
 	appealTicketsMu.Lock()
 	type appealView struct {
 		TicketID  string
@@ -379,20 +463,20 @@ button.dismiss{border-color:#f85149;color:#f85149;}
 		hash := template.HTMLEscapeString(v.Hash)
 		msg := template.HTMLEscapeString(msgPreview)
 		ageStr := template.HTMLEscapeString(age.String())
-		pwd := template.HTMLEscapeString(password)
+		sess := template.HTMLEscapeString(sessionToken)
 		fmt.Fprintf(c.Writer, `<tr><td><a href="/appeal/%s">%s</a></td><td>%s</td><td>%s</td><td>%s</td>
 	<td>
 	<form method="POST" action="/admin/appeals/%s/resolve" style="display:inline;">
-	<input type="hidden" name="password" value="%s">
+	<input type="hidden" name="session" value="%s">
 	<input type="hidden" name="outcome" value="unban">
 	<button type="submit" class="unban">Unban</button>
 	</form>
 	<form method="POST" action="/admin/appeals/%s/resolve" style="display:inline;">
-	<input type="hidden" name="password" value="%s">
+	<input type="hidden" name="session" value="%s">
 	<input type="hidden" name="outcome" value="dismiss">
 	<button type="submit" class="dismiss">Dismiss</button>
 	</form>
-	</td></tr>`, ticketID, ticketShort, hash, msg, ageStr, ticketID, pwd, ticketID, pwd)
+	</td></tr>`, ticketID, ticketShort, hash, msg, ageStr, ticketID, sess, ticketID, sess)
 	}
 	fmt.Fprintf(c.Writer, `</table>
 <hr class="sep"><h2>Resolved (%d)</h2><table><tr><th>Ticket</th><th>Hash</th><th>Outcome</th></tr>`, len(resolvedList))
@@ -411,12 +495,39 @@ button.dismiss{border-color:#f85149;color:#f85149;}
 	fmt.Fprintf(c.Writer, `</table></body></html>`)
 }
 
+func renderAdminLogin(c *gin.Context, errMsg string) {
+	errHTML := ""
+	if errMsg != "" {
+		errHTML = fmt.Sprintf(`<p style="color:#f85149;">%s</p>`, template.HTMLEscapeString(errMsg))
+	}
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(c.Writer, `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Admin · gitGost</title>
+<style>body{font-family:Inter,system-ui,sans-serif;background:#0d1117;color:#c9d1d9;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}
+.card{background:#161b22;border:1px solid rgba(255,166,87,0.45);border-radius:16px;padding:32px;width:360px;}
+h1{color:#ffa657;font-size:24px;margin:0 0 16px;}
+input[type=password]{width:100%%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:#0d1117;color:#c9d1d9;box-sizing:border-box;}
+button{margin-top:14px;width:100%%;padding:12px;border:none;background:#ffa657;color:#0d1117;font-weight:700;font-size:15px;border-radius:10px;cursor:pointer;}
+p{font-size:13px;color:#9fb3ff;}
+</style></head><body><div class="card"><h1>gitGost Admin</h1>%s
+<form method="POST" action="/admin/appeals">
+<input type="password" name="password" placeholder="Admin password" autofocus required />
+<button type="submit">Sign in</button>
+</form></div></body></html>`, errHTML)
+}
+
 func AdminAppealResolveHandler(c *gin.Context) {
 	ticketID := c.Param("ticket")
-	password := c.PostForm("password")
 	outcome := c.PostForm("outcome")
+	sessionToken := c.PostForm("session")
+	if sessionToken == "" {
+		if v, err := c.Cookie(adminSessionCookie); err == nil {
+			sessionToken = v
+		}
+	}
 
-	if password == "" || panicPassword == "" || subtle.ConstantTimeCompare([]byte(password), []byte(panicPassword)) != 1 {
+	// Se acepta una sesión válida o la contraseña directa (para clientes no
+	// navegador). Ambas verificaciones son en tiempo constante.
+	if !validAdminSession(sessionToken) && !verifyAdminPassword(c.PostForm("password")) {
 		c.String(http.StatusUnauthorized, "Unauthorized")
 		return
 	}
@@ -459,6 +570,9 @@ func AdminAppealResolveHandler(c *gin.Context) {
 		}()
 	}
 
-	c.SetCookie("admin_pass", password, 3600, "/admin/", "", true, true)
+	if validAdminSession(sessionToken) {
+		// Renovar la sesión tras una acción para sesiones activas.
+		c.SetCookie(adminSessionCookie, sessionToken, int(adminSessionTTL.Seconds()), "/admin/", "", true, true)
+	}
 	c.Redirect(http.StatusSeeOther, "/admin/appeals")
 }

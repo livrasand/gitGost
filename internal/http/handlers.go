@@ -7,6 +7,7 @@ import (
 	"crypto/md5"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/base32"
 	"encoding/base64"
 	"encoding/hex"
@@ -37,7 +38,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var uploadPackClient = &http.Client{Timeout: 10 * time.Minute}
+var uploadPackClient = newSafeHTTPClient(10 * time.Minute)
 
 func doGitHubWithTokenRotation(client *http.Client, buildRequest func(string) (*http.Request, error), fallbackToken string) (*http.Response, error) {
 	tokens := tokenpool.GitHubTokens()
@@ -984,6 +985,62 @@ func InitPanicConfig(password, adminTopic string) {
 	ntfyAdminTopic = adminTopic
 }
 
+// constantTimeEquals compara dos strings sin filtrar información por timing.
+func constantTimeEquals(a, b string) bool {
+	return subtle.ConstantTimeCompare([]byte(a), []byte(b)) == 1
+}
+
+// safeSameHostRedirects es una política CheckRedirect que compara cada salto
+// contra la petición inicial (via[0]): solo permite seguir redirecciones
+// HTTPS hacia el mismo host. Sin ella, un upstream puede redirigir el fetch
+// del servidor a direcciones internas (SSRF vía redirect).
+func safeSameHostRedirects(maxRedirects int) func(*http.Request, []*http.Request) error {
+	return func(req *http.Request, via []*http.Request) error {
+		if len(via) >= maxRedirects {
+			return fmt.Errorf("too many redirects")
+		}
+		if len(via) == 0 {
+			return nil
+		}
+		first := via[0].URL
+		if first.Scheme != "https" {
+			return fmt.Errorf("redirects disabled: initial request is not https")
+		}
+		if req.URL.Scheme != "https" || req.URL.Host != first.Host {
+			return fmt.Errorf("redirect to disallowed destination")
+		}
+		return nil
+	}
+}
+
+// newSafeHTTPClient construye un cliente HTTP con límite de tiempo y la
+// política de redirecciones same-host segura. Usarlo en lugar de
+// &http.Client{Timeout: ...} en todos los fetches salientes.
+func newSafeHTTPClient(timeout time.Duration) *http.Client {
+	return &http.Client{Timeout: timeout, CheckRedirect: safeSameHostRedirects(3)}
+}
+
+// verifyAdminPassword valida la contraseña de administrador en tiempo
+// constante y solo si PANIC_PASSWORD está configurado.
+func verifyAdminPassword(password string) bool {
+	return password != "" && panicPassword != "" && constantTimeEquals(password, panicPassword)
+}
+
+// isValidContentHash valida el formato de los hashes de identidad usados por
+// moderación y apelaciones (derivados con HMAC-SHA256 truncado a 8 hex):
+// entre 8 y 64 caracteres hexadecimales, sin operadores PostgREST ni metacaracteres.
+func isValidContentHash(hash string) bool {
+	if len(hash) < 8 || len(hash) > 64 {
+		return false
+	}
+	for _, r := range hash {
+		if !((r >= '0' && r <= '9') || (r >= 'a' && r <= 'f') || (r >= 'A' && r <= 'F')) {
+			return false
+		}
+	}
+	return true
+}
+
 func InitMentaConfig(apiEndpoint, apiKey string) {
 	mentaAPIEndpoint = strings.TrimRight(apiEndpoint, "/")
 	mentaAPIKey = apiKey
@@ -1008,7 +1065,7 @@ func verifyMentaCaptcha(token string) bool {
 	if mentaAPIKey != "" {
 		req.Header.Set("X-API-Key", mentaAPIKey)
 	}
-	client := &http.Client{Timeout: 5 * time.Second}
+	client := newSafeHTTPClient(5 * time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
 		utils.Log("Menta verify request failed: %v", err)
@@ -1025,7 +1082,7 @@ func verifyMentaCaptcha(token string) bool {
 	return result.Valid
 }
 
-var mentaProxyClient = &http.Client{Timeout: 15 * time.Second}
+var mentaProxyClient = newSafeHTTPClient(15 * time.Second)
 
 func MentaCaptchaProxyHandler(c *gin.Context) {
 	if mentaAPIEndpoint == "" {
@@ -1170,7 +1227,7 @@ func PanicHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
 		return
 	}
-	authorized := (panicPassword != "" && req.Password == panicPassword) ||
+	authorized := verifyAdminPassword(req.Password) ||
 		(req.Token != "" && consumeActionToken(req.Token))
 	if !authorized {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
@@ -1204,7 +1261,7 @@ func RollbackBurstHandler(c *gin.Context) {
 		return
 	}
 
-	authorized := (panicPassword != "" && req.Password == panicPassword) ||
+	authorized := verifyAdminPassword(req.Password) ||
 		(req.Token != "" && consumeActionToken(req.Token))
 	if !authorized {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
@@ -1392,7 +1449,12 @@ func CreateAnonymousIssueHandler(c *gin.Context) {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 				return
 			}
-			userToken := generateUserToken()
+			userToken, tokenErr := generateUserToken()
+			if tokenErr != nil {
+				utils.Log("generateUserToken: %v", tokenErr)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "token generation failed"})
+				return
+			}
 			hash := deriveHash(owner, repo, issueNumber, userToken)
 			karma := getKarma(c.Request.Context(), hash)
 			updateKarma(c.Request.Context(), hash, karma)
@@ -1416,7 +1478,12 @@ func CreateAnonymousIssueHandler(c *gin.Context) {
 		return
 	}
 
-	userToken := generateUserToken()
+	userToken, tokenErr := generateUserToken()
+	if tokenErr != nil {
+		utils.Log("generateUserToken: %v", tokenErr)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "token generation failed"})
+		return
+	}
 	hash := deriveHash(owner, repo, issueNumber, userToken)
 	karma := getKarma(c.Request.Context(), hash)
 	updateKarma(c.Request.Context(), hash, karma)
@@ -1461,7 +1528,7 @@ func GitLabIssueNotesProxyHandler(c *gin.Context) {
 	}
 	req.Header.Set("Accept", "application/json")
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{"error": "gitlab unreachable"})
@@ -1478,7 +1545,7 @@ func GitLabCommitCountHandler(c *gin.Context) {
 	repo := c.Param("repo")
 
 	projectID := url.PathEscape(owner + "/" + repo)
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := newSafeHTTPClient(30 * time.Second)
 	glToken := os.Getenv("GITLAB_TOKEN")
 
 	glFetch := func(page int) (int, error) {
@@ -1602,7 +1669,7 @@ func GitLabAvatarHandler(c *gin.Context) {
 		if err == nil {
 			req.Header.Set("PRIVATE-TOKEN", glToken)
 			req.Header.Set("Accept", "application/json")
-			client := &http.Client{Timeout: 8 * time.Second}
+			client := newSafeHTTPClient(8 * time.Second)
 			resp, err := client.Do(req)
 			if err == nil {
 				body, _ := io.ReadAll(resp.Body)
@@ -1649,7 +1716,7 @@ func GitLabCommitsHandler(c *gin.Context) {
 	}
 	req.Header.Set("Accept", "application/json")
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{"error": "gitlab unreachable"})
@@ -1681,7 +1748,7 @@ func GitLabCommitDetailHandler(c *gin.Context) {
 		req.Header.Set("Accept", "application/json")
 	}
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 
 	type commitResult struct {
 		data []byte
@@ -1768,7 +1835,7 @@ func GitHubDiscussionsProxyHandler(c *gin.Context) {
 		return
 	}
 
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := newSafeHTTPClient(15 * time.Second)
 	resp, err := doGitHubWithTokenRotation(client, func(token string) (*http.Request, error) {
 		req, requestErr := http.NewRequestWithContext(c.Request.Context(), "POST", "https://api.github.com/graphql", bytes.NewReader(jsonBody))
 		if requestErr != nil {
@@ -1898,7 +1965,7 @@ func GitHubDiscussionDetailProxyHandler(c *gin.Context) {
 		req.Header.Set("Authorization", "bearer "+ghToken)
 	}
 
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := newSafeHTTPClient(15 * time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{"error": "github unreachable"})
@@ -1988,7 +2055,7 @@ func GitHubWikiProxyHandler(c *gin.Context) {
 		fmt.Sprintf("https://raw.githubusercontent.com/wiki/%s/%s/%s", owner, repo, page),
 	}
 
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := newSafeHTTPClient(15 * time.Second)
 	for _, pageURL := range pageURLs {
 		req, err := http.NewRequest("GET", pageURL, nil)
 		if err != nil {
@@ -2034,7 +2101,7 @@ func GitLabWikiProxyHandler(c *gin.Context) {
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "gitGost/1.0")
 
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := newSafeHTTPClient(15 * time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
 		utils.Log("GitLab wiki proxy error: %v", err)
@@ -2096,7 +2163,12 @@ func CreateAnonymousCommentHandler(c *gin.Context) {
 
 	userToken := req.UserToken
 	if strings.TrimSpace(userToken) == "" {
-		userToken = generateUserToken()
+		var tokenErr error
+		if userToken, tokenErr = generateUserToken(); tokenErr != nil {
+			utils.Log("generateUserToken: %v", tokenErr)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "token generation failed"})
+			return
+		}
 	}
 	hash := deriveHash(owner, repo, number, userToken)
 	reports := getReportCountWithWindow(c.Request.Context(), hash)
@@ -2203,7 +2275,12 @@ func CreateAnonymousPRCommentHandler(c *gin.Context) {
 
 	userToken := req.UserToken
 	if strings.TrimSpace(userToken) == "" {
-		userToken = generateUserToken()
+		var tokenErr error
+		if userToken, tokenErr = generateUserToken(); tokenErr != nil {
+			utils.Log("generateUserToken: %v", tokenErr)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "token generation failed"})
+			return
+		}
 	}
 	hash := deriveHash(owner, repo, number, userToken)
 	reports := getReportCountWithWindow(c.Request.Context(), hash)
@@ -2308,7 +2385,12 @@ func CreateAnonymousDiscussionCommentHandler(c *gin.Context) {
 
 	userToken := req.UserToken
 	if strings.TrimSpace(userToken) == "" {
-		userToken = generateUserToken()
+		var tokenErr error
+		if userToken, tokenErr = generateUserToken(); tokenErr != nil {
+			utils.Log("generateUserToken: %v", tokenErr)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "token generation failed"})
+			return
+		}
 	}
 	hash := deriveHash(owner, repo, number, userToken)
 	reports := getReportCountWithWindow(c.Request.Context(), hash)
@@ -2428,6 +2510,10 @@ func ReportHashHandler(c *gin.Context) {
 			renderReportForm(c, "", 0, "sin datos", "El hash es obligatorio", newReportToken())
 			return
 		}
+		if !isValidContentHash(hash) {
+			renderReportForm(c, hash, 0, "inválido", "El formato del hash no es válido.", newReportToken())
+			return
+		}
 		if isBlockedHash(hash) {
 			renderReportForm(c, hash, 6, "bloqueado", "Este hash ya fue baneado/eliminado.", newReportToken())
 			return
@@ -2440,6 +2526,11 @@ func ReportHashHandler(c *gin.Context) {
 	hash := strings.TrimSpace(c.PostForm("hash"))
 	if hash == "" {
 		renderReportForm(c, "", 0, "sin datos", "El hash es obligatorio.", newReportToken())
+		return
+	}
+
+	if !isValidContentHash(hash) {
+		renderReportForm(c, hash, 0, "inválido", "El formato del hash no es válido.", newReportToken())
 		return
 	}
 
@@ -2617,16 +2708,22 @@ func deriveHash(owner, repo string, number int, userToken string) string {
 	input := fmt.Sprintf("%s/%s#%d|%s", owner, repo, number, userToken)
 	h := hmac.New(sha256.New, getSecretKey())
 	h.Write([]byte(input))
-	return hex.EncodeToString(h.Sum(nil))[:8]
+	// 64 bits truncados: con solo 32 bits la colisión de cumpleaños llegaba a
+	// ~65k comentarios y el hash es la clave de moderación (ban por hash borra
+	// TODO el contenido que lo comparte). 16 hex mantienen compatibilidad con
+	// los hashes de 8 ya almacenados (los lookups son por igualdad exacta).
+	return hex.EncodeToString(h.Sum(nil))[:16]
 }
 
-func generateUserToken() string {
+// generateUserToken genera el token de identidad anónima del autor. Si el
+// CSPRNG falla se devuelve error: degradar a un valor predecible permitiría
+// suplantación de identidad, así que la petición debe abortar.
+func generateUserToken() (string, error) {
 	buf := make([]byte, 10)
-	_, err := rand.Read(buf)
-	if err != nil {
-		return fmt.Sprintf("tok-%d", time.Now().UnixNano())
+	if _, err := rand.Read(buf); err != nil {
+		return "", fmt.Errorf("csprng failure: %w", err)
 	}
-	return strings.ToUpper(base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(buf))
+	return strings.ToUpper(base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(buf)), nil
 }
 
 func getKarma(ctx context.Context, hash string) int {
@@ -3167,7 +3264,7 @@ func CodebergProxyHandler(c *gin.Context) {
 		req.Header.Set("Accept", accept)
 	}
 
-	client := &http.Client{Timeout: 45 * time.Second}
+	client := newSafeHTTPClient(45 * time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
 		// Codeberg sufre timeouts puntuales: reintentar una vez antes de devolver 502.
@@ -3249,7 +3346,7 @@ func GitLabProxyHandler(c *gin.Context) {
 	req.Header.Set("Accept", c.GetHeader("Accept"))
 	req.Header.Set("User-Agent", "gitGost/1.0")
 
-	resp, err := (&http.Client{Timeout: 45 * time.Second}).Do(req)
+	resp, err := (newSafeHTTPClient(45 * time.Second)).Do(req)
 	if err != nil {
 		utils.Log("GitLab proxy error: %v", err)
 		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "failed to reach GitLab"})
@@ -3329,7 +3426,7 @@ func GitHubAPIProxyHandler(c *gin.Context) {
 		cacheKey += "|" + hex.EncodeToString(sum[:8])
 	}
 	entry, hasEntry := ghProxyCacheGet(cacheKey)
-	resp, err := doGitHubWithTokenRotation(&http.Client{Timeout: 15 * time.Second}, func(token string) (*http.Request, error) {
+	resp, err := doGitHubWithTokenRotation(newSafeHTTPClient(15*time.Second), func(token string) (*http.Request, error) {
 		req, requestErr := http.NewRequestWithContext(c.Request.Context(), c.Request.Method, target, nil)
 		if requestErr != nil {
 			return nil, requestErr
@@ -3443,7 +3540,7 @@ func searchGitHub(query string) []gin.H {
 
 	apiURL := fmt.Sprintf("https://api.github.com/search/repositories?q=%s&sort=stars&order=desc&per_page=100", url.QueryEscape(query))
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return results
@@ -3520,7 +3617,7 @@ func searchCodeberg(query, topic string) []gin.H {
 
 	apiURL := "https://codeberg.org/api/v1/repos/search?" + params.Encode()
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return results
@@ -3587,7 +3684,7 @@ func getGitLabPrimaryLanguage(projectID int, token string) string {
 	if projectID == 0 {
 		return ""
 	}
-	client := &http.Client{Timeout: 3 * time.Second}
+	client := newSafeHTTPClient(3 * time.Second)
 	url := fmt.Sprintf("https://gitlab.com/api/v4/projects/%d/languages", projectID)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -3625,7 +3722,7 @@ func searchGitLab(query string) []gin.H {
 	url := fmt.Sprintf("https://gitlab.com/api/v4/projects?search=%s&order_by=star_count&sort=desc&per_page=100", url.QueryEscape(query))
 
 	glToken := os.Getenv("GITLAB_TOKEN")
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return results
@@ -3833,7 +3930,7 @@ func CodeSearchHandler(c *gin.Context) {
 	req.Header.Set("Authorization", "token "+token)
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "gitGost")
-	resp, err := (&http.Client{Timeout: 10 * time.Second}).Do(req)
+	resp, err := (newSafeHTTPClient(10 * time.Second)).Do(req)
 	if err != nil {
 		utils.Log("GitHub code search error: %v", err)
 		c.JSON(http.StatusBadGateway, gin.H{"error": "GitHub code search is unavailable"})
@@ -3881,7 +3978,7 @@ func GitHubPackagesHandler(c *gin.Context) {
 		return
 	}
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 	for _, kind := range []string{"users", "orgs"} {
 		apiURL := fmt.Sprintf("https://api.github.com/%s/%s/packages?per_page=100", kind, url.PathEscape(owner))
 		req, err := http.NewRequest("GET", apiURL, nil)
@@ -3923,7 +4020,7 @@ func searchGitHubUsers(query, clientToken string) []gin.H {
 
 	apiURL := fmt.Sprintf("https://api.github.com/search/users?q=%s&per_page=100", url.QueryEscape(query))
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return results
@@ -3978,7 +4075,7 @@ func searchGitLabUsers(query, clientToken string) []gin.H {
 
 	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/users?search=%s&per_page=100", url.QueryEscape(query))
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return results
@@ -4035,7 +4132,7 @@ func searchCodebergUsers(query, clientToken string) []gin.H {
 	params.Set("limit", "100")
 	apiURL := "https://codeberg.org/api/v1/users/search?" + params.Encode()
 
-	client := &http.Client{Timeout: 45 * time.Second}
+	client := newSafeHTTPClient(45 * time.Second)
 
 	token := os.Getenv("CODEBERG_TOKEN")
 	if token == "" {
@@ -4150,7 +4247,7 @@ func UserProfileHandler(c *gin.Context) {
 func gitHubUserProfile(username, clientToken string) profileResult {
 	apiURL := fmt.Sprintf("https://api.github.com/users/%s", url.PathEscape(username))
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return profileResult{profile: nil, notFound: false}
@@ -4242,7 +4339,7 @@ func gitHubUserProfile(username, clientToken string) profileResult {
 func githubSocialAccounts(username, token string) map[string]string {
 	accounts := map[string]string{}
 	apiURL := fmt.Sprintf("https://api.github.com/users/%s/social_accounts?per_page=100", url.PathEscape(username))
-	client := &http.Client{Timeout: 5 * time.Second}
+	client := newSafeHTTPClient(5 * time.Second)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return accounts
@@ -4319,7 +4416,7 @@ func UserStarredHandler(c *gin.Context) {
 	if token == "" {
 		token = clientToken
 	}
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := newSafeHTTPClient(15 * time.Second)
 	starred := []json.RawMessage{}
 	for page := 1; page <= 10; page++ {
 		apiURL := fmt.Sprintf("https://api.github.com/users/%s/starred?per_page=100&page=%d", url.PathEscape(username), page)
@@ -4399,7 +4496,7 @@ func UserOrgsHandler(c *gin.Context) {
 	if token == "" {
 		token = clientToken
 	}
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/users/%s/orgs?per_page=100", url.PathEscape(username)), nil)
 	if err == nil {
 		if token != "" {
@@ -4441,7 +4538,7 @@ func UserEventsHandler(c *gin.Context) {
 	if token == "" {
 		token = clientToken
 	}
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := newSafeHTTPClient(15 * time.Second)
 	events := []json.RawMessage{}
 	for page := 1; page <= 3; page++ {
 		apiURL := fmt.Sprintf("https://api.github.com/users/%s/events?per_page=100&page=%d", url.PathEscape(username), page)
@@ -4536,7 +4633,7 @@ func ghContributionsGraphQL(username, token string) (map[string]any, bool) {
 	}
 	req.Header.Set("Authorization", "token "+token)
 	req.Header.Set("User-Agent", "gitGost")
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := newSafeHTTPClient(15 * time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, false
@@ -4596,7 +4693,7 @@ func ghContributionsScrape(username string) (map[string]any, error) {
 	}
 	req.Header.Set("User-Agent", "gitGost")
 	req.Header.Set("Accept", "text/html")
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := newSafeHTTPClient(15 * time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -4629,7 +4726,7 @@ func ghContributionsScrape(username string) (map[string]any, error) {
 func gitLabUserProfile(username, clientToken string) profileResult {
 	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/users?username=%s", url.QueryEscape(username))
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return profileResult{profile: nil, notFound: false}
@@ -4693,7 +4790,7 @@ func gitLabUserProfile(username, clientToken string) profileResult {
 func gitLabGroupProfile(username, clientToken string) profileResult {
 	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/groups/%s", url.PathEscape(username))
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return profileResult{profile: nil, notFound: false}
@@ -4750,7 +4847,7 @@ func gitLabGroupProfile(username, clientToken string) profileResult {
 func gitLabUserCount(userID int, kind, clientToken string) int {
 	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/users/%d/%s?per_page=1", userID, kind)
 
-	client := &http.Client{Timeout: 5 * time.Second}
+	client := newSafeHTTPClient(5 * time.Second)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return 0
@@ -4784,7 +4881,7 @@ func gitLabUserCount(userID int, kind, clientToken string) int {
 // por eso, ante un 403 se reintenta una vez sin token. Devuelve body, status y
 // X-Total-Count (cuando el endpoint es un listado).
 func codebergAPIGet(apiPath, token string) ([]byte, int, int) {
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 	for attempt := 0; attempt < 2; attempt++ {
 		req, err := http.NewRequest("GET", "https://codeberg.org"+apiPath, nil)
 		if err != nil {
@@ -4819,7 +4916,7 @@ func codebergAPIGet(apiPath, token string) ([]byte, int, int) {
 func codebergUserProfile(username, clientToken string) profileResult {
 	apiURL := fmt.Sprintf("https://codeberg.org/api/v1/users/%s", url.PathEscape(username))
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 
 	token := os.Getenv("CODEBERG_TOKEN")
 	if token == "" {
@@ -4927,7 +5024,7 @@ func codebergUserProfile(username, clientToken string) profileResult {
 func codebergOrgProfile(username, clientToken string) profileResult {
 	apiURL := fmt.Sprintf("https://codeberg.org/api/v1/orgs/%s", url.PathEscape(username))
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 
 	token := os.Getenv("CODEBERG_TOKEN")
 	if token == "" {
@@ -5155,7 +5252,7 @@ func UserReposHandler(c *gin.Context) {
 func gitHubUserRepos(username, clientToken string) []gin.H {
 	apiURL := fmt.Sprintf("https://api.github.com/users/%s/repos?per_page=30&sort=updated&type=all", url.PathEscape(username))
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return nil
@@ -5229,7 +5326,7 @@ func gitLabUserRepos(username, userType, clientToken string) []gin.H {
 		}
 	}
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return nil
@@ -5290,7 +5387,7 @@ func gitLabUserRepos(username, userType, clientToken string) []gin.H {
 func gitLabUserID(username, clientToken string) int {
 	apiURL := fmt.Sprintf("https://gitlab.com/api/v4/users?username=%s", url.QueryEscape(username))
 
-	client := &http.Client{Timeout: 5 * time.Second}
+	client := newSafeHTTPClient(5 * time.Second)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return 0
@@ -5329,7 +5426,7 @@ func codebergUserRepos(username, userType, clientToken string) []gin.H {
 		apiURL = fmt.Sprintf("https://codeberg.org/api/v1/users/%s/repos?limit=30&sort=updated", url.PathEscape(username))
 	}
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 
 	token := os.Getenv("CODEBERG_TOKEN")
 	if token == "" {
@@ -5475,7 +5572,7 @@ func getTrendingGitHub(sort string, perPage, page int) []gin.H {
 		url = fmt.Sprintf("https://api.github.com/search/repositories?q=created:>%s&sort=stars&order=desc&per_page=%d&page=%d", dateCutoff, perPage, page)
 	}
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return results
@@ -5552,7 +5649,7 @@ func getTrendingGitLab(sort string, perPage, page int) []gin.H {
 	}
 
 	glToken := os.Getenv("GITLAB_TOKEN")
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return results
@@ -5662,7 +5759,7 @@ func getTrendingCodeberg(sort string, perPage, page int) []gin.H {
 
 	apiURL := "https://codeberg.org/api/v1/repos/search?" + params.Encode()
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := newSafeHTTPClient(10 * time.Second)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return results

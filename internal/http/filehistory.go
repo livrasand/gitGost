@@ -58,7 +58,7 @@ func FileHistoryHandler(c *gin.Context) {
 		return
 	}
 
-	client := &http.Client{Timeout: blameHTTPTimeout}
+	client := newSafeHTTPClient(blameHTTPTimeout)
 	commits, err := listPathCommits(client, provider, owner, repo, path, ref, fileHistoryPerPage, page)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "failed to list commits"})

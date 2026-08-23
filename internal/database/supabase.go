@@ -94,7 +94,9 @@ func (c *SupabaseClient) HasReportFromIP(ctx context.Context, hash, ip string) (
 		return false, nil
 	}
 
-	url := fmt.Sprintf("%s/rest/v1/reports?hash=eq.%s&ip=eq.%s&select=id", c.URL, hash, ip)
+	// hash e ip provienen de input del usuario: sin QueryEscape un valor como
+	// "x&ip=neq." alteraría los filtros PostgREST del resto de la consulta.
+	url := fmt.Sprintf("%s/rest/v1/reports?hash=eq.%s&ip=eq.%s&select=id", c.URL, url.QueryEscape(hash), url.QueryEscape(ip))
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return false, err
@@ -269,7 +271,7 @@ func (c *SupabaseClient) GetTotalPRs(ctx context.Context) (int, error) {
 }
 
 func (c *SupabaseClient) DeleteOldReports(ctx context.Context, hash string, before time.Time) error {
-	url := fmt.Sprintf("%s/rest/v1/reports?hash=eq.%s&created_at=lt.%s", c.URL, hash, before.Format(time.RFC3339))
+	url := fmt.Sprintf("%s/rest/v1/reports?hash=eq.%s&created_at=lt.%s", c.URL, url.QueryEscape(hash), before.Format(time.RFC3339))
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
 		return err
@@ -402,7 +404,7 @@ func (c *SupabaseClient) UpsertKarma(ctx context.Context, hash string, karma int
 }
 
 func (c *SupabaseClient) GetKarma(ctx context.Context, hash string) (int, error) {
-	url := fmt.Sprintf("%s/rest/v1/karma?select=karma&hash=eq.%s&limit=1", c.URL, hash)
+	url := fmt.Sprintf("%s/rest/v1/karma?select=karma&hash=eq.%s&limit=1", c.URL, url.QueryEscape(hash))
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return 0, err
@@ -474,7 +476,7 @@ func (c *SupabaseClient) InsertReport(ctx context.Context, hash, ip string) erro
 }
 
 func (c *SupabaseClient) GetPRCountByRepo(ctx context.Context, owner, repo string) (int, error) {
-	url := fmt.Sprintf("%s/rest/v1/prs?owner=eq.%s&repo=eq.%s&select=id", c.URL, owner, repo)
+	url := fmt.Sprintf("%s/rest/v1/prs?owner=eq.%s&repo=eq.%s&select=id", c.URL, url.QueryEscape(owner), url.QueryEscape(repo))
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return 0, err
@@ -600,7 +602,7 @@ func (c *SupabaseClient) GetTotalComments(ctx context.Context) (int, error) {
 }
 
 func (c *SupabaseClient) GetReportCount(ctx context.Context, hash string) (int, error) {
-	url := fmt.Sprintf("%s/rest/v1/reports?hash=eq.%s&select=id", c.URL, hash)
+	url := fmt.Sprintf("%s/rest/v1/reports?hash=eq.%s&select=id", c.URL, url.QueryEscape(hash))
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return 0, err

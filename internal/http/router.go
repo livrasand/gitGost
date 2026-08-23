@@ -1,8 +1,10 @@
 package http
 
 import (
+	"crypto/subtle"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -195,11 +197,28 @@ func isValidRepoName(name string) bool {
 	return true
 }
 
+// gitSmartHTTPSuffixes son los sufijos exactos del protocolo smart HTTP de
+// Git. Solo estos caminos quedan exentos del API key; usar strings.Contains
+// permitía que cualquier ruta futura con wildcard que contuviese estas
+// cadenas saltase la autenticación silenciosamente.
+var gitSmartHTTPSuffixes = []string{
+	"/info/refs",
+	"/git-upload-pack",
+	"/git-receive-pack",
+}
+
+func isGitSmartHTTPPath(path string) bool {
+	for _, suffix := range gitSmartHTTPSuffixes {
+		if strings.HasSuffix(path, suffix) {
+			return true
+		}
+	}
+	return false
+}
+
 func anonymousAuthMiddleware(apiKey string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if strings.Contains(c.Request.URL.Path, "git-receive-pack") ||
-			strings.Contains(c.Request.URL.Path, "git-upload-pack") ||
-			strings.Contains(c.Request.URL.Path, "info/refs") {
+		if isGitSmartHTTPPath(c.Request.URL.Path) {
 			c.Next()
 			return
 		}
@@ -210,12 +229,7 @@ func anonymousAuthMiddleware(apiKey string) gin.HandlerFunc {
 		}
 
 		providedKey := c.GetHeader("X-Gitgost-Key")
-		if providedKey == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "API key required"})
-			return
-		}
-
-		if providedKey != apiKey {
+		if providedKey == "" || subtle.ConstantTimeCompare([]byte(providedKey), []byte(apiKey)) != 1 {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid API key"})
 			return
 		}
@@ -358,6 +372,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		admin.POST("/panic", PanicHandler)
 		admin.POST("/rollback", RollbackBurstHandler)
 		admin.GET("/appeals", AdminAppealsHandler)
+		admin.POST("/appeals", AdminAppealsHandler)
 		admin.POST("/appeals/:ticket/resolve", AdminAppealResolveHandler)
 	}
 
@@ -401,7 +416,15 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 				return
 			}
 		}
-		c.File("./web/index.html")
+		// Ruta desconocida: responder 404 real (soft-404 con 200 hacía que
+		// rutas como /.env parecieran existir y confundía a escáneres y
+		// clientes HTTP), pero sirviendo el índice para navegación humana.
+		body, err := os.ReadFile("./web/index.html")
+		if err != nil {
+			c.String(http.StatusInternalServerError, "index unavailable")
+			return
+		}
+		c.Data(http.StatusNotFound, "text/html; charset=utf-8", body)
 	})
 
 	return r

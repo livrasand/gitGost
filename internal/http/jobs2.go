@@ -91,7 +91,7 @@ var remoteJobSlots = make(chan struct{}, remoteJobMaxConcurrent)
 var remoteJobCancels sync.Map
 
 // openbinClient permite subir bundles grandes sin el timeout corto del proxy.
-var openbinClient = &http.Client{Timeout: 30 * time.Minute}
+var openbinClient = newSafeHTTPClient(30 * time.Minute)
 
 // CreateRemoteJobHandler crea un trabajo de descarga y lo ejecuta en background.
 func CreateRemoteJobHandler(c *gin.Context) {

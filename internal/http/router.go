@@ -387,6 +387,10 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 			return
 		}
 		if c.Request.Method == http.MethodGet {
+			if c.Request.URL.Path == "/" {
+				c.File("./web/index.html")
+				return
+			}
 			parts := strings.Split(strings.Trim(c.Request.URL.Path, "/"), "/")
 			isProvider := len(parts) > 0 && (parts[0] == "gh" || parts[0] == "gl" || parts[0] == "cb")
 			if isProvider && len(parts) >= 2 {

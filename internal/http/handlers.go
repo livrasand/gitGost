@@ -1041,6 +1041,27 @@ func isValidContentHash(hash string) bool {
 	return true
 }
 
+// minUserTokenLen es la longitud mínima aceptada para user tokens aportados
+// por el cliente. El token ES la credencial de identidad anónima: cualquiera
+// que lo presente puede publicar bajo el mismo hash (y provocar el ban
+// colateral de ese contenido). Tokens triviales ("test", "1234") permiten
+// apropiación de identidad por adivinación, así que se exige entropía mínima.
+// Los tokens generados por el servidor miden 16 caracteres base32.
+const minUserTokenLen = 12
+
+// isValidUserToken valida un user token suministrado por el cliente.
+func isValidUserToken(token string) bool {
+	if len(token) < minUserTokenLen || len(token) > 256 {
+		return false
+	}
+	for _, r := range token {
+		if r < 0x21 || r > 0x7e {
+			return false
+		}
+	}
+	return true
+}
+
 func InitMentaConfig(apiEndpoint, apiKey string) {
 	mentaAPIEndpoint = strings.TrimRight(apiEndpoint, "/")
 	mentaAPIKey = apiKey
@@ -2156,12 +2177,21 @@ func CreateAnonymousCommentHandler(c *gin.Context) {
 		return
 	}
 
+	if strings.TrimSpace(req.UserToken) != "" && !isValidUserToken(req.UserToken) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_token demasiado débil: mínimo 12 caracteres imprimibles"})
+		return
+	}
+
 	if !verifyMentaCaptcha(req.CaptchaToken) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "captcha verification failed"})
 		return
 	}
 
 	userToken := req.UserToken
+	if strings.TrimSpace(userToken) != "" && !isValidUserToken(userToken) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_token demasiado débil: mínimo 12 caracteres imprimibles"})
+		return
+	}
 	if strings.TrimSpace(userToken) == "" {
 		var tokenErr error
 		if userToken, tokenErr = generateUserToken(); tokenErr != nil {
@@ -2268,12 +2298,21 @@ func CreateAnonymousPRCommentHandler(c *gin.Context) {
 		return
 	}
 
+	if strings.TrimSpace(req.UserToken) != "" && !isValidUserToken(req.UserToken) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_token demasiado débil: mínimo 12 caracteres imprimibles"})
+		return
+	}
+
 	if !verifyMentaCaptcha(req.CaptchaToken) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "captcha verification failed"})
 		return
 	}
 
 	userToken := req.UserToken
+	if strings.TrimSpace(userToken) != "" && !isValidUserToken(userToken) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_token demasiado débil: mínimo 12 caracteres imprimibles"})
+		return
+	}
 	if strings.TrimSpace(userToken) == "" {
 		var tokenErr error
 		if userToken, tokenErr = generateUserToken(); tokenErr != nil {
@@ -2378,12 +2417,21 @@ func CreateAnonymousDiscussionCommentHandler(c *gin.Context) {
 		return
 	}
 
+	if strings.TrimSpace(req.UserToken) != "" && !isValidUserToken(req.UserToken) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_token demasiado débil: mínimo 12 caracteres imprimibles"})
+		return
+	}
+
 	if !verifyMentaCaptcha(req.CaptchaToken) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "captcha verification failed"})
 		return
 	}
 
 	userToken := req.UserToken
+	if strings.TrimSpace(userToken) != "" && !isValidUserToken(userToken) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_token demasiado débil: mínimo 12 caracteres imprimibles"})
+		return
+	}
 	if strings.TrimSpace(userToken) == "" {
 		var tokenErr error
 		if userToken, tokenErr = generateUserToken(); tokenErr != nil {

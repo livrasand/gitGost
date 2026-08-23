@@ -17,7 +17,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js" integrity="sha384-GdEWAbCjn+ghjX0gLx7/N1hyTVmPAjdC2OvoAA0RyNcAOhqwtT8qnbCxWle2+uJX" crossorigin="anonymous"></script>
     <script>if (typeof hljs !== 'undefined') hljs.configure({ ignoreUnescapedHTML: true });</script>
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js" integrity="sha384-QsSpx6a0USazT7nK7w8qXDgpSAPhFsb2XtpoLFQ5+X2yFN6hvCKnwEzN8M5FWaJb" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/environment-badge@^1.0.0/dist/bundle.js"></script>
+    <script src="https://unpkg.com/environment-badge@1.3.1/dist/bundle.js" integrity="sha384-2H0I1nyweBXE/B5DkvHgwGP0fghz2xTxgnK5BliEczCX5AEWyzPRo2oeA5L5U1Ni" crossorigin="anonymous"></script>
     <script>
         if (typeof environmentBadge === 'function') environmentBadge([
             { displayName: 'local', host: /(^localhost$|\.test$)/, backgroundColor: '#1a1a2e', foregroundColor: '#00d4ff' },
@@ -9255,6 +9255,10 @@
                     // Extiende el regex por defecto de DOMPurify para admitir el esquema file:.
                     ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|file):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i
                 });
+            } else {
+                // Fail-closed: sin sanitizer disponible (CDN bloqueado/offline)
+                // el HTML crudo del README NUNCA llega al DOM; se muestra como texto.
+                result = `<pre class="markdown-raw-fallback">${escHtml(result)}</pre>`;
             }
             return result;
         }

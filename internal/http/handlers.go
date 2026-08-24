@@ -1062,16 +1062,29 @@ func isValidUserToken(token string) bool {
 	return true
 }
 
-func InitMentaConfig(apiEndpoint, apiKey string) {
+var mentaEnforceCaptcha bool
+
+func InitMentaConfig(apiEndpoint, apiKey string, enforce bool) {
 	mentaAPIEndpoint = strings.TrimRight(apiEndpoint, "/")
 	mentaAPIKey = apiKey
+	mentaEnforceCaptcha = enforce
+	if mentaAPIEndpoint == "" {
+		if enforce {
+			utils.Log("WARNING: MENTA_CAPTCHA_ENFORCED=true but MENTA_API_ENDPOINT is unset: CAPTCHA will reject all anonymous submissions")
+		} else {
+			utils.Log("WARNING: Menta CAPTCHA verification is DISABLED (MENTA_API_ENDPOINT unset). Anti-abuse control is off.")
+		}
+	}
 }
 
 func verifyMentaCaptcha(token string) bool {
-	if mentaAPIEndpoint == "" {
+	if mentaAPIEndpoint == "" && !mentaEnforceCaptcha {
 		return true
 	}
 	if strings.TrimSpace(token) == "" {
+		return false
+	}
+	if mentaAPIEndpoint == "" {
 		return false
 	}
 	body, err := json.Marshal(map[string]string{"token": token})
@@ -2743,13 +2756,16 @@ func getSecretKey() []byte {
 	if secretKey != nil {
 		return secretKey
 	}
-	b := make([]byte, 32)
-	_, err := rand.Read(b)
-	if err != nil {
-		b = []byte(time.Now().String())
+	for range 3 {
+		b := make([]byte, 32)
+		if _, err := rand.Read(b); err == nil {
+			secretKey = b
+			return secretKey
+		}
 	}
-	secretKey = b
-	return secretKey
+	// Un CSPRNG roto haría predecibles los hashes de moderación y los tokens
+	// de apelación: es mejor abortar que degradar a un valor determinista.
+	panic("crypto/rand unavailable: cannot derive moderation identity key")
 }
 
 func deriveHash(owner, repo string, number int, userToken string) string {
@@ -2804,10 +2820,24 @@ func getScheme(r *http.Request) string {
 	if r.TLS != nil {
 		return "https"
 	}
-	if scheme := r.Header.Get("X-Forwarded-Proto"); scheme != "" {
+	// Solo aceptar el header cuando el Host coincide con el dominio de
+	// producción (SERVICE_URL): en local o detrás de hosts desconocidos, un
+	// atacante podría falsificarlo para generar URLs https falsas.
+	if scheme := r.Header.Get("X-Forwarded-Proto"); scheme == "https" && isTrustedProxyHost(r.Host) {
 		return scheme
 	}
 	return "http"
+}
+
+func isTrustedProxyHost(host string) bool {
+	serviceURL := os.Getenv("SERVICE_URL")
+	if serviceURL == "" {
+		serviceURL = "https://gitgost.fly.dev"
+	}
+	if u, err := url.Parse(serviceURL); err == nil {
+		return strings.EqualFold(host, u.Host)
+	}
+	return false
 }
 
 func BadgeHandler(c *gin.Context) {

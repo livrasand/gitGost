@@ -66,16 +66,25 @@ func Prove(private PrivateKey, challenge []byte) (Proof, error) {
 	if private.value == nil || private.value.Sign() <= 0 || private.value.Cmp(curve.Params().N) >= 0 {
 		return Proof{}, errors.New("invalid private key")
 	}
-	nonce, err := rand.Int(rand.Reader, curve.Params().N)
-	if err != nil {
-		return Proof{}, err
+	public := PublicKey{}
+	x, y := curve.ScalarBaseMult(private.value.Bytes())
+	public.X, public.Y = x, y
+	halfN := new(big.Int).Rsh(curve.Params().N, 1)
+	for range 64 {
+		nonce, err := rand.Int(rand.Reader, curve.Params().N)
+		if err != nil {
+			return Proof{}, err
+		}
+		rx, ry := curve.ScalarBaseMult(nonce.Bytes())
+		challengeScalar := hashToScalar(challenge, public, rx, ry)
+		response := new(big.Int).Mul(challengeScalar, private.value)
+		response.Add(response, nonce)
+		response.Mod(response, curve.Params().N)
+		if response.Cmp(halfN) <= 0 {
+			return Proof{CommitmentX: rx, CommitmentY: ry, Response: response}, nil
+		}
 	}
-	rx, ry := curve.ScalarBaseMult(nonce.Bytes())
-	challengeScalar := hashToScalar(challenge, rx, ry)
-	response := new(big.Int).Mul(challengeScalar, private.value)
-	response.Add(response, nonce)
-	response.Mod(response, curve.Params().N)
-	return Proof{CommitmentX: rx, CommitmentY: ry, Response: response}, nil
+	return Proof{}, errors.New("canonical response generation failed")
 }
 
 func Verify(public PublicKey, challenge []byte, proof Proof) bool {
@@ -83,16 +92,23 @@ func Verify(public PublicKey, challenge []byte, proof Proof) bool {
 		proof.Response == nil || proof.Response.Sign() < 0 || proof.Response.Cmp(curve.Params().N) >= 0 {
 		return false
 	}
-	challengeScalar := hashToScalar(challenge, proof.CommitmentX, proof.CommitmentY)
+	halfN := new(big.Int).Rsh(curve.Params().N, 1)
+	if proof.Response.Cmp(halfN) > 0 {
+		return false
+	}
+	challengeScalar := hashToScalar(challenge, public, proof.CommitmentX, proof.CommitmentY)
 	leftX, leftY := curve.ScalarBaseMult(proof.Response.Bytes())
 	rightX, rightY := curve.ScalarMult(public.X, public.Y, challengeScalar.Bytes())
 	rightX, rightY = curve.Add(proof.CommitmentX, proof.CommitmentY, rightX, rightY)
 	return leftX.Cmp(rightX) == 0 && leftY.Cmp(rightY) == 0
 }
 
-func hashToScalar(challenge []byte, x, y *big.Int) *big.Int {
+// hashToScalar liga la clave pública al transcript Fiat-Shamir para evitar
+// ataques de maleabilidad y ROS/Wagner en escenarios multi-clave.
+func hashToScalar(challenge []byte, public PublicKey, x, y *big.Int) *big.Int {
 	h := sha256.New()
 	h.Write(challenge)
+	h.Write(public.Bytes())
 	h.Write(x.Bytes())
 	h.Write(y.Bytes())
 	value := new(big.Int).SetBytes(h.Sum(nil))

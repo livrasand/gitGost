@@ -3678,7 +3678,7 @@
                 _bugsCache.closed = closed;
                 renderBugsView('open');
             } catch(e) {
-                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+                const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: </div>`;
             }
         }
 
@@ -4286,7 +4286,7 @@
                 _prsCache = { open, closed, openTotal, closedTotal };
                 renderPRsView('all');
             } catch(e) {
-                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+                const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: </div>`;
             }
         }
 
@@ -4898,7 +4898,7 @@
                 }
                 renderCommitsView(commits, avatarMap);
             } catch(e) {
-                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+                const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: </div>`;
             }
         }
 
@@ -5068,7 +5068,7 @@
                 _releasesCache = await fetchReleases();
                 renderReleasesView();
             } catch(e) {
-                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+                const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: </div>`;
             }
         }
 
@@ -5117,7 +5117,7 @@
                 }
                 renderBranchesView(branches);
             } catch(e) {
-                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+                const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: </div>`;
             }
         }
 
@@ -5200,7 +5200,7 @@
                 }
                 renderTagsView(tags);
             } catch(e) {
-                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+                const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: </div>`;
             }
         }
 
@@ -5328,7 +5328,7 @@
                 _packagesCache = await fetchPackagesList();
                 renderPackagesView();
             } catch(e) {
-                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+                const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: </div>`;
             }
         }
 
@@ -5391,7 +5391,7 @@
                         <ul style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.78rem;list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.4rem;">${fileList}</ul>
                     </div>`;
             } catch(e) {
-                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+                const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: </div>`;
             }
         }
 
@@ -5685,7 +5685,7 @@
                 }
                 renderCommitDetail(commit, files, glAvatarUrl);
             } catch(e) {
-                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+                const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: </div>`;
             }
         }
 
@@ -6880,7 +6880,7 @@
                 const userMap = rv.provider === 'gl' ? await _glContributorUsernames(list) : new Map();
                 renderContributorsView(list, userMap);
             } catch(e) {
-                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+                const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: </div>`;
             }
         }
 
@@ -7089,7 +7089,7 @@
                 // Codeberg/Gitea no expone un endpoint público de deployments.
                 renderDeploymentsView(items);
             } catch(e) {
-                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${e.message}</div>`;
+                const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: </div>`;
             }
         }
 
@@ -9250,10 +9250,8 @@
             });
             if (typeof DOMPurify !== 'undefined') {
                 result = DOMPurify.sanitize(result, {
-                    ALLOW_DATA_ATTR: true,
-                    ADD_ATTR: ['target','rel','data-anchor','data-wiki','referrerpolicy'],
-                    // Extiende el regex por defecto de DOMPurify para admitir el esquema file:.
-                    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|file):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i
+                    ALLOW_DATA_ATTR: false,
+                    ADD_ATTR: ['target','rel','data-anchor','data-wiki','referrerpolicy']
                 });
             } else {
                 // Fail-closed: sin sanitizer disponible (CDN bloqueado/offline)

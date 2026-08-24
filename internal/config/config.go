@@ -21,6 +21,7 @@ type Config struct {
 	NtfyAdminTopic   string
 	MentaAPIEndpoint string
 	MentaAPIKey      string
+	MentaEnforce     bool
 }
 
 func Load() *Config {
@@ -39,6 +40,7 @@ func Load() *Config {
 		NtfyAdminTopic:   getEnv("NTFY_ADMIN_TOPIC", ""),
 		MentaAPIEndpoint: getEnv("MENTA_API_ENDPOINT", ""),
 		MentaAPIKey:      getEnv("MENTA_API_KEY", ""),
+		MentaEnforce:     getEnv("MENTA_CAPTCHA_ENFORCED", "") == "true",
 	}
 
 	return cfg

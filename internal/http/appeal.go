@@ -271,6 +271,8 @@ func AppealStartHandler(c *gin.Context) {
 }
 
 func AppealViewHandler(c *gin.Context) {
+	// Página con datos sensibles del ticket: nunca cacheable.
+	c.Header("Cache-Control", "no-store")
 	ticketID := c.Param("ticket")
 
 	appealTicketsMu.Lock()
@@ -388,6 +390,8 @@ func notifyAdminAppeal(ticketID, hash string) {
 }
 
 func AdminAppealsHandler(c *gin.Context) {
+	// Panel autenticado con hashes y mensajes: nunca cacheable.
+	c.Header("Cache-Control", "no-store")
 	// Autenticación solo por POST (formulario de login) o por cookie de
 	// sesión. Nunca por query string: la contraseña acabaría en logs de
 	// acceso y proxies intermedios.
@@ -402,6 +406,7 @@ func AdminAppealsHandler(c *gin.Context) {
 			c.String(http.StatusInternalServerError, "Error creating session")
 			return
 		}
+		c.SetSameSite(http.SameSiteStrictMode)
 		c.SetCookie(adminSessionCookie, token, int(adminSessionTTL.Seconds()), "/admin/", "", true, true)
 		c.Redirect(http.StatusSeeOther, "/admin/appeals")
 		return
@@ -592,6 +597,7 @@ func AdminAppealResolveHandler(c *gin.Context) {
 
 	if validAdminSession(sessionToken) {
 		// Renovar la sesión tras una acción para sesiones activas.
+		c.SetSameSite(http.SameSiteStrictMode)
 		c.SetCookie(adminSessionCookie, sessionToken, int(adminSessionTTL.Seconds()), "/admin/", "", true, true)
 	}
 	c.Redirect(http.StatusSeeOther, "/admin/appeals")

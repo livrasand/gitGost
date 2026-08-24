@@ -95,6 +95,14 @@ func main() {
 
 	// Initialize panic button
 	handler.InitPanicConfig(cfg.PanicPassword, cfg.NtfyAdminTopic)
+	if cfg.NtfyAdminTopic != "" {
+		if os.Getenv("NTFY_TOKEN") == "" {
+			utils.Log("WARNING: NTFY_TOKEN is unset: the admin ntfy topic is publicly readable/writable. Action tokens (panic/rollback) are exposed to anyone who learns NTFY_ADMIN_TOPIC")
+		}
+		if len(cfg.NtfyAdminTopic) < 24 {
+			utils.Log("WARNING: NTFY_ADMIN_TOPIC looks guessable: use a long random value (e.g. 32+ chars) to prevent topic enumeration")
+		}
+	}
 
 	// Initialize Menta CAPTCHA verification (fail-closed if MENTA_CAPTCHA_ENFORCED=true)
 	handler.InitMentaConfig(cfg.MentaAPIEndpoint, cfg.MentaAPIKey, cfg.MentaEnforce)

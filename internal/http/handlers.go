@@ -3059,6 +3059,7 @@ func BadgePRCountHandler(c *gin.Context) {
 }
 
 func PRStatusHandler(c *gin.Context) {
+	c.Header("Cache-Control", "no-store")
 	hash := strings.TrimSpace(c.Param("hash"))
 	if hash == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "hash is required"})
@@ -3307,8 +3308,8 @@ func CodebergProxyHandler(c *gin.Context) {
 	}
 
 	path := strings.TrimPrefix(c.Request.URL.Path, "/api/cb-proxy/")
-	if path == "" {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "missing path"})
+	if path == "" || strings.Contains(path, "..") {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid Codeberg API path"})
 		return
 	}
 

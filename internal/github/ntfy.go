@@ -28,6 +28,19 @@ func NtfyServiceURL() string {
 	return "https://gitgost.fly.dev"
 }
 
+// NtfyToken devuelve un token opcional (NTFY_TOKEN) para autenticar las
+// publicaciones contra un servidor ntfy con control de acceso. Sin él,
+// cualquier persona que conozca el topic puede leerlo y publicar en él.
+func NtfyToken() string {
+	return os.Getenv("NTFY_TOKEN")
+}
+
+func setNtfyAuth(req *http.Request) {
+	if tok := NtfyToken(); tok != "" {
+		req.Header.Set("Authorization", "Bearer "+tok)
+	}
+}
+
 func PublishNtfyEvent(prHash, title, message, actions string) error {
 	topic := NtfyTopicForPR(prHash)
 	url := fmt.Sprintf("%s/%s", NtfyBaseURL(), topic)
@@ -42,6 +55,7 @@ func PublishNtfyEvent(prHash, title, message, actions string) error {
 	if actions != "" {
 		req.Header.Set("Actions", actions)
 	}
+	setNtfyAuth(req)
 
 	resp, err := ntfyClient.Do(req)
 	if err != nil {
@@ -70,6 +84,7 @@ func PublishNtfyAdmin(topic, title, message, actions string) error {
 	if actions != "" {
 		req.Header.Set("Actions", actions)
 	}
+	setNtfyAuth(req)
 
 	resp, err := ntfyClient.Do(req)
 	if err != nil {

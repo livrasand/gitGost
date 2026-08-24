@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/livrasand/gitGost/internal/config"
+	"github.com/livrasand/gitGost/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -240,6 +241,9 @@ func anonymousAuthMiddleware(apiKey string) gin.HandlerFunc {
 
 func SetupRouter(cfg *config.Config) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
+	if cfg.APIKey == "" {
+		utils.Log("WARNING: GITGOST_API_KEY is unset: /v1 push/issue/comment endpoints are UNAUTHENTICATED")
+	}
 	r := gin.New()
 	r.SetTrustedProxies([]string{})
 	r.Use(gin.Recovery())
@@ -345,18 +349,18 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/blame/:provider/:owner/:repo", proxyLimiter(), BlameHandler)
 		api.GET("/file-history/:provider/:owner/:repo", proxyLimiter(), FileHistoryHandler)
 		api.GET("/release-asset/:provider/:owner/:repo", proxyLimiter(), ReleaseAssetDownloadHandler)
-		api.GET("/trending/:provider", TrendingHandler)
+		api.GET("/trending/:provider", proxyLimiter(), TrendingHandler)
 		api.GET("/cb-proxy/*path", proxyLimiter(), CodebergProxyHandler)
 		api.GET("/gl-proxy/*path", proxyLimiter(), GitLabProxyHandler)
-		api.GET("/gl-notes/:owner/:repo/:number", GitLabIssueNotesProxyHandler)
-		api.GET("/gl-commit-count/:owner/:repo", GitLabCommitCountHandler)
-		api.GET("/gl-avatar", GitLabAvatarHandler)
-		api.GET("/gl-commits/:owner/:repo", GitLabCommitsHandler)
-		api.GET("/gl-commit-detail/:owner/:repo/:sha", GitLabCommitDetailHandler)
-		api.GET("/gh-discussions/:owner/:repo", GitHubDiscussionsProxyHandler)
-		api.GET("/gh-discussion/:owner/:repo/:number", GitHubDiscussionDetailProxyHandler)
-		api.GET("/gh-wiki/:owner/:repo/:page", GitHubWikiProxyHandler)
-		api.GET("/gl-wiki/:owner/:repo", GitLabWikiProxyHandler)
+		api.GET("/gl-notes/:owner/:repo/:number", proxyLimiter(), GitLabIssueNotesProxyHandler)
+		api.GET("/gl-commit-count/:owner/:repo", proxyLimiter(), GitLabCommitCountHandler)
+		api.GET("/gl-avatar", proxyLimiter(), GitLabAvatarHandler)
+		api.GET("/gl-commits/:owner/:repo", proxyLimiter(), GitLabCommitsHandler)
+		api.GET("/gl-commit-detail/:owner/:repo/:sha", proxyLimiter(), GitLabCommitDetailHandler)
+		api.GET("/gh-discussions/:owner/:repo", proxyLimiter(), GitHubDiscussionsProxyHandler)
+		api.GET("/gh-discussion/:owner/:repo/:number", proxyLimiter(), GitHubDiscussionDetailProxyHandler)
+		api.GET("/gh-wiki/:owner/:repo/:page", proxyLimiter(), GitHubWikiProxyHandler)
+		api.GET("/gl-wiki/:owner/:repo", proxyLimiter(), GitLabWikiProxyHandler)
 		api.GET("/captcha/*path", captchaLimiter(), MentaCaptchaProxyHandler)
 		api.POST("/captcha/*path", captchaLimiter(), MentaCaptchaProxyHandler)
 	}

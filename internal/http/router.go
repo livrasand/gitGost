@@ -377,9 +377,13 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	}
 
 	r.GET("/api/status", ServiceStatusHandler)
-	r.POST("/api/zkp/register", ZKPRegisterHandler)
-	r.POST("/api/zkp/challenge", ZKPChallengeHandler)
-	r.POST("/api/zkp/verify", ZKPVerifyHandler)
+	zkp := r.Group("/api/zkp")
+	zkp.Use(zkpSecurity(), prCheckWindowLimiter("ZKP rate limit exceeded", 30, time.Minute))
+	{
+		zkp.POST("/register", ZKPRegisterHandler)
+		zkp.POST("/challenge", ZKPChallengeHandler)
+		zkp.POST("/verify", ZKPVerifyHandler)
+	}
 
 	r.NoRoute(func(c *gin.Context) {
 		// Las rutas de API desconocidas deben fallar con 404 JSON; servir el

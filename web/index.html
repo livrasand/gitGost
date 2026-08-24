@@ -3519,7 +3519,7 @@
             }
 
             async function searchGitHubUsers(query) {
-                const token = localStorage.getItem('gh_token');
+                    const token = sessionStorage.getItem('gh_token');
                 const headers = token ? { 'Authorization': `token ${token}` } : {};
                 // Siempre por el backend: usa el token del servidor (y el local como respaldo), evitando 403 del navegador.
                 const res = await fetch(`${API_BASE}/api/users/search?q=${encodeURIComponent(query)}&provider=gh`, { headers });
@@ -3529,7 +3529,7 @@
             }
 
             async function searchGitLabUsers(query) {
-                const token = localStorage.getItem('gl_token');
+                    const token = sessionStorage.getItem('gl_token');
                 const headers = token ? { 'Authorization': `token ${token}` } : {};
                 // Siempre por el backend: usa el token del servidor (y el local como respaldo), evitando 403 del navegador.
                 const res = await fetch(`${API_BASE}/api/users/search?q=${encodeURIComponent(query)}&provider=gl`, { headers });
@@ -3539,7 +3539,7 @@
             }
 
             async function searchCodebergUsers(query) {
-                const token = localStorage.getItem('cb_token');
+                    const token = sessionStorage.getItem('cb_token');
                 const headers = token ? { 'Authorization': `token ${token}` } : {};
                 // Siempre por el backend: usa el token del servidor (y el local como respaldo), evitando 403 del navegador.
                 const res = await fetch(`${API_BASE}/api/users/search?q=${encodeURIComponent(query)}&provider=cb`, { headers });
@@ -3592,9 +3592,9 @@
             }
 
             async function fetchUserProfile(user) {
-                const token = user.provider === 'gitlab' ? localStorage.getItem('gl_token')
-                    : user.provider === 'codeberg' ? localStorage.getItem('cb_token')
-                    : localStorage.getItem('gh_token');
+                const token = user.provider === 'gitlab' ? sessionStorage.getItem('gl_token')
+                    : user.provider === 'codeberg' ? sessionStorage.getItem('cb_token')
+                    : sessionStorage.getItem('gh_token');
                 const headers = token ? { 'Authorization': `token ${token}` } : {};
                 const provider = user.provider === 'gitlab' ? 'gl' : user.provider === 'codeberg' ? 'cb' : 'gh';
                 // Siempre por el backend: usa el token del servidor (y el local como respaldo), evitando 403 del navegador.
@@ -4830,23 +4830,23 @@
                 const ghTokenClear = root.querySelector('#gh-token-clear');
                 const ghTokenStatus = root.querySelector('#gh-token-status');
                 if (ghTokenInput) {
-                    ghTokenInput.value = localStorage.getItem('gh_token') || '';
+                    ghTokenInput.value = sessionStorage.getItem('gh_token') || '';
                 }
                 if (ghTokenSave) {
                     ghTokenSave.addEventListener('click', () => {
                         const value = (ghTokenInput?.value || '').trim();
                         if (value) {
-                            localStorage.setItem('gh_token', value);
+                            sessionStorage.setItem('gh_token', value);
                             if (ghTokenStatus) ghTokenStatus.textContent = 'Saved';
                         } else {
-                            localStorage.removeItem('gh_token');
+                            sessionStorage.removeItem('gh_token');
                             if (ghTokenStatus) ghTokenStatus.textContent = 'Cleared';
                         }
                     });
                 }
                 if (ghTokenClear) {
                     ghTokenClear.addEventListener('click', () => {
-                        localStorage.removeItem('gh_token');
+                        sessionStorage.removeItem('gh_token');
                         if (ghTokenInput) ghTokenInput.value = '';
                         if (ghTokenStatus) ghTokenStatus.textContent = 'Cleared';
                     });
@@ -4907,7 +4907,7 @@
                         issueSubmit.disabled = true;
                         if (statusEl) statusEl.textContent = 'Sending...';
                         if (resultEl) resultEl.textContent = '';
-                        const githubToken = provider === 'gh' ? (localStorage.getItem('gh_token') || '').trim() : '';
+                        const githubToken = provider === 'gh' ? (sessionStorage.getItem('gh_token') || '').trim() : '';
                         const payload = { title, body, labels };
                         if (githubToken) payload.github_token = githubToken;
                         try {
@@ -4944,7 +4944,7 @@
                         commentSubmit.disabled = true;
                         if (statusEl) statusEl.textContent = 'Sending...';
                         if (resultEl) resultEl.textContent = '';
-                        const githubToken = provider === 'gh' ? (localStorage.getItem('gh_token') || '').trim() : '';
+                        const githubToken = provider === 'gh' ? (sessionStorage.getItem('gh_token') || '').trim() : '';
                         const payload = { body };
                         if (token) payload.user_token = token;
                         if (githubToken) payload.github_token = githubToken;
@@ -4981,7 +4981,7 @@
                         prCommentSubmit.disabled = true;
                         if (statusEl) statusEl.textContent = 'Sending...';
                         if (resultEl) resultEl.textContent = '';
-                        const githubToken = provider === 'gh' ? (localStorage.getItem('gh_token') || '').trim() : '';
+                        const githubToken = provider === 'gh' ? (sessionStorage.getItem('gh_token') || '').trim() : '';
                         const payload = { body };
                         if (token) payload.user_token = token;
                         if (githubToken) payload.github_token = githubToken;
@@ -5355,7 +5355,7 @@
         }
 
         async function updateRateLimit() {
-            const token = localStorage.getItem('gh_token');
+            const token = sessionStorage.getItem('gh_token');
             if (token) {
                 try {
                     const proxyURL = `${API_BASE}/api/gh-proxy/rate_limit`;
@@ -5383,7 +5383,7 @@
                 st.style.color = '#1a7f37';
             }
             {
-                const glToken = localStorage.getItem('gl_token');
+                const glToken = sessionStorage.getItem('gl_token');
                 const limit = glToken ? 2000 : 300;
                 const unit  = glToken ? '2,000 / min' : '300 / min';
                 document.getElementById('gl-remaining').textContent = unit;
@@ -5396,7 +5396,7 @@
             }
 
             {
-                const cbToken = localStorage.getItem('cb_token');
+                const cbToken = sessionStorage.getItem('cb_token');
                 const limit = cbToken ? 1000 : 60;
                 const unit  = cbToken ? '1,000 / min' : '60 / min';
                 document.getElementById('cb-remaining').textContent = unit;

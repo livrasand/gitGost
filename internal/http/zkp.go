@@ -13,6 +13,8 @@ import (
 )
 
 const zkpChallengeTTL = 2 * time.Minute
+const zkpMaxBodySize = 16 * 1024
+const zkpMaxIdentityLength = 128
 
 type zkpRegistration struct{ PublicKey zkp.PublicKey }
 type zkpChallenge struct {
@@ -43,9 +45,27 @@ type zkpVerifyRequest struct {
 	Response    string `json:"response"`
 }
 
+func zkpSecurity() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("Cache-Control", "no-store")
+		c.Header("Pragma", "no-cache")
+		if c.Request.ContentLength > zkpMaxBodySize {
+			c.AbortWithStatusJSON(http.StatusRequestEntityTooLarge, gin.H{"error": "ZKP request too large"})
+			return
+		}
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, zkpMaxBodySize)
+		c.Next()
+	}
+}
+
 func ZKPRegisterHandler(c *gin.Context) {
 	var req zkpRegisterRequest
-	if err := c.ShouldBindJSON(&req); err != nil || strings.TrimSpace(req.Identity) == "" || req.PublicKey == "" {
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "identity and public_key are required"})
+		return
+	}
+	req.Identity = strings.TrimSpace(req.Identity)
+	if req.Identity == "" || len(req.Identity) > zkpMaxIdentityLength || req.PublicKey == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "identity and public_key are required"})
 		return
 	}
@@ -71,12 +91,17 @@ func ZKPRegisterHandler(c *gin.Context) {
 
 func ZKPChallengeHandler(c *gin.Context) {
 	var req zkpChallengeRequest
-	if err := c.ShouldBindJSON(&req); err != nil || strings.TrimSpace(req.Identity) == "" {
+	if err := c.ShouldBindJSON(&req); err != nil || strings.TrimSpace(req.Identity) == "" || len(strings.TrimSpace(req.Identity)) > zkpMaxIdentityLength {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "identity is required"})
 		return
 	}
 	zkpState.Lock()
 	defer zkpState.Unlock()
+	for id, challenge := range zkpState.challenges {
+		if time.Now().After(challenge.Expires) || challenge.Used {
+			delete(zkpState.challenges, id)
+		}
+	}
 	if _, exists := zkpState.registrations[req.Identity]; !exists {
 		c.JSON(http.StatusNotFound, gin.H{"error": "identity is not registered"})
 		return
@@ -104,6 +129,11 @@ func ZKPVerifyHandler(c *gin.Context) {
 	}
 	zkpState.Lock()
 	defer zkpState.Unlock()
+	for id, storedChallenge := range zkpState.challenges {
+		if time.Now().After(storedChallenge.Expires) || storedChallenge.Used {
+			delete(zkpState.challenges, id)
+		}
+	}
 	challenge, exists := zkpState.challenges[req.ChallengeID]
 	registration, registered := zkpState.registrations[req.Identity]
 	if !exists || !registered || challenge.Identity != req.Identity || challenge.Used || time.Now().After(challenge.Expires) {

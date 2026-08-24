@@ -1220,7 +1220,7 @@
                 // Codeberg (Gitea) expone /packages/{owner} con paginación; sin token
                 // funciona para paquetes públicos.
                 const packages = [];
-                const token = localStorage.getItem('cb_token');
+                const token = sessionStorage.getItem('cb_token');
                 const headers = token ? { 'Authorization': 'token ' + token } : {};
                 try {
                     for (let page = 1; page <= 10; page++) {
@@ -1314,7 +1314,7 @@
                     }
                 } else if (PROVIDER === 'gl') {
                     // GitLab solo expone followers/following por id de usuario.
-                    const token = localStorage.getItem('gl_token');
+                    const token = sessionStorage.getItem('gl_token');
                     const headers = token ? { 'PRIVATE-TOKEN': token } : {};
                     const uRes = await fetch(`https://gitlab.com/api/v4/users?username=${encodeURIComponent(USERNAME)}`, { headers });
                     const uArr = uRes.ok ? await uRes.json() : [];
@@ -1332,7 +1332,7 @@
                     }
                 } else if (PROVIDER === 'cb') {
                     // Codeberg exige auth para followers/following (401 sin token).
-                    const token = localStorage.getItem('cb_token');
+                    const token = sessionStorage.getItem('cb_token');
                     if (!token) return users;
                     const headers = { 'Authorization': 'token ' + token };
                     for (let page = 1; page <= 10; page++) {
@@ -1479,7 +1479,7 @@
         async function glContributionDays(username) {
             const days = new Map();
             const repos = new Map();
-            const headers = localStorage.getItem('gl_token') ? { 'PRIVATE-TOKEN': localStorage.getItem('gl_token') } : {};
+            const headers = sessionStorage.getItem('gl_token') ? { 'PRIVATE-TOKEN': sessionStorage.getItem('gl_token') } : {};
             const uRes = await fetch(`https://gitlab.com/api/v4/users?username=${encodeURIComponent(username)}`, { headers });
             if (!uRes.ok) return null;
             const users = await uRes.json();
@@ -1522,7 +1522,7 @@
             // [{ timestamp (segundos), contributions }, ...]
             const days = new Map();
             const repos = new Map();
-            const token = localStorage.getItem('cb_token');
+            const token = sessionStorage.getItem('cb_token');
             const headers = token ? { 'Authorization': 'token ' + token } : {};
             const res = await fetch(`https://codeberg.org/api/v1/users/${encodeURIComponent(username)}/heatmap`, { headers });
             if (!res.ok) return null;

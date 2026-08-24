@@ -15,6 +15,7 @@ import (
 func TestZKPAuthenticationRejectsReplay(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
+	r.Use(zkpSecurity())
 	r.POST("/register", ZKPRegisterHandler)
 	r.POST("/challenge", ZKPChallengeHandler)
 	r.POST("/verify", ZKPVerifyHandler)
@@ -31,6 +32,9 @@ func TestZKPAuthenticationRejectsReplay(t *testing.T) {
 	response := postJSON(t, r, "/register", registerBody)
 	if response.Code != http.StatusCreated {
 		t.Fatalf("register status = %d, want %d", response.Code, http.StatusCreated)
+	}
+	if response.Header().Get("Cache-Control") != "no-store" {
+		t.Fatal("ZKP response must not be cached")
 	}
 
 	response = postJSON(t, r, "/challenge", map[string]string{"identity": identity})

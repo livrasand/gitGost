@@ -96,8 +96,8 @@ func main() {
 	// Initialize panic button
 	handler.InitPanicConfig(cfg.PanicPassword, cfg.NtfyAdminTopic)
 
-	// Initialize Menta CAPTCHA verification (no-op if MENTA_API_ENDPOINT is unset)
-	handler.InitMentaConfig(cfg.MentaAPIEndpoint, cfg.MentaAPIKey)
+	// Initialize Menta CAPTCHA verification (fail-closed if MENTA_CAPTCHA_ENFORCED=true)
+	handler.InitMentaConfig(cfg.MentaAPIEndpoint, cfg.MentaAPIKey, cfg.MentaEnforce)
 
 	// Setup router
 	router := handler.SetupRouter(cfg)

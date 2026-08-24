@@ -15,6 +15,7 @@ import (
 const zkpChallengeTTL = 2 * time.Minute
 const zkpMaxBodySize = 16 * 1024
 const zkpMaxIdentityLength = 128
+const zkpMaxRegistrations = 10000
 
 type zkpRegistration struct{ PublicKey zkp.PublicKey }
 type zkpChallenge struct {
@@ -27,6 +28,7 @@ type zkpChallenge struct {
 var zkpState = struct {
 	sync.Mutex
 	registrations map[string]zkpRegistration
+	order         []string
 	challenges    map[string]*zkpChallenge
 }{registrations: make(map[string]zkpRegistration), challenges: make(map[string]*zkpChallenge)}
 
@@ -85,7 +87,13 @@ func ZKPRegisterHandler(c *gin.Context) {
 		c.JSON(http.StatusConflict, gin.H{"error": "identity is already registered"})
 		return
 	}
+	if len(zkpState.registrations) >= zkpMaxRegistrations {
+		oldest := zkpState.order[0]
+		zkpState.order = zkpState.order[1:]
+		delete(zkpState.registrations, oldest)
+	}
 	zkpState.registrations[req.Identity] = zkpRegistration{PublicKey: publicKey}
+	zkpState.order = append(zkpState.order, req.Identity)
 	c.JSON(http.StatusCreated, gin.H{"identity": req.Identity})
 }
 

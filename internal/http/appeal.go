@@ -1,13 +1,16 @@
 package http
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -365,9 +368,18 @@ func notifyAdminAppeal(ticketID, hash string) {
 	if ntfyAdminTopic == "" {
 		return
 	}
-	appealURL := fmt.Sprintf("https://gitgost.fly.dev/appeal/%s", ticketID)
-	payload := fmt.Sprintf(`{"topic":"%s","title":"New appeal filed","message":"Hash %s has filed an appeal.\n\n%s","tags":["warning"]}`, ntfyAdminTopic, hash, appealURL)
-	resp, err := http.Post("https://ntfy.sh", "application/json", strings.NewReader(payload))
+	appealURL := fmt.Sprintf("https://gitgost.fly.dev/appeal/%s", url.PathEscape(ticketID))
+	payload, err := json.Marshal(map[string]any{
+		"topic": ntfyAdminTopic,
+		"title": "New appeal filed",
+		"message": fmt.Sprintf("Hash %s has filed an appeal.\n\n%s", hash, appealURL),
+		"tags": []string{"warning"},
+	})
+	if err != nil {
+		utils.Log("Error building ntfy appeal notification: %v", err)
+		return
+	}
+	resp, err := newSafeHTTPClient(10 * time.Second).Post("https://ntfy.sh", "application/json", bytes.NewReader(payload))
 	if err != nil {
 		utils.Log("Error sending ntfy appeal notification: %v", err)
 		return
@@ -562,8 +574,16 @@ func AdminAppealResolveHandler(c *gin.Context) {
 			if outcome == "unban" {
 				status = "unbanned"
 			}
-			payload := fmt.Sprintf(`{"topic":"%s","title":"Appeal %s","message":"Hash %s appeal %s.","tags":["white_check_mark"]}`, ntfyAdminTopic, status, ticket.Hash, status)
-			resp, err := http.Post("https://ntfy.sh", "application/json", strings.NewReader(payload))
+			payload, err := json.Marshal(map[string]any{
+				"topic":   ntfyAdminTopic,
+				"title":   "Appeal " + status,
+				"message": fmt.Sprintf("Hash %s appeal %s.", ticket.Hash, status),
+				"tags":    []string{"white_check_mark"},
+			})
+			if err != nil {
+				return
+			}
+			resp, err := newSafeHTTPClient(10 * time.Second).Post("https://ntfy.sh", "application/json", bytes.NewReader(payload))
 			if err == nil {
 				resp.Body.Close()
 			}

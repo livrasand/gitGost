@@ -4048,7 +4048,21 @@
                 const statusbarPath = document.getElementById("statusbar-path");
                 if (!statusbarPath) return;
                 const homePath = PAGE_TO_PATH['home'] || '/explore';
-                statusbarPath.innerHTML = `<a href="${homePath}" onclick="showPage('home');return false;" style="color:var(--fg-secondary);text-decoration:none;">home</a> » ${section}${value ? " » " + value : ""}`;
+                statusbarPath.textContent = '';
+
+                const homeLink = document.createElement('a');
+                homeLink.href = homePath;
+                homeLink.style.color = 'var(--fg-secondary)';
+                homeLink.style.textDecoration = 'none';
+                homeLink.textContent = 'home';
+                homeLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showPage('home');
+                });
+
+                statusbarPath.appendChild(homeLink);
+                statusbarPath.appendChild(document.createTextNode(' » ' + section));
+                if (value) statusbarPath.appendChild(document.createTextNode(' » ' + value));
             }
 
             const PAGES = {

@@ -232,6 +232,7 @@ func PairHandler(c *gin.Context) {
 	// Try to get owner from ZKP identity first
 	identity, exists := c.Get(IdentityKey)
 	var owner string
+	authSource := "identity"
 	if exists {
 		owner, _ = identity.(string)
 	}
@@ -241,6 +242,7 @@ func PairHandler(c *gin.Context) {
 		apiKey := c.GetHeader("X-Gitgost-Key")
 		if apiKey != "" {
 			owner = apiKey
+			authSource = "api_key"
 		}
 	}
 	
@@ -254,7 +256,7 @@ func PairHandler(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
-	log.Printf("[node] PAIRED: %s at %s by %s", nodeID, time.Now().Format(time.RFC3339), owner)
+	log.Printf("[node] PAIRED: %s at %s by %s", nodeID, time.Now().Format(time.RFC3339), authSource)
 	c.JSON(http.StatusOK, gin.H{"node_id": nodeID})
 }
 

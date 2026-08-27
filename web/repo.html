@@ -6918,7 +6918,8 @@
             if (patch) _cdfPatchStore[key] = patch;
             const { dir, name } = _cdfSplitPath(f.filename);
             const oldPath = f.previous_filename || f.old_path || '';
-            return `<div class="commit-diff-file" data-pierre-key="${key}" data-filename="${escAttr(f.filename)}">
+            const safeKeyAttr = escAttr(key);
+            return `<div class="commit-diff-file" data-pierre-key="${safeKeyAttr}" data-filename="${escAttr(f.filename)}">
                         <div class="cdf-header">
                             <button type="button" class="cdf-toggle" aria-expanded="true" title="Toggle file diff">
                                 <svg class="cdf-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg>
@@ -6929,7 +6930,7 @@
                             <span class="cdf-statbars" title="${adds} additions &amp; ${dels} deletions">${_cdfStatBars(adds, dels)}</span>
                             ${adds ? `<span class="cdf-stat add">+${escHtml(adds)}</span>` : ''}
                             ${dels ? `<span class="cdf-stat del">&minus;${escHtml(dels)}</span>` : ''}
-                            ${patch ? `<button type="button" class="cdf-copy" data-cdf-copy="${key}" title="Copy raw patch">
+                            ${patch ? `<button type="button" class="cdf-copy" data-cdf-copy="${safeKeyAttr}" title="Copy raw patch">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-4M5 9h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2"/></svg>
                             </button>` : ''}
                         </div>

@@ -844,10 +844,65 @@ type PRTimelineEvent struct {
 	User      *struct {
 		Login string `json:"login"`
 	} `json:"user,omitempty"`
-	State string `json:"state,omitempty"`
-	Label *struct {
+	Actor *struct {
+		Login string `json:"login"`
+	} `json:"actor,omitempty"`
+	State       string `json:"state,omitempty"`
+	StateReason string `json:"state_reason,omitempty"`
+	CommitID    string `json:"commit_id,omitempty"`
+	Label       *struct {
 		Name string `json:"name"`
 	} `json:"label,omitempty"`
+	Assignee *struct {
+		Login string `json:"login"`
+	} `json:"assignee,omitempty"`
+	RequestedReviewer *struct {
+		Login string `json:"login"`
+	} `json:"requested_reviewer,omitempty"`
+	Milestone *struct {
+		Title string `json:"title"`
+	} `json:"milestone,omitempty"`
+	Source *struct {
+		Issue struct {
+			Number      int       `json:"number"`
+			Title       string    `json:"title"`
+			HTMLURL     string    `json:"html_url"`
+			PullRequest *struct{} `json:"pull_request,omitempty"`
+		} `json:"issue"`
+	} `json:"source,omitempty"`
+}
+
+// Author returns the most relevant login for the event, since timeline events
+// inconsistently use "actor", "user", "assignee" or "requested_reviewer".
+func (e *PRTimelineEvent) Author() string {
+	switch {
+	case e.Actor != nil && e.Actor.Login != "":
+		return e.Actor.Login
+	case e.User != nil && e.User.Login != "":
+		return e.User.Login
+	case e.Assignee != nil && e.Assignee.Login != "":
+		return e.Assignee.Login
+	case e.RequestedReviewer != nil && e.RequestedReviewer.Login != "":
+		return e.RequestedReviewer.Login
+	default:
+		return ""
+	}
+}
+
+// TargetTitle returns the title of the linked issue/PR for cross-references
+// and connected events, or the milestone title for milestoned events.
+func (e *PRTimelineEvent) TargetInfo() (title, url string) {
+	if e.Source != nil && e.Source.Issue.Title != "" {
+		ref := fmt.Sprintf("#%d %s", e.Source.Issue.Number, e.Source.Issue.Title)
+		if e.Source.Issue.PullRequest != nil {
+			ref += " (PR)"
+		}
+		return ref, e.Source.Issue.HTMLURL
+	}
+	if e.Milestone != nil && e.Milestone.Title != "" {
+		return e.Milestone.Title, ""
+	}
+	return "", ""
 }
 
 func ExtractPRNumber(prURL string) int {

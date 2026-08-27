@@ -361,6 +361,41 @@
         }
         .stars-back:hover { text-decoration: underline; }
         .stars-count { color: var(--fg-secondary); font-weight: 400; }
+
+        .repo-fork-watch-row {
+            display: flex;
+            width: 100%;
+            margin-top: 0.6rem;
+            gap: 0.5rem;
+        }
+
+        .repo-fork-btn,
+        .repo-watch-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            padding: 0.3rem 0.6rem;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            background: transparent;
+            color: var(--fg);
+            font-size: 0.72rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.1s, border-color 0.1s;
+            flex: 1;
+            box-sizing: border-box;
+        }
+        .repo-fork-btn:hover { background: var(--bg-hover); border-color: var(--fg-secondary); }
+        .repo-watch-btn:hover { background: var(--bg-hover); border-color: var(--fg-secondary); }
+        .repo-fork-btn svg,
+        .repo-watch-btn svg {
+            width: 1em;
+            height: 1em;
+            flex-shrink: 0;
+        }
         /* Oculta secciones de main al alternar vistas (SPA); gana a display inline y a .repo-list */
         .view-hidden { display: none !important; }
 
@@ -384,6 +419,142 @@
         .person-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .person-info { min-width: 0; }
         .person-name { color: var(--fg-muted); font-size: 0.72rem; margin-top: 0.1rem; }
+
+        /* ---- Nodes panel ---- */
+        .nodes-panel {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.75rem;
+        }
+        .nodes-panel .node-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            background: var(--bg-secondary);
+        }
+        .nodes-panel .node-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            flex: 1 1 140px;
+            min-width: 120px;
+        }
+        .nodes-panel .node-field label {
+            font-size: 0.65rem;
+            color: var(--fg-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .nodes-panel .node-field input {
+            font-family: inherit;
+            font-size: 0.72rem;
+            padding: 0.35rem 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            color: var(--fg);
+            outline: none;
+        }
+        .nodes-panel .node-field input:focus { border-color: var(--accent); }
+        .nodes-panel .node-form-btn {
+            font-family: inherit;
+            font-size: 0.72rem;
+            padding: 0.35rem 0.8rem;
+            border: 1px solid var(--accent);
+            border-radius: var(--radius-sm);
+            background: var(--accent);
+            color: #fff;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .nodes-panel .node-form-btn:hover { opacity: 0.85; }
+        .nodes-panel .node-form-btn:disabled { opacity: 0.4; cursor: default; }
+
+        .nodes-panel .node-list { display: flex; flex-direction: column; gap: 0; }
+        .nodes-panel .node-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .nodes-panel .node-card:last-child { border-bottom: none; }
+        .nodes-panel .node-card:hover { background: var(--bg-hover); }
+        .nodes-panel .node-card-left {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            min-width: 0;
+            flex: 1;
+        }
+        .nodes-panel .node-status {
+            width: 0.55em;
+            height: 0.55em;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .nodes-panel .node-status.connected { background: var(--hm-2); }
+        .nodes-panel .node-status.disconnected { background: var(--fg-secondary); }
+        .nodes-panel .node-status.connecting { background: var(--alert-warning); }
+        .nodes-panel .node-card-name {
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 0.78rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .nodes-panel .node-card-id {
+            color: var(--fg-secondary);
+            font-size: 0.65rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .nodes-panel .node-card-actions {
+            display: flex;
+            gap: 0.35rem;
+            flex-shrink: 0;
+        }
+        .nodes-panel .node-btn {
+            font-family: inherit;
+            font-size: 0.65rem;
+            padding: 0.2rem 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            color: var(--fg-muted);
+            cursor: pointer;
+        }
+        .nodes-panel .node-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .nodes-panel .node-btn.danger:hover { border-color: var(--alert-caution); color: var(--alert-caution); }
+        .nodes-panel .node-empty {
+            color: var(--fg-secondary);
+            font-size: 0.72rem;
+            padding: 1rem 0;
+        }
+        .nodes-panel .node-form-btn.secondary {
+            background: transparent;
+            color: var(--fg-muted);
+            border-color: var(--border);
+        }
+        .nodes-panel .node-form-btn.secondary:hover {
+            border-color: var(--fg-secondary);
+            color: var(--fg);
+        }
+        .nodes-panel .status {
+            font-size: 0.72rem;
+            margin-top: 0.4rem;
+            color: var(--fg-secondary);
+        }
+        .nodes-panel .status.ok { color: #22c55e; }
+        .nodes-panel .status.error { color: #ef4444; }
 
         .orgs-row {
             display: flex;
@@ -601,6 +772,174 @@
             .readme-content { padding: 1rem; }
             .hm-months { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
         }
+        /* New Repository Modal Styles */
+        .new-repo-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: rgba(0, 0, 0, 0.65);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .new-repo-overlay.active {
+            display: flex;
+        }
+        .new-repo-modal {
+            background: var(--bg-secondary, #161b22);
+            border: 1px solid var(--border, #30363d);
+            border-radius: 8px;
+            width: 500px;
+            max-width: 92vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            color: var(--fg, #c9d1d9);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        .new-repo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.7rem 1rem;
+            border-bottom: 1px solid var(--border, #30363d);
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+        .new-repo-close {
+            background: none;
+            border: none;
+            color: var(--fg-muted, #8b949e);
+            cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+            padding: 0 2px;
+        }
+        .new-repo-close:hover {
+            color: var(--fg, #c9d1d9);
+        }
+        .new-repo-content {
+            padding: 1.25rem;
+        }
+        .new-repo-field {
+            margin-bottom: 0.85rem;
+        }
+        .new-repo-field label {
+            display: block;
+            font-size: 0.72rem;
+            color: var(--fg-muted, #8b949e);
+            margin-bottom: 0.35rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .new-repo-field input,
+        .new-repo-field select,
+        .new-repo-field textarea {
+            width: 100%;
+            padding: 0.45rem 0.65rem;
+            background: var(--bg, #0d1117);
+            border: 1px solid var(--border, #30363d);
+            border-radius: 4px;
+            color: var(--fg, #c9d1d9);
+            font-family: inherit;
+            font-size: 0.8rem;
+            box-sizing: border-box;
+        }
+        .new-repo-field input:focus,
+        .new-repo-field select:focus,
+        .new-repo-field textarea:focus {
+            outline: none;
+            border-color: var(--accent, #58a6ff);
+        }
+        .new-repo-field textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .new-repo-field select {
+            cursor: pointer;
+        }
+        .new-repo-hint {
+            font-size: 0.7rem;
+            color: var(--fg-muted, #8b949e);
+            margin-bottom: 1rem;
+            line-height: 1.45;
+        }
+        .new-repo-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        .new-repo-btn {
+            padding: 0.55rem 1.25rem;
+            background: var(--accent, #58a6ff);
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .new-repo-btn:hover {
+            opacity: 0.88;
+        }
+        .new-repo-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        .new-repo-btn-secondary {
+            background: transparent;
+            color: var(--fg-muted, #8b949e);
+            border: 1px solid var(--border, #30363d);
+        }
+        .new-repo-btn-secondary:hover {
+            color: var(--fg, #c9d1d9);
+            border-color: var(--fg-muted, #8b949e);
+        }
+        .new-repo-status {
+            margin-top: 0.75rem;
+            font-size: 0.75rem;
+            min-height: 1em;
+            word-break: break-word;
+        }
+        .new-repo-status.ok {
+            color: #3fb950;
+        }
+        .new-repo-status.err {
+            color: #f85149;
+        }
+        .new-repo-status.busy {
+            color: var(--fg-muted, #8b949e);
+        }
+        .new-repo-node-select {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .new-repo-node-select select {
+            flex: 1;
+        }
+        .new-repo-node-status {
+            width: 0.55em;
+            height: 0.55em;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .new-repo-node-status.connected {
+            background: var(--hm-2, #006d32);
+        }
+        .new-repo-node-status.disconnected {
+            background: var(--fg-secondary, #6b7280);
+        }
+        @media (max-width: 500px) {
+            .new-repo-modal {
+                width: 92vw;
+                margin: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -612,6 +951,266 @@
         </div>
     </div>
 
+    <!-- New Repository Modal -->
+    <div id="new-repo-overlay" class="new-repo-overlay">
+        <div class="new-repo-modal" role="dialog" aria-modal="true" aria-label="Create New Repository">
+            <div class="new-repo-header">
+                <span>New repository</span>
+                <button class="new-repo-close" id="new-repo-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="new-repo-content">
+                <div class="new-repo-hint">A new home for your code and its history. Have a repo already?</div>
+                
+                <div class="new-repo-field">
+                    <label for="new-repo-name">Name</label>
+                    <input type="text" id="new-repo-name" placeholder="my-next-repo" maxlength="100" autocomplete="off" spellcheck="false">
+                </div>
+                
+                <div class="new-repo-field">
+                    <label for="new-repo-desc">Description</label>
+                    <textarea id="new-repo-desc" placeholder="what it does and what it will do..."></textarea>
+                </div>
+                
+                <div class="new-repo-field">
+                    <label for="new-repo-node">Node</label>
+                    <div class="new-repo-node-select">
+                        <select id="new-repo-node">
+                            <option value="">Select a node...</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                    <div class="new-repo-field" style="flex: 1;">
+                        <label for="new-repo-visibility">Visibility</label>
+                        <select id="new-repo-visibility">
+                            <option value="public">public</option>
+                            <option value="private">private</option>
+                        </select>
+                    </div>
+                    <div class="new-repo-field" style="flex: 1;">
+                        <label for="new-repo-readme">README</label>
+                        <select id="new-repo-readme">
+                            <option value="no">no</option>
+                            <option value="yes">yes</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                    <div class="new-repo-field" style="flex: 1;">
+                        <label for="new-repo-gitignore">.gitignore</label>
+                        <select id="new-repo-gitignore">
+                            <option value="none">none</option>
+                            <option value="Node">Node</option>
+                            <option value="Python">Python</option>
+                            <option value="Go">Go</option>
+                            <option value="Java">Java</option>
+                            <option value="C++">C++</option>
+                        </select>
+                    </div>
+                    <div class="new-repo-field" style="flex: 1;">
+                        <label for="new-repo-license">LICENSE</label>
+                        <select id="new-repo-license">
+                            <option value="none">none</option>
+                            <option value="MIT">MIT</option>
+                            <option value="Apache-2.0">Apache 2.0</option>
+                            <option value="GPL-3.0">GPL 3.0</option>
+                            <option value="AGPL-3.0">AGPL 3.0</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="new-repo-actions">
+                    <button class="new-repo-btn new-repo-btn-secondary" id="new-repo-cancel">Cancel</button>
+                    <button class="new-repo-btn" id="new-repo-create">Create</button>
+                </div>
+                
+                <div class="new-repo-status" id="new-repo-status"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // New Repository Modal Logic
+        window.openNewRepoModal = function openNewRepoModal() {
+            const overlay = document.getElementById('new-repo-overlay');
+            if (!overlay) return;
+            
+            // Load user nodes
+            window.loadNewRepoNodes();
+            
+            // Show modal
+            overlay.classList.add('active');
+            
+            // Focus on name field
+            const nameInput = document.getElementById('new-repo-name');
+            if (nameInput) {
+                nameInput.focus();
+                nameInput.select();
+            }
+        }
+        
+        window.closeNewRepoModal = function closeNewRepoModal() {
+            const overlay = document.getElementById('new-repo-overlay');
+            if (overlay) overlay.classList.remove('active');
+            
+            // Clear status
+            const statusEl = document.getElementById('new-repo-status');
+            if (statusEl) {
+                statusEl.textContent = '';
+                statusEl.className = 'new-repo-status';
+            }
+        }
+        
+        window.loadNewRepoNodes = async function loadNewRepoNodes() {
+            const select = document.getElementById('new-repo-node');
+            if (!select) return;
+            
+            select.innerHTML = '<option value="">Loading nodes...</option>';
+            
+            try {
+                const data = await window.apiGet('/api/nodes');
+                const nodes = (data && Array.isArray(data.nodes)) ? data.nodes : [];
+                
+                if (nodes.length === 0) {
+                    select.innerHTML = '<option value="">No nodes available - pair a node first</option>';
+                    return;
+                }
+                
+                select.innerHTML = '<option value="">Select a node...</option>' +
+                    nodes.map(n => {
+                        const statusClass = n.online ? 'connected' : 'disconnected';
+                        const statusTitle = n.online ? 'Online' : 'Offline';
+                        return `<option value="${window.escAttr(n.id)}" data-status="${statusClass}">${window.escHtml(n.name || n.id)}</option>`;
+                    }).join('');
+            } catch (_) {
+                select.innerHTML = '<option value="">Failed to load nodes</option>';
+            }
+        }
+        
+        window.createNewRepo = async function createNewRepo() {
+            const name = (document.getElementById('new-repo-name')?.value || '').trim();
+            const desc = (document.getElementById('new-repo-desc')?.value || '').trim();
+            const nodeId = document.getElementById('new-repo-node')?.value;
+            const visibility = document.getElementById('new-repo-visibility')?.value || 'public';
+            const readme = document.getElementById('new-repo-readme')?.value || 'no';
+            const gitignore = document.getElementById('new-repo-gitignore')?.value || 'none';
+            const license = document.getElementById('new-repo-license')?.value || 'none';
+            const btn = document.getElementById('new-repo-create');
+            const statusEl = document.getElementById('new-repo-status');
+            
+            if (!name) {
+                if (statusEl) {
+                    statusEl.textContent = 'Repository name is required';
+                    statusEl.className = 'new-repo-status err';
+                }
+                return;
+            }
+            
+            if (!nodeId) {
+                if (statusEl) {
+                    statusEl.textContent = 'Please select a node';
+                    statusEl.className = 'new-repo-status err';
+                }
+                return;
+            }
+            
+            if (btn) btn.disabled = true;
+            if (statusEl) {
+                statusEl.textContent = 'Creating repository...';
+                statusEl.className = 'new-repo-status busy';
+            }
+            
+            try {
+                const res = await fetch(window.API_BASE + '/api/nodes/' + encodeURIComponent(nodeId) + '/repos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Gitgost-Key': window.GG_API_KEY || '',
+                        'X-ZKP-Token': zkpSessionToken()
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        description: desc,
+                        visibility: visibility,
+                        readme: readme,
+                        gitignore: gitignore,
+                        license: license
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok && data.repo_id) {
+                    if (statusEl) {
+                        statusEl.textContent = 'Repository created successfully!';
+                        statusEl.className = 'new-repo-status ok';
+                    }
+                    // Refresh nodes list
+                    window._nodesCache = null;
+                    if (typeof window._loadNodes === 'function') window._loadNodes();
+                    
+                    // Close modal after 2 seconds
+                    setTimeout(async () => {
+                        window.closeNewRepoModal();
+                        // Reload repos
+                        if (window.PROVIDER === 'gg' && window.USERNAME) {
+                            const typeParam = '';
+                            const reposData = await window.apiGet(`/api/users/repos?provider=gg&user=${encodeURIComponent(window.USERNAME)}${typeParam}`);
+                            if (reposData && Array.isArray(reposData.repos)) {
+                                window.renderRepos(reposData.repos);
+                            }
+                        }
+                    }, 2000);
+                } else {
+                    if (statusEl) {
+                        statusEl.textContent = data.error || 'Failed to create repository';
+                        statusEl.className = 'new-repo-status err';
+                    }
+                }
+            } catch (e) {
+                if (statusEl) {
+                    statusEl.textContent = e.message || 'Network error';
+                    statusEl.className = 'new-repo-status err';
+                }
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+        
+        // Bind events
+        document.addEventListener('DOMContentLoaded', function() {
+            // Open modal on event
+            window.addEventListener('zkp-new-repo', window.openNewRepoModal);
+            
+            const overlay = document.getElementById('new-repo-overlay');
+            if (!overlay) return;
+            
+            // Close button
+            const closeBtn = document.getElementById('new-repo-close');
+            if (closeBtn) closeBtn.addEventListener('click', window.closeNewRepoModal);
+            
+            // Cancel button
+            const cancelBtn = document.getElementById('new-repo-cancel');
+            if (cancelBtn) cancelBtn.addEventListener('click', window.closeNewRepoModal);
+            
+            // Create button
+            const createBtn = document.getElementById('new-repo-create');
+            if (createBtn) createBtn.addEventListener('click', window.createNewRepo);
+            
+            // Close on overlay click
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) window.closeNewRepoModal();
+            });
+            
+            // Close on Escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') window.closeNewRepoModal();
+            });
+        });
+    </script>
+
     <div class="statusbar">
         <div class="statusbar-left">
             <a href="/" style="color:var(--accent);text-decoration:none;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-weight:700;font-size:0.78rem;">gitGost</a>
@@ -621,7 +1220,6 @@
             <span class="current" id="sb-username">—</span>
         </div>
         <div class="statusbar-right">
-            <span style="color:var(--fg-muted);">browsing as goster</span>
         </div>
     </div>
 
@@ -674,6 +1272,21 @@
                 members
                 <span class="count" id="nav-members-count"></span>
             </a>
+            <a href="#" id="nav-nodes" style="display:none;" onclick="openNodes(); return false;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                    <path d="M0 0h24v24H0z" fill="none"/>
+                    <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+                        <rect x="2" y="2" width="20" height="8" rx="2"/>
+                        <rect x="2" y="14" width="20" height="8" rx="2"/>
+                        <circle cx="6" cy="6" r="1" fill="currentColor" stroke="none"/>
+                        <circle cx="6" cy="18" r="1" fill="currentColor" stroke="none"/>
+                        <line x1="10" y1="6" x2="18" y2="6"/>
+                        <line x1="10" y1="18" x2="18" y2="18"/>
+                    </g>
+                </svg>
+                nodes
+                <span class="count" id="nav-nodes-count"></span>
+            </a>
         </nav>
 
         <main class="main-content" id="main-content">
@@ -694,6 +1307,25 @@
 
             <div class="section-title view-hidden" id="packages-section-title"></div>
             <div id="packages-section" class="repo-list view-hidden"></div>
+
+            <div class="section-title view-hidden" id="nodes-section-title">nodes</div>
+            <div id="nodes-section" class="nodes-panel view-hidden">
+                <div id="node-pair-form" class="node-form" style="display:none; margin-top:.6rem;">
+                    <div class="node-field">
+                        <label for="pair-code-input">pairing code</label>
+                        <input type="text" id="pair-code-input" placeholder="XXXXXX" maxlength="12" autocomplete="off" />
+                    </div>
+                    <div class="node-field">
+                        <label for="pair-node-id-input">node id</label>
+                        <input type="text" id="pair-node-id-input" placeholder="ABCDEF0123456789" spellcheck="false" />
+                    </div>
+                    <button class="node-form-btn" onclick="submitPair()">submit pair</button>
+                    <button class="node-form-btn secondary" onclick="cancelPair()">cancel</button>
+                    <div class="status" id="pair-status"></div>
+                </div>
+                <button class="node-form-btn" id="node-pair-btn" onclick="pairNode()" style="margin-bottom:1rem;">pair node</button>
+                <div id="node-list" class="node-list"></div>
+            </div>
         </main>
 
         <aside class="right-sidebar">
@@ -714,7 +1346,7 @@
             }
             return window.location.origin;
         }
-        const API_BASE = getApiBase();
+        window.API_BASE = getApiBase();
 
         const nativeFetch = window.fetch.bind(window);
         function proxiedProviderFetch(input, opts = {}) {
@@ -726,21 +1358,22 @@
                 proxyPath = '/api/cb-proxy' + target.pathname;
             }
             if (proxyPath) {
-                const proxyURL = new URL(proxyPath + target.search, API_BASE);
+                const proxyURL = new URL(proxyPath + target.search, window.API_BASE);
                 return nativeFetch(proxyURL, opts);
             }
             return nativeFetch(input, opts);
         }
         window.fetch = proxiedProviderFetch;
 
-        // Ruta limpia: /gh|gl|cb/{username}
+        // Ruta limpia: /gh|gl|cb|gg/{username}
         const _pathParts = window.location.pathname.split('/').filter(Boolean);
-        let PROVIDER = (_pathParts[0] === 'gl' || _pathParts[0] === 'cb') ? _pathParts[0] : 'gh';
-        let USERNAME = '';
+        const _validProviders = { gh: true, gl: true, cb: true, gg: true };
+        window.PROVIDER = _validProviders[_pathParts[0]] ? _pathParts[0] : 'gh';
+        window.USERNAME = '';
         try {
-            USERNAME = decodeURIComponent(_pathParts[1] || '');
+            window.USERNAME = decodeURIComponent(_pathParts[1] || '');
         } catch (_) {
-            USERNAME = _pathParts[1] || '';
+            window.USERNAME = _pathParts[1] || '';
         }
         // Fallback con query params: /profile.html?provider=gh&user=octocat.
         // repo.html enlaza así para que el perfil también abra en la app (Capacitor
@@ -748,12 +1381,23 @@
         const _qp = new URLSearchParams(window.location.search);
         const _qpProvider = _qp.get('provider');
         const _qpUser = _qp.get('user');
-        if (_qpProvider) PROVIDER = (_qpProvider === 'gl' || _qpProvider === 'cb') ? _qpProvider : 'gh';
-        if (_qpUser) USERNAME = _qpUser;
+        if (_qpProvider && _validProviders[_qpProvider]) window.PROVIDER = _qpProvider;
+        if (_qpUser) window.USERNAME = _qpUser;
 
         const PROFILE_VIEWS = { stars: 'stars', followers: 'followers', following: 'following', members: 'members', projects: 'projects', packages: 'packages' };
         const _viewPart = (_pathParts.length >= 3) ? _pathParts[2] : '';
         const _initialView = PROFILE_VIEWS[_viewPart] || 'overview';
+
+        window.GG_API_KEY = '';
+        let _configReady = (async () => {
+            try {
+                const res = await fetch(API_BASE + '/api/config');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.api_key) window.GG_API_KEY = data.api_key;
+                }
+            } catch (_) {}
+        })();
 
         function profileViewUrl(view) {
             const base = `/${encodeURIComponent(PROVIDER)}/${encodeURIComponent(USERNAME)}`;
@@ -781,12 +1425,76 @@
 	</g>
         </svg>`;
 
-        function escHtml(s) {
-            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        // Deterministic "beam" avatar for gitGost-native identities (mirrors zkp-client.js's
+        // GitGostAvatar, duplicated here since this inline script runs before that file loads).
+        function ggAvatarDataUri(name, size) {
+            if (window.GitGostAvatar) return window.GitGostAvatar.dataUri(name, size);
+            const BEAM_SIZE = 36;
+            const COLORS = ['#92A1C6', '#146A7C', '#F0AB3D', '#C271B4', '#C20D90'];
+            function hashCode(str) {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    hash = (hash << 5) - hash + str.charCodeAt(i);
+                    hash = hash & hash;
+                }
+                return Math.abs(hash);
+            }
+            function getUnit(n, range, index) {
+                const value = n % range;
+                if (index && (n % (index * range)) / index < range) return -value;
+                return value;
+            }
+            function getBoolean(n, n2) { return !!(n % n2); }
+            function pickColor(n) { return COLORS[n % COLORS.length]; }
+            function getContrast(hex) {
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+                const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+                return yiq >= 128 ? '#000000' : '#ffffff';
+            }
+            const n = hashCode(String(name || ''));
+            const wrapperColor = pickColor(n);
+            const faceColor = getContrast(wrapperColor);
+            const backgroundColor = pickColor(n + 13);
+            const preTX = getUnit(n, 10, 1);
+            const wrapperTranslateX = preTX < 5 ? preTX + BEAM_SIZE / 9 : preTX;
+            const preTY = getUnit(n, 10, 2);
+            const wrapperTranslateY = preTY < 5 ? preTY + BEAM_SIZE / 9 : preTY;
+            const wrapperRotate = getUnit(n, 360);
+            const wrapperScale = 1 + getUnit(n, BEAM_SIZE / 12) / 10;
+            const isMouthOpen = getBoolean(n, 2);
+            const isCircle = getBoolean(n, 1);
+            const eyeSpread = getUnit(n, 5);
+            const mouthSpread = getUnit(n, 3);
+            const faceRotate = getUnit(n, 10, 3);
+            const faceTranslateX = wrapperTranslateX > BEAM_SIZE / 6 ? wrapperTranslateX / 2 : getUnit(n, 8, 1);
+            const faceTranslateY = wrapperTranslateY > BEAM_SIZE / 6 ? wrapperTranslateY / 2 : getUnit(n, 7, 2);
+            const maskId = 'beam' + n;
+            const mouth = isMouthOpen
+                ? `<path d="M15 ${19 + mouthSpread}c2 1 4 1 6 0" stroke="${faceColor}" fill="none" stroke-linecap="round"/>`
+                : `<path d="M13,${19 + mouthSpread} a1,0.75 0 0,0 10,0" fill="${faceColor}"/>`;
+            const s = size || BEAM_SIZE;
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${BEAM_SIZE} ${BEAM_SIZE}" width="${s}" height="${s}" role="img">` +
+                `<mask id="${maskId}" maskUnits="userSpaceOnUse" x="0" y="0" width="${BEAM_SIZE}" height="${BEAM_SIZE}">` +
+                `<rect width="${BEAM_SIZE}" height="${BEAM_SIZE}" rx="${BEAM_SIZE * 2}" fill="#FFFFFF"/></mask>` +
+                `<g mask="url(#${maskId})">` +
+                `<rect width="${BEAM_SIZE}" height="${BEAM_SIZE}" fill="${backgroundColor}"/>` +
+                `<rect x="0" y="0" width="${BEAM_SIZE}" height="${BEAM_SIZE}" transform="translate(${wrapperTranslateX} ${wrapperTranslateY}) rotate(${wrapperRotate} ${BEAM_SIZE / 2} ${BEAM_SIZE / 2}) scale(${wrapperScale})" fill="${wrapperColor}" rx="${isCircle ? BEAM_SIZE : BEAM_SIZE / 6}"/>` +
+                `<g transform="translate(${faceTranslateX} ${faceTranslateY}) rotate(${faceRotate} ${BEAM_SIZE / 2} ${BEAM_SIZE / 2})">` +
+                mouth +
+                `<rect x="${14 - eyeSpread}" y="14" width="1.5" height="2" rx="1" stroke="none" fill="${faceColor}"/>` +
+                `<rect x="${20 + eyeSpread}" y="14" width="1.5" height="2" rx="1" stroke="none" fill="${faceColor}"/>` +
+                `</g></g></svg>`;
+            return 'data:image/svg+xml,' + encodeURIComponent(svg);
         }
-        function escAttr(s) {
+
+        window.escHtml = function escHtml(s) {
             return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-        }
+        };
+        window.escAttr = function escAttr(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        };
 
         function sanitizeUrl(url) {
             if (!url) return '';
@@ -853,6 +1561,9 @@
             if (PROVIDER === 'cb') {
                 return { label: 'codeberg', name: 'codeberg.org', color: '#2185D0', icon: codebergBadgeIcon() };
             }
+            if (PROVIDER === 'gg') {
+                return { label: 'gitGost', name: 'gitGost', color: '#e53dab', icon: '<svg viewBox="0 0 24 24" width="1em" height="1em" style="display:block;fill:#e53dab;"><circle cx="12" cy="12" r="10"/></svg>' };
+            }
             return { label: 'github', name: 'github.com', color: '#181717', icon: githubBadgeIcon() };
         }
 
@@ -871,9 +1582,21 @@
             return fetch(target.toString(), opts);
         }
 
-        async function apiGet(path) {
+        function zkpSessionToken() {
             try {
-                const res = await fetch(`${API_BASE}${path}`, { headers: authHeaders() });
+                const s = JSON.parse(localStorage.getItem('zkp_session') || 'null');
+                return (s && s.session_token) ? s.session_token : '';
+            } catch (_) { return ''; }
+        }
+
+        window.apiGet = async function apiGet(path) {
+            try {
+                await _configReady;
+                const headers = authHeaders();
+                if (window.GG_API_KEY) headers['X-Gitgost-Key'] = window.GG_API_KEY;
+                const zkpt = zkpSessionToken();
+                if (zkpt) headers['X-ZKP-Token'] = zkpt;
+                const res = await fetch(`${API_BASE}${path}`, { headers });
                 if (!res.ok) return null;
                 return await res.json();
             } catch (_) {
@@ -943,13 +1666,15 @@
                             <div class="sb-name">${safeName || safeUser}</div>
                             <div class="sb-user">@${safeUser}</div>
 
-                            <div class="badges">
+                            ${PROVIDER === 'gg' ? '' : `<div class="badges">
                                 <a href="${safeUrl}" target="_blank" rel="noopener noreferrer"><span class="provider-badge" style="color:${meta.color};border-color:${meta.color};margin-top: 5px;">${meta.icon}${meta.label}</span></a>
                                 <span class="type-badge">${typeLabel}</span>
-                            </div>
+                            </div>`}
                         </div>
                     </div>
                     ${safeBio ? `<p class="sb-bio">${safeBio}</p>` : ''}
+                    ${window.PROVIDER === 'gg' && !window.isSelfProfile() ? `<button class="sb-btn" id="follow-btn" onclick="toggleFollow()">${window.isFollowing(safeUser) ? 'unfollow' : 'follow'}</button>` : ''}
+                    ${window.PROVIDER === 'gg' && window.isSelfProfile() ? `<button class="sb-btn" id="new-repo-btn" onclick="window.openNewRepoModal()">new repository</button>` : ''}
                     ${stats.length ? `<div class="stats-grid">${stats.join('')}</div>` : ''}
                     <ul class="meta-list">
                         ${safeLocation ? `<li><span class="k">location</span><span class="v">${safeLocation}</span></li>` : ''}
@@ -998,6 +1723,20 @@
             const lang = r.language ? escHtml(r.language) : '';
             const ago = timeAgo(r.updated_at);
             const visibility = r.fork ? 'fork' : 'public';
+            const isGitGost = PROVIDER === 'gg';
+            const forked = isGitGost && isRepoForked(owner, name);
+            const watched = isGitGost && isRepoWatched(owner, name);
+            const forkWatchBtns = isGitGost ? `
+                <div class="repo-fork-watch-row">
+                    <button type="button" class="repo-fork-btn" data-owner="${safeOwner}" data-repo="${safeName}" onclick="event.stopPropagation(); toggleRepoFork(this)" title="${forked ? 'You have forked this repository' : 'Fork this repository to your node'}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="${forked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.5 12a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 0a6 6 0 0 0-6 6v1.5h12V18a6 6 0 0 0-6-6Zm9-4.25a2.75 2.75 0 1 1 0-5.5 2.75 2.75 0 0 1 0 5.5Zm0 0a4.75 4.75 0 0 0-4.6 6"/></svg>
+                        <span class="repo-fork-text">${forked ? 'Forked' : 'Fork'}</span>
+                    </button>
+                    <button type="button" class="repo-watch-btn" data-owner="${safeOwner}" data-repo="${safeName}" onclick="event.stopPropagation(); toggleRepoWatch(this)" title="${watched ? 'Stop watching this repository' : 'Watch this repository for updates'}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="${watched ? 'currentColor' : 'none'}" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.75 12c2-4 5-6 9.25-6s7.25 2 9.25 6c-2 4-5 6-9.25 6s-7.25-2-9.25-6z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <span class="repo-watch-text">${watched ? 'Watching' : 'Watch'}</span>
+                    </button>
+                </div>` : '';
             return `
                 <div class="repo-card">
                     <div class="repo-card-head">
@@ -1011,11 +1750,12 @@
                         ${(r.forks || 0) > 0 ? `<span>⑂ ${formatNumber(r.forks)}</span>` : ''}
                         ${ago ? `<span>updated ${ago}</span>` : ''}
                     </div>
+                    ${forkWatchBtns}
                 </div>
             `;
         }
 
-        function renderRepos(repos) {
+        window.renderRepos = function renderRepos(repos) {
             const container = document.getElementById('repos-section');
             if (!container) return;
             const navCount = document.getElementById('nav-repo-count');
@@ -1027,6 +1767,73 @@
             }
             const reposHtml = repos.map(repoCardHtml).join('');
             container.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(reposHtml) : escHtml(reposHtml);
+        }
+
+        // ---- Fork / Watch for gitGost repos ----
+        function isRepoForked(owner, repo) {
+            return !!localStorage.getItem(`gg:fork:${owner}/${repo}`);
+        }
+
+        function isRepoWatched(owner, repo) {
+            return !!localStorage.getItem(`gg:watch:${owner}/${repo}`);
+        }
+
+        function updateRepoForkBtn(btn) {
+            if (!btn) return;
+            const owner = btn.dataset.owner;
+            const repo = btn.dataset.repo;
+            const forked = isRepoForked(owner, repo);
+            const text = btn.querySelector('.repo-fork-text');
+            if (text) text.textContent = forked ? 'Forked' : 'Fork';
+            const svg = btn.querySelector('svg path:last-child');
+            if (svg) svg.setAttribute('fill', forked ? 'currentColor' : 'none');
+        }
+
+        function updateRepoWatchBtn(btn) {
+            if (!btn) return;
+            const owner = btn.dataset.owner;
+            const repo = btn.dataset.repo;
+            const watched = isRepoWatched(owner, repo);
+            const text = btn.querySelector('.repo-watch-text');
+            if (text) text.textContent = watched ? 'Watching' : 'Watch';
+            const svg = btn.querySelector('svg path:last-child');
+            if (svg) svg.setAttribute('fill', watched ? 'currentColor' : 'none');
+        }
+
+        function toggleRepoFork(btn) {
+            const owner = btn.dataset.owner;
+            const repo = btn.dataset.repo;
+            const key = `gg:fork:${owner}/${repo}`;
+            const wasForked = isRepoForked(owner, repo);
+            if (wasForked) {
+                localStorage.removeItem(key);
+            } else {
+                localStorage.setItem(key, JSON.stringify({
+                    owner,
+                    repo,
+                    full_name: `${owner}/${repo}`,
+                    forked_at: new Date().toISOString()
+                }));
+            }
+            updateRepoForkBtn(btn);
+        }
+
+        function toggleRepoWatch(btn) {
+            const owner = btn.dataset.owner;
+            const repo = btn.dataset.repo;
+            const key = `gg:watch:${owner}/${repo}`;
+            const wasWatched = isRepoWatched(owner, repo);
+            if (wasWatched) {
+                localStorage.removeItem(key);
+            } else {
+                localStorage.setItem(key, JSON.stringify({
+                    owner,
+                    repo,
+                    full_name: `${owner}/${repo}`,
+                    watched_at: new Date().toISOString()
+                }));
+            }
+            updateRepoWatchBtn(btn);
         }
 
         // ---- Repos con star del usuario (GitHub / Codeberg; GitLab no lo expone) ----
@@ -1095,6 +1902,10 @@
             if (_currentView === 'packages') return;
             switchView('packages');
         }
+        function openNodes() {
+            if (_currentView === 'nodes') return;
+            switchView('nodes');
+        }
 
         function switchView(view, push) {
             if (push === undefined) push = true;
@@ -1105,6 +1916,7 @@
             const isPeople = view === 'followers' || view === 'following' || view === 'members';
             const isProjects = view === 'projects';
             const isPackages = view === 'packages';
+            const isNodes = view === 'nodes';
             _currentView = view;
 
             if (push) {
@@ -1115,7 +1927,7 @@
             if (isOverview) {
                 document.title = _prevTitle || `${USERNAME} · gitGost`;
             } else {
-                const label = view === 'followers' ? 'followers' : view === 'following' ? 'following' : view === 'members' ? 'members' : view === 'projects' ? 'projects' : view === 'packages' ? 'packages' : 'starred';
+                const label = view === 'followers' ? 'followers' : view === 'following' ? 'following' : view === 'members' ? 'members' : view === 'projects' ? 'projects' : view === 'packages' ? 'packages' : view === 'nodes' ? 'nodes' : 'starred';
                 document.title = `${USERNAME} · ${label} · gitGost`;
             }
 
@@ -1132,18 +1944,21 @@
             show(document.getElementById('projects-section'), isProjects);
             show(document.getElementById('packages-section-title'), isPackages);
             show(document.getElementById('packages-section'), isPackages);
+            show(document.getElementById('nodes-section-title'), isNodes);
+            show(document.getElementById('nodes-section'), isNodes);
             const aside = document.querySelector('.right-sidebar');
             if (aside) aside.style.display = isOverview ? '' : 'none';
 
             const navLinks = document.querySelectorAll('.left-nav a');
             for (let i = 0; i < navLinks.length; i++) {
-                navLinks[i].classList.toggle('active', isOverview ? i === 0 : ((isStars && i === 2) || (isProjects && i === 3) || (isPackages && i === 4) || (view === 'members' && i === 5)));
+                navLinks[i].classList.toggle('active', isOverview ? i === 0 : ((isStars && i === 2) || (isProjects && i === 3) || (isPackages && i === 4) || (view === 'members' && i === 5) || (isNodes && i === 6)));
             }
 
             if (isStars) _loadStars();
             if (isPeople) _loadPeople(view);
             if (isProjects) _loadProjects();
             if (isPackages) _loadPackages();
+            if (isNodes) window._loadNodes();
         }
 
         async function _loadStars() {
@@ -1273,6 +2088,177 @@
             titleEl.insertAdjacentHTML('beforeend', ` <span class="stars-count">· ${packages.length}</span>`);
             const packagesHtml = packages.map(packageCardHtml).join('');
             listEl.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(packagesHtml) : escHtml(packagesHtml);
+        }
+
+        // ---- Follow (localStorage, gitGost native profiles only) ----
+        function _getFollowing() {
+            try { return JSON.parse(localStorage.getItem('gg_following') || '[]'); }
+            catch (_) { return []; }
+        }
+        function _saveFollowing(list) {
+            localStorage.setItem('gg_following', JSON.stringify(list));
+        }
+        window.isFollowing = function isFollowing(identity) {
+            return _getFollowing().includes(identity);
+        };
+        window.isSelfProfile = function isSelfProfile() {
+            if (window.PROVIDER !== 'gg') return false;
+            let session = null;
+            try { session = JSON.parse(localStorage.getItem('zkp_session') || 'null'); } catch (_) {}
+            return !!(session && session.identity === window.USERNAME);
+        };
+        window.toggleFollow = function toggleFollow() {
+            const list = _getFollowing();
+            const idx = list.indexOf(window.USERNAME);
+            if (idx === -1) list.push(window.USERNAME);
+            else list.splice(idx, 1);
+            _saveFollowing(list);
+            const btn = document.getElementById('follow-btn');
+            if (btn) btn.textContent = window.isFollowing(window.USERNAME) ? 'unfollow' : 'follow';
+        }
+
+        // ---- Nodes (backend API) ----
+        window._nodesCache = null;
+        function _nodeHtml(n, idx) {
+            const safeName = escHtml(n.name || 'unnamed');
+            const safeId = escHtml(n.id || '');
+            const statusClass = n.online ? 'connected' : 'disconnected';
+            const statusLabel = n.online ? 'online' : 'offline';
+            const fw = n.firmware ? escHtml(n.firmware) : '';
+            const uptime = n.uptime_s ? formatUptime(n.uptime_s) : '';
+            const storage = n.storage_max ? `${formatBytes(n.storage_free || 0)} / ${formatBytes(n.storage_max)}` : '';
+            const ramTotal = n.ram_total || 0;
+            const ramFree = n.heap_free || 0;
+            const ram = ramTotal ? `${formatBytes(ramTotal - ramFree)} / ${formatBytes(ramTotal)}` : '';
+            const rssi = (n.wifi_rssi !== undefined && n.wifi_rssi !== null) ? `${n.wifi_rssi} dBm` : '';
+            const lastSeen = n.last_seen ? timeAgo(n.last_seen) : '';
+            return `
+                <div class="node-card" data-idx="${idx}">
+                    <div class="node-card-left">
+                        <span class="node-status ${statusClass}" title="${statusLabel}"></span>
+                        <span>
+                            <span class="node-card-name">${safeName}</span>
+                            <span class="node-card-id">${safeId}</span>
+                        </span>
+                    </div>
+                    <div class="node-card-actions">
+                        ${fw ? `<span class="node-btn" style="cursor:default;">${fw}</span>` : ''}
+                        <span class="node-status-label" style="font-size:0.65rem;color:var(--fg-secondary);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;">${statusLabel}${lastSeen && !n.online ? ' · ' + lastSeen : ''}</span>
+                    </div>
+                </div>
+                ${uptime || storage || ram || rssi ? `<div style="padding:0 0 0.5rem 1.2rem;display:flex;gap:0.9rem;color:var(--fg-secondary);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:0.65rem;flex-wrap:wrap;">
+                    ${uptime ? `<span>uptime ${uptime}</span>` : ''}
+                    ${storage ? `<span>storage ${storage}</span>` : ''}
+                    ${ram ? `<span>ram ${ram}</span>` : ''}
+                    ${rssi ? `<span>wifi ${rssi}</span>` : ''}
+                </div>` : ''}
+            `;
+        }
+        function formatUptime(seconds) {
+            const d = Math.floor(seconds / 86400);
+            const h = Math.floor((seconds % 86400) / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            if (d > 0) return `${d}d ${h}h`;
+            if (h > 0) return `${h}h ${m}m`;
+            return `${m}m`;
+        }
+        function formatBytes(bytes) {
+            if (bytes >= 1073741824) return (bytes / 1073741824).toFixed(1) + ' GB';
+            if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + ' MB';
+            if (bytes >= 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return bytes + ' B';
+        }
+        window._loadNodes = async function _loadNodes() {
+            const listEl = document.getElementById('node-list');
+            const navCount = document.getElementById('nav-nodes-count');
+            if (!listEl) return;
+            listEl.innerHTML = '<div class="node-empty">loading...</div>';
+            try {
+                const data = await window.apiGet('/api/nodes');
+                const nodes = (data && Array.isArray(data.nodes)) ? data.nodes : [];
+                window._nodesCache = nodes;
+                if (navCount) navCount.textContent = nodes.length || '';
+                if (!nodes.length) {
+                    listEl.innerHTML = '<div class="node-empty">no nodes paired yet — use "pair node" to add one</div>';
+                    window.renderRepos([]);
+                    return;
+                }
+                listEl.innerHTML = nodes.map(_nodeHtml).join('');
+                const repos = [];
+                for (const node of nodes) {
+                    if (node.repositories && Array.isArray(node.repositories)) {
+                        for (const r of node.repositories) {
+                            repos.push({
+                                name: r.name || '',
+                                size: r.size || 0,
+                                full_name: (USERNAME || '') + '/' + (r.name || ''),
+                                description: '',
+                                language: '',
+                                stars: 0,
+                                forks: 0,
+                                updated_at: '',
+                            });
+                        }
+                    }
+                }
+                window.renderRepos(repos);
+                const statsGrid = document.querySelector('.sb-about .stats-grid');
+                if (statsGrid && repos.length) {
+                    const statDivs = statsGrid.querySelectorAll('.stat');
+                    for (const div of statDivs) {
+                        const label = div.querySelector('.l');
+                        if (label && label.textContent.trim() === 'public repos') {
+                            const value = div.querySelector('.v');
+                            if (value) value.textContent = formatNumber(repos.length);
+                            break;
+                        }
+                    }
+                }
+            } catch (_) {
+                listEl.innerHTML = '<div class="node-empty">failed to load nodes</div>';
+            }
+        }
+        function pairNode() {
+            const form = document.getElementById('node-pair-form');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+        function cancelPair() {
+            document.getElementById('node-pair-form').style.display = 'none';
+            document.getElementById('pair-status').textContent = '';
+        }
+        async function submitPair() {
+            const code = (document.getElementById('pair-code-input').value || '').trim();
+            const nodeId = (document.getElementById('pair-node-id-input').value || '').trim().toUpperCase();
+            const statusEl = document.getElementById('pair-status');
+            if (!code || !nodeId) { statusEl.textContent = 'code and node id required'; statusEl.className = 'status error'; return; }
+            statusEl.textContent = 'pairing...'; statusEl.className = 'status';
+            try {
+                const res = await fetch(API_BASE + '/api/nodes/pair', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Gitgost-Key': window.GG_API_KEY || '',
+                        'X-ZKP-Token': zkpSessionToken()
+                    },
+                    body: JSON.stringify({ code, node_id: nodeId })
+                });
+                const data = await res.json();
+                if (res.ok && data.node_id) {
+                    statusEl.textContent = 'paired: ' + data.node_id;
+                    statusEl.className = 'status ok';
+                    document.getElementById('node-pair-form').style.display = 'none';
+                    document.getElementById('pair-code-input').value = '';
+                    document.getElementById('pair-node-id-input').value = '';
+                    window._nodesCache = null;
+                    window._loadNodes();
+                } else {
+                    statusEl.textContent = data.error || 'pair failed';
+                    statusEl.className = 'status error';
+                }
+            } catch (_) {
+                statusEl.textContent = 'network error';
+                statusEl.className = 'status error';
+            }
         }
 
         // ---- Seguidores / siguiendo (vista SPA reutilizada para ambas listas) ----
@@ -1687,6 +2673,51 @@
                 return;
             }
 
+            // gitGost native profile — no external API needed
+            if (PROVIDER === 'gg') {
+                let session = null;
+                try { session = JSON.parse(localStorage.getItem('zkp_session') || 'null'); } catch (_) {}
+                const identity = USERNAME;
+                const isSelf = session && session.identity === identity;
+
+                const ggProfile = {
+                    username: identity,
+                    name: identity,
+                    avatar_url: ggAvatarDataUri(identity, 128),
+                    bio: 'gitGost user · registered via Zero-Knowledge Proof',
+                    url: '',
+                    location: '',
+                    type: 'user',
+                    followers: 0,
+                    following: 0,
+                    public_repos: 0,
+                    joined_at: session ? new Date().toISOString() : '',
+                };
+                renderProfile(ggProfile);
+
+                // Nodes tab for self
+                if (isSelf) {
+                    window._loadNodes();
+                    const navNodes = document.getElementById('nav-nodes');
+                    if (navNodes) navNodes.style.display = '';
+                    const navProjects = document.getElementById('nav-projects');
+                    if (navProjects) navProjects.style.display = 'none';
+                    const navPackages = document.getElementById('nav-packages');
+                    if (navPackages) navPackages.style.display = 'none';
+                } else {
+                    // visiting someone else's gg profile
+                    const navProjects = document.getElementById('nav-projects');
+                    if (navProjects) navProjects.style.display = 'none';
+                    const navPackages = document.getElementById('nav-packages');
+                    if (navPackages) navPackages.style.display = 'none';
+                    const navNodes = document.getElementById('nav-nodes');
+                    if (navNodes) navNodes.style.display = 'none';
+                }
+
+                if (_initialView !== 'overview') switchView(_initialView, false);
+                return;
+            }
+
             const p = await apiGet(`/api/users/profile?provider=${PROVIDER}&user=${encodeURIComponent(USERNAME)}`);
             if (!p) {
                 showError();
@@ -1897,5 +2928,30 @@
 
         init();
     </script>
+    <footer class="statusbar command-statusbar">
+        <div class="statusbar-left statusbar-command">
+            <button type="button" id="command-trigger" class="statusbar-command-trigger" aria-haspopup="true" aria-expanded="false">
+                <span id="statusbar-path">home</span>
+                <span style="color:var(--accent);">_</span>
+            </button>
+            <div id="command-menu" class="statusbar-command-menu" hidden>
+                <a href="#" data-cmd="home">home</a>
+                <a href="#" data-cmd="cli">cli</a>
+                <a href="#" data-cmd="git-extension">git extension</a>
+                <a href="#" data-cmd="settings">settings</a>
+                <div class="statusbar-command-menu-divider"></div>
+                <a href="#" data-cmd="issue">issue</a>
+                <a href="#" data-cmd="comment">comment</a>
+                <a href="#" data-cmd="pr-comment">pr comment</a>
+                <a href="#" data-cmd="legal">legal</a>
+                <a href="#" data-cmd="about">about</a>
+                <a href="#" data-cmd="stats">stats</a>
+                    <div class="statusbar-command-menu-divider"></div>
+                    <button type="button" data-cmd="toggle-theme">toggle theme</button>
+            </div>
+        </div>
+        <div class="statusbar-right"></div>
+    </footer>
+    <script src="/zkp-client.js?v=3"></script>
 </body>
 </html>

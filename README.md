@@ -362,9 +362,9 @@ Everything is designed to prevent abuse while keeping you anonymous.
 ## gitGost for Resilient Networking
 
 > [!WARNING]
-> **Alpha software**
+> **Beta software**
 >
-> GREN is currently in **Alpha**. It is under active development and **has not yet been thoroughly tested**. Expect bugs, incomplete features, and breaking changes. Do not rely on it for production or critical workflows.
+> GREN is currently in **Beta**. It is under active development and **has not yet been thoroughly tested**. Expect bugs, incomplete features, and breaking changes. Do not rely on it for production or critical workflows.
 
 Git manages the repository. GREN manages the network. The GREN client pauses, resumes, queues and retries Git operations in the background — without replacing Git itself.
 
@@ -419,7 +419,7 @@ $ git gost watch 82
 $ git gost pause 82   # or resume / cancel
 ```
 
-# Why GREN Exists
+## Why GREN Exists
 
 Git was designed for reliable networks. Many developers don't have that luxury.
 
@@ -455,6 +455,194 @@ Git already works well under ideal network conditions.
 My goal isn't to change how Git works.
 
 My goal is to make Git more resilient when the network isn't.
+
+# gitGost Forge
+
+> [!IMPORTANT]
+> **gitGost Forge is not required to use gitGost.**
+>
+> gitGost Forge is an **experimental, lightweight Git storage system for ESP32 devices**. It is specifically designed for users who want to **keep their repositories on hardware they physically own and control**, while using gitGost as a secure connection layer between their device and the public internet.
+>
+> Your ESP32 remains the place where your repositories are stored. gitGost acts as the connection layer that makes those repositories reachable without requiring you to expose your ESP32 directly to the internet.
+>
+> ```text
+> Your computer
+>       │
+>       │ Git
+>       ▼
+>    gitGost
+>       │
+>       │ secure connection
+>       ▼
+>     ESP32
+>       │
+>       └── Your repositories
+> ```
+>
+> [!WARNING]
+> **Experimental software**
+>
+> gitGost Forge is currently **experimental**. It is under active development and **has not yet been thoroughly tested**. Do not rely on it as your only copy of important or critical repositories.
+
+## What is gitGost Forge?
+
+gitGost Forge is intentionally **small**.
+
+At its current stage, an ESP32 node can primarily be used to store the core Git data of your repositories, including:
+
+* **Repositories**
+* **Commits**
+* **Branches**
+* **Git history**
+
+However, gitGost Forge is **not yet a full-featured Git forge**.
+
+It currently does not aim to provide all the functionality you would find in platforms such as GitHub, GitLab, Codeberg, Gitea, or similar services. Features such as:
+
+* Wikis
+* Issues
+* Pull requests
+* Discussions
+* Tags
+* Releases
+* Deployments
+* CI/CD
+* Project management
+* Advanced repository administration
+
+and other forge functionality are not currently implemented.
+
+This is intentional.
+
+### We don't want to reinvent the wheel
+
+Building a complete Git forge is a **massive undertaking**.
+
+There are already excellent projects dedicated to providing full-featured Git hosting. Recreating every feature they provide would require an enormous amount of development, maintenance, infrastructure, and testing.
+
+**That is not the goal of gitGost Forge.**
+
+The goal is much simpler:
+
+> **Give you a small, independent place where your Git repositories can continue to exist on hardware that you control.**
+
+If you have an idea for a feature, a workflow you need, or a problem that gitGost Forge could solve, **feel free to open an issue and describe it**.
+
+And if you see a practical way to improve gitGost Forge, **pull requests are welcome**. We would especially appreciate contributions that improve its usefulness without turning it into another full-featured Git forge.
+
+## Why use an ESP32?
+
+Traditional Git forges such as Gitea and Gogs are designed to run on servers. They are excellent choices when you need a full-featured self-hosted Git platform, but they still require a server, operating system, storage, maintenance, and continuous power.
+
+gitGost takes a different approach:
+
+**Your repository can live on a small device that you physically own and control.**
+
+The ESP32 is not intended to replace a traditional Git forge. Instead, it provides a **lightweight and independent place to store your repositories**, while gitGost acts as the connection layer between your device and the public internet.
+
+This gives your repositories a different kind of ownership:
+
+* **You own the device.**
+* **You control the storage.**
+* **Your repositories remain on your hardware.**
+* **gitGost does not need to be the permanent home of your code.**
+* **Your repositories can remain available even if gitGost itself disappears.**
+
+## Why does gitGost Forge exist?
+
+gitGost is designed to provide anonymous access to existing Git hosting platforms. But that creates an important dependency:
+
+What happens if GitHub, GitLab, Codeberg, or another provider decides to block, restrict, or prohibit gitGost from accessing their services?
+
+You could lose the ability to use those services through gitGost.
+
+**Your repositories should not have to disappear with them.**
+
+gitGost Forge provides an independent fallback.
+
+You can keep a copy of your repositories on an ESP32 that you physically own. If a third-party Git hosting provider stops being accessible through gitGost, your repositories can still exist on your own hardware.
+
+This is **not intended to replace GitHub, GitLab, Codeberg, or other forges**.
+
+Think of it instead as an **independent backup and escape hatch** for your Git repositories.
+
+The important idea is:
+
+> **Your code should not depend entirely on a service you do not control.**
+
+## Prerequisites
+
+Before getting started, you will need:
+
+* An **ESP32 + Wi-Fi** development board
+
+## 1. Download the gitGost Firmware
+
+Download the latest gitGost Forge firmware for your ESP32.
+
+## 2. Flash the ESP32
+
+Flash the gitGost Forge firmware onto your ESP32 using the recommended flashing tool.
+
+## 3. Connect to the gitGost Wi-Fi Network
+
+<p align="left">
+  <img src="./web/assets/screenshots/connect-wifi.png" width="250px" />
+</p>
+
+After flashing the firmware, power on the ESP32.
+
+The device will create a temporary Wi-Fi network with a name similar to:
+
+```text
+gitGost-XXXXXXXX
+```
+
+Connect your computer or phone to this network.
+
+## 4. Configure Your Node
+
+Open your browser and go to:
+
+`http://192.168.4.1`
+
+Follow the setup instructions to configure your gitGost node and connect it to your gitGost account.
+
+## 5. Create Your First Repository
+
+Once your node is configured and connected to your account, you can create your first repository and start using gitGost Forge.
+
+<p align="center">
+  <img src="./web/assets/screenshots/nodes.png" width="100%" />
+</p>
+
+## Reset the ESP32
+
+If you configured the ESP32 incorrectly or need to start the setup again, press and hold the **BOOT** button for **5 seconds**.
+
+<p align="center">
+  <img src="./web/assets/screenshots/reset.png" width="100%" />
+</p>
+
+This will reset the device and clear its configuration, allowing you to configure it again from scratch.
+
+## Contributing
+
+gitGost Forge is still experimental, and there is plenty of room for improvement.
+
+If you think the project has potential:
+
+* **Open an issue** to describe a feature, problem, or use case you would like to see supported.
+* **Submit a pull request** if you have an improvement you would like to contribute.
+* **Share your ideas** if you have a different approach that could make the project more useful.
+
+There is no expectation that gitGost Forge should become another GitHub or GitLab.
+
+**The simpler it can remain while still solving its core problem, the better.**
+
+> **Your code doesn't live on our servers. It lives on a device you own.**
+>
+> gitGost is simply the connection layer.
 
 ## License
 

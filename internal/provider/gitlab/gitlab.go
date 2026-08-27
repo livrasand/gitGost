@@ -575,25 +575,110 @@ func (p *GitLabProvider) GetMRStatus(owner, repo string, number int) (*provider.
 	}
 
 	comments := 0
-	events := make([]provider.Event, 0, len(allNotes))
+	events := make([]provider.Event, 0, len(allNotes)+8)
 	for _, n := range allNotes {
 		eventType := "comment"
 		if n.System {
 			eventType = "system"
 		}
-		events = append(events, provider.Event{
+		ev := provider.Event{
 			Type: eventType, Author: n.Author.Username,
 			Body: n.Body, CreatedAt: n.CreatedAt,
-		})
+		}
+		ev.Summarize()
+		events = append(events, ev)
 		if !n.System {
 			comments++
 		}
 	}
 
+	for _, se := range fetchMRStateEvents(pid, number) {
+		ev := provider.Event{
+			Type:      se.Action,
+			Author:    se.User.Username,
+			CreatedAt: se.CreatedAt,
+			Summary:   se.User.Username + " " + stateEventVerb(se.Action),
+		}
+		if ev.Summary == "" {
+			ev.Summarize()
+		}
+		events = append(events, ev)
+	}
+	provider.SortEvents(events)
+
 	return &provider.MRStatus{
 		State: mr.State, Title: mr.Title, Number: number,
 		Comments: comments, UpdatedAt: mr.UpdatedAt, Events: events,
 	}, nil
+}
+
+func stateEventVerb(action string) string {
+	switch action {
+	case "opened":
+		return "abrió la solicitud de fusión"
+	case "closed":
+		return "cerró la solicitud de fusión"
+	case "reopened":
+		return "reabrió la solicitud de fusión"
+	case "merged":
+		return "fusionó la solicitud de fusión"
+	case "approved":
+		return "aprobó los cambios"
+	case "unapproved":
+		return "retiró su aprobación"
+	default:
+		return ""
+	}
+}
+
+type gitlabStateEvent struct {
+	Action    string `json:"action"`
+	CreatedAt string `json:"created_at"`
+	User      struct {
+		Username string `json:"username"`
+	} `json:"user"`
+}
+
+func fetchMRStateEvents(pid string, number int) []gitlabStateEvent {
+	url := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/merge_requests/%d/resource_state_events?per_page=100", pid, number)
+	var all []gitlabStateEvent
+	for url != "" {
+		req, _ := http.NewRequest("GET", url, nil)
+		authHeader(req)
+		resp, err := httpClient.Do(req)
+		if err != nil || resp.StatusCode != http.StatusOK {
+			if resp != nil {
+				resp.Body.Close()
+			}
+			break
+		}
+		var page []gitlabStateEvent
+		err = json.NewDecoder(resp.Body).Decode(&page)
+		resp.Body.Close()
+		if err != nil {
+			break
+		}
+		all = append(all, page...)
+		url = nextPageFromLink(resp.Header.Get("Link"))
+	}
+	return all
+}
+
+func nextPageFromLink(linkHeader string) string {
+	if linkHeader == "" {
+		return ""
+	}
+	for _, part := range strings.Split(linkHeader, ",") {
+		part = strings.TrimSpace(part)
+		if strings.Contains(part, `rel="next"`) {
+			start := strings.Index(part, "<")
+			end := strings.Index(part, ">")
+			if start != -1 && end != -1 && end > start {
+				return part[start+1 : end]
+			}
+		}
+	}
+	return ""
 }
 
 func (p *GitLabProvider) IsRepoVerified(owner, repo string) bool {

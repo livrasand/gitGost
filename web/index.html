@@ -204,137 +204,6 @@
                 }
             }
 
-            .rate-limit-providers {
-                display: flex;
-                justify-content: center;
-                gap: 0.7rem;
-                margin-top: 10px;
-            }
-
-            .rate-limit-provider {
-                position: relative;
-                width: 42px;
-                height: 42px;
-                padding: 4px;
-                border: 0;
-                border-radius: 50%;
-                color: var(--fg-muted);
-                background: transparent;
-                cursor: pointer;
-                transition: color 0.1s;
-            }
-
-            .rate-limit-provider:hover {
-                color: var(--fg);
-            }
-
-            .rate-limit-provider svg {
-                position: absolute;
-                inset: 0;
-                width: 100%;
-                height: 100%;
-                transform: rotate(-90deg);
-                pointer-events: none;
-            }
-
-            .rate-limit-provider .rate-limit-track,
-            .rate-limit-provider .rate-limit-progress {
-                fill: none;
-                stroke-width: 2;
-            }
-
-            .rate-limit-provider .rate-limit-track {
-                stroke: var(--border);
-            }
-
-            .rate-limit-provider .rate-limit-progress {
-                stroke: var(--accent);
-                stroke-linecap: round;
-                stroke-dasharray: 138.2;
-                stroke-dashoffset: 138.2;
-                transition: stroke-dashoffset 0.4s, stroke 0.4s;
-            }
-
-            .rate-limit-icon {
-                position: relative;
-                z-index: 1;
-                display: grid;
-                place-items: center;
-                width: 100%;
-                height: 100%;
-                border-radius: 50%;
-                font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
-                font-size: 0.65rem;
-                font-weight: 700;
-            }
-
-            .rate-limit-icon svg {
-                position: static;
-                width: 1.05rem;
-                height: 1.05rem;
-                transform: none;
-            }
-
-            .rate-limit-icon svg path {
-                fill: currentColor;
-            }
-
-            .rate-limit-modal {
-                position: fixed;
-                inset: 0;
-                z-index: 20;
-                display: grid;
-                place-items: center;
-                padding: 1rem;
-                background: rgb(0 0 0 / 45%);
-            }
-
-            .rate-limit-modal[hidden] {
-                display: none;
-            }
-
-            .rate-limit-modal-content {
-                position: relative;
-                width: min(100%, 300px);
-                padding: 1.25rem;
-                border: 1px solid var(--border);
-                border-radius: var(--radius-lg);
-                background: var(--card);
-                box-shadow: 0 12px 36px rgb(0 0 0 / 25%);
-                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            }
-
-            .rate-limit-modal-close {
-                position: absolute;
-                top: 0.55rem;
-                right: 0.65rem;
-                border: 0;
-                color: var(--fg-muted);
-                background: transparent;
-                font-size: 1.1rem;
-                cursor: pointer;
-            }
-
-            .rate-limit-modal-title {
-                margin: 0 1.5rem 1rem 0;
-                color: var(--fg);
-                font-size: 0.85rem;
-                text-transform: lowercase;
-            }
-
-            .rate-limit-modal-details {
-                display: grid;
-                gap: 0.45rem;
-                color: var(--fg-muted);
-                font-size: 0.68rem;
-            }
-
-            .rate-limit-modal-details div {
-                display: flex;
-                justify-content: space-between;
-                gap: 1rem;
-            }
-
             *,
             *::before,
             *::after {
@@ -765,6 +634,41 @@
                 flex-shrink: 0;
             }
 
+            .repo-fork-watch-row {
+                display: flex;
+                width: 100%;
+                margin-top: 0.35rem;
+                gap: 0.5rem;
+            }
+
+            .repo-fork-btn,
+            .repo-watch-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.35rem;
+                padding: 0.2rem 0.5rem;
+                border: 1px solid var(--border);
+                border-radius: 3px;
+                background: transparent;
+                color: var(--fg);
+                font-size: 0.7rem;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                cursor: pointer;
+                text-decoration: none;
+                transition: background 0.1s, border-color 0.1s;
+                flex: 1;
+                box-sizing: border-box;
+            }
+            .repo-fork-btn:hover { background: var(--bg-hover); border-color: var(--fg-secondary); }
+            .repo-watch-btn:hover { background: var(--bg-hover); border-color: var(--fg-secondary); }
+            .repo-fork-btn svg,
+            .repo-watch-btn svg {
+                width: 1em;
+                height: 1em;
+                flex-shrink: 0;
+            }
+
             .user-item {
                 display: flex;
                 align-items: center;
@@ -912,6 +816,78 @@
 
             .statusbar a:hover {
                 text-decoration: underline;
+            }
+
+            .statusbar-command {
+                position: relative;
+            }
+
+            .statusbar-command-trigger {
+                border: 0;
+                padding: 0;
+                color: var(--fg-secondary);
+                background: transparent;
+                font: inherit;
+                cursor: pointer;
+            }
+
+            .statusbar-command-trigger:hover,
+            .statusbar-command-trigger:focus-visible {
+                color: var(--fg);
+                outline: none;
+            }
+
+            .statusbar-command-menu {
+                position: absolute;
+                bottom: calc(100% + 0.25rem);
+                left: 0;
+                width: 14rem;
+                padding: 0.25rem 0;
+                border: 1px solid var(--border);
+                background: var(--bg);
+                box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
+            }
+
+            .statusbar-command-menu[hidden] {
+                display: none;
+            }
+
+            .statusbar-command-menu a,
+            .statusbar-command-menu button {
+                display: flex;
+                align-items: center;
+                width: 100%;
+                border: 0;
+                padding: 0.4rem 0.75rem;
+                color: var(--fg);
+                background: transparent;
+                font: inherit;
+                font-size: 0.72rem;
+                text-align: left;
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+            .statusbar-command-menu a:hover,
+            .statusbar-command-menu button:hover,
+            .statusbar-command-menu a:focus-visible,
+            .statusbar-command-menu button:focus-visible {
+                background: var(--bg-hover);
+                outline: none;
+            }
+
+            .statusbar-command-menu-divider {
+                height: 1px;
+                margin: 0.25rem 0;
+                background: var(--border);
+            }
+
+            .sidebar > .nav-links {
+                display: none;
+            }
+
+            .sidebar > .nav-toggle {
+                display: none;
             }
 
             .modal-overlay {
@@ -1291,8 +1267,7 @@
                     display: flex;
                 }
 
-                .sidebar > div:not(#rate-limit-section),
-                #rate-limit-section,
+                .sidebar > div,
                 .sidebar .section-title {
                     display: none;
                 }
@@ -1346,6 +1321,10 @@
                 }
 
                 .repo-star-row {
+                    display: flex;
+                }
+
+                .repo-fork-watch-row {
                     display: flex;
                 }
 
@@ -1753,48 +1732,6 @@
 </svg> stats</a>
                 </nav>
 
-                <div class="section-content" id="rate-limit-section">
-                    <div class="rate-limit-providers" aria-label="API rate limits">
-                        <button class="rate-limit-provider" type="button" data-provider="github" aria-label="View GitHub API rate limit">
-                            <svg viewBox="0 0 48 48" aria-hidden="true">
-                                <circle class="rate-limit-track" cx="24" cy="24" r="22" />
-                                <circle class="rate-limit-progress" id="rl-bar" cx="24" cy="24" r="22" />
-                            </svg>
-                            <span class="rate-limit-icon" aria-hidden="true"><svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>GitHub</title><path fill="#181717" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></span>
-                        </button>
-                        <button class="rate-limit-provider" type="button" data-provider="gitlab" aria-label="View GitLab API rate limit">
-                            <svg viewBox="0 0 48 48" aria-hidden="true">
-                                <circle class="rate-limit-track" cx="24" cy="24" r="22" />
-                                <circle class="rate-limit-progress" id="gl-bar" cx="24" cy="24" r="22" style="stroke:#fc6d26;" />
-                            </svg>
-                            <span class="rate-limit-icon" aria-hidden="true"><svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#FC6D26" d="m23.6004 9.5927-.0337-.0862L20.3.9814a.851.851 0 0 0-.3362-.405.8748.8748 0 0 0-.9997.0539.8748.8748 0 0 0-.29.4399l-2.2055 6.748H7.5375l-2.2057-6.748a.8573.8573 0 0 0-.29-.4412.8748.8748 0 0 0-.9997-.0537.8585.8585 0 0 0-.3362.4049L.4332 9.5015l-.0325.0862a6.0657 6.0657 0 0 0 2.0119 7.0105l.0113.0087.03.0213 4.976 3.7264 2.462 1.8633 1.4995 1.1321a1.0085 1.0085 0 0 0 1.2197 0l1.4995-1.1321 2.4619-1.8633 5.006-3.7489.0125-.01a6.0682 6.0682 0 0 0 2.0094-7.003z"/></svg></span>
-                        </button>
-                        <button class="rate-limit-provider" type="button" data-provider="codeberg" aria-label="View Codeberg API rate limit">
-                            <svg viewBox="0 0 48 48" aria-hidden="true">
-                                <circle class="rate-limit-track" cx="24" cy="24" r="22" />
-                                <circle class="rate-limit-progress" id="cb-bar" cx="24" cy="24" r="22" style="stroke:#2185D0;" />
-                            </svg>
-                            <span class="rate-limit-icon" aria-hidden="true"><svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Codeberg</title><path fill="#2185D0" d="M11.999.747A11.974 11.974 0 0 0 0 12.75c0 2.254.635 4.465 1.833 6.376L11.837 6.19c.072-.092.251-.092.323 0l4.178 5.402h-2.992l.065.239h3.113l.882 1.138h-3.674l.103.374h3.86l.777 1.003h-4.358l.135.483h4.593l.695.894h-5.038l.165.589h5.326l.609.785h-5.717l.182.65h6.038l.562.727h-6.397l.183.65h6.717A12.003 12.003 0 0 0 24 12.75 11.977 11.977 0 0 0 11.999.747zm3.654 19.104.182.65h5.326c.173-.204.353-.433.513-.65zm.385 1.377.18.65h3.563c.233-.198.485-.428.712-.65zm.383 1.377.182.648h1.203c.356-.204.685-.412 1.042-.648zz"/></svg></span>
-                        </button>
-                    </div>
-                    <div hidden>
-                        <span id="rl-remaining">—</span><span id="rl-limit">/ —</span><span id="rl-status"></span><span id="rl-reset"></span>
-                        <span id="gl-remaining">—</span><span id="gl-limit">/ —</span><span id="gl-status"></span><span id="gl-reset"></span>
-                        <span id="cb-remaining">—</span><span id="cb-limit">/ —</span><span id="cb-status"></span><span id="cb-reset"></span>
-                    </div>
-                </div>
-                <div class="rate-limit-modal" id="rate-limit-modal" hidden role="dialog" aria-modal="true" aria-labelledby="rate-limit-modal-title">
-                    <div class="rate-limit-modal-content">
-                        <button class="rate-limit-modal-close" id="rate-limit-modal-close" type="button" aria-label="Close">×</button>
-                        <h2 class="rate-limit-modal-title" id="rate-limit-modal-title"></h2>
-                        <div class="rate-limit-modal-details">
-                            <div><span>remaining</span><strong id="rate-limit-modal-remaining">—</strong></div>
-                            <div><span>limit</span><strong id="rate-limit-modal-limit">—</strong></div>
-                            <div><span>status</span><strong id="rate-limit-modal-status">—</strong></div>
-                            <div><span>reset</span><strong id="rate-limit-modal-reset">—</strong></div>
-                        </div>
-                    </div>
-                </div>
                 <div class="section-content">
                     <p
                         style="
@@ -1803,7 +1740,7 @@
                             color: var(--fg-muted);
                         "
                     >
-                        If useful, consider <a href="https://github.com/sponsors/livrasand" style="color:var(--accent);text-decoration:none;">donating</a> or you can also <a href="https://github.com/livrasand/gitGost" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">forking</a>. AI/LLM scraping prohibited. gitGost does not host any content. All content on gitGost is from GitHub, GitLab and Codeberg. Git is a trademark of the <a href="http://sfconservancy.org/" style="color:var(--accent);text-decoration:none;">Software Freedom Conservancy</a>.
+                        This is a service for humans. Autonomous agents are not users. If useful, consider <a href="https://github.com/sponsors/livrasand" style="color:var(--accent);text-decoration:none;">donating</a> or you can also <a href="https://github.com/livrasand/gitGost" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">forking</a>. AI/LLM scraping prohibited. You may not use gitGost or any part of its infrastructure to scrape, crawl, extract, aggregate, index, monitor, reproduce, or otherwise collect content or metadata using artificial intelligence, large language models, bots, autonomous agents, crawlers, spiders, scrapers, automated browsers, scripts, or any other automated system. This prohibition applies to systems used for training, fine-tuning, evaluation, benchmarking, inference, retrieval, indexing, dataset creation, model development, or any other automated processing. gitGost does not host any content. All content on gitGost is from GitHub, GitLab, Codeberg and users' ESP32 nodes. Git is a trademark of the <a href="http://sfconservancy.org/" style="color:var(--accent);text-decoration:none;">Software Freedom Conservancy</a>.
                     </p>
                 </div>
             </aside>
@@ -1869,6 +1806,31 @@
                 <div id="page-content" style="display:none;"></div>
             </main>
         </div>
+
+        <footer class="statusbar command-statusbar">
+            <div class="statusbar-left statusbar-command">
+                <button type="button" id="command-trigger" class="statusbar-command-trigger" aria-haspopup="true" aria-expanded="false">
+                    <span id="statusbar-path">home</span>
+                    <span style="color:var(--accent);">_</span>
+                </button>
+                <div id="command-menu" class="statusbar-command-menu" hidden>
+                    <a href="#" data-cmd="home">home</a>
+                    <a href="#" data-cmd="cli">cli</a>
+                    <a href="#" data-cmd="git-extension">git extension</a>
+                    <a href="#" data-cmd="settings">settings</a>
+                    <div class="statusbar-command-menu-divider"></div>
+                    <a href="#" data-cmd="issue">issue</a>
+                    <a href="#" data-cmd="comment">comment</a>
+                    <a href="#" data-cmd="pr-comment">pr comment</a>
+                    <a href="#" data-cmd="legal">legal</a>
+                    <a href="#" data-cmd="about">about</a>
+                    <a href="#" data-cmd="stats">stats</a>
+                    <div class="statusbar-command-menu-divider"></div>
+                    <button type="button" data-cmd="toggle-theme">toggle theme</button>
+                </div>
+            </div>
+            <div class="statusbar-right"></div>
+        </footer>
 
         <div
             class="modal-overlay"
@@ -2903,7 +2865,7 @@
                 const controller = new AbortController();
                 const timeout = setTimeout(() => controller.abort(), 3000);
                 try {
-                    const res = await fetch('https://raw.githubusercontent.com/hiroppy/github-language-color-themes/master/languages.json', { signal: controller.signal });
+                    const res = await fetch('colors.json', { signal: controller.signal });
                     if (!res.ok) return false;
                     const data = await res.json();
                     if (data && typeof data === 'object') {
@@ -3028,6 +2990,7 @@
                     openModal("command-modal");
                 }
                 if (e.key === "Escape") {
+                    closeCommandMenu();
                     document
                         .querySelectorAll(".modal-overlay.active")
                         .forEach((modal) => {
@@ -3363,6 +3326,87 @@
                 return `<div class="repo-star-row"><button type="button" class="repo-star-btn" data-provider="${safeProvider}" data-owner="${safeOwner}" data-repo="${safeRepo}" data-language="${safeLang}" data-stars="${safeStars}" onclick="event.stopPropagation(); toggleRepoStar(this)" title="${title}"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="${fill}" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.704 4.325a1.5 1.5 0 0 1 2.592 0l1.818 3.12a1.5 1.5 0 0 0 .978.712l3.53.764a1.5 1.5 0 0 1 .8 2.465l-2.405 2.693a1.5 1.5 0 0 0-.374 1.15l.363 3.593a1.5 1.5 0 0 1-2.097 1.524l-3.304-1.456a1.5 1.5 0 0 0-1.21 0l-3.304 1.456a1.5 1.5 0 0 1-2.097-1.524l.363-3.593a1.5 1.5 0 0 0-.373-1.15l-2.406-2.693a1.5 1.5 0 0 1 .8-2.465l3.53-.764a1.5 1.5 0 0 0 .979-.711z"/></svg> <span class="repo-star-text">${text}</span> <span class="repo-star-count">${count}</span></button></div>`;
             }
 
+            function repoForkWatchHtml(owner, repo) {
+                const safeOwner = escapeHtml(owner);
+                const safeRepo = escapeHtml(repo);
+                const forked = isRepoForked(owner, repo);
+                const watched = isRepoWatched(owner, repo);
+                const forkFill = forked ? 'currentColor' : 'none';
+                const watchFill = watched ? 'currentColor' : 'none';
+                const forkText = forked ? 'Forked' : 'Fork';
+                const watchText = watched ? 'Watching' : 'Watch';
+                return `<div class="repo-fork-watch-row">
+                    <button type="button" class="repo-fork-btn" data-owner="${safeOwner}" data-repo="${safeRepo}" onclick="event.stopPropagation(); toggleRepoFork(this)" title="${forked ? 'You have forked this repository' : 'Fork this repository to your node'}"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="${forkFill}" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.5 12a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 0a6 6 0 0 0-6 6v1.5h12V18a6 6 0 0 0-6-6Zm9-4.25a2.75 2.75 0 1 1 0-5.5 2.75 2.75 0 0 1 0 5.5Zm0 0a4.75 4.75 0 0 0-4.6 6"/></svg> <span class="repo-fork-text">${forkText}</span></button>
+                    <button type="button" class="repo-watch-btn" data-owner="${safeOwner}" data-repo="${safeRepo}" onclick="event.stopPropagation(); toggleRepoWatch(this)" title="${watched ? 'Stop watching this repository' : 'Watch this repository for updates'}"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="${watchFill}" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.75 12c2-4 5-6 9.25-6s7.25 2 9.25 6c-2 4-5 6-9.25 6s-7.25-2-9.25-6z"/><circle cx="12" cy="12" r="3"/></svg> <span class="repo-watch-text">${watchText}</span></button>
+                </div>`;
+            }
+
+            function isRepoForked(owner, repo) {
+                return !!localStorage.getItem(`gg:fork:${owner}/${repo}`);
+            }
+
+            function isRepoWatched(owner, repo) {
+                return !!localStorage.getItem(`gg:watch:${owner}/${repo}`);
+            }
+
+            function updateRepoForkBtn(btn) {
+                if (!btn) return;
+                const owner = btn.dataset.owner;
+                const repo = btn.dataset.repo;
+                const forked = isRepoForked(owner, repo);
+                const text = btn.querySelector('.repo-fork-text');
+                if (text) text.textContent = forked ? 'Forked' : 'Fork';
+                const svg = btn.querySelector('svg path:last-child');
+                if (svg) svg.setAttribute('fill', forked ? 'currentColor' : 'none');
+            }
+
+            function updateRepoWatchBtn(btn) {
+                if (!btn) return;
+                const owner = btn.dataset.owner;
+                const repo = btn.dataset.repo;
+                const watched = isRepoWatched(owner, repo);
+                const text = btn.querySelector('.repo-watch-text');
+                if (text) text.textContent = watched ? 'Watching' : 'Watch';
+                const svg = btn.querySelector('svg path:last-child');
+                if (svg) svg.setAttribute('fill', watched ? 'currentColor' : 'none');
+            }
+
+            function toggleRepoFork(btn) {
+                const owner = btn.dataset.owner;
+                const repo = btn.dataset.repo;
+                const key = `gg:fork:${owner}/${repo}`;
+                const wasForked = isRepoForked(owner, repo);
+                if (wasForked) {
+                    localStorage.removeItem(key);
+                } else {
+                    localStorage.setItem(key, JSON.stringify({
+                        owner,
+                        repo,
+                        full_name: `${owner}/${repo}`,
+                        forked_at: new Date().toISOString()
+                    }));
+                }
+                updateRepoForkBtn(btn);
+            }
+
+            function toggleRepoWatch(btn) {
+                const owner = btn.dataset.owner;
+                const repo = btn.dataset.repo;
+                const key = `gg:watch:${owner}/${repo}`;
+                const wasWatched = isRepoWatched(owner, repo);
+                if (wasWatched) {
+                    localStorage.removeItem(key);
+                } else {
+                    localStorage.setItem(key, JSON.stringify({
+                        owner,
+                        repo,
+                        full_name: `${owner}/${repo}`,
+                        watched_at: new Date().toISOString()
+                    }));
+                }
+                updateRepoWatchBtn(btn);
+            }
+
             function updateRepoStarBtn(btn) {
                 if (!btn) return;
                 const provider = btn.dataset.provider;
@@ -3425,6 +3469,7 @@
                     let provider;
                     if (repo.provider === 'gitlab') provider = 'gl';
                     else if (repo.provider === 'codeberg') provider = 'cb';
+                    else if (repo.provider === 'gitgost' || repo.provider === 'gg') provider = 'gg';
                     else provider = 'gh';
                     const parts = (repo.full_name || '').split('/');
                     const owner = parts[0] || repo.owner || '';
@@ -3450,8 +3495,10 @@
                     let providerLabel, providerColor;
                     if (provider === 'gl') { providerLabel = gitlabBadgeIcon(); providerColor = '#FC6D26'; }
                     else if (provider === 'cb') { providerLabel = codebergBadgeIcon(); providerColor = '#2185D0'; }
+                    else if (provider === 'gg') { providerLabel = 'gitGost'; providerColor = '#e53dab'; }
                     else { providerLabel = githubBadgeIcon(); providerColor = '#181717'; }
                     const forgeIcon = forgeIconHtml(repo.provider);
+                    const isGitGost = provider === 'gg';
                     item.innerHTML = `
                         <div class="repo-item-normal">
                             <div class="repo-item-left">
@@ -3468,7 +3515,7 @@
                             </div>
                         </div>
                         <div class="repo-card">${repoCardSvgHtml(repo, owner, name, provider)}</div>
-                        ${repoStarBtnHtml(provider, owner, name, repo.stars, repo.language)}
+                        ${isGitGost ? repoForkWatchHtml(owner, name) : repoStarBtnHtml(provider, owner, name, repo.stars, repo.language)}
                     `;
 
                     container.appendChild(item);
@@ -3481,7 +3528,7 @@
             function loadUsersTab() {
                 const container = document.getElementById('repo-list');
                 if (container) {
-                    container.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">search for users from github, gitlab and codeberg — type a query and press Enter.</p>';
+                    container.innerHTML = '<p style="color:var(--fg-secondary);font-size:0.78rem;">search for users from github, gitlab, codeberg and gitgost — type a query and press Enter.</p>';
                 }
             }
 
@@ -3491,12 +3538,13 @@
                 pushHomeParams({ q: query, tab: 'users', tag: null });
                 let anyFailed = false;
                 try {
-                    const [gh, gl, cb] = await Promise.all([
+                    const [gh, gl, cb, gg] = await Promise.all([
                         searchGitHubUsers(query).catch(() => { anyFailed = true; return []; }),
                         searchGitLabUsers(query).catch(() => { anyFailed = true; return []; }),
                         searchCodebergUsers(query).catch(() => { anyFailed = true; return []; }),
+                        searchGitGostUsers(query).catch(() => { anyFailed = true; return []; }),
                     ]);
-                    const results = [...gh, ...gl, ...cb];
+                    const results = [...gh, ...gl, ...cb, ...gg];
                     if (results.length > 0) {
                         addToSearchHistory(query);
                         renderUsers(results);
@@ -3548,6 +3596,13 @@
                 return data.results || [];
             }
 
+            async function searchGitGostUsers(query) {
+                const res = await fetch(`${API_BASE}/api/users/search?q=${encodeURIComponent(query)}&provider=gg`);
+                if (!res.ok) throw new Error(`gitGost users search failed: ${res.status}`);
+                const data = await res.json();
+                return data.results || [];
+            }
+
             function renderUsers(users) {
                 const container = document.getElementById("repo-list");
                 if (!container) return;
@@ -3558,16 +3613,21 @@
                     const safeUsername = escapeHtml(user.username || '');
                     const safeName = escapeHtml(user.name || '');
                     const safeAvatar = escapeHtml(user.avatar_url || '');
-                    const badgeColor = user.provider === 'gitlab' ? '#FC6D26' : user.provider === 'codeberg' ? '#2185D0' : '#181717';
+                    const isGitGost = user.provider === 'gitgost';
+                    const badgeColor = user.provider === 'gitlab' ? '#FC6D26' : user.provider === 'codeberg' ? '#2185D0' : isGitGost ? '#e53dab' : '#181717';
                     let providerLabel;
                     if (user.provider === 'gitlab') providerLabel = gitlabBadgeIcon();
                     else if (user.provider === 'codeberg') providerLabel = codebergBadgeIcon();
+                    else if (isGitGost) providerLabel = 'gitGost';
                     else providerLabel = githubBadgeIcon();
-                    const p = user.provider === 'gitlab' ? 'gl' : user.provider === 'codeberg' ? 'cb' : 'gh';
+                    const p = user.provider === 'gitlab' ? 'gl' : user.provider === 'codeberg' ? 'cb' : isGitGost ? 'gg' : 'gh';
                     item.setAttribute('data-href', `/${p}/${encodeURIComponent(user.username || '')}`);
+                    const avatarHtml = isGitGost
+                        ? `<canvas class="user-avatar" width="36" height="36" data-jdenticon-value="${safeUsername}" data-jdenticon-hash="${safeUsername}"></canvas>`
+                        : safeAvatar ? `<img class="user-avatar" src="${safeAvatar}" alt="" loading="lazy"/>` : `<span class="user-avatar">${safeUsername.slice(0, 1).toUpperCase()}</span>`;
                     item.innerHTML = `
                         <div class="user-item-left">
-                            ${safeAvatar ? `<img class="user-avatar" src="${safeAvatar}" alt="" loading="lazy"/>` : `<span class="user-avatar">${safeUsername.slice(0, 1).toUpperCase()}</span>`}
+                            ${avatarHtml}
                             <div class="user-info">
                                 <div class="user-name">${safeName || safeUsername}</div>
                                 <div class="user-username">${safeUsername}</div>
@@ -3577,6 +3637,9 @@
                     `;
                     container.appendChild(item);
                 });
+                if (window.jdenticon) {
+                    try { window.jdenticon(); } catch {}
+                }
             }
 
             async function openUserProfile(user) {
@@ -3703,6 +3766,7 @@
                     let provider;
                     if (repo.provider === 'gl' || repo.provider === 'gitlab') provider = 'gl';
                     else if (repo.provider === 'codeberg' || repo.provider === 'cb') provider = 'cb';
+                    else if (repo.provider === 'gitgost' || repo.provider === 'gg') provider = 'gg';
                     else provider = 'gh';
                     item.setAttribute('data-href', `/${provider}/${encodeURIComponent(repo.owner)}/${encodeURIComponent(repo.repo)}`);
                     const ago = timeAgo(repo.starred_at);
@@ -3713,6 +3777,7 @@
                     let starBadgeColor, starBadgeBorder, starBadgeLabel;
                     if (provider === 'gl') { starBadgeColor = '#FC6D26'; starBadgeBorder = '#FC6D26'; starBadgeLabel = gitlabBadgeIcon(); }
                     else if (provider === 'cb') { starBadgeColor = '#2185D0'; starBadgeBorder = '#2185D0'; starBadgeLabel = codebergBadgeIcon(); }
+                    else if (provider === 'gg') { starBadgeColor = '#e53dab'; starBadgeBorder = '#e53dab'; starBadgeLabel = 'gitGost'; }
                     else { starBadgeColor = '#181717'; starBadgeBorder = '#181717'; starBadgeLabel = githubBadgeIcon(); }
                     const starCount = repo.stars > 0 ? repo.stars : 0;
                     const starCountLabel = repo.stars > 0 ? `(${STAR_ICON_HTML}${formatNumber(repo.stars)})` : '';
@@ -3983,7 +4048,21 @@
                 const statusbarPath = document.getElementById("statusbar-path");
                 if (!statusbarPath) return;
                 const homePath = PAGE_TO_PATH['home'] || '/explore';
-                statusbarPath.innerHTML = `<a href="${homePath}" onclick="showPage('home');return false;" style="color:var(--fg-secondary);text-decoration:none;">home</a> &gt; ${section}${value ? " &gt; " + value : ""}`;
+                statusbarPath.textContent = '';
+
+                const homeLink = document.createElement('a');
+                homeLink.href = homePath;
+                homeLink.style.color = 'var(--fg-secondary)';
+                homeLink.style.textDecoration = 'none';
+                homeLink.textContent = 'home';
+                homeLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showPage('home');
+                });
+
+                statusbarPath.appendChild(homeLink);
+                statusbarPath.appendChild(document.createTextNode(' » ' + section));
+                if (value) statusbarPath.appendChild(document.createTextNode(' » ' + value));
             }
 
             const PAGES = {
@@ -5132,6 +5211,7 @@
                     let provider;
                     if (repo.provider === 'gitlab') provider = 'gl';
                     else if (repo.provider === 'codeberg') provider = 'cb';
+                    else if (repo.provider === 'gitgost' || repo.provider === 'gg') provider = 'gg';
                     else provider = 'gh';
                     if (owner && name) item.setAttribute('data-href', `/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(name)}`);
                     const desc = repo.description ? escapeHtml(repo.description.slice(0, 120)) : '';
@@ -5143,6 +5223,7 @@
                     					let providerLabel, providerColor;
                     if (repo.provider === 'gitlab') { providerLabel = gitlabBadgeIcon(); providerColor = '#FC6D26'; }
                     else if (repo.provider === 'codeberg') { providerLabel = codebergBadgeIcon(); providerColor = '#2185D0'; }
+                    else if (repo.provider === 'gitgost' || repo.provider === 'gg') { providerLabel = 'gitGost'; providerColor = '#e53dab'; }
                     else { providerLabel = githubBadgeIcon(); providerColor = '#181717'; }
                     item.innerHTML = `
                         						<div class="repo-item-normal">
@@ -5338,77 +5419,6 @@
                 }
             });
 
-        function rlColor(pct) {
-            return pct > 50 ? 'var(--accent)' : pct > 20 ? '#f0a500' : '#da3737';
-        }
-        function updateRateLimitRing(id, pct, color) {
-            const ring = document.getElementById(id);
-            if (!ring) return;
-            const circumference = 138.2;
-            const safePct = Math.max(0, Math.min(100, pct));
-            ring.style.strokeDashoffset = String(circumference - (circumference * safePct) / 100);
-            ring.style.stroke = color;
-        }
-        function rlResetText(epochSec) {
-            const diffMin = Math.ceil((epochSec * 1000 - Date.now()) / 60000);
-            return 'resets in ' + (diffMin > 0 ? diffMin + 'm' : 'soon');
-        }
-
-        async function updateRateLimit() {
-            const token = sessionStorage.getItem('gh_token');
-            if (token) {
-                try {
-                    const proxyURL = `${API_BASE}/api/gh-proxy/rate_limit`;
-                    const res = await fetch(proxyURL, { headers: { 'Authorization': `token ${token}` } });
-                    if (res.ok) {
-                        const core = (await res.json()).rate;
-                        const pct  = core.limit > 0 ? Math.round((core.remaining / core.limit) * 100) : 0;
-                        document.getElementById('rl-remaining').textContent = core.remaining.toLocaleString() + ' remaining';
-                        document.getElementById('rl-limit').textContent = '/ ' + core.limit.toLocaleString();
-                        updateRateLimitRing('rl-bar', pct, rlColor(pct));
-                        document.getElementById('rl-reset').textContent = rlResetText(core.reset);
-                        const st = document.getElementById('rl-status');
-                        st.textContent = 'authenticated';
-                        st.style.color = '#1a7f37';
-                    }
-                } catch {}
-            } else {
-                // No token: show the unauthenticated limit without calling the API (avoids GitHub 403s).
-                document.getElementById('rl-remaining').textContent = '60 / hour';
-                document.getElementById('rl-limit').textContent = '';
-                updateRateLimitRing('rl-bar', 100, 'var(--accent)');
-                document.getElementById('rl-reset').textContent = 'resets every hour';
-                const st = document.getElementById('rl-status');
-                st.textContent = '';
-                st.style.color = '#1a7f37';
-            }
-            {
-                const glToken = sessionStorage.getItem('gl_token');
-                const limit = glToken ? 2000 : 300;
-                const unit  = glToken ? '2,000 / min' : '300 / min';
-                document.getElementById('gl-remaining').textContent = unit;
-                document.getElementById('gl-limit').textContent = '';
-                updateRateLimitRing('gl-bar', 100, 'var(--accent)');
-                document.getElementById('gl-reset').textContent = 'resets every minute';
-                const st = document.getElementById('gl-status');
-                st.textContent = glToken ? 'authenticated' : '';
-                st.style.color = '#1a7f37';
-            }
-
-            {
-                const cbToken = sessionStorage.getItem('cb_token');
-                const limit = cbToken ? 1000 : 60;
-                const unit  = cbToken ? '1,000 / min' : '60 / min';
-                document.getElementById('cb-remaining').textContent = unit;
-                document.getElementById('cb-limit').textContent = '';
-                updateRateLimitRing('cb-bar', 100, '#2185D0');
-                document.getElementById('cb-reset').textContent = 'resets every minute';
-                const st = document.getElementById('cb-status');
-                st.textContent = cbToken ? 'authenticated' : '';
-                st.style.color = '#1a7f37';
-            }
-        }
-
             async function lookupNtfyTopic() {
                 const hash = document.getElementById("ntfy-hash-input")?.value.trim();
                 const resultEl = document.getElementById("ntfy-result");
@@ -5457,45 +5467,6 @@
                     setTimeout(() => { btn.textContent = orig; }, 1200);
                 }
             }
-
-        const rateLimitModal = document.getElementById('rate-limit-modal');
-        const rateLimitModalClose = document.getElementById('rate-limit-modal-close');
-        const providerNames = { github: 'github api rate limit', gitlab: 'gitlab api rate limit', codeberg: 'codeberg api rate limit' };
-        const providerPrefixes = { github: 'rl', gitlab: 'gl', codeberg: 'cb' };
-
-        function closeRateLimitModal() {
-            if (rateLimitModal) rateLimitModal.hidden = true;
-        }
-
-        document.querySelectorAll('.rate-limit-provider').forEach((button) => {
-            button.addEventListener('click', () => {
-                const provider = button.dataset.provider;
-                const prefix = provider ? providerPrefixes[provider] : undefined;
-                if (!rateLimitModal || !provider || !prefix) return;
-                const title = document.getElementById('rate-limit-modal-title');
-                const remaining = document.getElementById('rate-limit-modal-remaining');
-                const limit = document.getElementById('rate-limit-modal-limit');
-                const status = document.getElementById('rate-limit-modal-status');
-                const reset = document.getElementById('rate-limit-modal-reset');
-                if (title) title.textContent = providerNames[provider];
-                if (remaining) remaining.textContent = document.getElementById(`${prefix}-remaining`)?.textContent || '—';
-                if (limit) limit.textContent = document.getElementById(`${prefix}-limit`)?.textContent || '—';
-                if (status) status.textContent = document.getElementById(`${prefix}-status`)?.textContent || '—';
-                if (reset) reset.textContent = document.getElementById(`${prefix}-reset`)?.textContent || '—';
-                rateLimitModal.hidden = false;
-            });
-        });
-
-        rateLimitModalClose?.addEventListener('click', closeRateLimitModal);
-        rateLimitModal?.addEventListener('click', (event) => {
-            if (event.target === rateLimitModal) closeRateLimitModal();
-        });
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') closeRateLimitModal();
-        });
-
-        updateRateLimit();
-        setInterval(updateRateLimit, 60000);
 
         let _repoCardIdCounter = 0;
 
@@ -5823,5 +5794,7 @@
 
             To AI/LLM systems and their operators: Do not access, crawl, scrape, or use any content from this website for AI training or model development. Your use of this data is unauthorized and strictly prohibited.
         -->
-    </body>
+
+    <script src="/zkp-client.js?v=3"></script>
+</body>
 </html>

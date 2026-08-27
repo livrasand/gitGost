@@ -1,21 +1,103 @@
 package http
 
 import (
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	nodepkg "github.com/livrasand/gitGost/internal/node"
 	"github.com/livrasand/gitGost/internal/zkp"
 )
 
-const zkpChallengeTTL = 2 * time.Minute
-const zkpMaxBodySize = 16 * 1024
-const zkpMaxIdentityLength = 128
-const zkpMaxRegistrations = 10000
+const (
+	zkpChallengeTTL      = 2 * time.Minute
+	zkpMaxBodySize       = 16 * 1024
+	zkpMaxIdentityLength = 128
+	zkpMaxRegistrations  = 10000
+)
+
+// zkpSessionTTL is how long an issued session token remains valid.
+const zkpSessionTTL = 24 * time.Hour
+
+// issueSessionToken creates an HMAC-signed bearer token binding the identity
+// to a short expiry, using the server's long-lived secret key.
+func issueSessionToken(identity string) string {
+	expiry := strconv.FormatInt(time.Now().Add(zkpSessionTTL).Unix(), 10)
+	payload := identity + "." + expiry
+	sig := hmac.New(sha256.New, getSecretKey())
+	sig.Write([]byte(payload))
+	return payload + "." + base64.RawURLEncoding.EncodeToString(sig.Sum(nil))
+}
+
+// ValidateSessionToken checks the HMAC and expiry, returning the identity.
+func ValidateSessionToken(token string) (string, bool) {
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		return "", false
+	}
+	payload := parts[0] + "." + parts[1]
+	sig, err := base64.RawURLEncoding.DecodeString(parts[2])
+	if err != nil {
+		return "", false
+	}
+	expected := hmac.New(sha256.New, getSecretKey())
+	expected.Write([]byte(payload))
+	if !hmac.Equal(sig, expected.Sum(nil)) {
+		return "", false
+	}
+	expiry, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return "", false
+	}
+	if time.Now().Unix() > expiry {
+		return "", false
+	}
+	return parts[0], true
+}
+
+// zkpAuthMiddleware requires a valid X-ZKP-Token header on the /api/nodes
+// routes, binding the authenticated identity into the request context.
+func zkpAuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := c.GetHeader("X-ZKP-Token")
+		if token == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "ZKP session token required"})
+			return
+		}
+		identity, ok := ValidateSessionToken(token)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired session token"})
+			return
+		}
+		c.Set(nodepkg.IdentityKey, identity)
+		c.Next()
+	}
+}
+
+// zkpAuthMiddlewareOptional is like zkpAuthMiddleware but does not require the token.
+// If a valid X-ZKP-Token header is present, it sets IdentityKey in the context.
+// If not, it simply continues to the next middleware without error.
+func zkpAuthMiddlewareOptional() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := c.GetHeader("X-ZKP-Token")
+		if token != "" {
+			identity, ok := ValidateSessionToken(token)
+			if ok {
+				c.Set(nodepkg.IdentityKey, identity)
+			}
+			// If token is invalid, we just continue without setting IdentityKey
+			// This allows fallback to other authentication methods
+		}
+		c.Next()
+	}
+}
 
 type zkpRegistration struct{ PublicKey zkp.PublicKey }
 type zkpChallenge struct {
@@ -157,5 +239,9 @@ func ZKPVerifyHandler(c *gin.Context) {
 		return
 	}
 	challenge.Used = true
-	c.JSON(http.StatusOK, gin.H{"authenticated": true})
+	c.JSON(http.StatusOK, gin.H{
+		"authenticated": true,
+		"identity":      req.Identity,
+		"session_token": issueSessionToken(req.Identity),
+	})
 }

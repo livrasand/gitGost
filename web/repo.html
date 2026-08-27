@@ -1520,6 +1520,132 @@
             margin-bottom: 0.25rem;
         }
 
+        .bugs-filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .bugs-filter-input {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.72rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.3rem 0.5rem;
+            color: var(--fg);
+            outline: none;
+            min-width: 160px;
+        }
+        .bugs-filter-input:focus { border-color: var(--accent); }
+        .bugs-filter-select {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.72rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.3rem 0.5rem;
+            color: var(--fg);
+            outline: none;
+            cursor: pointer;
+        }
+        .bugs-filter-select:focus { border-color: var(--accent); }
+        .bugs-filter-spacer { flex: 1; }
+        .bugs-filter-clear {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.68rem;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.2rem 0.5rem;
+            cursor: pointer;
+            color: var(--fg-muted);
+        }
+        .bugs-filter-clear:hover { color: var(--fg); border-color: var(--fg-secondary); }
+
+        .issue-reactions {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .issue-reaction-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 0.15rem 0.5rem;
+            cursor: pointer;
+            color: var(--fg-muted);
+            transition: all 0.15s ease;
+        }
+        .issue-reaction-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .issue-reaction-btn.active { border-color: var(--accent); color: var(--accent); background: var(--bg-hover); }
+        .issue-reaction-count { font-weight: 600; }
+
+        .comment-reactions {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-top: 0.4rem;
+        }
+        .comment-reaction-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.2rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 0.1rem 0.4rem;
+            cursor: pointer;
+            color: var(--fg-muted);
+            transition: all 0.15s ease;
+        }
+        .comment-reaction-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .comment-reaction-btn.active { border-color: var(--accent); color: var(--accent); background: var(--bg-hover); }
+
+        .milestone-badge {
+            display: inline-block;
+            font-size: 0.65rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            padding: 0.1em 0.4em;
+            border-radius: 2px;
+            margin-left: 0.3rem;
+            vertical-align: middle;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--fg-muted);
+        }
+        .milestone-badge.open { border-color: #2da44e; color: #2da44e; background: #2da44e22; }
+        .milestone-badge.closed { border-color: #8b949e; color: #8b949e; background: #8b949e22; }
+
+        .bug-field-group select {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.8rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.35rem 0.5rem;
+            color: var(--fg);
+            outline: none;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .bug-field-group select:focus { border-color: var(--accent); }
+
+        .ds-label { color: var(--fg-muted); margin-bottom: 0.15rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.04em; }
+        .ds-val { color: var(--fg); word-break: break-word; }
+
         .hash-modal-overlay {
             position: fixed;
             inset: 0;
@@ -1672,7 +1798,7 @@
             border-bottom: 1px solid var(--border);
             padding: 0.5rem 1.5rem;
             display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(220px, 420px) minmax(0, 1fr);
+            grid-template-columns: minmax(0, 1fr) minmax(220px, 420px) auto;
             align-items: center;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.75rem;
@@ -1731,6 +1857,57 @@
         .statusbar-right { display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; }
         .statusbar a { color: var(--accent); text-decoration: none; }
         .statusbar a:hover { text-decoration: underline; }
+        .statusbar:not(.command-statusbar) {
+            display: flex;
+        }
+        .statusbar:not(.command-statusbar) .statusbar-left {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+        .statusbar:not(.command-statusbar) .statusbar-center {
+            flex: 0 1 420px;
+            margin-left: auto;
+        }
+        .statusbar:not(.command-statusbar) .statusbar-right {
+            flex: 0 0 auto;
+            margin-left: 0.75rem;
+        }
+        .branch-compare-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+            flex-wrap: wrap;
+        }
+        .branch-compare-toolbar .compare-controls {
+            display: flex;
+            flex: 1 1 100%;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0;
+            border-bottom: 0;
+        }
+        .branch-compare-toolbar .compare-row {
+            display: flex;
+            flex: 1 1 0;
+            align-items: center;
+            min-width: 10rem;
+            gap: 0.5rem;
+        }
+        .branch-compare-toolbar .compare-row select {
+            flex: 1;
+            min-width: 0;
+        }
+        .command-statusbar {
+            display: flex;
+            grid-template-columns: none;
+            justify-content: space-between;
+        }
+        .command-statusbar .statusbar-right { margin-left: auto; }
+        #ref-select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7280'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.5rem center; padding-right: 1.5rem; }
+        #ref-select option { background: var(--bg); color: var(--fg); }
 
         .suspension-banner {
             display: none;
@@ -2287,6 +2464,141 @@
                     max-height: 60vh;
                     overflow: auto;
                 }
+                .compare-controls {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.75rem;
+                    padding: 1rem 1.25rem;
+                    border-bottom: 1px solid var(--border);
+                }
+                .compare-row {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                }
+                .compare-row label {
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    color: var(--fg-muted);
+                    text-transform: lowercase;
+                    width: 2.5rem;
+                }
+                .compare-row select {
+                    flex: 1;
+                    padding: 0.35rem 0.5rem;
+                    border: 1px solid var(--border);
+                    border-radius: 3px;
+                    background: var(--bg);
+                    color: var(--fg);
+                    font-size: 0.8rem;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                }
+                .compare-summary {
+                    border-bottom: 1px solid var(--border);
+                }
+                .compare-summary-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    padding: 0.6rem 1.25rem;
+                    font-size: 0.8rem;
+                    flex-wrap: wrap;
+                }
+                .compare-base-head {
+                    font-weight: 600;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                }
+                .compare-status {
+                    padding: 0.15rem 0.4rem;
+                    border-radius: 3px;
+                    font-size: 0.7rem;
+                    font-weight: 600;
+                    text-transform: capitalize;
+                }
+                .compare-status.st-ahead { color: #2da44e; border: 1px solid #2da44e; }
+                .compare-status.st-behind { color: #cf222e; border: 1px solid #cf222e; }
+                .compare-status.st-identical { color: var(--fg-muted); border: 1px solid var(--border); }
+                .compare-stats {
+                    font-size: 0.75rem;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                }
+                .compare-stats .add { color: #2da44e; }
+                .compare-stats .del { color: #cf222e; }
+                .compare-commits {
+                    padding: 0.5rem 1.25rem;
+                    border-bottom: 1px solid var(--border);
+                }
+                .compare-commits-header {
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    color: var(--fg-muted);
+                    margin-bottom: 0.4rem;
+                }
+                .compare-commit {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.25rem 0;
+                    font-size: 0.75rem;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                }
+                .compare-commit-sha {
+                    color: var(--accent);
+                }
+                .compare-commit-msg {
+                    color: var(--fg);
+                    flex: 1;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+                .compare-commit-meta {
+                    color: var(--fg-muted);
+                    font-size: 0.7rem;
+                }
+                .compare-toolbar {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    padding: 0.5rem 1.25rem;
+                    border-bottom: 1px solid var(--border);
+                    background: var(--bg-secondary);
+                    position: sticky;
+                    top: 0;
+                    z-index: 5;
+                }
+                .branch-compare-toolbar {
+                    position: static;
+                    flex-wrap: wrap;
+                }
+                .branch-compare-toolbar .compare-controls {
+                    display: flex;
+                    flex: 1 1 100%;
+                    flex-direction: row;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0;
+                    border-bottom: 0;
+                }
+                .branch-compare-toolbar .compare-row {
+                    flex: 1 1 0;
+                    min-width: 10rem;
+                }
+                .branch-compare-toolbar .compare-row select {
+                    min-width: 0;
+                }
+                .compare-check {
+                    margin: 0 0.35rem;
+                    accent-color: var(--accent);
+                    cursor: pointer;
+                }
+                .commit-item:hover .compare-check:not(:disabled) {
+                    opacity: 1;
+                }
+                .compare-check:disabled {
+                    opacity: 0.3;
+                    cursor: not-allowed;
+                }
                 .pr-files-section {
                     border-top: 1px solid var(--border);
                     margin-top: 1rem;
@@ -2742,6 +3054,8 @@
             <a href="/" style="color:var(--accent);text-decoration:none;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-weight:700;font-size:0.78rem;">gitGost</a>
             <span style="color:var(--fg-muted);">›</span>
             <span id="statusbar-path" style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;display:flex;align-items:center;gap:0.2rem;"></span>
+            <select id="ref-select" style="display:none;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;color:var(--fg-muted);background:transparent;border:none;border-radius:3px;padding:0.15rem 0;cursor:pointer;" aria-label="Switch branch or tag">
+            </select>
         </div>
         <div class="statusbar-center" role="search">
             <span class="statusbar-file-search-icon" aria-hidden="true">⌕</span>
@@ -2749,9 +3063,6 @@
             <div class="statusbar-file-results" id="statusbar-file-results" role="listbox"></div>
         </div>
         <div class="statusbar-right">
-            <span style="color:var(--fg-muted);">browsing as goster</span>
-            <!--span style="color:var(--accent);">(signup)</span-->
-            <!--span style="color:var(--accent);">(login)</span-->
         </div>
     </div>
 
@@ -2771,7 +3082,7 @@
             			<path d="M4.281 14.385a8.25 8.25 0 1 0 .824-6.26l-.477.88m-.523-4.63v3.75a1 1 0 0 0 .523.88m4.227.12h-3.75a1 1 0 0 1-.477-.12" />
             			<path d="M12.25 8v4.25l3.685 2.117" />
             		</g>
-            	</svg> <span class="val" id="sb-commits"></span> <span class="nav-label">commits</span></a>
+            </svg> <span class="val" id="sb-commits"></span> <span class="nav-label">commits</span></a>
             <a href="#" onclick="showView('branches'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
                 <path d="M0 0h24v24H0z" fill="none" />
                 <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8.25a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0v7.5m0-7.5c0 2.9 2.35 5.25 5.25 5.25h2M7 15.75a2.75 2.75 0 1 0 0 5.5a2.75 2.75 0 0 0 0-5.5m7.25-2.25a2.75 2.75 0 1 0 5.5 0a2.75 2.75 0 0 0-5.5 0" />
@@ -2892,6 +3203,14 @@
                             <span id="msb-star-text">Star</span>
                             <span id="msb-star-count"></span>
                         </button>
+                        <button class="msb-btn" id="msb-fork-btn" style="display:none" onclick="doFork()" title="Fork this repository to your node">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.5 12a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 0a6 6 0 0 0-6 6v1.5h12V18a6 6 0 0 0-6-6Zm9-4.25a2.75 2.75 0 1 1 0-5.5 2.75 2.75 0 0 1 0 5.5Zm0 0a4.75 4.75 0 0 0-4.6 6"/></svg>
+                            <span id="msb-fork-text">Fork</span>
+                        </button>
+                        <button class="msb-btn" id="msb-watch-btn" style="display:none" onclick="doWatch()" title="Watch this repository for updates">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.75 12c2-4 5-6 9.25-6s7.25 2 9.25 6c-2 4-5 6-9.25 6s-7.25-2-9.25-6z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <span id="msb-watch-text">Watch</span>
+                        </button>
                         <button class="msb-btn" onclick="doClone()">
                             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8.25a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0V12m0 3.75a2.75 2.75 0 1 0 0 5.5a2.75 2.75 0 0 0 0-5.5m0 0V12m10-3.75a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0V9a3 3 0 0 1-3 3H7"/></svg>
                             Clone
@@ -2940,6 +3259,14 @@
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.704 4.325a1.5 1.5 0 0 1 2.592 0l1.818 3.12a1.5 1.5 0 0 0 .978.712l3.53.764a1.5 1.5 0 0 1 .8 2.465l-2.405 2.693a1.5 1.5 0 0 0-.374 1.15l.363 3.593a1.5 1.5 0 0 1-2.097 1.524l-3.304-1.456a1.5 1.5 0 0 0-1.21 0l-3.304 1.456a1.5 1.5 0 0 1-2.097-1.524l.363-3.593a1.5 1.5 0 0 0-.373-1.15l-2.406-2.693a1.5 1.5 0 0 1 .8-2.465l3.53-.764a1.5 1.5 0 0 0 .979-.711z" />
 </svg> <span id="sb-star-text">Star</span> <span id="sb-star-count"></span></button>
+                    <button class="sidebar-btn" id="sb-fork-btn" style="display:none" onclick="doFork()" title="Fork this repository to your node"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.5 12a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 0a6 6 0 0 0-6 6v1.5h12V18a6 6 0 0 0-6-6Zm9-4.25a2.75 2.75 0 1 1 0-5.5 2.75 2.75 0 0 1 0 5.5Zm0 0a4.75 4.75 0 0 0-4.6 6" />
+</svg> <span id="sb-fork-text">Fork</span></button>
+                    <button class="sidebar-btn" id="sb-watch-btn" style="display:none" onclick="doWatch()" title="Watch this repository for updates"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.75 12c2-4 5-6 9.25-6s7.25 2 9.25 6c-2 4-5 6-9.25 6s-7.25-2-9.25-6z"/><circle cx="12" cy="12" r="3"/>
+</svg> <span id="sb-watch-text">Watch</span></button>
                     <button class="sidebar-btn" onclick="doClone()"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8.25a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0V12m0 3.75a2.75 2.75 0 1 0 0 5.5a2.75 2.75 0 0 0 0-5.5m0 0V12m10-3.75a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0V9a3 3 0 0 1-3 3H7" />
@@ -3006,6 +3333,16 @@
             return window.location.origin;
         }
         const API_BASE = getApiBase();
+
+        function ggApiHeaders() {
+            const headers = {};
+            if (window.GG_API_KEY) headers['X-Gitgost-Key'] = window.GG_API_KEY;
+            try {
+                const s = JSON.parse(localStorage.getItem('zkp_session') || 'null');
+                if (s && s.session_token) headers['X-ZKP-Token'] = s.session_token;
+            } catch(_) {}
+            return headers;
+        }
 
         const nativeFetch = window.fetch.bind(window);
         function proxiedProviderFetch(input, opts = {}) {
@@ -3106,7 +3443,7 @@
         }
 
         const _pathParts = window.location.pathname.split('/').filter(Boolean);
-        const _isCleanPath = _pathParts.length >= 3 && (_pathParts[0] === 'gh' || _pathParts[0] === 'gl' || _pathParts[0] === 'cb');
+        const _isCleanPath = _pathParts.length >= 3 && (_pathParts[0] === 'gh' || _pathParts[0] === 'gl' || _pathParts[0] === 'cb' || _pathParts[0] === 'gg');
         const rv = {
             owner:    _isCleanPath ? decodeURIComponent(_pathParts[1] || '') : (params.get('owner') || ''),
             repo:     _isCleanPath ? decodeURIComponent(_pathParts[2] || '') : (params.get('repo')  || ''),
@@ -3157,7 +3494,7 @@
         // Devuelve null si el path no pertenece a este esquema (p.ej. ?owner=&repo=).
         function parseRepoRoute(pathname) {
             const parts = String(pathname || '').split('/').filter(Boolean);
-            if (parts.length < 3 || !['gh', 'gl', 'cb'].includes(parts[0])) return null;
+            if (parts.length < 3 || !['gh', 'gl', 'cb', 'gg'].includes(parts[0])) return null;
             const route = { provider: parts[0], owner: parts[1], repo: parts[2] };
             try {
                 route.owner = decodeURIComponent(parts[1]);
@@ -3263,13 +3600,64 @@
                 `<a href="/${encodeURIComponent(rv.provider)}/${encodeURIComponent(rv.owner)}" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.owner)}</a>`+
                 `<span style="color:var(--fg-muted);">/</span>`+
                 `<a href="${repoBasePath()}" onclick="showView('home');return false;" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.repo)}</a>`+
-                (branchName ? `<span style="color:var(--fg-muted);">/</span><span style="color:var(--fg-muted);display:inline-flex;align-items:center;gap:0.25rem;">${BRANCH_SVG}${branchName}</span>` : '');
+                (branchName ? `<span style="color:var(--fg-muted);">/</span><span style="display:inline-flex;align-items:center;gap:0.2rem;">${BRANCH_SVG}</span>` : '');
+            const sel = document.getElementById('ref-select');
+            if (sel) {
+                sel.style.display = branchName ? 'inline-block' : 'none';
+                if (branchName) sel.value = branchName;
+            }
+        }
+
+        function updateRefSelect(branches, tags) {
+            const sel = document.getElementById('ref-select');
+            if (!sel) return;
+            const items = [];
+            for (const b of (branches || [])) {
+                const name = b.name || '';
+                if (name) items.push({ name, kind: 'branch' });
+            }
+            for (const t of (tags || [])) {
+                const name = typeof t === 'string' ? t : (t.name || '');
+                if (name) items.push({ name, kind: 'tag' });
+            }
+            sel.innerHTML = items.map(it => `<option value="${escAttr(it.name)}">${it.kind === 'tag' ? '🏷 ' : ''}${escHtml(it.name)}</option>`).join('');
+            const cur = rv.branch || '';
+            if (cur) sel.value = cur;
+            sel.style.display = items.length ? 'inline-block' : 'none';
+            if (items.length) fitRefSelectToContent(sel);
+        }
+
+        function fitRefSelectToContent(sel) {
+            const styles = getComputedStyle(sel);
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            if (!context) return;
+            context.font = styles.font;
+            const widestOption = Array.from(sel.options).reduce((widest, option) => {
+                return Math.max(widest, context.measureText(option.text).width);
+            }, 0);
+            const horizontalPadding = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+            sel.style.width = `${Math.ceil(widestOption + horizontalPadding)}px`;
+        }
+
+        function initRefSelect() {
+            const sel = document.getElementById('ref-select');
+            if (!sel) return;
+            sel.addEventListener('change', () => {
+                const ref = sel.value;
+                if (!ref) return;
+                go({ kind: 'files', mode: 'tree', ref, segs: [] });
+                rv.branch = ref;
+                updateStatusbarPath();
+                showView('files', false);
+            });
         }
 
         function init() {
             document.title = `${rv.owner}/${rv.repo} · gitGost`;
             updateStatusbarPath();
             initStatusbarFileSearch();
+            initRefSelect();
 
             const forkLink = document.getElementById('fork-link');
             if (forkLink) {
@@ -3288,8 +3676,23 @@
             const sbStarBtn = document.getElementById('sb-star-btn');
             if (sbStarBtn) sbStarBtn.disabled = false;
 
+            // Show Fork/Watch buttons for gitGost repos
+            if (rv.provider === 'gg') {
+                const msbForkBtn = document.getElementById('msb-fork-btn');
+                const msbWatchBtn = document.getElementById('msb-watch-btn');
+                const sbForkBtn = document.getElementById('sb-fork-btn');
+                const sbWatchBtn = document.getElementById('sb-watch-btn');
+                if (msbForkBtn) msbForkBtn.style.display = '';
+                if (msbWatchBtn) msbWatchBtn.style.display = '';
+                if (sbForkBtn) sbForkBtn.style.display = '';
+                if (sbWatchBtn) sbWatchBtn.style.display = '';
+                updateForkBtnState();
+                updateWatchBtnState();
+            }
+
             loadRepoInfo();
             loadLanguages();
+            loadRefSelectData();
             _updateStarBtn();
             loadCommitCount();
             loadReleaseCount();
@@ -3321,6 +3724,7 @@
             // comportamiento nativo del navegador).
             document.addEventListener('click', function(e) {
                 if (e.button !== 0) return;
+                if (e.target.closest('.compare-check')) return;
                 if (e.target.closest('a')) return;
                 const el = e.target.closest('[data-goto]');
                 if (!el) return;
@@ -3581,6 +3985,14 @@
                     } else if (rv.provider === 'gh') {
                         const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}`);
                         if (res.ok) d = await res.json();
+                    } else if (rv.provider === 'gg') {
+                        const res = await fetch(`${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/branches`, { headers: ggApiHeaders() });
+                        if (res.ok) {
+                            const dd = await res.json();
+                            const bs = Array.isArray(dd.branches) ? dd.branches : [];
+                            const def = bs.find(b => b === 'main' || b === 'master') || bs[0];
+                            if (def) d = { default_branch: def };
+                        }
                     } else {
                         const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                         const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}`);
@@ -3602,6 +4014,14 @@
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const items = await res.json();
                     item = items.find(i => i.name.toLowerCase() === 'readme.md');
+                } else if (rv.provider === 'gg') {
+                    const res = await fetch(`${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/tree?path=`, {
+                        headers: ggApiHeaders()
+                    });
+                    if (res.ok) {
+                        const items = await res.json();
+                        item = items.find(i => (i.name || '').toLowerCase() === 'readme.md');
+                    }
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const ref = currentBranch();
@@ -3623,7 +4043,8 @@
                     }
                 }
                 if (item) {
-                    await loadFile(item, { lastCommitScope: 'repo' });
+                    // silentUrl: el README se muestra en la vista 'home', no debe cambiar la URL a /blob/.
+                    await loadFile(item, { lastCommitScope: 'repo', silentUrl: true });
                 } else {
                     panel.innerHTML = '<div class="code-loading">no README</div>';
                 }
@@ -3636,10 +4057,16 @@
         }
 
         let _bugsCache = { open: null, closed: null };
+        let _bugsFilters = { state: 'all', search: '', label: '', milestone: '' };
+        let _bugsLabels = [];
+        let _bugsMilestones = [];
+        let _bugsCollaborators = [];
 
         async function loadIssues() {
             const panel = document.getElementById('code-panel');
             _bugsCache = { open: null, closed: null };
+            _bugsLabels = [];
+            _bugsMilestones = [];
             panel.innerHTML = '<div class="code-loading">loading issues...</div>';
             try {
                 let open = [], closed = [];
@@ -3650,6 +4077,18 @@
                     ]);
                     if (rOpen.ok) { const d = await rOpen.json(); open = d.filter(i => !i.pull_request); }
                     if (rClosed.ok) { const d = await rClosed.json(); closed = d.filter(i => !i.pull_request); }
+                    const [lRes, mRes] = await Promise.all([
+                        ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/labels?per_page=100`),
+                        ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/milestones?state=all&per_page=100`)
+                    ]);
+                    if (lRes.ok) _bugsLabels = await lRes.json();
+                    if (mRes.ok) _bugsMilestones = await mRes.json();
+                    try {
+                        const cRes = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/collaborators?per_page=100`);
+                        if (cRes.ok) _bugsCollaborators = await cRes.json();
+                    } catch(e) {
+                        _bugsCollaborators = [];
+                    }
                 } else if (rv.provider === 'cb') {
                     const [rOpen, rClosed] = await Promise.all([
                         cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/issues?state=open&limit=50&type=issues`),
@@ -3665,6 +4104,8 @@
                         const t = rClosed.headers.get('X-Total-Count');
                         if (t) _bugsCache.closedTotal = parseInt(t);
                     }
+                    const lRes = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/labels?limit=100`);
+                    if (lRes.ok) _bugsLabels = await lRes.json();
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const [rOpen, rClosed] = await Promise.all([
@@ -3676,9 +4117,9 @@
                 }
                 _bugsCache.open = open;
                 _bugsCache.closed = closed;
-                renderBugsView('open');
+                renderBugsView(_currentBugsTab);
             } catch(e) {
-                const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: </div>`;
+                const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${em}</div>`;
             }
         }
 
@@ -3688,10 +4129,15 @@
             const open   = _bugsCache.open   || [];
             const closed = _bugsCache.closed || [];
             const pending = open.filter(i => !(i.assignees?.length || i.assignee));
-            const items = tab === 'open' ? open : tab === 'pending' ? pending : closed;
+
+            let items = tab === 'open' ? open : tab === 'pending' ? pending : closed;
 
             const openTotal   = _bugsCache.openTotal   != null ? _bugsCache.openTotal   : open.length;
             const closedTotal = _bugsCache.closedTotal != null ? _bugsCache.closedTotal : closed.length;
+
+            const labelOptions = _bugsLabels.map(l => `<option value="${escAttr(l.name)}">${escHtml(l.name)}</option>`).join('');
+            const milestoneOptions = _bugsMilestones.map(m => `<option value="${escAttr(m.title)}">${escHtml(m.title)}</option>`).join('');
+
             const toolbar = `
                 <div class="bugs-toolbar">
                     <button class="bugs-tab ${tab==='open'?'active':''}" onclick="renderBugsView('open')">Open <span style="opacity:.6;">${openTotal.toLocaleString()}</span></button>
@@ -3699,7 +4145,42 @@
                     <button class="bugs-tab ${tab==='closed'?'active':''}" onclick="renderBugsView('closed')">Closed <span style="opacity:.6;">${closedTotal.toLocaleString()}</span></button>
                     <span class="bugs-spacer"></span>
                     <button class="bugs-new-btn" onclick="openBugModal()">+ new issue</button>
+                </div>
+                <div class="bugs-filter-bar">
+                    <input class="bugs-filter-input" type="text" placeholder="Search issues..." value="${escAttr(_bugsFilters.search)}" oninput="_bugsFilters.search=this.value; renderBugsView('${tab}');" />
+                    <select class="bugs-filter-select" onchange="_bugsFilters.state=this.value; renderBugsView('${tab}');">
+                        <option value="all" ${_bugsFilters.state==='all'?'selected':''}>All states</option>
+                        <option value="open" ${_bugsFilters.state==='open'?'selected':''}>Open</option>
+                        <option value="closed" ${_bugsFilters.state==='closed'?'selected':''}>Closed</option>
+                    </select>
+                    <select class="bugs-filter-select" onchange="_bugsFilters.label=this.value; renderBugsView('${tab}');">
+                        <option value="">All labels</option>
+                        ${labelOptions}
+                    </select>
+                    ${_bugsMilestones.length ? `<select class="bugs-filter-select" onchange="_bugsFilters.milestone=this.value; renderBugsView('${tab}');">
+                        <option value="">All milestones</option>
+                        ${milestoneOptions}
+                    </select>` : ''}
+                    <span class="bugs-filter-spacer"></span>
+                    <button class="bugs-filter-clear" onclick="_bugsFilters={state:'all',search:'',label:'',milestone:''}; renderBugsView('${tab}');">Clear</button>
                 </div>`;
+
+            if (_bugsFilters.state !== 'all') {
+                items = items.filter(i => (i.state || 'open') === _bugsFilters.state);
+            }
+
+            if (_bugsFilters.search) {
+                const q = _bugsFilters.search.toLowerCase();
+                items = items.filter(i => (i.title || '').toLowerCase().includes(q) || String(i.number || i.iid).includes(q));
+            }
+
+            if (_bugsFilters.label) {
+                items = items.filter(i => (i.labels || []).some(l => l.name === _bugsFilters.label));
+            }
+
+            if (_bugsFilters.milestone) {
+                items = items.filter(i => (i.milestone && i.milestone.title === _bugsFilters.milestone));
+            }
 
             if (!items.length) {
                 panel.innerHTML = toolbar + `<div class="bugs-empty">no ${tab} issues</div>`;
@@ -3716,14 +4197,97 @@
                 const url  = i.html_url || i.web_url || '#';
                 const assignee = i.assignees?.[0]?.login || i.assignee?.login || i.assignee?.username || '';
                 const num = i.number || i.iid;
+                const milestone = i.milestone?.title ? `<span class="milestone-badge ${i.milestone.state || 'open'}">${escHtml(i.milestone.title)}</span>` : '';
                 return `<div class="issue-item" style="cursor:pointer;" data-goto="${escAttr(buildDetailUrl('issues', num))}">
                     <span class="issue-num">#${escHtml(num)}</span>
-                    <span class="issue-title">${escHtml(i.title)}${labels}</span>
+                    <span class="issue-title">${escHtml(i.title)}${labels}${milestone}</span>
                     <span class="issue-meta">${assignee ? profileLink(assignee) + ' · ' : ''}${profileLink(user)} · ${date}</span>
                 </div>`;
             }).join('');
 
             panel.innerHTML = toolbar + `<div class="issue-list">${list}</div>`;
+        }
+
+        const THUMB_UP_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">\n\t<path d="M0 0h24v24H0z" fill="none" />\n\t<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">\n\t\t<rect width="4.2" height="13.296" x="3.25" y="7.201" rx="1.5" />\n\t\t<path d="M7.45 9.526v7.97a3 3 0 0 0 3 3h6.873a2.5 2.5 0 0 0 2.412-1.842l1.958-7.188a2.5 2.5 0 0 0-2.412-3.157h-4.095V4.5a2 2 0 0 0-2-2h-.036a2 2 0 0 0-1.67.9z" />\n\t</g>\n</svg>`;
+
+        const THUMB_DOWN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">\n\t<path d="M0 0h24v24H0z" fill="none" />\n\t<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">\n\t\t<rect width="4.2" height="13.296" x="21.25" y="16.799" rx="1.5" transform="rotate(180 21.25 16.8)" />\n\t\t<path d="M17.05 14.475V6.503a3 3 0 0 0-3-3H7.177a2.5 2.5 0 0 0-2.412 1.843l-1.958 7.188a2.5 2.5 0 0 0 2.412 3.157h4.095V19.5a2 2 0 0 0 2 2h.036a2 2 0 0 0 1.67-.9z" />\n\t</g>\n</svg>`;
+
+        const SMILE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">\n\t<path d="M0 0h24v24H0z" fill="none" />\n\t<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">\n\t\t<circle cx="12" cy="12" r="9.25" />\n\t\t<path d="M16.5 12.75c.276 0 .503.224.475.5a4.999 4.999 0 0 1-9.594 1.413a5 5 0 0 1-.356-1.414c-.028-.275.199-.499.475-.499zM7.264 9.082a1.797 1.797 0 0 1 3.472 0m2.528 0a1.796 1.796 0 0 1 3.472 0" />\n\t</g>\n</svg>`;
+
+        const CONFUSED_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<g fill="none">
+		<circle cx="12" cy="12" r="9.25" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
+		<circle cx="9" cy="9.5" r="1.25" fill="currentColor" />
+		<circle cx="15" cy="9.5" r="1.25" fill="currentColor" />
+		<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.464 15.813a4 4 0 0 0-6.928 0" />
+	</g>
+</svg>`
+
+        const HEART_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.5" d="M4.087 6.477a4.565 4.565 0 0 1 6.456 0L12 7.934l1.457-1.457a4.565 4.565 0 0 1 6.456 6.457l-1.457 1.456l.013.013l-6.456 6.457l-.013-.013l-.013.013l-6.456-6.457l.013-.013l-1.457-1.456a4.565 4.565 0 0 1 0-6.457Z" />
+</svg>
+`
+        const ROCKET_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<g fill="none">
+		<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.604 4.683a4.04 4.04 0 0 1 5.713 5.713l-7.32 7.32l-5.712-5.713z" />
+		<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.568 14.145a4.04 4.04 0 0 1 0 5.713L13.426 22l-1.429-1.428a2.02 2.02 0 0 1 0-2.857zM9.855 8.432a4.04 4.04 0 0 0-5.713 0L2 10.575l1.428 1.428a2.02 2.02 0 0 0 2.857 0z" />
+		<path fill="currentColor" d="M9.32 17.894a4 4 0 0 1-.943.698c-.34.179-.695.297-1.043.346c-.348.05-.683.03-.986-.057a1.8 1.8 0 0 1-.778-.451a1.8 1.8 0 0 1-.451-.778a2.4 2.4 0 0 1-.057-.986c.05-.348.167-.703.346-1.043c.18-.341.417-.661.698-.942z" />
+		<circle cx="15.918" cy="8.082" r="1.5" fill="currentColor" transform="rotate(45 15.918 8.082)" />
+	</g>
+</svg>
+`
+
+        const EYES_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<g fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.5">
+		<path d="M3.182 12.808C4.233 14.613 7.195 18.81 12 18.81c4.813 0 7.77-4.199 8.82-6.002a1.6 1.6 0 0 0-.001-1.615C19.769 9.389 16.809 5.19 12 5.19s-7.768 4.197-8.818 6.001a1.6 1.6 0 0 0 0 1.617Z" />
+		<path d="M12 14.625a2.625 2.625 0 1 0 0-5.25a2.625 2.625 0 0 0 0 5.25Z" />
+	</g>
+</svg>
+`
+        const REACTION_EMOJIS = [
+            { key: 'thumbs_up', emoji: THUMB_UP_SVG, label: '+1', content: '+1' },
+            { key: 'thumbs_down', emoji: THUMB_DOWN_SVG, label: '-1', content: '-1' },
+            { key: 'laugh', emoji: SMILE_SVG, label: 'laugh', content: 'laugh' },
+            { key: 'confused', emoji: CONFUSED_SVG, label: 'confused', content: 'confused' },
+            { key: 'heart', emoji: HEART_SVG, label: 'heart', content: 'heart' },
+            { key: 'rocket', emoji: ROCKET_SVG, label: 'rocket', content: 'rocket' },
+            { key: 'eyes', emoji: EYES_SVG, label: 'eyes', content: 'eyes' },
+        ];
+
+        function renderReactions(reactions, num, type) {
+            if (!reactions || typeof reactions !== 'object') return '';
+            const parts = [];
+            for (const r of REACTION_EMOJIS) {
+                const count = reactions[r.key] || 0;
+                if (count > 0) {
+                    parts.push(`<span class="${type === 'comment' ? 'comment-reaction-btn' : 'issue-reaction-btn'}" title="${r.label}">${r.emoji} <span class="issue-reaction-count">${count}</span></span>`);
+                }
+            }
+            if (!parts.length) return '';
+            return `<div class="${type === 'comment' ? 'comment-reactions' : 'issue-reactions'}">${parts.join('')}</div>`;
+        }
+
+        async function addIssueReaction(provider, owner, repo, num, reactionKey, commentId) {
+            const reaction = REACTION_EMOJIS.find(r => r.key === reactionKey);
+            if (!reaction) return;
+            try {
+                const url = `/v1/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/${num}${commentId ? '/comments/' + commentId : ''}/reactions`;
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Gitgost-Key': 'gitgost-anonymous' },
+                    body: JSON.stringify({ content: reaction.content }),
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `HTTP ${res.status}`);
+                }
+            } catch(e) {
+                console.error('reaction error:', e);
+            }
         }
 
         async function showIssueDetail(num, preloaded) {
@@ -3753,6 +4317,10 @@
             const listId = `comments-${num}`;
             const captchaId = `menta-issue-${num}`;
 
+            const milestone = issue.milestone?.title ? `<span class="milestone-badge ${issue.milestone.state || 'open'}">${escHtml(issue.milestone.title)}</span>` : '';
+            const reactions = issue.reactions || {};
+            const reactionHtml = renderReactions(reactions, num, 'issue');
+
             panel.innerHTML = `
                 <div class="issue-detail">
                     <div class="issue-detail-main">
@@ -3761,6 +4329,7 @@
                             <span class="issue-detail-title">${escHtml(issue.title)}</span>
                         </div>
                         ${labels ? `<div style="margin-bottom:0.75rem;display:flex;gap:0.3rem;flex-wrap:wrap;">${labels}</div>` : ''}
+                        ${milestone ? `<div style="margin-bottom:0.75rem;display:flex;gap:0.3rem;flex-wrap:wrap;">${milestone}</div>` : ''}
                         <div class="issue-detail-meta">
                             ${avatar ? `<img class="issue-detail-avatar" src="${escAttr(avatar)}" alt="${escAttr(user)}" />` : ''}
                             <strong style="color:var(--fg);">${profileLink(user)}</strong>
@@ -3772,6 +4341,10 @@
 </a></span>
                         </div>
                         <div class="issue-detail-body readme">${renderedBody}</div>
+                        ${reactionHtml}
+                        <div class="issue-reactions" id="issue-reaction-picker-${num}">
+                            ${REACTION_EMOJIS.map(r => `<button class="issue-reaction-btn" onclick="addIssueReaction('${escJsStr(rv.provider)}','${escJsStr(rv.owner)}','${escJsStr(rv.repo)}',${escJsStr(num)},'${r.key}')" title="${r.label}">${r.emoji}</button>`).join('')}
+                        </div>
                         <ul class="comment-list" id="${listId}"></ul>
                         <div class="reply-section">
                             <div class="reply-row">
@@ -3808,6 +4381,10 @@
                             <div class="ds-label">updated</div>
                             <div class="ds-val">${updated}</div>
                         </div>
+                        ${issue.milestone ? `<div>
+                            <div class="ds-label">milestone</div>
+                            <div class="ds-val">${escHtml(issue.milestone.title)}</div>
+                        </div>` : ''}
                         ${issue.assignees?.length || issue.assignee ? `<div>
                             <div class="ds-label">assignee</div>
                             <div class="ds-val">${escHtml(issue.assignees?.[0]?.login || issue.assignee?.login || issue.assignee?.username || '')}</div>
@@ -3841,6 +4418,8 @@
                     const cAvatar = c.user?.avatar_url || c.author?.avatar_url || '';
                     const cDate   = new Date(c.created_at).toLocaleDateString('en', {year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
                     const cBody   = c.body || '';
+                    const reactions = c.reactions || {};
+                    const reactionHtml = renderReactions(reactions, c.id || num, 'comment');
                     const li = document.createElement('li');
                     li.className = 'comment-item';
                     li.innerHTML = `
@@ -3850,6 +4429,10 @@
                         <div class="comment-bubble">
                             <div class="comment-meta"><strong style="color:var(--fg);">${profileLink(cUser)}</strong> &middot; ${cDate}</div>
                             <div class="readme" style="font-size:0.8rem;">${renderMd(cBody)}</div>
+                            ${reactionHtml}
+                            <div class="comment-reactions">
+                                ${REACTION_EMOJIS.map(r => `<button class="comment-reaction-btn" onclick="addIssueReaction('${escJsStr(rv.provider)}','${escJsStr(rv.owner)}','${escJsStr(rv.repo)}',${escJsStr(num)},'${r.key}',${escJsStr(c.id || 0)})" title="${r.label}">${r.emoji}</button>`).join('')}
+                            </div>
                         </div>`;
                     list.appendChild(li);
                 }
@@ -4014,6 +4597,18 @@
                             <div class="bug-field-label">Labels (optional, comma-separated)</div>
                             <input id="bug-labels-input" type="text" placeholder="bug, enhancement, help wanted" />
                         </div>
+                        <div class="bug-field-group">
+                            <div class="bug-field-label">Assignee (optional)</div>
+                            <select id="bug-assignee-input">
+                                <option value="">No assignee</option>
+                            </select>
+                        </div>
+                        <div class="bug-field-group">
+                            <div class="bug-field-label">Milestone (optional)</div>
+                            <select id="bug-milestone-input">
+                                <option value="">No milestone</option>
+                            </select>
+                        </div>
                     </div>
                     <menta-widget id="menta-bug" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                 </div>`;
@@ -4053,6 +4648,18 @@
                             <div class="bug-field-label">Labels (optional, comma-separated)</div>
                             <input id="bug-labels-input" type="text" placeholder="bug, enhancement, help wanted" />
                         </div>
+                        <div class="bug-field-group">
+                            <div class="bug-field-label">Assignee (optional)</div>
+                            <select id="bug-assignee-input">
+                                <option value="">No assignee</option>
+                            </select>
+                        </div>
+                        <div class="bug-field-group">
+                            <div class="bug-field-label">Milestone (optional)</div>
+                            <select id="bug-milestone-input">
+                                <option value="">No milestone</option>
+                            </select>
+                        </div>
                         <menta-widget id="menta-bug" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                     </div>`;
             } else {
@@ -4069,6 +4676,18 @@
                         <div class="bug-field-group">
                             <div class="bug-field-label">Labels (optional, comma-separated)</div>
                             <input id="bug-labels-input" type="text" placeholder="bug, enhancement, help wanted" />
+                        </div>
+                        <div class="bug-field-group">
+                            <div class="bug-field-label">Assignee (optional)</div>
+                            <select id="bug-assignee-input">
+                                <option value="">No assignee</option>
+                            </select>
+                        </div>
+                        <div class="bug-field-group">
+                            <div class="bug-field-label">Milestone (optional)</div>
+                            <select id="bug-milestone-input">
+                                <option value="">No milestone</option>
+                            </select>
                         </div>
                         <menta-widget id="menta-bug" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                     </div>`;
@@ -4111,7 +4730,6 @@
             if (missing) return null;
             return body.filter(Boolean).join('\n\n');
         }
-
         function openBugModal() {
             if (document.getElementById('bug-modal-overlay')) return;
             const overlay = document.createElement('div');
@@ -4120,6 +4738,7 @@
             const escapeHtml = bugEscapeHtml;
             const safeOwner = escapeHtml(rv.owner || '');
             const safeRepo = escapeHtml(rv.repo || '');
+
             const repoBase = rv.provider === 'cb'
                 ? 'https://codeberg.org'
                 : rv.provider === 'gh'
@@ -4150,6 +4769,7 @@
                 _bugTemplates = [];
                 _bugBlankEnabled = true;
                 bugRenderDefaultForm();
+                populateBugFormDropdowns();
                 return;
             }
 
@@ -4167,13 +4787,32 @@
                     } else {
                         bugRenderDefaultForm();
                     }
+                    populateBugFormDropdowns();
                 })
                 .catch(e => {
                     console.error('Error fetching templates', e);
                     _bugTemplates = [];
                     _bugBlankEnabled = true;
                     bugRenderDefaultForm();
+                    populateBugFormDropdowns();
                 });
+        }
+
+        function populateBugFormDropdowns() {
+            const assigneeSelect = document.getElementById('bug-assignee-input');
+            const milestoneSelect = document.getElementById('bug-milestone-input');
+            if (assigneeSelect && _bugsCollaborators.length) {
+                const current = assigneeSelect.value;
+                assigneeSelect.innerHTML = '<option value="">No assignee</option>' +
+                    _bugsCollaborators.map(u => `<option value="${escAttr(u.login || u.username)}">${escHtml(u.login || u.username)}</option>`).join('');
+                assigneeSelect.value = current;
+            }
+            if (milestoneSelect && _bugsMilestones.length) {
+                const current = milestoneSelect.value;
+                milestoneSelect.innerHTML = '<option value="">No milestone</option>' +
+                    _bugsMilestones.map(m => `<option value="${escAttr(m.title)}">${escHtml(m.title)}</option>`).join('');
+                milestoneSelect.value = current;
+            }
         }
 
         function closeBugModal() {
@@ -4186,9 +4825,13 @@
             const titleEl = document.getElementById('bug-title-input');
             const bodyEl = document.getElementById('bug-desc-input');
             const labelsRaw = document.getElementById('bug-labels-input')?.value.trim();
+            const assigneeEl = document.getElementById('bug-assignee-input');
+            const milestoneEl = document.getElementById('bug-milestone-input');
             const btn = document.getElementById('bug-submit-btn');
             const statusEl = document.getElementById('bug-status');
             const labels = labelsRaw ? labelsRaw.split(',').map(l => l.trim()).filter(Boolean) : [];
+            const assignee = assigneeEl?.value || '';
+            const milestone = milestoneEl?.value || '';
             const captchaToken = document.getElementById('menta-bug')?.token;
 
             const title = titleEl?.value.trim();
@@ -4211,10 +4854,13 @@
             if (btn) btn.disabled = true;
             if (statusEl) statusEl.textContent = 'Sending...';
             try {
+                const payload = { title, body, labels, captcha_token: captchaToken };
+                if (assignee) payload.assignee = assignee;
+                if (milestone) payload.milestone = milestone;
                 const res = await fetch(`/v1/${rv.provider}/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/issues/anonymous`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-Gitgost-Key': 'gitgost-anonymous' },
-                    body: JSON.stringify({ title, body, labels, captcha_token: captchaToken }),
+                    body: JSON.stringify(payload),
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
@@ -4853,9 +5499,17 @@
             }
         }
 
+        let _compareMode = false;
+        let _compareSelection = [];
+
         async function loadCommits() {
             const panel = document.getElementById('code-panel');
+            _disposePierreDiffs();
+            const toolbar = document.getElementById('compare-toolbar');
+            if (toolbar) toolbar.remove();
             panel.innerHTML = '<div class="code-loading">loading commits...</div>';
+            _compareSelection = [];
+            _compareMode = false;
             try {
                 let commits = [];
                 const ref = currentBranch();
@@ -4909,6 +5563,14 @@
                 panel.innerHTML = '<div class="bugs-empty">no commits found</div>';
                 return;
             }
+            let toolbarHtml = '<div class="compare-toolbar" id="compare-toolbar">' +
+                '<label style="font-size:0.75rem;font-weight:600;color:var(--fg-muted);display:inline-flex;align-items:center;gap:0.35rem;cursor:pointer;">' +
+                '<input type="checkbox" id="compare-mode-toggle" ' + (_compareMode ? 'checked' : '') + '> Compare mode</label>' +
+                '<span style="font-size:0.75rem;color:var(--fg-secondary);" id="compare-selection-info">' +
+                (_compareSelection.length ? `selected: ${_compareSelection.map(s => String(s).substring(0,7)).join(', ')}` : 'select 2 commits to compare') +
+                '</span>' +
+                (_compareSelection.length ? `<button type="button" class="rv-btn" id="compare-clear" style="font-size:0.7rem;padding:0.2rem 0.5rem;">clear</button>` : '') +
+                '</div>';
             const list = commits.map(c => {
                 const fullSha = c.sha || c.id || '';
                 const sha = fullSha.substring(0, 7);
@@ -4932,19 +5594,189 @@
                 } else {
                     avatarHtml = `<span class="commit-avatar-placeholder">${initial}</span>`;
                 }
+                const checked = _compareSelection.includes(fullSha) ? 'checked' : '';
+                const disabled = (!_compareMode || _compareSelection.length >= 2) && !_compareSelection.includes(fullSha) ? 'disabled' : '';
                 return `<div class="commit-item" style="cursor:pointer;" data-goto="${escAttr(buildDetailUrl('commit', fullSha))}">
                     <div class="commit-avatar">${avatarHtml}</div>
                     <div class="commit-body">
                         <div class="commit-msg">${escHtml(firstLine)}</div>
                         <div class="commit-meta">
                             <span class="commit-sha">${escHtml(sha)}</span>
+                            ${_compareMode ? `<input type="checkbox" class="compare-check" data-sha="${escAttr(fullSha)}" ${checked} ${disabled} style="margin:0 0.35rem;">` : ''}
                             <span class="commit-author">${profileLink(authorUsername, author)}</span>
                             <span class="commit-time">${date} at ${time}</span>
                         </div>
                     </div>
                 </div>`;
             }).join('');
-            panel.innerHTML = `<div class="commit-list">${list}</div>`;
+            let resultHtml = '';
+            const resultEl = document.getElementById('compare-result');
+            if (resultEl && _compareSelection.length === 2) {
+                resultHtml = resultEl.outerHTML;
+            }
+            panel.innerHTML = toolbarHtml + '<div class="commit-list">' + list + '</div>' + resultHtml;
+            const toggle = document.getElementById('compare-mode-toggle');
+            if (toggle) {
+                toggle.addEventListener('change', () => {
+                    _compareMode = toggle.checked;
+                    _compareSelection = [];
+                    renderCommitsView(commits, avatarMap);
+                });
+            }
+            const clearBtn = document.getElementById('compare-clear');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => {
+                    _compareSelection = [];
+                    renderCommitsView(commits, avatarMap);
+                });
+            }
+            panel.querySelectorAll('.compare-check').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const sha = cb.getAttribute('data-sha');
+                    if (cb.checked) {
+                        if (_compareSelection.length >= 2) _compareSelection.shift();
+                        _compareSelection.push(sha);
+                    } else {
+                        _compareSelection = _compareSelection.filter(s => s !== sha);
+                    }
+                    renderCommitsView(commits, avatarMap);
+                    if (_compareSelection.length === 2) {
+                        doInlineCompare(_compareSelection[0], _compareSelection[1]);
+                    }
+                });
+                cb.addEventListener('click', e => {
+                    if (!_compareMode) {
+                        e.stopPropagation();
+                        showCommitDetail(cb.getAttribute('data-sha'));
+                    }
+                });
+            });
+            panel.querySelectorAll('.commit-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const href = item.getAttribute('data-goto');
+                    if (href && !_compareMode) go(href);
+                });
+            });
+        }
+
+        async function doCompare(base, head) {
+            const resultEl = document.getElementById('compare-result');
+            resultEl.innerHTML = '<div class="code-loading">loading comparison...</div>';
+            try {
+                const apiBase = getApiBase();
+                const url = `${apiBase}/api/compare/${rv.provider}/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}?base=${encodeURIComponent(base)}&head=${encodeURIComponent(head)}`;
+                const res = await fetch(url);
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `HTTP ${res.status}`);
+                }
+                const data = await res.json();
+                renderCompareResult(data, base, head);
+            } catch(e) {
+                const em = escHtml((e && e.message) ? e.message : String(e));
+                resultEl.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${em}</div>`;
+            }
+        }
+
+        function renderCompareResult(data, base, head) {
+            const resultEl = document.getElementById('compare-result');
+            _disposePierreDiffs();
+            let files = [];
+            let commits = [];
+            let status = '';
+            if (rv.provider === 'gh') {
+                files = data.files || [];
+                commits = data.commits || [];
+                status = data.status || '';
+            } else if (rv.provider === 'gl') {
+                files = (data.diffs || []).map(d => ({
+                    filename: d.new_path,
+                    old_path: d.old_path,
+                    status: d.new_file ? 'added' : d.deleted_file ? 'removed' : d.renamed_file ? 'renamed' : 'modified',
+                    additions: 0,
+                    deletions: 0,
+                    patch: d.diff || ''
+                }));
+                commits = data.commits || [];
+                status = data.compare_across_refs ? 'ahead' : 'identical';
+            } else if (rv.provider === 'cb') {
+                files = data.files || [];
+                commits = data.commits || [];
+                status = data.status || '';
+            }
+            const totalAdditions = files.reduce((sum, f) => sum + (f.additions || 0), 0);
+            const totalDeletions = files.reduce((sum, f) => sum + (f.deletions || 0), 0);
+            let html = `<div class="compare-summary">
+                <div class="compare-summary-header">
+                    <span class="compare-base-head">${escHtml(base)}...${escHtml(head)}</span>
+                    <span class="compare-status st-${escHtml(status)}">${escHtml(status)}</span>
+                    <span class="compare-stats">
+                        <span class="add">+${escHtml(totalAdditions)}</span>
+                        <span class="del">-${escHtml(totalDeletions)}</span>
+                        <span>${files.length} file${files.length !== 1 ? 's' : ''}</span>
+                    </span>
+                </div>`;
+            if (commits.length) {
+                html += `<div class="compare-commits">
+                    <div class="compare-commits-header">${commits.length} commit${commits.length !== 1 ? 's' : ''}</div>`;
+                html += commits.map(c => {
+                    const sha = String(c.sha || c.id || '').substring(0, 7);
+                    const msg = c.commit?.message || c.title || c.message || '';
+                    const firstLine = msg.split('\n')[0];
+                    const author = c.commit?.author?.name || c.author_name || c.author?.login || '';
+                    const date = new Date(c.commit?.author?.date || c.authored_date || c.created_at)
+                        .toLocaleDateString('en', {month:'short', day:'numeric', year:'numeric'});
+                    return `<div class="compare-commit">
+                        <span class="compare-commit-sha">${escHtml(sha)}</span>
+                        <span class="compare-commit-msg">${escHtml(firstLine)}</span>
+                        <span class="compare-commit-meta">${escHtml(author)} · ${date}</span>
+                    </div>`;
+                }).join('');
+                html += `</div>`;
+            }
+            if (files.length) {
+                const patchByKey = new Map();
+                html += '<div class="commit-diff-list">' + files.map((f, i) => {
+                    const patch = _gitPatchForFile(f);
+                    const key = `compare-${base}-${head}-${i}`;
+                    if (patch) patchByKey.set(key, patch);
+                    return _cdfFileHtml(f, key, patch);
+                }).join('') + '</div>';
+                resultEl.innerHTML = html;
+                _upgradeDiffsWithPierre(resultEl, patchByKey);
+                _highlightDiffs(resultEl);
+            } else {
+                html += '<div style="padding:0.5rem 0;color:var(--fg-muted);font-size:0.75rem;">no file changes to display</div>';
+                html += '</div>';
+                resultEl.innerHTML = html;
+            }
+        }
+
+        async function doInlineCompare(base, head) {
+            const existing = document.getElementById('compare-result');
+            if (existing) existing.remove();
+            const container = document.createElement('div');
+            container.id = 'compare-result';
+            container.innerHTML = '<div class="code-loading">loading comparison...</div>';
+            const panel = document.getElementById('code-panel');
+            panel.appendChild(container);
+            try {
+                const apiBase = getApiBase();
+                const url = `${apiBase}/api/compare/${rv.provider}/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}?base=${encodeURIComponent(base)}&head=${encodeURIComponent(head)}`;
+                const res = await fetch(url);
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `HTTP ${res.status}`);
+                }
+                const data = await res.json();
+                const resultEl = document.getElementById('compare-result');
+                if (!resultEl) return;
+                renderCompareResult(data, base, head);
+            } catch(e) {
+                const em = escHtml((e && e.message) ? e.message : String(e));
+                const container = document.getElementById('compare-result');
+                if (container) container.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${em}</div>`;
+            }
         }
 
         let _releasesCache = null;
@@ -5072,6 +5904,96 @@
             }
         }
 
+        async function fetchGGBranches() {
+            try {
+                const res = await fetch(`${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/branches`, { headers: ggApiHeaders() });
+                if (!res.ok) return [];
+                const d = await res.json();
+                const arr = Array.isArray(d.branches) ? d.branches : [];
+                return arr.map(name => ({ name: String(name) }));
+            } catch (_) { return []; }
+        }
+
+        async function fetchGGTags() {
+            try {
+                const res = await fetch(`${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/tags`, { headers: ggApiHeaders() });
+                if (!res.ok) return [];
+                const d = await res.json();
+                const arr = Array.isArray(d.tags) ? d.tags : [];
+                return arr.map(name => ({ name: String(name) }));
+            } catch (_) { return []; }
+        }
+
+        async function loadRefSelectData() {
+            try {
+                let branches = [];
+                if (rv.provider === 'gh') {
+                    let page = 1;
+                    while (true) {
+                        const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/branches?per_page=100&page=${page}`);
+                        if (!res.ok) break;
+                        const data = await res.json();
+                        if (!Array.isArray(data) || data.length === 0) break;
+                        branches.push(...data);
+                        const link = res.headers.get('Link') || '';
+                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                        page++;
+                    }
+                } else if (rv.provider === 'cb') {
+                    let page = 1;
+                    while (true) {
+                        const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/branches?limit=50&page=${page}`);
+                        if (!res.ok) break;
+                        const data = await res.json();
+                        if (!Array.isArray(data) || data.length === 0) break;
+                        branches.push(...data);
+                        const link = res.headers.get('Link') || '';
+                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                        page++;
+                    }
+                } else if (rv.provider === 'gg') {
+                    branches = await fetchGGBranches();
+                } else {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    let page = 1;
+                    while (true) {
+                        const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/branches?per_page=100&page=${page}`);
+                        if (!res.ok) break;
+                        const data = await res.json();
+                        if (!Array.isArray(data) || data.length === 0) break;
+                        branches.push(...data);
+                        const link = res.headers.get('Link') || '';
+                        if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
+                        page++;
+                    }
+                }
+                let tags = [];
+                if (rv.provider === 'gh') {
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/tags?per_page=100`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data)) tags = data.map(t => t.name);
+                    }
+                } else if (rv.provider === 'cb') {
+                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/tags?limit=100`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data)) tags = data.map(t => t.name);
+                    }
+                } else if (rv.provider === 'gg') {
+                    tags = (await fetchGGTags()).map(t => t.name);
+                } else {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/tags?per_page=100`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data)) tags = data.map(t => t.name);
+                    }
+                }
+                updateRefSelect(branches, tags);
+            } catch(_) {}
+        }
+
         async function loadBranches() {
             const panel = document.getElementById('code-panel');
             panel.innerHTML = '<div class="code-loading">loading branches...</div>';
@@ -5101,6 +6023,8 @@
                         if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
                         page++;
                     }
+                } else if (rv.provider === 'gg') {
+                    branches = await fetchGGBranches();
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     let page = 1;
@@ -5115,13 +6039,37 @@
                         page++;
                     }
                 }
-                renderBranchesView(branches);
+                let tags = [];
+                if (rv.provider === 'gh') {
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/tags?per_page=100`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data)) tags = data.map(t => t.name);
+                    }
+                } else if (rv.provider === 'cb') {
+                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/tags?limit=100`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data)) tags = data.map(t => t.name);
+                    }
+                } else if (rv.provider === 'gg') {
+                    tags = (await fetchGGTags()).map(t => t.name);
+                } else {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/tags?per_page=100`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data)) tags = data.map(t => t.name);
+                    }
+                }
+                renderBranchesView(branches, tags);
+                updateRefSelect(branches, tags);
             } catch(e) {
-                const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: </div>`;
+                const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${em}</div>`;
             }
         }
 
-        function renderBranchesView(branches) {
+        function renderBranchesView(branches, tags) {
             const panel = document.getElementById('code-panel');
             if (!branches.length) {
                 panel.innerHTML = '<div class="bugs-empty">no branches found</div>';
@@ -5133,8 +6081,32 @@
                     ? `https://github.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/tree/`
                     : `https://gitlab.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/-/tree/`;
             const defaultName = (branches.find(b => b.name === 'main' || b.name === 'master') || branches[0]).name;
-            const header = `<div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;">
-                <span style="font-size:0.85rem;font-weight:600;color:var(--fg);">${branches.length.toLocaleString()} branches</span>
+            const branchOptions = branches.map(b => `<option value="${escAttr(b.name)}">${escHtml(b.name)}</option>`).join('');
+            const tagOptions = (tags || []).map(t => `<option value="${escAttr(t)}">${escHtml(t)}</option>`).join('');
+            const header = `<div class="compare-toolbar branch-compare-toolbar">
+                <label style="font-size:0.75rem;font-weight:600;color:var(--fg-muted);display:inline-flex;align-items:center;gap:0.35rem;">
+                    Compare branches
+                </label>
+                <span style="font-size:0.75rem;color:var(--fg-secondary);">${branches.length.toLocaleString()} branches</span>
+                <div class="compare-controls" style="border-bottom:none;padding:0;flex:1;justify-content:flex-end;">
+                    <div class="compare-row" style="justify-content:flex-end;">
+                        <label>base</label>
+                        <select id="branch-compare-base">
+                            <option value="">select base...</option>
+                            ${branchOptions}
+                            ${tagOptions ? `<optgroup label="tags">${tagOptions}</optgroup>` : ''}
+                        </select>
+                    </div>
+                    <div class="compare-row" style="justify-content:flex-end;">
+                        <label>head</label>
+                        <select id="branch-compare-head">
+                            <option value="">select head...</option>
+                            ${branchOptions}
+                            ${tagOptions ? `<optgroup label="tags">${tagOptions}</optgroup>` : ''}
+                        </select>
+                    </div>
+                    <button type="button" class="rv-btn star" id="branch-compare-btn">compare</button>
+                </div>
             </div>`;
             const list = branches.map(b => {
                 const name = b.name || '';
@@ -5149,7 +6121,14 @@
                     <span class="issue-meta" style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">${escHtml(sha)}</span>
                 </div>`;
             }).join('');
-            panel.innerHTML = header + '<div class="commit-list">' + list + '</div>';
+            panel.innerHTML = header + '<div class="commit-list">' + list + '</div><div id="compare-result"></div>';
+            document.getElementById('branch-compare-btn')?.addEventListener('click', () => {
+                const base = document.getElementById('branch-compare-base').value;
+                const head = document.getElementById('branch-compare-head').value;
+                if (!base || !head) { alert('please select both base and head'); return; }
+                if (base === head) { alert('base and head must be different'); return; }
+                doCompare(base, head);
+            });
         }
 
         async function loadTags() {
@@ -5183,6 +6162,8 @@
                         page++;
                         if (page > 10) break;
                     }
+                } else if (rv.provider === 'gg') {
+                    tags = await fetchGGTags();
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     let page = 1;
@@ -5199,6 +6180,7 @@
                     }
                 }
                 renderTagsView(tags);
+                updateRefSelect([], tags);
             } catch(e) {
                 const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: </div>`;
             }
@@ -5376,7 +6358,24 @@
                 }
                 const date = pkg.created_at ? new Date(pkg.created_at).toLocaleString('en') : '';
                 const fileList = Array.isArray(files) && files.length
-                    ? files.map(f => `<li>${escHtml(f.name || f.file_name || 'file')} <span style="color:var(--fg-muted);font-size:0.7rem;">(${formatBytes(f.size || f.Size || 0)})</span></li>`).join('')
+                    ? files.map(f => {
+                        const fname = f.name || f.file_name || 'file';
+                        const size = Number(f.size || f.Size || 0) ? formatBytes(Number(f.size || f.Size || 0)) : '';
+                        const url = _pkgFileDownloadURL(f, pkg);
+                        const orig = (rv.provider === 'gl' && f.links && f.links.web_path)
+                            ? `https://gitlab.com${f.links.web_path}` : '';
+                        return `<li class="rel-asset-row" style="flex-wrap:wrap;">
+                            <span class="rel-asset-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12.074 3.25v12.478M6.19 10.465l4.822 4.822c.293.293.677.44 1.06.44m5.883-5.262l-4.822 4.822c-.293.293-.677.44-1.06.44m8.677.788v.935a3.3 3.3 0 0 1-3.3 3.3H6.55a3.3 3.3 0 0 1-3.3-3.3v-.935" />
+</svg></span>
+                            ${orig ? `<a class="rel-asset-name" href="${escAttr(orig)}" target="_blank" rel="noopener" title="${escAttr(orig)}">${escHtml(fname)}</a>`
+                                   : `<span class="rel-asset-name" title="${escAttr(fname)}">${escHtml(fname)}</span>`}
+                            ${size ? `<span class="rel-asset-meta">${size}</span>` : ''}
+                            ${url ? `<button type="button" class="ft-btn rel-pkg-dl-btn" data-url="${escAttr(url)}" title="Download this file">download</button>` +
+                                    `<button type="button" class="ft-btn rel-pkg-copy-btn" data-url="${escAttr(url)}" title="Copy the direct download URL">copy link</button>` : ''}
+                        </li>`;
+                    }).join('')
                     : '<li style="color:var(--fg-muted);">no files listed</li>';
                 panel.innerHTML = `
                     <div class="commit-detail-header" style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);">
@@ -5390,6 +6389,17 @@
                         <div style="font-size:0.85rem;font-weight:600;margin-bottom:0.5rem;">Files</div>
                         <ul style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.78rem;list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.4rem;">${fileList}</ul>
                     </div>`;
+                panel.querySelectorAll('.rel-pkg-dl-btn').forEach(btn => {
+                    btn.addEventListener('click', () => _downloadPackageFile(btn.getAttribute('data-url') || ''));
+                });
+                panel.querySelectorAll('.rel-pkg-copy-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const ok = await _copyTextToClipboard(btn.getAttribute('data-url') || '');
+                        const orig2 = btn.textContent;
+                        btn.textContent = ok ? 'copied!' : 'copy failed';
+                        setTimeout(() => { btn.textContent = orig2; }, 1500);
+                    });
+                });
             } catch(e) {
                 const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: </div>`;
             }
@@ -5555,6 +6565,38 @@
         function _downloadReleaseAsset(url) {
             if (!url) return;
             const proxied = `${API_BASE}/api/release-asset/${rv.provider}/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}?url=${encodeURIComponent(url)}`;
+            const a = document.createElement('a');
+            a.href = proxied;
+            a.rel = 'noopener';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+
+        // URL de descarga directa (en la forja original) de un fichero concreto
+        // de un package publicado. Se enruta por el proxy del backend
+        // (/api/package-file) para forzar Content-Disposition: attachment.
+        function _pkgFileDownloadURL(f, pkg) {
+            if (rv.provider === 'cb') {
+                const o = encodeURIComponent(rv.owner);
+                const t = encodeURIComponent(pkg.type || '');
+                const n = encodeURIComponent(pkg.name || '');
+                const v = encodeURIComponent(pkg.version || '');
+                const id = f.id != null ? f.id : '';
+                return `https://codeberg.org/api/v1/packages/${o}/${t}/${n}/${v}/files/${id}`;
+            }
+            if (rv.provider === 'gl') {
+                const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                const webPath = (f.links && f.links.web_path) ||
+                    `/api/v4/projects/${enc}/packages/${pkg.id}/package_files/${f.id}/download`;
+                return `https://gitlab.com${webPath}`;
+            }
+            return '';
+        }
+
+        function _downloadPackageFile(url) {
+            if (!url) return;
+            const proxied = `${API_BASE}/api/package-file/${rv.provider}/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}?url=${encodeURIComponent(url)}`;
             const a = document.createElement('a');
             a.href = proxied;
             a.rel = 'noopener';
@@ -5876,7 +6918,8 @@
             if (patch) _cdfPatchStore[key] = patch;
             const { dir, name } = _cdfSplitPath(f.filename);
             const oldPath = f.previous_filename || f.old_path || '';
-            return `<div class="commit-diff-file" data-pierre-key="${key}" data-filename="${escAttr(f.filename)}">
+            const safeKeyAttr = escAttr(key);
+            return `<div class="commit-diff-file" data-pierre-key="${safeKeyAttr}" data-filename="${escAttr(f.filename)}">
                         <div class="cdf-header">
                             <button type="button" class="cdf-toggle" aria-expanded="true" title="Toggle file diff">
                                 <svg class="cdf-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg>
@@ -5887,7 +6930,7 @@
                             <span class="cdf-statbars" title="${adds} additions &amp; ${dels} deletions">${_cdfStatBars(adds, dels)}</span>
                             ${adds ? `<span class="cdf-stat add">+${escHtml(adds)}</span>` : ''}
                             ${dels ? `<span class="cdf-stat del">&minus;${escHtml(dels)}</span>` : ''}
-                            ${patch ? `<button type="button" class="cdf-copy" data-cdf-copy="${key}" title="Copy raw patch">
+                            ${patch ? `<button type="button" class="cdf-copy" data-cdf-copy="${safeKeyAttr}" title="Copy raw patch">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-4M5 9h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2"/></svg>
                             </button>` : ''}
                         </div>
@@ -6454,6 +7497,20 @@
                     loadCommitCount();
                     loadContributors();
                     loadDeployments();
+                } else if (rv.provider === 'gg') {
+                    const res = await fetch(`${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/info`, {
+                        headers: ggApiHeaders()
+                    });
+                    if (!res.ok) return;
+                    const d = await res.json();
+                    const bar = document.getElementById('repo-info');
+                    const infoDesc = document.getElementById('info-desc');
+                    if (infoDesc && d.name) infoDesc.textContent = d.name;
+                    if (bar) bar.style.display = 'flex';
+                    rv.branch = '';
+                    rv.stars = 0;
+                    const sbSize = document.getElementById('sb-size');
+                    if (sbSize && d.size) sbSize.textContent = formatBytes(d.size);
                 } else if (rv.provider === 'gl') {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const glToken = sessionStorage.getItem('gl_token');
@@ -6674,7 +7731,7 @@
             const link = document.getElementById('sb-home-link');
             if (!row || !link) return;
             const safe = sanitizeHttpUrl(String(url || '').trim());
-            if (!safe) {
+            if (!safe || isGitGostHomepage(safe)) {
                 row.style.display = 'none';
                 return;
             }
@@ -6684,6 +7741,17 @@
             const span = link.querySelector('span');
             if (span) span.textContent = label;
             row.style.display = '';
+        }
+
+        function isGitGostHomepage(url) {
+            try {
+                const parsed = new URL(url, window.location.href);
+                return (parsed.hostname === 'localhost' && parsed.port === '8080')
+                    || parsed.hostname === 'gitgost.livrasand.com'
+                    || parsed.hostname === 'gitgost.fly.dev';
+            } catch (_) {
+                return false;
+            }
         }
 
         // GitLab /repository/contributors no incluye el username (solo name/email).
@@ -7320,7 +8388,7 @@
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 3000);
             try {
-                const res = await fetch('https://raw.githubusercontent.com/hiroppy/github-language-color-themes/master/languages.json', { signal: controller.signal });
+                const res = await fetch('colors.json', { signal: controller.signal });
                 if (!res.ok) return false;
                 const data = await res.json();
                 if (data && typeof data === 'object') {
@@ -7503,6 +8571,12 @@
                 return await res.json();
             } else if (rv.provider === 'cb') {
                 const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/contents/${pathStr}?ref=${encodeURIComponent(ref)}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
+            } else if (rv.provider === 'gg') {
+                const res = await fetch(`${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/tree?path=${encodeURIComponent(pathStr)}`, {
+                    headers: ggApiHeaders()
+                });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 return await res.json();
             } else {
@@ -7956,6 +9030,15 @@
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const data = await res.json();
                     content = decodeBase64Utf8(data.content);
+                } else if (rv.provider === 'gg') {
+                    const path = encodeURIComponent(item.path || item.name || '');
+                    const res = await fetch(`${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/raw?path=${path}`, {
+                        headers: ggApiHeaders()
+                    });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const data = await res.json();
+                    content = decodeBase64Utf8(data.data_b64 || '');
+                    if (!fileSize && data.len) fileSize = data.len;
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const fp  = encodeURIComponent(item.path || item.name);
@@ -7979,6 +9062,9 @@
                             ? `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${branch}/${item.path}`
                             : `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/${item.path}`;
                     }
+                    if (rv.provider === 'gg') {
+                        imgUrl = `${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/raw?path=${encodeURIComponent(item.path || item.name)}`;
+                    }
                     const safeImgUrl = sanitizeHttpUrl(imgUrl);
                     _renderFilePanel(name, { path: item.path || item.name, lastCommitScope: opts.lastCommitScope || 'file', content, size: fileSize, imgUrl: safeImgUrl, isImage: true, previewHtml: `<div style="padding:1rem;text-align:center;"><img src="${escHtml(safeImgUrl)}" alt="${escHtml(name)}" style="max-width:100%;max-height:80vh;object-fit:contain;border-radius:4px;" /></div>` });
                 } else if (name.toLowerCase().endsWith('.md')) {
@@ -7990,6 +9076,9 @@
                         mdBaseUrl = branch
                             ? `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${branch}/${dir}`
                             : `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/${dir}`;
+                    }
+                    if (rv.provider === 'gg') {
+                        mdBaseUrl = `${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/raw?path=${encodeURIComponent(dir)}`;
                     }
                     _renderFilePanel(name, { path: item.path || item.name, lastCommitScope: opts.lastCommitScope || 'file', content, size: fileSize, isMd: true, previewHtml: `<div class="readme">${renderMd(content, mdBaseUrl)}</div>` });
                 } else {
@@ -8759,6 +9848,68 @@
             _updateStarBtn();
         }
 
+        // ---- Fork / Watch for gitGost repos ----
+        function _forkKey() { return `gg:fork:${rv.owner}/${rv.repo}`; }
+        function _watchKey() { return `gg:watch:${rv.owner}/${rv.repo}`; }
+        function _isForked() { return !!localStorage.getItem(_forkKey()); }
+        function _isWatched() { return !!localStorage.getItem(_watchKey()); }
+
+        function doFork() {
+            if (rv.provider !== 'gg') return;
+            const key = _forkKey();
+            if (_isForked()) {
+                localStorage.removeItem(key);
+            } else {
+                localStorage.setItem(key, JSON.stringify({
+                    owner: rv.owner,
+                    repo: rv.repo,
+                    full_name: `${rv.owner}/${rv.repo}`,
+                    forked_at: new Date().toISOString()
+                }));
+            }
+            updateForkBtnState();
+        }
+
+        function doWatch() {
+            if (rv.provider !== 'gg') return;
+            const key = _watchKey();
+            if (_isWatched()) {
+                localStorage.removeItem(key);
+            } else {
+                localStorage.setItem(key, JSON.stringify({
+                    owner: rv.owner,
+                    repo: rv.repo,
+                    full_name: `${rv.owner}/${rv.repo}`,
+                    watched_at: new Date().toISOString()
+                }));
+            }
+            updateWatchBtnState();
+        }
+
+        function updateForkBtnState() {
+            const forked = _isForked();
+            const msbForkText = document.getElementById('msb-fork-text');
+            const sbForkText = document.getElementById('sb-fork-text');
+            const msbForkSvg = document.querySelector('#msb-fork-btn svg path:last-child');
+            const sbForkSvg = document.querySelector('#sb-fork-btn svg path:last-child');
+            if (msbForkText) msbForkText.textContent = forked ? 'Forked' : 'Fork';
+            if (sbForkText) sbForkText.textContent = forked ? 'Forked' : 'Fork';
+            if (msbForkSvg) msbForkSvg.setAttribute('fill', forked ? 'currentColor' : 'none');
+            if (sbForkSvg) sbForkSvg.setAttribute('fill', forked ? 'currentColor' : 'none');
+        }
+
+        function updateWatchBtnState() {
+            const watched = _isWatched();
+            const msbWatchText = document.getElementById('msb-watch-text');
+            const sbWatchText = document.getElementById('sb-watch-text');
+            const msbWatchSvg = document.querySelector('#msb-watch-btn svg path:last-child');
+            const sbWatchSvg = document.querySelector('#sb-watch-btn svg path:last-child');
+            if (msbWatchText) msbWatchText.textContent = watched ? 'Watching' : 'Watch';
+            if (sbWatchText) sbWatchText.textContent = watched ? 'Watching' : 'Watch';
+            if (msbWatchSvg) msbWatchSvg.setAttribute('fill', watched ? 'currentColor' : 'none');
+            if (sbWatchSvg) sbWatchSvg.setAttribute('fill', watched ? 'currentColor' : 'none');
+        }
+
         function doClone() {
             if (document.getElementById('clone-modal-overlay')) return;
             const host = `gitgost.fly.dev/v1/${rv.provider}/${rv.owner}/${rv.repo}`;
@@ -9378,6 +10529,31 @@
             a.addEventListener('click', expandLeftNav);
         });
     </script>
+    <footer class="statusbar command-statusbar">
+        <div class="statusbar-left statusbar-command">
+            <button type="button" id="command-trigger" class="statusbar-command-trigger" aria-haspopup="true" aria-expanded="false">
+                <span id="statusbar-path">home</span>
+                <span style="color:var(--accent);">_</span>
+            </button>
+            <div id="command-menu" class="statusbar-command-menu" hidden>
+                <a href="#" data-cmd="home">home</a>
+                <a href="#" data-cmd="cli">cli</a>
+                <a href="#" data-cmd="git-extension">git extension</a>
+                <a href="#" data-cmd="settings">settings</a>
+                <div class="statusbar-command-menu-divider"></div>
+                <a href="#" data-cmd="issue">issue</a>
+                <a href="#" data-cmd="comment">comment</a>
+                <a href="#" data-cmd="pr-comment">pr comment</a>
+                <a href="#" data-cmd="legal">legal</a>
+                <a href="#" data-cmd="about">about</a>
+                <a href="#" data-cmd="stats">stats</a>
+                    <div class="statusbar-command-menu-divider"></div>
+                    <button type="button" data-cmd="toggle-theme">toggle theme</button>
+            </div>
+        </div>
+        <div class="statusbar-right"></div>
+    </footer>
+    <script src="/zkp-client.js?v=3"></script>
     <script src="/ethicalmetrics.js" data-site-key="gitgost-repo"></script>
 </body>
 </html>

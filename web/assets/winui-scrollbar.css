@@ -40,6 +40,7 @@
 ::-webkit-scrollbar {
     display: block;
     inline-size: 14px;
+    block-size: 2px;
     border-radius: 12px;
 }
 
@@ -78,6 +79,7 @@
 
 ::-webkit-scrollbar-button:single-button {
     display: block;
+    inline-size: 14px;
     block-size: 14px;
 }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gitgost-v2';
+const CACHE_NAME = 'gitgost-v4';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',

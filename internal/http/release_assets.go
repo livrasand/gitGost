@@ -51,7 +51,12 @@ func releaseAssetHostAllowed(provider, host string) bool {
 	return false
 }
 
-func ReleaseAssetDownloadHandler(c *gin.Context) {
+// streamProxiedFile transmite en stream un archivo desde la forja original
+// (allowlist por proveedor) hacia el cliente, forzando siempre
+// Content-Disposition: attachment. Se usa tanto para assets de release como
+// para ficheros concretos de packages, de modo que la descarga funcione en un
+// solo clic desde el mismo origen (incluido el WebView de Capacitor).
+func streamProxiedFile(c *gin.Context) {
 	provider := c.Param("provider")
 	switch provider {
 	case "github":
@@ -137,4 +142,17 @@ func ReleaseAssetDownloadHandler(c *gin.Context) {
 		// La descarga ya empezó; solo registrar el corte.
 		return
 	}
+}
+
+// ReleaseAssetDownloadHandler: descarga de assets de releases (experiencia
+// tipo GitHub) a través del proxy del backend.
+func ReleaseAssetDownloadHandler(c *gin.Context) {
+	streamProxiedFile(c)
+}
+
+// PackageFileDownloadHandler: descarga de ficheros concretos de un package
+// publicado (Codeberg/GitLab), con la misma lógica de allowlist y
+// Content-Disposition que los assets de release.
+func PackageFileDownloadHandler(c *gin.Context) {
+	streamProxiedFile(c)
 }

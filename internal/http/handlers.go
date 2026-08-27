@@ -28,10 +28,12 @@ import (
 	"github.com/livrasand/gitGost/internal/database"
 	"github.com/livrasand/gitGost/internal/git"
 	"github.com/livrasand/gitGost/internal/github"
+	nodepkg "github.com/livrasand/gitGost/internal/node"
 	"github.com/livrasand/gitGost/internal/provider"
 	cbprovider "github.com/livrasand/gitGost/internal/provider/codeberg"
 	ghprovider "github.com/livrasand/gitGost/internal/provider/github"
 	glprovider "github.com/livrasand/gitGost/internal/provider/gitlab"
+	gitgostprovider "github.com/livrasand/gitGost/internal/provider/gitgost"
 	"github.com/livrasand/gitGost/internal/tokenpool"
 	"github.com/livrasand/gitGost/internal/utils"
 
@@ -251,6 +253,9 @@ func providerFromPath(path string) provider.Provider {
 	}
 	if strings.HasPrefix(path, "/v1/cb/") {
 		return cbprovider.New()
+	}
+	if strings.HasPrefix(path, "/v1/gg/") {
+		return gitgostprovider.New()
 	}
 	return ghprovider.New()
 }
@@ -813,6 +818,16 @@ func SetBuildInfo(hash, built, repo string) {
 	commitHash = hash
 	buildTime = built
 	sourceRepo = repo
+}
+
+var apiKey string
+
+func SetAPIKey(key string) {
+	apiKey = key
+}
+
+func ConfigHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"api_key": apiKey})
 }
 
 var (
@@ -1535,6 +1550,72 @@ func CreateAnonymousIssueHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+func CreateReactionHandler(c *gin.Context) {
+	provider := c.Param("provider")
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+	numberStr := c.Param("number")
+	number, err := strconv.Atoi(numberStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid issue number"})
+		return
+	}
+
+	var req struct {
+		Content   string `json:"content"`
+		CommentID int    `json:"comment_id"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
+		return
+	}
+
+	content := strings.TrimSpace(req.Content)
+	if content == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "content is required"})
+		return
+	}
+
+	if provider == "gh" {
+		token := tokenpool.NextGitHubToken()
+		if token == "" {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "GITHUB_TOKEN not set"})
+			return
+		}
+
+		var apiURL string
+		if req.CommentID > 0 {
+			apiURL = fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d/comments/%d/reactions", owner, repo, number, req.CommentID)
+		} else {
+			apiURL = fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d/reactions", owner, repo, number)
+		}
+
+		payload, _ := json.Marshal(map[string]string{"content": content})
+		req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(payload))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to build request"})
+			return
+		}
+		req.Header.Set("Accept", "application/vnd.github+json")
+		req.Header.Set("Authorization", "token "+token)
+		req.Header.Set("Content-Type", "application/json")
+
+		client := newSafeHTTPClient(10 * time.Second)
+		resp, err := client.Do(req)
+		if err != nil {
+			c.JSON(http.StatusBadGateway, gin.H{"error": "github unreachable"})
+			return
+		}
+		defer resp.Body.Close()
+
+		body, _ := io.ReadAll(resp.Body)
+		c.Data(resp.StatusCode, "application/json", body)
+		return
+	}
+
+	c.JSON(http.StatusNotImplemented, gin.H{"error": "reactions are only supported for GitHub"})
+}
+
 func GitLabIssueNotesProxyHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
@@ -1840,6 +1921,93 @@ func GitLabCommitDetailHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, commitData)
+}
+
+func CompareHandler(c *gin.Context) {
+	provider := c.Param("provider")
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+
+	base := c.Query("base")
+	head := c.Query("head")
+	if base == "" || head == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "base and head query parameters are required"})
+		return
+	}
+
+	client := newSafeHTTPClient(15 * time.Second)
+
+	switch provider {
+	case "gh":
+		target := fmt.Sprintf("https://api.github.com/repos/%s/%s/compare/%s...%s",
+			url.PathEscape(owner), url.PathEscape(repo), url.PathEscape(base), url.PathEscape(head))
+		req, err := http.NewRequestWithContext(c.Request.Context(), "GET", target, nil)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid request"})
+			return
+		}
+		req.Header.Set("Accept", "application/json")
+		resp, err := doGitHubWithTokenRotation(client, func(token string) (*http.Request, error) {
+			r := req.Clone(c.Request.Context())
+			if token != "" {
+				r.Header.Set("Authorization", "token "+token)
+			}
+			return r, nil
+		}, "")
+		if err != nil {
+			c.JSON(http.StatusBadGateway, gin.H{"error": "github unreachable"})
+			return
+		}
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+		c.Data(resp.StatusCode, "application/json", body)
+
+	case "gl":
+		projectID := url.PathEscape(owner + "/" + repo)
+		target := fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/repository/compare?from=%s&to=%s",
+			projectID, url.QueryEscape(base), url.QueryEscape(head))
+		req, err := http.NewRequestWithContext(c.Request.Context(), "GET", target, nil)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid request"})
+			return
+		}
+		req.Header.Set("Accept", "application/json")
+		if token := os.Getenv("GITLAB_TOKEN"); token != "" {
+			req.Header.Set("PRIVATE-TOKEN", token)
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			c.JSON(http.StatusBadGateway, gin.H{"error": "gitlab unreachable"})
+			return
+		}
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+		c.Data(resp.StatusCode, "application/json", body)
+
+	case "cb":
+		target := fmt.Sprintf("https://codeberg.org/api/v1/repos/%s/%s/compare/%s...%s",
+			url.PathEscape(owner), url.PathEscape(repo), url.PathEscape(base), url.PathEscape(head))
+		req, err := http.NewRequestWithContext(c.Request.Context(), "GET", target, nil)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid request"})
+			return
+		}
+		req.Header.Set("Accept", "application/json")
+		if token := os.Getenv("CODEBERG_TOKEN"); token != "" {
+			req.Header.Set("Authorization", "token "+token)
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			c.JSON(http.StatusBadGateway, gin.H{"error": "codeberg unreachable"})
+			return
+		}
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+		c.Data(resp.StatusCode, "application/json", body)
+
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "unsupported provider"})
+	}
 }
 
 func GitHubDiscussionsProxyHandler(c *gin.Context) {
@@ -3110,22 +3278,27 @@ func PRCheckHandler(c *gin.Context) {
 	}
 
 	events := status.Events
-	if len(events) > 10 {
-		events = events[len(events)-10:]
+	total := len(events)
+	if total > 0 {
+		provider.SortEvents(events)
+	}
+	if len(events) > 25 {
+		events = events[len(events)-25:]
 	}
 
 	response := gin.H{
-		"hash":       hash,
-		"tracked":    true,
-		"pr_number":  status.Number,
-		"owner":      track.Owner,
-		"repo":       track.Repo,
-		"pr_url":     track.PRURL,
-		"provider":   track.Provider,
-		"state":      status.State,
-		"title":      status.Title,
-		"comments":   status.Comments,
-		"updated_at": status.UpdatedAt,
+		"hash":         hash,
+		"tracked":      true,
+		"pr_number":    status.Number,
+		"owner":        track.Owner,
+		"repo":         track.Repo,
+		"pr_url":       track.PRURL,
+		"provider":     track.Provider,
+		"state":        status.State,
+		"title":        status.Title,
+		"comments":     status.Comments,
+		"updated_at":   status.UpdatedAt,
+		"events_total": total,
 	}
 
 	if events != nil {
@@ -3915,6 +4088,7 @@ func UsersSearchHandler(c *gin.Context) {
 	ghChan := make(chan searchResult, 1)
 	glChan := make(chan searchResult, 1)
 	cbChan := make(chan searchResult, 1)
+	ggChan := make(chan searchResult, 1)
 
 	if provider == "gh" || provider == "all" || provider == "" {
 		wg.Add(1)
@@ -3946,6 +4120,16 @@ func UsersSearchHandler(c *gin.Context) {
 		cbChan <- searchResult{results: []gin.H{}}
 	}
 
+	if provider == "gg" || provider == "all" || provider == "" {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			ggChan <- searchResult{results: searchGitGostUsers(query)}
+		}()
+	} else {
+		ggChan <- searchResult{results: []gin.H{}}
+	}
+
 	done := make(chan struct{})
 	go func() {
 		wg.Wait()
@@ -3960,12 +4144,14 @@ func UsersSearchHandler(c *gin.Context) {
 	close(ghChan)
 	close(glChan)
 	close(cbChan)
+	close(ggChan)
 
 	// Collect and merge results
 	results := []gin.H{}
 	results = append(results, (<-ghChan).results...)
 	results = append(results, (<-glChan).results...)
 	results = append(results, (<-cbChan).results...)
+	results = append(results, (<-ggChan).results...)
 
 	c.JSON(http.StatusOK, gin.H{
 		"query":   query,
@@ -4271,6 +4457,28 @@ func searchCodebergUsers(query, clientToken string) []gin.H {
 		token = ""
 	}
 
+	return results
+}
+
+func searchGitGostUsers(query string) []gin.H {
+	results := []gin.H{}
+	zkpState.Lock()
+	defer zkpState.Unlock()
+	q := strings.ToLower(query)
+	for identity := range zkpState.registrations {
+		if strings.Contains(strings.ToLower(identity), q) {
+			results = append(results, gin.H{
+				"provider":   "gitgost",
+				"username":   identity,
+				"name":       identity,
+				"avatar_url": "",
+				"url":        fmt.Sprintf("/gg/%s", identity),
+			})
+			if len(results) >= 100 {
+				break
+			}
+		}
+	}
 	return results
 }
 
@@ -5317,6 +5525,8 @@ func UserReposHandler(c *gin.Context) {
 		repos = gitLabUserRepos(username, userType, clientToken)
 	case "cb":
 		repos = codebergUserRepos(username, userType, clientToken)
+	case "gg":
+		repos = gitGostUserRepos(username, c)
 	default:
 		repos = gitHubUserRepos(username, clientToken)
 	}
@@ -5583,6 +5793,49 @@ func codebergUserRepos(username, userType, clientToken string) []gin.H {
 			"html_url":    r.HTMLURL,
 			"updated_at":  r.UpdatedAt,
 		})
+	}
+	return repos
+}
+
+func gitGostUserRepos(account string, c *gin.Context) []gin.H {
+	token := c.GetHeader("X-ZKP-Token")
+	identity := ""
+	if token != "" {
+		var ok bool
+		identity, ok = ValidateSessionToken(token)
+		if !ok {
+			return nil
+		}
+	}
+
+	if identity != "" && identity != account {
+		return nil
+	}
+
+	nodes := nodepkg.ListByAccount(account)
+	repos := make([]gin.H, 0)
+	for _, n := range nodes {
+		rawRepos, _ := n["repositories"].([]interface{})
+		for _, r := range rawRepos {
+			obj, ok := r.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			name, _ := obj["name"].(string)
+			repos = append(repos, gin.H{
+				"provider":    "gg",
+				"name":        name,
+				"full_name":   account + "/" + name,
+				"description": "",
+				"language":    "",
+				"stars":       0,
+				"forks":       0,
+				"fork":        false,
+				"html_url":    "/gg/" + url.PathEscape(account) + "/" + url.PathEscape(name),
+				"updated_at":  "",
+				"size":        obj["size"],
+			})
+		}
 	}
 	return repos
 }

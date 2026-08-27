@@ -1,6 +1,8 @@
 package github
 
 import (
+	"strings"
+
 	"github.com/livrasand/gitGost/internal/github"
 	"github.com/livrasand/gitGost/internal/provider"
 )
@@ -92,7 +94,7 @@ func (p *GitHubProvider) GetMRStatus(owner, repo string, number int) (*provider.
 		return nil, err
 	}
 
-	events, _, _, err := github.FetchPRTimeline(owner, repo, number, "")
+	events, newETag, _, err := github.FetchPRTimeline(owner, repo, number, "")
 	if err != nil {
 		return &provider.MRStatus{
 			State: state, Title: title, Number: number,
@@ -100,19 +102,49 @@ func (p *GitHubProvider) GetMRStatus(owner, repo string, number int) (*provider.
 		}, nil
 	}
 
-	providerEvents := make([]provider.Event, len(events))
-	for i, e := range events {
-		author := ""
-		if e.User != nil {
-			author = e.User.Login
+	providerEvents := make([]provider.Event, 0, len(events))
+	for i := range events {
+		e := &events[i]
+		ev := provider.Event{
+			Type:        e.Event,
+			Author:      e.Author(),
+			Body:        e.Body,
+			CreatedAt:   e.CreatedAt,
+			StateReason: e.StateReason,
+			CommitSHA:   shortSHA(e.CommitID),
 		}
-		providerEvents[i] = provider.Event{
-			Type: e.Event, Author: author, Body: e.Body, CreatedAt: e.CreatedAt,
+		switch e.Event {
+		case "labeled", "unlabeled":
+			if e.Label != nil {
+				ev.Label = e.Label.Name
+			}
+		case "reviewed":
+			switch strings.ToLower(e.State) {
+			case "approved":
+				ev.ReviewState = "approved"
+			case "changes_requested":
+				ev.ReviewState = "changes_requested"
+			default:
+				ev.ReviewState = "commented"
+			}
 		}
+		ev.Target, ev.TargetURL = e.TargetInfo()
+		ev.Summarize()
+		providerEvents = append(providerEvents, ev)
 	}
+	provider.SortEvents(providerEvents)
 
 	return &provider.MRStatus{
 		State: state, Title: title, Number: number,
-		Comments: comments, UpdatedAt: updatedAt, Events: providerEvents,
+		Comments: comments, UpdatedAt: updatedAt,
+		ETag:   newETag,
+		Events: providerEvents,
 	}, nil
+}
+
+func shortSHA(sha string) string {
+	if len(sha) > 7 {
+		return sha[:7]
+	}
+	return sha
 }

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/livrasand/gitGost/internal/config"
+	nodepkg "github.com/livrasand/gitGost/internal/node"
 	"github.com/livrasand/gitGost/internal/utils"
 
 	"github.com/gin-gonic/gin"
@@ -244,6 +245,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	if cfg.APIKey == "" {
 		utils.Log("WARNING: GITGOST_API_KEY is unset: /v1 push/issue/comment endpoints are UNAUTHENTICATED")
 	}
+	SetAPIKey(cfg.APIKey)
 	r := gin.New()
 	r.SetTrustedProxies([]string{})
 	r.Use(gin.Recovery())
@@ -251,6 +253,39 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.Use(localhostCORS())
 	r.GET("/health", HealthHandler)
 	r.GET("/metrics", MetricsHandler)
+	r.GET("/api/config", ConfigHandler)
+
+	// GitGost Node Protocol: los nodos de almacenamiento inician la conexión
+	// (saliente, sin puertos abiertos) y mantienen el socket vivo.
+	r.GET("/node/ws", nodepkg.WSHandler)
+	
+	// API endpoint for listing nodes (API key + optional ZKP authentication)
+	r.GET("/api/nodes", anonymousAuthMiddleware(cfg.APIKey), zkpAuthMiddlewareOptional(), nodepkg.ListHandler)
+	
+	// API endpoints for node operations (require both API key and ZKP authentication)
+	nodesAPI := r.Group("/api/nodes", anonymousAuthMiddleware(cfg.APIKey), zkpAuthMiddleware())
+	{
+		nodesAPI.POST("/pair", nodepkg.PairHandler)
+		nodesAPI.GET("/:id/repos", nodepkg.NodeReposHandler)
+		nodesAPI.POST("/:id/repos", nodepkg.NodeRepoCreateFullHandler)
+		nodesAPI.GET("/:id/refs/:repo", nodepkg.NodeRefsHandler)
+		nodesAPI.POST("/:id/repo/create", nodepkg.NodeRepoCreateHandler)
+		nodesAPI.POST("/:id/repo/delete", nodepkg.NodeRepoDeleteHandler)
+		nodesAPI.POST("/:id/fs/read", nodepkg.NodeFSReadHandler)
+		nodesAPI.POST("/:id/fs/write", nodepkg.NodeFSWriteHandler)
+		nodesAPI.POST("/:id/fs/list", nodepkg.NodeFSListHandler)
+		nodesAPI.POST("/:id/cmd/ping", nodepkg.NodeCmdHandler)
+	}
+
+	ggAPI := r.Group("/api/gg", zkpAuthMiddlewareOptional())
+	{
+		ggAPI.GET("/repos/:owner/:repo/tree", nodepkg.GGRepoTreeHandler)
+		ggAPI.GET("/repos/:owner/:repo/raw", nodepkg.GGRepoRawHandler)
+		ggAPI.GET("/repos/:owner/:repo/info", nodepkg.GGRepoInfoHandler)
+		ggAPI.GET("/repos/:owner/:repo/branches", nodepkg.GGRepoBranchesHandler)
+		ggAPI.GET("/repos/:owner/:repo/tags", nodepkg.GGRepoTagsHandler)
+	}
+
 	r.GET("/VERIFY", VerifyHandler)
 	r.GET("/gitgost-bin", BinaryHandler)
 	r.POST("/v1/pageviews", EthicalMetricsPageviewHandler)
@@ -267,6 +302,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.StaticFile("/.well-known/security.txt", "./web/.well-known/security.txt")
 	r.Static("/assets", "./web/assets")
 	r.StaticFile("/ethicalmetrics.js", "./web/ethicalmetrics.js")
+	r.StaticFile("/zkp-client.js", "./web/zkp-client.js")
 
 	v1 := r.Group("/v1")
 	v1.Use(sizeLimitMiddleware())
@@ -291,7 +327,9 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 			gh.POST("/:owner/:repo/git-upload-pack", UploadPackHandler)
 			gh.GET("/:owner/:repo/issues/templates", GetIssueTemplatesHandler)
 			gh.POST("/:owner/:repo/issues/anonymous", CreateAnonymousIssueHandler)
+			gh.POST("/:owner/:repo/issues/:number/reactions", CreateReactionHandler)
 			gh.POST("/:owner/:repo/issues/:number/comments/anonymous", CreateAnonymousCommentHandler)
+			gh.POST("/:owner/:repo/issues/:number/comments/:comment_id/reactions", CreateReactionHandler)
 			gh.POST("/:owner/:repo/pulls/:number/comments/anonymous", CreateAnonymousPRCommentHandler)
 			gh.POST("/:owner/:repo/discussions/:number/comments/anonymous", CreateAnonymousDiscussionCommentHandler)
 		}
@@ -349,6 +387,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/blame/:provider/:owner/:repo", proxyLimiter(), BlameHandler)
 		api.GET("/file-history/:provider/:owner/:repo", proxyLimiter(), FileHistoryHandler)
 		api.GET("/release-asset/:provider/:owner/:repo", proxyLimiter(), ReleaseAssetDownloadHandler)
+		api.GET("/package-file/:provider/:owner/:repo", proxyLimiter(), PackageFileDownloadHandler)
 		api.GET("/trending/:provider", proxyLimiter(), TrendingHandler)
 		api.GET("/cb-proxy/*path", proxyLimiter(), CodebergProxyHandler)
 		api.GET("/gl-proxy/*path", proxyLimiter(), GitLabProxyHandler)
@@ -357,6 +396,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/gl-avatar", proxyLimiter(), GitLabAvatarHandler)
 		api.GET("/gl-commits/:owner/:repo", proxyLimiter(), GitLabCommitsHandler)
 		api.GET("/gl-commit-detail/:owner/:repo/:sha", proxyLimiter(), GitLabCommitDetailHandler)
+		api.GET("/compare/:provider/:owner/:repo", proxyLimiter(), CompareHandler)
 		api.GET("/gh-discussions/:owner/:repo", proxyLimiter(), GitHubDiscussionsProxyHandler)
 		api.GET("/gh-discussion/:owner/:repo/:number", proxyLimiter(), GitHubDiscussionDetailProxyHandler)
 		api.GET("/gh-wiki/:owner/:repo/:page", proxyLimiter(), GitHubWikiProxyHandler)
@@ -403,7 +443,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 				return
 			}
 			parts := strings.Split(strings.Trim(c.Request.URL.Path, "/"), "/")
-			isProvider := len(parts) > 0 && (parts[0] == "gh" || parts[0] == "gl" || parts[0] == "cb")
+			isProvider := len(parts) > 0 && (parts[0] == "gh" || parts[0] == "gl" || parts[0] == "cb" || parts[0] == "gg")
 			if isProvider && len(parts) >= 2 {
 				if len(parts) == 2 {
 					c.File("./web/profile.html")

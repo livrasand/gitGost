@@ -12,6 +12,7 @@ import (
 
 	"github.com/livrasand/gitGost/internal/config"
 	handler "github.com/livrasand/gitGost/internal/http"
+	"github.com/livrasand/gitGost/internal/node"
 	"github.com/livrasand/gitGost/internal/utils"
 
 	"github.com/joho/godotenv"
@@ -104,6 +105,20 @@ func main() {
 		}
 	}
 
+	// Initialize node registry persistence
+	nodeStore, err := node.OpenStore(nodeDBPath())
+	if err != nil {
+		utils.Log("WARNING: node registry persistence disabled: %v", err)
+	} else {
+		node.NodeStore = nodeStore
+		defer nodeStore.Close()
+		if err := node.LoadProvisioned(); err != nil {
+			utils.Log("WARNING: no se pudieron cargar nodos persistidos: %v", err)
+		} else {
+			utils.Log("Node registry persistence enabled (%s)", nodeDBPath())
+		}
+	}
+
 	// Initialize Menta CAPTCHA verification (fail-closed if MENTA_CAPTCHA_ENFORCED=true)
 	handler.InitMentaConfig(cfg.MentaAPIEndpoint, cfg.MentaAPIKey, cfg.MentaEnforce)
 
@@ -116,4 +131,11 @@ func main() {
 	if err := http.ListenAndServe(addr, router); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func nodeDBPath() string {
+	if v := os.Getenv("GITGOST_HOME"); v != "" {
+		return v + "/nodes.db"
+	}
+	return os.ExpandEnv("$HOME/.gitgost/nodes.db")
 }

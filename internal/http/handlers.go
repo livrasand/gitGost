@@ -260,6 +260,17 @@ func providerFromPath(path string) provider.Provider {
 	return ghprovider.New()
 }
 
+func providerSlugFromPath(path string) string {
+	segments := strings.Split(strings.TrimPrefix(path, "/"), "/")
+	if len(segments) >= 2 {
+		switch segments[1] {
+		case "gh", "gl", "cb", "gg":
+			return segments[1]
+		}
+	}
+	return ""
+}
+
 const anonymousFriendlyBadgeSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="180" height="20" viewBox="0 0 180 20">
   <rect width="180" height="20" fill="#4CAF50" rx="3"/>
   <text x="90" y="14" fill="#ffffff" font-family="Arial, sans-serif" font-size="12" text-anchor="middle">Anonymous Contributor Friendly</text>
@@ -1550,8 +1561,29 @@ func CreateAnonymousIssueHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+func gitLabEmoji(content string) string {
+	switch content {
+	case "+1":
+		return "thumbsup"
+	case "-1":
+		return "thumbsdown"
+	case "laugh":
+		return "laughing"
+	case "confused":
+		return "confused"
+	case "heart":
+		return "heart"
+	case "rocket":
+		return "rocket"
+	case "eyes":
+		return "eyes"
+	default:
+		return content
+	}
+}
+
 func CreateReactionHandler(c *gin.Context) {
-	provider := c.Param("provider")
+	provider := providerSlugFromPath(c.Request.URL.Path)
 	owner := c.Param("owner")
 	repo := c.Param("repo")
 	numberStr := c.Param("number")
@@ -1613,7 +1645,87 @@ func CreateReactionHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusNotImplemented, gin.H{"error": "reactions are only supported for GitHub"})
+	if provider == "gl" {
+		glToken := os.Getenv("GITLAB_TOKEN")
+		projectID := url.PathEscape(owner + "/" + repo)
+
+		var apiURL string
+		if req.CommentID > 0 {
+			apiURL = fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/issues/%s/notes/%d/reactions", projectID, numberStr, req.CommentID)
+		} else {
+			apiURL = fmt.Sprintf("https://gitlab.com/api/v4/projects/%s/issues/%s/reactions", projectID, numberStr)
+		}
+
+		emoji := gitLabEmoji(content)
+		payload := url.Values{}
+		payload.Set("emoji", emoji)
+
+		req, err := http.NewRequest("POST", apiURL, strings.NewReader(payload.Encode()))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to build request"})
+			return
+		}
+		req.Header.Set("Accept", "application/json")
+		if glToken != "" {
+			req.Header.Set("PRIVATE-TOKEN", glToken)
+		}
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		client := newSafeHTTPClient(10 * time.Second)
+		resp, err := client.Do(req)
+		if err != nil {
+			c.JSON(http.StatusBadGateway, gin.H{"error": "gitlab unreachable"})
+			return
+		}
+		defer resp.Body.Close()
+
+		body, _ := io.ReadAll(resp.Body)
+		c.Data(resp.StatusCode, "application/json", body)
+		return
+	}
+
+	if provider == "cb" {
+		token := os.Getenv("CODEBERG_TOKEN")
+		if token == "" {
+			token = c.GetHeader("Authorization")
+			token = strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(token, "token "), "Bearer "))
+		}
+		if token == "" {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "CODEBERG_TOKEN not set"})
+			return
+		}
+
+		var apiURL string
+		if req.CommentID > 0 {
+			apiURL = fmt.Sprintf("https://codeberg.org/api/v1/repos/%s/%s/issues/%d/comments/%d/reactions", url.PathEscape(owner), url.PathEscape(repo), number, req.CommentID)
+		} else {
+			apiURL = fmt.Sprintf("https://codeberg.org/api/v1/repos/%s/%s/issues/%d/reactions", url.PathEscape(owner), url.PathEscape(repo), number)
+		}
+
+		payload, _ := json.Marshal(map[string]string{"content": content})
+		req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(payload))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to build request"})
+			return
+		}
+		req.Header.Set("Accept", "application/json")
+		req.Header.Set("Authorization", "token "+token)
+		req.Header.Set("Content-Type", "application/json")
+
+		client := newSafeHTTPClient(10 * time.Second)
+		resp, err := client.Do(req)
+		if err != nil {
+			c.JSON(http.StatusBadGateway, gin.H{"error": "codeberg unreachable"})
+			return
+		}
+		defer resp.Body.Close()
+
+		body, _ := io.ReadAll(resp.Body)
+		c.Data(resp.StatusCode, "application/json", body)
+		return
+	}
+
+	c.JSON(http.StatusNotImplemented, gin.H{"error": "reactions are only supported for GitHub, GitLab and Codeberg"})
 }
 
 func GitLabIssueNotesProxyHandler(c *gin.Context) {
@@ -2424,6 +2536,7 @@ func CreateAnonymousCommentHandler(c *gin.Context) {
 					utils.Log("Error recording comment in DB: %v", err)
 				}
 			}
+			publishIssueCommentNtfy(owner, repo, number, commentURL)
 			c.JSON(http.StatusOK, gin.H{
 				"comment_url":  commentURL,
 				"hash":         hash,
@@ -2446,6 +2559,7 @@ func CreateAnonymousCommentHandler(c *gin.Context) {
 			utils.Log("Error recording comment in DB: %v", err)
 		}
 	}
+	publishIssueCommentNtfy(owner, repo, number, commentURL)
 
 	resp := gin.H{
 		"comment_url":  commentURL,
@@ -2456,6 +2570,23 @@ func CreateAnonymousCommentHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, resp)
+}
+
+// publishIssueCommentNtfy publica en el topic de la issue una notificación de
+// comentario nuevo (fire-and-forget), para que los suscriptores del topic
+// reciban la novedad sin bloquear la respuesta de la API.
+func publishIssueCommentNtfy(owner, repo string, number int, commentURL string) {
+	go func() {
+		topic := github.NtfyTopicForIssue(owner, repo, strconv.Itoa(number))
+		title := fmt.Sprintf("Nuevo comentario · %s/%s#%d", owner, repo, number)
+		msg := fmt.Sprintf("Se publicó un comentario anónimo en la issue.\nComentario: %s\nTopic: %s/%s", commentURL, github.NtfyBaseURL(), topic)
+		actionBtn := fmt.Sprintf("http, Ver issue, %s/%s/%s/issues/%d, clear=true, method=GET", github.NtfyServiceURL(), owner, repo, number)
+		if err := github.PublishNtfyIssueComment(owner, repo, strconv.Itoa(number), title, msg, actionBtn); err != nil {
+			utils.Log("ntfy issue publish error %s/%s#%d: %v", owner, repo, number, err)
+		} else {
+			utils.Log("ntfy issue publish ok %s/%s#%d topic=%s", owner, repo, number, topic)
+		}
+	}()
 }
 
 func CreateAnonymousPRCommentHandler(c *gin.Context) {
@@ -3244,6 +3375,31 @@ func PRStatusHandler(c *gin.Context) {
 	})
 }
 
+// IssueStatusHandler devuelve el topic de ntfy (y su URL de suscripción) para una
+// issue concreta, de modo que un usuario pueda suscribirse a las notificaciones
+// de esa issue sin cuenta.
+func IssueStatusHandler(c *gin.Context) {
+	c.Header("Cache-Control", "no-store")
+	owner := strings.TrimSpace(c.Param("owner"))
+	repo := strings.TrimSpace(c.Param("repo"))
+	number := strings.TrimSpace(c.Param("number"))
+	if owner == "" || repo == "" || number == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "owner, repo and number are required"})
+		return
+	}
+
+	topic := github.NtfyTopicForIssue(owner, repo, number)
+	subscribeURL := fmt.Sprintf("%s/%s", github.NtfyBaseURL(), topic)
+
+	c.JSON(http.StatusOK, gin.H{
+		"owner":         owner,
+		"repo":          repo,
+		"number":        number,
+		"ntfy_topic":    topic,
+		"subscribe_url": subscribeURL,
+	})
+}
+
 func PRCheckHandler(c *gin.Context) {
 	hash := strings.TrimSpace(c.Param("hash"))
 	if hash == "" {
@@ -3616,6 +3772,95 @@ func GitLabProxyHandler(c *gin.Context) {
 	}
 }
 
+func GitHubRawProxyHandler(c *gin.Context) {
+	if c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead {
+		c.AbortWithStatusJSON(http.StatusMethodNotAllowed, gin.H{"error": "only GET/HEAD allowed"})
+		return
+	}
+
+	path := strings.TrimPrefix(c.Request.URL.Path, "/api/gh-raw/")
+	if path == "" || strings.Contains(path, "..") {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid raw path"})
+		return
+	}
+
+	target := "https://raw.githubusercontent.com/" + path
+	if c.Request.URL.RawQuery != "" {
+		target += "?" + c.Request.URL.RawQuery
+	}
+
+	req, err := http.NewRequestWithContext(c.Request.Context(), c.Request.Method, target, nil)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to build request"})
+		return
+	}
+	req.Header.Set("User-Agent", "gitGost/1.0")
+	req.Header.Set("Accept", c.GetHeader("Accept"))
+
+	client := newSafeHTTPClient(45 * time.Second)
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.Log("GitHub raw proxy error: %v", err)
+		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "failed to reach raw.githubusercontent.com"})
+		return
+	}
+	defer resp.Body.Close()
+
+	for _, h := range []string{"Content-Type", "Content-Length", "Cache-Control", "ETag"} {
+		if v := resp.Header.Get(h); v != "" {
+			c.Writer.Header().Set(h, v)
+		}
+	}
+	c.Writer.WriteHeader(resp.StatusCode)
+	if _, err := io.Copy(c.Writer, resp.Body); err != nil {
+		utils.Log("GitHub raw proxy copy error: %v", err)
+	}
+}
+
+func GitHubAvatarProxyHandler(c *gin.Context) {
+	if c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead {
+		c.AbortWithStatusJSON(http.StatusMethodNotAllowed, gin.H{"error": "only GET/HEAD allowed"})
+		return
+	}
+
+	path := strings.TrimPrefix(c.Request.URL.Path, "/api/gh-avatar/")
+	if path == "" || strings.Contains(path, "..") {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid avatar path"})
+		return
+	}
+
+	target := "https://avatars.githubusercontent.com/" + path
+	if c.Request.URL.RawQuery != "" {
+		target += "?" + c.Request.URL.RawQuery
+	}
+
+	req, err := http.NewRequestWithContext(c.Request.Context(), c.Request.Method, target, nil)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to build request"})
+		return
+	}
+	req.Header.Set("User-Agent", "gitGost/1.0")
+
+	client := newSafeHTTPClient(45 * time.Second)
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.Log("GitHub avatar proxy error: %v", err)
+		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "failed to reach avatars.githubusercontent.com"})
+		return
+	}
+	defer resp.Body.Close()
+
+	for _, h := range []string{"Content-Type", "Content-Length", "Cache-Control", "ETag"} {
+		if v := resp.Header.Get(h); v != "" {
+			c.Writer.Header().Set(h, v)
+		}
+	}
+	c.Writer.WriteHeader(resp.StatusCode)
+	if _, err := io.Copy(c.Writer, resp.Body); err != nil {
+		utils.Log("GitHub avatar proxy copy error: %v", err)
+	}
+}
+
 type ghProxyCacheEntry struct {
 	body        []byte
 	contentType string
@@ -3932,9 +4177,23 @@ func searchCodeberg(query, topic string) []gin.H {
 	return results
 }
 
+type gitLabLangCacheEntry struct {
+	language string
+	at       time.Time
+}
+
+var gitLabLanguageCache sync.Map // projectID int -> gitLabLangCacheEntry
+
+const gitLabLanguageCacheTTL = 24 * time.Hour
+
 func getGitLabPrimaryLanguage(projectID int, token string) string {
 	if projectID == 0 {
 		return ""
+	}
+	if v, ok := gitLabLanguageCache.Load(projectID); ok {
+		if entry := v.(gitLabLangCacheEntry); time.Since(entry.at) < gitLabLanguageCacheTTL {
+			return entry.language
+		}
 	}
 	client := newSafeHTTPClient(3 * time.Second)
 	url := fmt.Sprintf("https://gitlab.com/api/v4/projects/%d/languages", projectID)
@@ -3965,6 +4224,7 @@ func getGitLabPrimaryLanguage(projectID int, token string) string {
 			primary = lang
 		}
 	}
+	gitLabLanguageCache.Store(projectID, gitLabLangCacheEntry{language: primary, at: time.Now()})
 	return primary
 }
 
@@ -4012,16 +4272,13 @@ func searchGitLab(query string) []gin.H {
 		return results
 	}
 
-	const languageBackfillLimit = 10
 	langs := make([]string, len(data))
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, 10)
-	backfills := 0
 	for i, item := range data {
-		if item.Language != "" || backfills >= languageBackfillLimit {
+		if item.Language != "" {
 			continue
 		}
-		backfills++
 		wg.Add(1)
 		go func(idx, id int) {
 			defer wg.Done()
@@ -5640,6 +5897,7 @@ func gitLabUserRepos(username, userType, clientToken string) []gin.H {
 	}
 
 	var d []struct {
+		ID                int             `json:"id"`
 		Name              string          `json:"name"`
 		PathWithNamespace string          `json:"path_with_namespace"`
 		Description       string          `json:"description"`
@@ -5655,14 +5913,28 @@ func gitLabUserRepos(username, userType, clientToken string) []gin.H {
 		return nil
 	}
 
+	langs := make([]string, len(d))
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, 10)
+	for i, r := range d {
+		wg.Add(1)
+		go func(idx, id int) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+			langs[idx] = getGitLabPrimaryLanguage(id, token)
+		}(i, r.ID)
+	}
+	wg.Wait()
+
 	repos := make([]gin.H, 0, len(d))
-	for _, r := range d {
+	for i, r := range d {
 		repos = append(repos, gin.H{
 			"provider":    "gitlab",
 			"full_name":   r.PathWithNamespace,
 			"name":        r.Name,
 			"description": r.Description,
-			"language":    "",
+			"language":    langs[i],
 			"stars":       r.Stars,
 			"forks":       r.Forks,
 			"fork":        len(r.ForkedFromProject) > 0,
@@ -5767,7 +6039,7 @@ func codebergUserRepos(username, userType, clientToken string) []gin.H {
 		FullName    string `json:"full_name"`
 		Description string `json:"description"`
 		Language    string `json:"language"`
-		Stars       int    `json:"stargazers_count"`
+		Stars       int    `json:"stars_count"`
 		Forks       int    `json:"forks_count"`
 		Fork        bool   `json:"fork"`
 		HTMLURL     string `json:"html_url"`

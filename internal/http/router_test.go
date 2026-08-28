@@ -153,3 +153,27 @@ func TestAnonymousAuthMiddleware(t *testing.T) {
 		t.Errorf("Git receive-pack should allow anonymous access, got status %d", w.Code)
 	}
 }
+
+func TestProviderSlugFromPath(t *testing.T) {
+	tests := []struct {
+		path     string
+		expected string
+	}{
+		{"/v1/gh/owner/repo/issues/5/reactions", "gh"},
+		{"/v1/gl/owner/repo/issues/5/reactions", "gl"},
+		{"/v1/cb/owner/repo/issues/5/comments/12/reactions", "cb"},
+		{"/v1/gh/owner/repo/issues/5/comments/12/reactions", "gh"},
+		{"/v1/gg/owner/repo/info/refs", "gg"},
+		{"/v2/jobs", ""},
+		{"/", ""},
+		{"", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
+			if got := providerSlugFromPath(tt.path); got != tt.expected {
+				t.Errorf("providerSlugFromPath(%q) = %q; want %q", tt.path, got, tt.expected)
+			}
+		})
+	}
+}

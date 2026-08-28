@@ -175,6 +175,7 @@
             border-bottom: 1px solid var(--border);
             margin-bottom: 1.25rem;
         }
+        #profile-header { display: none; }
         .profile-header .avatar {
             width: 64px;
             height: 64px;
@@ -940,6 +941,77 @@
                 margin: 1rem;
             }
         }
+
+        /* Skeleton loading */
+        @keyframes shimmer {
+            0%   { background-position: -400px 0; }
+            100% { background-position: 400px 0; }
+        }
+        .skeleton-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .skeleton-line {
+            height: 0.7rem;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
+            background-size: 400px 100%;
+            animation: shimmer 1.2s ease-in-out infinite;
+        }
+        .skeleton-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.25rem;
+        }
+        .skeleton-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
+            background-size: 400px 100%;
+            animation: shimmer 1.2s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+        .skeleton-text {
+            height: 0.8rem;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
+            background-size: 400px 100%;
+            animation: shimmer 1.2s ease-in-out infinite;
+        }
+        .skeleton-sidebar-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.35rem 0;
+        }
+        .skeleton-sidebar-line {
+            height: 0.6rem;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
+            background-size: 400px 100%;
+            animation: shimmer 1.2s ease-in-out infinite;
+        }
+        .skeleton-contrib {
+            display: flex;
+            gap: 0.3rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+        .skeleton-contrib-cell {
+            width: 0.6rem;
+            height: 0.6rem;
+            border-radius: 2px;
+            background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
+            background-size: 400px 100%;
+            animation: shimmer 1.2s ease-in-out infinite;
+        }
     </style>
 </head>
 <body>
@@ -1293,6 +1365,18 @@
             <div id="readme-section"></div>
             <div id="orgs-row"></div>
 
+            <div id="profile-skeleton" style="display:none;">
+                <div class="skeleton-header">
+                    <div class="skeleton-avatar"></div>
+                    <div style="flex:1;display:flex;flex-direction:column;gap:0.5rem;">
+                        <div class="skeleton-text" style="width:40%"></div>
+                        <div class="skeleton-text" style="width:25%"></div>
+                        <div class="skeleton-text" style="width:30%"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="profile-header"></div>
+
             <div class="section-title" id="repos-section-title">repositories</div>
             <div id="repos-section" class="repo-list"></div>
 
@@ -1330,6 +1414,18 @@
 
         <aside class="right-sidebar">
             <div class="section-title">about</div>
+            <div id="sb-about-skeleton" style="display:none;">
+                <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:0.8rem;">
+                    <div class="skeleton-avatar" style="width:2.3rem;height:2.3rem;border-radius:50%;"></div>
+                    <div style="flex:1;display:flex;flex-direction:column;gap:0.4rem;">
+                        <div class="skeleton-text" style="width:60%"></div>
+                        <div class="skeleton-text" style="width:40%"></div>
+                    </div>
+                </div>
+                <div class="skeleton-sidebar-row"><div class="skeleton-sidebar-line" style="width:45%"></div><div class="skeleton-sidebar-line" style="width:30%"></div></div>
+                <div class="skeleton-sidebar-row"><div class="skeleton-sidebar-line" style="width:55%"></div><div class="skeleton-sidebar-line" style="width:25%"></div></div>
+                <div class="skeleton-sidebar-row"><div class="skeleton-sidebar-line" style="width:40%"></div><div class="skeleton-sidebar-line" style="width:35%"></div></div>
+            </div>
             <div class="sb-about" id="sb-about"></div>
             <div id="sb-contributions"></div>
         </aside>
@@ -1356,6 +1452,12 @@
                 proxyPath = '/api/gl-proxy' + target.pathname;
             } else if (target.hostname === 'codeberg.org' && (target.pathname.startsWith('/api/v1/') || target.pathname.includes('/raw/branch/'))) {
                 proxyPath = '/api/cb-proxy' + target.pathname;
+            } else if (target.hostname === 'api.github.com') {
+                proxyPath = '/api/gh-proxy' + target.pathname;
+            } else if (target.hostname === 'raw.githubusercontent.com') {
+                proxyPath = '/api/gh-raw' + target.pathname;
+            } else if (target.hostname === 'avatars.githubusercontent.com') {
+                proxyPath = '/api/gh-avatar' + target.pathname;
             }
             if (proxyPath) {
                 const proxyURL = new URL(proxyPath + target.search, window.API_BASE);
@@ -1364,6 +1466,39 @@
             return nativeFetch(input, opts);
         }
         window.fetch = proxiedProviderFetch;
+
+        function proxyResourceUrl(url) {
+            if (!url || typeof url !== 'string') return url;
+            const target = new URL(url, window.location.href);
+            if (target.hostname === 'avatars.githubusercontent.com') {
+                return `${window.API_BASE}/api/gh-avatar${target.pathname}${target.search}`;
+            }
+            if (target.hostname === 'raw.githubusercontent.com') {
+                return `${window.API_BASE}/api/gh-raw${target.pathname}${target.search}`;
+            }
+            return url;
+        }
+
+        (function proxyImageObserver() {
+            function rewrite(img) {
+                if (img.src && !img.src.startsWith(window.API_BASE) && !img.src.startsWith('data:')) {
+                    const proxied = proxyResourceUrl(img.src);
+                    if (proxied !== img.src) img.src = proxied;
+                }
+            }
+            document.querySelectorAll('img').forEach(rewrite);
+            const observer = new MutationObserver((mutations) => {
+                for (const mutation of mutations) {
+                    for (const node of mutation.addedNodes) {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            if (node.tagName === 'IMG') rewrite(node);
+                            node.querySelectorAll('img').forEach(rewrite);
+                        }
+                    }
+                }
+            });
+            observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
+        })();
 
         // Ruta limpia: /gh|gl|cb|gg/{username}
         const _pathParts = window.location.pathname.split('/').filter(Boolean);
@@ -1634,6 +1769,8 @@
             // En las vistas SPA (stars/followers/following) el título lo gestiona switchView; no pisarlo.
             if (_currentView === 'overview') document.title = `${p.name || p.username} · gitGost`;
 
+            hideProfileSkeletons();
+
             const header = document.getElementById('profile-header');
             if (header) {
                 header.innerHTML = `
@@ -1674,7 +1811,6 @@
                     </div>
                     ${safeBio ? `<p class="sb-bio">${safeBio}</p>` : ''}
                     ${window.PROVIDER === 'gg' && !window.isSelfProfile() ? `<button class="sb-btn" id="follow-btn" onclick="toggleFollow()">${window.isFollowing(safeUser) ? 'unfollow' : 'follow'}</button>` : ''}
-                    ${window.PROVIDER === 'gg' && window.isSelfProfile() ? `<button class="sb-btn" id="new-repo-btn" onclick="window.openNewRepoModal()">new repository</button>` : ''}
                     ${stats.length ? `<div class="stats-grid">${stats.join('')}</div>` : ''}
                     <ul class="meta-list">
                         ${safeLocation ? `<li><span class="k">location</span><span class="v">${safeLocation}</span></li>` : ''}
@@ -1767,6 +1903,29 @@
             }
             const reposHtml = repos.map(repoCardHtml).join('');
             container.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(reposHtml) : escHtml(reposHtml);
+        }
+
+        function showProfileSkeletons() {
+            const profileSkeleton = document.getElementById('profile-skeleton');
+            const reposSection = document.getElementById('repos-section');
+            const sbAboutSkeleton = document.getElementById('sb-about-skeleton');
+            
+            if (profileSkeleton) profileSkeleton.style.display = '';
+            if (reposSection) {
+                reposSection.innerHTML = Array.from({ length: 6 }).map(() => `
+                    <div class="skeleton-item">
+                        <div class="skeleton-line" style="width:55%"></div>
+                        <div class="skeleton-line" style="width:80%"></div>
+                    </div>`).join('');
+            }
+            if (sbAboutSkeleton) sbAboutSkeleton.style.display = '';
+        }
+
+        function hideProfileSkeletons() {
+            const profileSkeleton = document.getElementById('profile-skeleton');
+            const sbAboutSkeleton = document.getElementById('sb-about-skeleton');
+            if (profileSkeleton) profileSkeleton.style.display = 'none';
+            if (sbAboutSkeleton) sbAboutSkeleton.style.display = 'none';
         }
 
         // ---- Fork / Watch for gitGost repos ----
@@ -2416,7 +2575,7 @@
             const section = document.getElementById('readme-section');
             if (!section) return;
             const readmeUrl = baseUrl || ((PROVIDER === 'gh')
-                ? `https://raw.githubusercontent.com/${USERNAME}/${USERNAME}/HEAD/`
+                ? `${getApiBase()}/api/gh-raw/${USERNAME}/${USERNAME}/HEAD/`
                 : (PROVIDER === 'gl')
                     ? `https://gitlab.com/${USERNAME}/${USERNAME}/-/raw/HEAD/`
                     : `https://codeberg.org/${USERNAME}/.profile/raw/branch/main/`);
@@ -2672,6 +2831,8 @@
                 showError();
                 return;
             }
+
+            showProfileSkeletons();
 
             // gitGost native profile — no external API needed
             if (PROVIDER === 'gg') {

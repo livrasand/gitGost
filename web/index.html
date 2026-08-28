@@ -4834,6 +4834,7 @@
                     pageContent.innerHTML = '';
                     updateStatusbar('home');
                     removeSentinel();
+                    document.title = 'gitGost — Anonymous Git Contributions';
                     const urlTab = new URLSearchParams(window.location.search).get('tab');
                     const tab = ["trending","new","popular","updated","users","stars"].includes(urlTab) ? urlTab : 'trending';
                     document.querySelectorAll('.content-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
@@ -4854,6 +4855,7 @@
                     <h2 style="font-size:1rem;font-weight:600;margin:0 0 1.25rem;color:var(--fg);">${page.title}</h2>
                     ${page.html()}
                 `;
+                document.title = `${page.title} · gitGost`;
                 updateStatusbar(name);
 
                 if (name === 'stats') {
@@ -5109,6 +5111,7 @@
             async function showTagPage(tag, push) {
                 if (push === undefined) push = true;
                 if (push) pushHomeParams({ tag: tag, q: null });
+                document.title = `${escapeHtml(tag)} · gitGost Topics`;
                 const container = document.getElementById('repo-list');
                 const iconSlug = tag.toLowerCase().replace(/[^a-z0-9]/g, '');
                 const iconUrl  = `https://cdn.simpleicons.org/${iconSlug}/6b7280`;
@@ -5187,8 +5190,8 @@
                     						window.tagState.exhausted = true;
                     						return;
                     					}
-                    					shuffleArray(results);
-                    					renderTagRepos(results, append);
+results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
+                   							renderTagRepos(results, append);
                     window.tagState.page++;
                 } catch (e) {
                     window.tagState.exhausted = true;

@@ -57,7 +57,7 @@ func securityHeaders() gin.HandlerFunc {
 				"img-src 'self' data: blob: https://* http://*; "+
 				"object-src 'none'; "+
 				"frame-ancestors 'none'; "+
-				"connect-src 'self' capacitor://localhost http://localhost:* https://localhost https://gitgost.livrasand.com https://api.github.com https://raw.githubusercontent.com https://github.com https://gitlab.com https://codeberg.org https://en.wikipedia.org https://www.wikidata.org https://mentacaptchaeu.eu.pythonanywhere.com",
+				"connect-src 'self' capacitor://localhost http://localhost:* https://localhost https://gitgost.livrasand.com https://en.wikipedia.org https://www.wikidata.org https://mentacaptchaeu.eu.pythonanywhere.com",
 		)
 		c.Next()
 	}
@@ -342,6 +342,8 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 			gl.POST("/:owner/:repo/git-upload-pack", UploadPackHandler)
 			gl.POST("/:owner/:repo/issues/anonymous", CreateAnonymousIssueHandler)
 			gl.POST("/:owner/:repo/issues/:number/comments/anonymous", CreateAnonymousCommentHandler)
+			gl.POST("/:owner/:repo/issues/:number/reactions", CreateReactionHandler)
+			gl.POST("/:owner/:repo/issues/:number/comments/:comment_id/reactions", CreateReactionHandler)
 			gl.POST("/:owner/:repo/pulls/:number/comments/anonymous", CreateAnonymousPRCommentHandler)
 		}
 
@@ -352,6 +354,8 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 			cb.POST("/:owner/:repo/git-upload-pack", UploadPackHandler)
 			cb.POST("/:owner/:repo/issues/anonymous", CreateAnonymousIssueHandler)
 			cb.POST("/:owner/:repo/issues/:number/comments/anonymous", CreateAnonymousCommentHandler)
+			cb.POST("/:owner/:repo/issues/:number/reactions", CreateReactionHandler)
+			cb.POST("/:owner/:repo/issues/:number/comments/:comment_id/reactions", CreateReactionHandler)
 			cb.POST("/:owner/:repo/pulls/:number/comments/anonymous", CreateAnonymousPRCommentHandler)
 		}
 	}
@@ -372,6 +376,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/stats", StatsHandler)
 		api.GET("/recent-prs", RecentPRsHandler)
 		api.GET("/pr-status/:hash", PRStatusHandler)
+		api.GET("/issue-status/:owner/:repo/:number", IssueStatusHandler)
 		api.GET("/pr/:hash/status", prCheckLimiter(), PRCheckHandler)
 		api.GET("/search", SearchHandler)
 		api.GET("/users/search", prCheckLimiter(), UsersSearchHandler)
@@ -385,6 +390,8 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/users/events", prCheckLimiter(), UserEventsHandler)
 		api.GET("/users/contributions", prCheckLimiter(), UserContributionsHandler)
 		api.GET("/gh-proxy/*path", proxyLimiter(), GitHubAPIProxyHandler)
+		api.GET("/gh-raw/*path", proxyLimiter(), GitHubRawProxyHandler)
+		api.GET("/gh-avatar/*path", proxyLimiter(), GitHubAvatarProxyHandler)
 		api.GET("/blame/:provider/:owner/:repo", proxyLimiter(), BlameHandler)
 		api.GET("/file-history/:provider/:owner/:repo", proxyLimiter(), FileHistoryHandler)
 		api.GET("/release-asset/:provider/:owner/:repo", proxyLimiter(), ReleaseAssetDownloadHandler)

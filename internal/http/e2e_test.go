@@ -366,3 +366,62 @@ func TestE2E_UploadPackRoute_Exists(t *testing.T) {
 		t.Errorf("Route POST /git-upload-pack should be registered (not 404), got %d", resp.StatusCode)
 	}
 }
+
+func TestE2E_ReactionsNoLongerReturn501(t *testing.T) {
+	t.Setenv("GITHUB_TOKEN", "")
+	t.Setenv("GITLAB_TOKEN", "")
+	t.Setenv("CODEBERG_TOKEN", "")
+
+	gin.SetMode(gin.TestMode)
+	cfg := &config.Config{APIKey: ""}
+	r := SetupRouter(cfg)
+	srv := httptest.NewServer(r)
+	defer srv.Close()
+
+	cases := []struct {
+		name       string
+		path       string
+		wantStatus int
+		wantBody   string
+	}{
+		{
+			name:       "github issue reaction",
+			path:       "/v1/gh/owner/repo/issues/5/reactions",
+			wantStatus: http.StatusInternalServerError,
+			wantBody:   "GITHUB_TOKEN not set",
+		},
+		{
+			name:       "github comment reaction",
+			path:       "/v1/gh/owner/repo/issues/5/comments/12/reactions",
+			wantStatus: http.StatusInternalServerError,
+			wantBody:   "GITHUB_TOKEN not set",
+		},
+		{
+			name:       "codeberg issue reaction",
+			path:       "/v1/cb/owner/repo/issues/5/reactions",
+			wantStatus: http.StatusInternalServerError,
+			wantBody:   "CODEBERG_TOKEN not set",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resp, err := http.Post(srv.URL+tc.path, "application/json", strings.NewReader(`{"content":"+1"}`))
+			if err != nil {
+				t.Fatalf("Request failed: %v", err)
+			}
+			defer resp.Body.Close()
+			body, _ := io.ReadAll(resp.Body)
+
+			if resp.StatusCode == http.StatusNotImplemented {
+				t.Fatalf("reaction endpoint still returns 501 (provider not derived from route); got body %q", body)
+			}
+			if resp.StatusCode != tc.wantStatus {
+				t.Errorf("expected status %d, got %d (body: %s)", tc.wantStatus, resp.StatusCode, body)
+			}
+			if !strings.Contains(string(body), tc.wantBody) {
+				t.Errorf("expected body containing %q, got %q", tc.wantBody, body)
+			}
+		})
+	}
+}

@@ -10,8 +10,8 @@
         />
     <link rel="icon" href="/assets/logos/gitgost-logo.svg" type="image/svg+xml" />
     <title>gitGost — repo</title>
-    <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/shiki@4.3.1/+esm" crossorigin="anonymous" fetchpriority="high" />
-    <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@pierre/diffs@1.3.5/+esm" crossorigin="anonymous" fetchpriority="high" />
+    <link rel="modulepreload" href="https://esm.sh/shiki@4.3.1" crossorigin="anonymous" fetchpriority="high" />
+    <link rel="modulepreload" href="https://esm.sh/@pierre/diffs@1.3.5" crossorigin="anonymous" fetchpriority="high" />
     <link rel="stylesheet" href="/assets/winui-scrollbar.css" />
     <link id="hljs-theme-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github.min.css" />
     <link id="hljs-theme-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github-dark.min.css" disabled />
@@ -170,6 +170,9 @@
             background: var(--bg);
             padding: 0.4rem 0;
             transition: width 0.2s ease, flex-basis 0.2s ease;
+        }
+        .file-tree:empty, .code-panel:empty {
+            display: none;
         }
         .search-results { padding: 0.9rem 1.25rem; }
         .search-results h2 { margin: 0 0 0.7rem; font: 600 0.88rem ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
@@ -429,7 +432,7 @@
             flex: 0 0 auto;
             min-width: 3ch;
             padding: 0 0.75rem;
-            text-align: right;
+            text-align: left;
             color: var(--fg-muted);
             opacity: 0.7;
             text-decoration: none;
@@ -1329,6 +1332,52 @@
             flex-direction: column;
             gap: 0.85rem;
             overflow-y: auto;
+        }
+
+        /* Skeleton loading */
+        @keyframes shimmer {
+            0%   { background-position: -400px 0; }
+            100% { background-position: 400px 0; }
+        }
+        .skeleton-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .skeleton-line {
+            height: 0.7rem;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
+            background-size: 400px 100%;
+            animation: shimmer 1.2s ease-in-out infinite;
+        }
+        .skeleton-tree-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.35rem 0.5rem;
+        }
+        .skeleton-tree-line {
+            height: 0.65rem;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
+            background-size: 400px 100%;
+            animation: shimmer 1.2s ease-in-out infinite;
+        }
+        .skeleton-sidebar-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.35rem 0;
+        }
+        .skeleton-sidebar-line {
+            height: 0.6rem;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
+            background-size: 400px 100%;
+            animation: shimmer 1.2s ease-in-out infinite;
         }
         .issue-detail-sidebar .ds-label {
             color: var(--fg-muted);
@@ -3033,6 +3082,35 @@
                     .release-detail { padding: 0.75rem; }
                     .release-detail-body { font-size: 0.82rem; }
                 }
+                .toast-container {
+                    position: fixed;
+                    bottom: 1.25rem;
+                    right: 1.25rem;
+                    z-index: 9999;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.5rem;
+                    pointer-events: none;
+                }
+                .toast {
+                    padding: 0.6rem 1rem;
+                    border-radius: 6px;
+                    font-size: 0.78rem;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                    color: var(--fg);
+                    background: var(--bg-secondary);
+                    border: 1px solid var(--border);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    opacity: 0;
+                    transform: translateY(8px);
+                    transition: opacity 0.2s, transform 0.2s;
+                    pointer-events: auto;
+                    max-width: 320px;
+                }
+                .toast.show { opacity: 1; transform: translateY(0); }
+                .toast-warning { border-left: 3px solid var(--alert-warning); }
+                .toast-error { border-left: 3px solid var(--alert-caution); }
+                .toast-success { border-left: 3px solid var(--alert-tip); }
             </style>
     <script>
         if ("serviceWorker" in navigator) {
@@ -3086,9 +3164,9 @@
             		</g>
             </svg> <span class="val" id="sb-commits"></span> <span class="nav-label">commits</span></a>
             <a href="#" onclick="showView('branches'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-                <path d="M0 0h24v24H0z" fill="none" />
-                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8.25a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0v7.5m0-7.5c0 2.9 2.35 5.25 5.25 5.25h2M7 15.75a2.75 2.75 0 1 0 0 5.5a2.75 2.75 0 0 0 0-5.5m7.25-2.25a2.75 2.75 0 1 0 5.5 0a2.75 2.75 0 0 0-5.5 0" />
-            </svg> <span class="nav-label">branches</span></a>
+	<path d="M0 0h24v24H0z" fill="none" />
+	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8.25a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0v7.5m0-7.5c0 2.9 2.35 5.25 5.25 5.25h2M7 15.75a2.75 2.75 0 1 0 0 5.5a2.75 2.75 0 0 0 0-5.5m7.25-2.25a2.75 2.75 0 1 0 5.5 0a2.75 2.75 0 0 0-5.5 0" />
+</svg> <span class="nav-label">branches</span></a>
             <a href="#" id="nav-packages" style="display:none;" onclick="showView('packages'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.5" d="m12 12l8.073-4.625M12 12v9.25M12 12L7.963 9.688m12.11-2.313a3.17 3.17 0 0 0-1.165-1.156L16.25 4.696m3.823 2.679c.275.472.427 1.015.427 1.58v6.09a3.15 3.15 0 0 1-1.592 2.736l-5.316 3.046A3.2 3.2 0 0 1 12 21.25M3.926 7.375a3.14 3.14 0 0 0-.426 1.58v6.09c0 1.13.607 2.172 1.592 2.736l5.316 3.046A3.2 3.2 0 0 0 12 21.25M3.926 7.375a3.17 3.17 0 0 1 1.166-1.156l5.316-3.046a3.2 3.2 0 0 1 3.184 0l2.658 1.523M3.926 7.375l4.037 2.313m0 0l8.287-4.992" />
@@ -3105,14 +3183,12 @@
 		</g>
 	</svg> <span class="nav-label">pull requests</span></a>
             <a href="#" id="nav-discussions" style="display:none;" onclick="showView('discussions'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-	<path d="M0 0h24v24H0z" fill="none" />
 	<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
 		<path d="M5.985 5.76a3 3 0 0 0-3 3v5.982a3 3 0 0 0 3 3h.446v3.017a.5.5 0 0 0 .839.367l3.67-3.385h4.045a3 3 0 0 0 3-3V8.76a3 3 0 0 0-3-3z" />
 		<path d="M6.985 2.76h8a6 6 0 0 1 6 6v4.982" />
 	</g>
             </svg> <span class="nav-label">discussions</span></a>
             <a href="#" id="nav-wiki" style="display:none;" onclick="showView('wiki'); return false;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-	<path d="M0 0h24v24H0z" fill="none" />
 	<g fill="none">
 		<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.5 16.25V5.75a3 3 0 0 1 3-3h11a1 1 0 0 1 1 1v12.5H7.375M4.5 16.245v2.38" />
 		<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.5 21.25H7a2.5 2.5 0 0 1 0-5h12.5v4a1 1 0 0 1-1 1" />
@@ -3122,16 +3198,16 @@
             </svg> <span class="nav-label">wiki</span></a>
             <a href="#" id="mobile-sidebar-toggle-btn" class="mobile-sidebar-toggle" onclick="toggleMobileSidebar(); return false;" title="About this repository" aria-expanded="false" aria-controls="mobile-sidebar-panel"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
-	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 11v6" />
-	<circle cx="12" cy="12" r="9.25" />
-	<circle cx="12" cy="7.5" r="0.5" fill="currentColor" />
+	<g fill="none">
+		<circle cx="12" cy="12" r="9.25" stroke="currentColor" stroke-width="1.5" />
+		<path stroke="currentColor" stroke-linecap="round" stroke-width="1.5" d="M12 11.813v5" />
+		<circle cx="12" cy="8.438" r="1.25" fill="currentColor" />
+	</g>
 </svg> <span class="nav-label">about</span></a>
                     </nav>
 
-        <div class="file-tree" id="file-tree" style="display:none;"></div>
-        <div class="code-panel" id="code-panel">
-            <div class="code-loading">select a file</div>
-        </div>
+        <div class="file-tree" id="file-tree"></div>
+        <div class="code-panel" id="code-panel"></div>
 
         <!-- Mobile sidebar panel (shown on small screens) -->
         <div class="mobile-sidebar-panel" id="mobile-sidebar-panel">
@@ -3229,6 +3305,12 @@
         <aside class="right-sidebar" id="right-sidebar">
             <div class="sidebar-section">
                 <div class="sidebar-label">About</div>
+                <div id="sb-skeleton" style="display:none;">
+                    <div class="skeleton-sidebar-row"><div class="skeleton-sidebar-line" style="width:70%"></div><div class="skeleton-sidebar-line" style="width:30%"></div></div>
+                    <div class="skeleton-sidebar-row"><div class="skeleton-sidebar-line" style="width:55%"></div><div class="skeleton-sidebar-line" style="width:25%"></div></div>
+                    <div class="skeleton-sidebar-row"><div class="skeleton-sidebar-line" style="width:60%"></div><div class="skeleton-sidebar-line" style="width:35%"></div></div>
+                    <div class="skeleton-sidebar-row"><div class="skeleton-sidebar-line" style="width:50%"></div><div class="skeleton-sidebar-line" style="width:20%"></div></div>
+                </div>
                 <div class="sidebar-desc" id="sb-desc">—</div>
                 <div class="sidebar-tags" id="sb-tags"></div>
             </div>
@@ -3354,6 +3436,12 @@
                 proxyPath = '/api/gl-proxy' + target.pathname;
             } else if (target.hostname === 'codeberg.org' && (target.pathname.startsWith('/api/v1/') || target.pathname.includes('/raw/branch/'))) {
                 proxyPath = '/api/cb-proxy' + target.pathname;
+            } else if (target.hostname === 'api.github.com') {
+                proxyPath = '/api/gh-proxy' + target.pathname;
+            } else if (target.hostname === 'raw.githubusercontent.com') {
+                proxyPath = '/api/gh-raw' + target.pathname;
+            } else if (target.hostname === 'avatars.githubusercontent.com') {
+                proxyPath = '/api/gh-avatar' + target.pathname;
             }
             if (proxyPath) {
                 const proxyURL = new URL(proxyPath + target.search, API_BASE);
@@ -3362,6 +3450,39 @@
             return nativeFetch(input, opts);
         }
         window.fetch = proxiedProviderFetch;
+
+        function proxyResourceUrl(url) {
+            if (!url || typeof url !== 'string') return url;
+            const target = new URL(url, window.location.href);
+            if (target.hostname === 'avatars.githubusercontent.com') {
+                return `${API_BASE}/api/gh-avatar${target.pathname}${target.search}`;
+            }
+            if (target.hostname === 'raw.githubusercontent.com') {
+                return `${API_BASE}/api/gh-raw${target.pathname}${target.search}`;
+            }
+            return url;
+        }
+
+        (function proxyImageObserver() {
+            function rewrite(img) {
+                if (img.src && !img.src.startsWith(API_BASE) && !img.src.startsWith('data:')) {
+                    const proxied = proxyResourceUrl(img.src);
+                    if (proxied !== img.src) img.src = proxied;
+                }
+            }
+            document.querySelectorAll('img').forEach(rewrite);
+            const observer = new MutationObserver((mutations) => {
+                for (const mutation of mutations) {
+                    for (const node of mutation.addedNodes) {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            if (node.tagName === 'IMG') rewrite(node);
+                            node.querySelectorAll('img').forEach(rewrite);
+                        }
+                    }
+                }
+            });
+            observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
+        })();
 
         async function checkServiceStatus() {
             try {
@@ -3583,6 +3704,36 @@
             return panel;
         }
 
+        function showRepoSkeletons(showFileTree = false) {
+            const fileTree = document.getElementById('file-tree');
+            const codePanel = document.getElementById('code-panel');
+            if (fileTree) {
+                fileTree.style.display = showFileTree ? '' : 'none';
+                if (showFileTree) {
+                    fileTree.innerHTML = `
+                        <div class="skeleton-tree-item"><div class="skeleton-tree-line" style="width:70%"></div></div>
+                        <div class="skeleton-tree-item"><div class="skeleton-tree-line" style="width:55%"></div></div>
+                        <div class="skeleton-tree-item"><div class="skeleton-tree-line" style="width:80%"></div></div>
+                        <div class="skeleton-tree-item"><div class="skeleton-tree-line" style="width:45%"></div></div>
+                        <div class="skeleton-tree-item"><div class="skeleton-tree-line" style="width:60%"></div></div>
+                        <div class="skeleton-tree-item"><div class="skeleton-tree-line" style="width:50%"></div></div>
+                    `;
+                }
+            }
+            if (codePanel) {
+                codePanel.style.display = '';
+                codePanel.innerHTML = `
+                    <div class="skeleton-item" style="padding:1.5rem;">
+                        <div class="skeleton-line" style="width:65%"></div>
+                        <div class="skeleton-line" style="width:90%"></div>
+                        <div class="skeleton-line" style="width:75%"></div>
+                        <div class="skeleton-line" style="width:85%"></div>
+                        <div class="skeleton-line" style="width:50%"></div>
+                    </div>
+                `;
+            }
+        }
+
         function profileLink(username, label, className = '') {
             const name = String(username || '').trim();
             if (!name) return escHtml(label || '');
@@ -3784,10 +3935,11 @@
 
             if (view === 'home') {
                 fileTree.style.display = 'none';
-                codePanel.innerHTML = '<div class="code-loading">loading README...</div>';
+                showRepoSkeletons(false);
                 loadReadme();
             } else if (view === 'files') {
                 fileTree.style.display = '';
+                showRepoSkeletons(true);
                 loadDir([]);
                 if (_isMobileFiles()) {
                     codePanel.style.display = 'none';
@@ -3795,36 +3947,47 @@
                 }
             } else if (view === 'branches') {
                 fileTree.style.display = 'none';
+                showRepoSkeletons(false);
                 loadBranches();
             } else if (view === 'packages') {
                 fileTree.style.display = 'none';
+                showRepoSkeletons(false);
                 loadPackages();
             } else if (view === 'bugs') {
                 fileTree.style.display = 'none';
+                showRepoSkeletons(false);
                 loadIssues();
             } else if (view === 'reviews') {
                 fileTree.style.display = 'none';
+                showRepoSkeletons(false);
                 loadPRs();
             } else if (view === 'commits') {
                 fileTree.style.display = 'none';
+                showRepoSkeletons(false);
                 loadCommits();
             } else if (view === 'discussions') {
                 fileTree.style.display = 'none';
+                showRepoSkeletons(false);
                 loadDiscussions();
             } else if (view === 'wiki') {
                 fileTree.style.display = 'none';
+                showRepoSkeletons(false);
                 loadWiki();
             } else if (view === 'releases') {
                 fileTree.style.display = 'none';
+                showRepoSkeletons(false);
                 loadReleases();
             } else if (view === 'tags') {
                 fileTree.style.display = 'none';
+                showRepoSkeletons(false);
                 loadTags();
             } else if (view === 'deployments') {
                 fileTree.style.display = 'none';
+                showRepoSkeletons(false);
                 loadDeploymentsView();
             } else if (view === 'contributors') {
                 fileTree.style.display = 'none';
+                showRepoSkeletons(false);
                 loadContributorsView();
             } else {
                 fileTree.style.display = 'none';
@@ -3844,6 +4007,7 @@
             const fileTree = document.getElementById('file-tree');
             const codePanel = document.getElementById('code-panel');
             fileTree.style.display = '';
+            showRepoSkeletons(true);
             if (_isMobileFiles()) {
                 // En móvil el panel se muestra al tocar un archivo (o si la ruta es un blob).
                 codePanel.style.display = 'none';
@@ -4273,7 +4437,13 @@
             return `<div class="${type === 'comment' ? 'comment-reactions' : 'issue-reactions'}">${parts.join('')}</div>`;
         }
 
+        const REACTION_SUPPORTED_PROVIDERS = ['gh', 'gl', 'cb'];
+
         async function addIssueReaction(provider, owner, repo, num, reactionKey, commentId) {
+            if (!REACTION_SUPPORTED_PROVIDERS.includes(provider)) {
+                flashMessage('Reactions are only supported for GitHub, GitLab and Codeberg', 'warning');
+                return;
+            }
             const reaction = REACTION_EMOJIS.find(r => r.key === reactionKey);
             if (!reaction) return;
             try {
@@ -4289,7 +4459,27 @@
                 }
             } catch(e) {
                 console.error('reaction error:', e);
+                flashMessage(e.message || 'Failed to add reaction', 'error');
             }
+        }
+
+        function flashMessage(text, type) {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.className = 'toast-container';
+                document.body.appendChild(container);
+            }
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-' + (type || 'warning');
+            toast.textContent = text;
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('show'));
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 200);
+            }, 3000);
         }
 
         async function showIssueDetail(num, preloaded) {
@@ -4391,10 +4581,52 @@
                             <div class="ds-label">assignee</div>
                             <div class="ds-val">${escHtml(issue.assignees?.[0]?.login || issue.assignee?.login || issue.assignee?.username || '')}</div>
                         </div>` : ''}
+                        <div>
+                            <div class="ds-label">ntfy topic</div>
+                            <div class="ds-val" id="issue-ntfy-${num}" style="font-size:0.7rem;">loading…</div>
+                            <div style="display:flex;gap:0.4rem;margin-top:0.35rem;flex-wrap:wrap;">
+                                <a id="issue-ntfy-link-${num}" href="#" target="_blank" rel="noreferrer" style="padding:0.25rem 0.55rem;border-radius:3px;background:var(--accent);color:#fff;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;text-decoration:none;white-space:nowrap;">Open in ntfy ↗</a>
+                                <button id="issue-ntfy-copy-${num}" onclick="copyIssueNtfyTopic('${num}')" style="padding:0.25rem 0.5rem;background:transparent;border:1px solid var(--border);color:var(--fg);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;border-radius:3px;">Copy</button>
+                            </div>
+                            <div id="issue-ntfy-err-${num}" style="display:none;margin-top:0.35rem;font-size:0.68rem;color:var(--accent);"></div>
+                        </div>
                     </div>
                 </div>`;
 
             loadIssueComments(num, listId);
+            loadIssueNtfyTopic(rv.owner, rv.repo, num);
+        }
+
+        async function loadIssueNtfyTopic(owner, repo, num) {
+            const topicEl = document.getElementById(`issue-ntfy-${num}`);
+            const linkEl  = document.getElementById(`issue-ntfy-link-${num}`);
+            const errEl   = document.getElementById(`issue-ntfy-err-${num}`);
+            if (!topicEl || !linkEl) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/issue-status/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/${encodeURIComponent(num)}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                topicEl.textContent = data.subscribe_url;
+                linkEl.href = data.subscribe_url;
+            } catch (err) {
+                topicEl.textContent = 'unavailable';
+                if (errEl) {
+                    errEl.textContent = 'Could not load issue ntfy topic.';
+                    errEl.style.display = 'block';
+                }
+            }
+        }
+
+        function copyIssueNtfyTopic(num) {
+            const topicEl = document.getElementById(`issue-ntfy-${num}`);
+            const btn = document.getElementById(`issue-ntfy-copy-${num}`);
+            if (!topicEl) return;
+            navigator.clipboard?.writeText(topicEl.textContent);
+            if (btn) {
+                const orig = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => { btn.textContent = orig; }, 1200);
+            }
         }
 
         async function loadIssueComments(num, listId) {
@@ -4878,6 +5110,7 @@
             } catch(e) {
                 if (statusEl) statusEl.textContent = `Error: ${e.message}`;
                 if (btn) btn.disabled = false;
+                resetCaptchaWidget('menta-bug');
             }
         }
         let _prsCache = null;
@@ -5271,7 +5504,7 @@
                         <div class="reply-avatar"><img src="/assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                         <div class="comment-bubble">
                             <div class="comment-meta">you · just now${data.hash ? ` · <span style="color:var(--accent)">${escHtml(data.hash)}</span>` : ''}</div>
-                            <div>${escHtml(commentBody).replace(/\n/g, '<br>')}</div>
+                             <div>${renderMd(commentBody)}</div>
                         </div>`;
                     list.appendChild(li);
                     li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -5284,6 +5517,7 @@
                 if (statusEl) statusEl.textContent = 'error: ' + e.message;
             } finally {
                 if (btn) btn.disabled = false;
+                if (captchaId) resetCaptchaWidget(captchaId);
             }
         }
 
@@ -5515,12 +5749,14 @@
             try {
                 let commits = [];
                 const ref = currentBranch();
+                const shaQ = ref ? `&sha=${encodeURIComponent(ref)}` : '';
+                const refQ = ref ? `&ref_name=${encodeURIComponent(ref)}` : '';
                 if (rv.provider === 'gh') {
-                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/commits?per_page=30&sha=${encodeURIComponent(ref)}`);
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/commits?per_page=30${shaQ}`);
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     commits = await res.json();
                 } else if (rv.provider === 'cb') {
-                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/commits?limit=30&sha=${encodeURIComponent(ref)}`);
+                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/commits?limit=30${shaQ}`);
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     commits = await res.json();
                     if (!Array.isArray(commits)) {
@@ -5529,7 +5765,7 @@
                     }
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
-                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/commits?per_page=30&ref_name=${encodeURIComponent(ref)}`);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/commits?per_page=30${refQ}`);
                     if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text().catch(()=>'')}`);
                     commits = await res.json();
                     if (!Array.isArray(commits)) {
@@ -5554,7 +5790,8 @@
                 }
                 renderCommitsView(commits, avatarMap);
             } catch(e) {
-                const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: </div>`;
+                const em = escHtml((e && e.message) ? e.message : String(e));
+                panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: ${em}</div>`;
             }
         }
 
@@ -6746,8 +6983,8 @@
         async function _getShiki() {
             if (_shikiHighlighter) return _shikiHighlighter;
             const cdnUrls = [
-                'https://cdn.jsdelivr.net/npm/shiki@4.3.1/+esm',
-                'https://esm.sh/shiki@4.3.1'
+                'https://esm.sh/shiki@4.3.1',
+                'https://cdn.jsdelivr.net/npm/shiki@4.3.1/+esm'
             ];
             for (const cdnUrl of cdnUrls) {
                 try {
@@ -6828,8 +7065,8 @@
             if (_pierreMod) return _pierreMod;
             if (_pierreLoading) return _pierreLoading;
             const cdnUrls = [
-                'https://cdn.jsdelivr.net/npm/@pierre/diffs@1.3.5/+esm',
-                'https://esm.sh/@pierre/diffs@1.3.5'
+                'https://esm.sh/@pierre/diffs@1.3.5',
+                'https://cdn.jsdelivr.net/npm/@pierre/diffs@1.3.5/+esm'
             ];
             _pierreLoading = (async () => {
                 for (const cdnUrl of cdnUrls) {
@@ -7128,6 +7365,16 @@
             }
         }
 
+        function resetCaptchaWidget(captchaId) {
+            const w = document.getElementById(captchaId);
+            if (!w) return;
+            w.token = null;
+            w.sessionId = null;
+            w.sessionSignature = null;
+            if (typeof w.render === 'function') w.render();
+            if (typeof w.initSession === 'function') w.initSession();
+        }
+
         async function submitIssueComment(provider, owner, repo, number, replyId, tokenId, statusId, listId, captchaId) {
             const textarea = document.getElementById(replyId);
             const tokenEl  = document.getElementById(tokenId);
@@ -7165,7 +7412,7 @@
                         <div class="reply-avatar"><img src="/assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                         <div class="comment-bubble">
                             <div class="comment-meta">you &middot; just now${data.hash ? ` &middot; <span style="color:var(--accent)">${escHtml(data.hash)}</span>` : ''}</div>
-                            <div>${escHtml(commentBody).replace(/\n/g, '<br>')}</div>
+                             <div>${renderMd(commentBody)}</div>
                         </div>`;
                     list.appendChild(li);
                     li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -7178,6 +7425,7 @@
                 if (statusEl) statusEl.textContent = 'error: ' + e.message;
             } finally {
                 if (btn) btn.disabled = false;
+                if (captchaId) resetCaptchaWidget(captchaId);
             }
         }
 
@@ -7440,6 +7688,8 @@
 
         async function loadRepoInfo() {
             try {
+                const sbSkeleton = document.getElementById('sb-skeleton');
+                if (sbSkeleton) sbSkeleton.style.display = '';
                 if (rv.provider === 'gh') {
                     const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}`);
                     if (!res.ok) return;
@@ -7701,6 +7951,8 @@
                 const sbDesc = document.getElementById('sb-desc');
                 if (sbDesc) sbDesc.textContent = `error: ${e.message}`;
             }
+            const _sbSkel = document.getElementById('sb-skeleton');
+            if (_sbSkel) _sbSkel.style.display = 'none';
             _checkSecurityPolicy();
         }
 
@@ -8196,14 +8448,15 @@
             if (!el) return;
             try {
                 const ref = currentBranch();
+                const shaQ = ref ? `&sha=${encodeURIComponent(ref)}` : '';
                 if (rv.provider === 'gh') {
-                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/commits?per_page=1&anon=true&sha=${encodeURIComponent(ref)}`);
+                    const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/commits?per_page=1&anon=true${shaQ}`);
                     if (!res.ok) { el.textContent = '?'; return; }
                     const link = res.headers.get('Link') || '';
                     const match = link.match(/&page=(\d+)>; rel="last"/);
                     el.textContent = match ? parseInt(match[1]).toLocaleString() : '?';
                 } else if (rv.provider === 'cb') {
-                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/commits?limit=1&sha=${encodeURIComponent(ref)}`);
+                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/commits?limit=1${shaQ}`);
                     if (!res.ok) { el.textContent = '?'; return; }
                     const total = res.headers.get('X-Total-Count') || res.headers.get('X-Total');
                     if (total) {
@@ -9057,7 +9310,7 @@
                 const imageExts = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico', 'avif', 'apng'];
                 if (imageExts.includes(ext)) {
                     let imgUrl = item.download_url || item.url || `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/${item.path}`;
-                    if (rv.provider === 'gh') imgUrl = `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/${currentBranch()}/${item.path}`;
+                    if (rv.provider === 'gh') imgUrl = `${API_BASE}/api/gh-raw/${rv.owner}/${rv.repo}/${currentBranch()}/${item.path}`;
                     if (rv.provider === 'cb') {
                         const branch = currentBranch();
                         imgUrl = branch
@@ -9072,7 +9325,7 @@
                 } else if (name.toLowerCase().endsWith('.md')) {
                     const dir = item.path ? item.path.substring(0, item.path.lastIndexOf('/') + 1) : '';
                     let mdBaseUrl = `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/${dir}`;
-                    if (rv.provider === 'gh') mdBaseUrl = `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/${currentBranch()}/${dir}`;
+                    if (rv.provider === 'gh') mdBaseUrl = `${API_BASE}/api/gh-raw/${rv.owner}/${rv.repo}/${currentBranch()}/${dir}`;
                     if (rv.provider === 'cb') {
                         const branch = currentBranch();
                         mdBaseUrl = branch
@@ -10323,11 +10576,11 @@
                                 ? `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${currentBranch()}/`
                                 : `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/`)
                             : rv.provider === 'gh'
-                                ? `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/${currentBranch()}/`
+                                ? `${getApiBase()}/api/gh-raw/${rv.owner}/${rv.repo}/${currentBranch()}/`
                                 : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/`);
                     src = rawBase.replace(/\/$/, '') + '/' + src.replace(/^\.?\//, '');
                 }
-                return `<img src="${escAttr(src)}" alt="${escAttr(alt)}"${title ? ` title="${escAttr(title)}"` : ''} style="max-width:100%;border-radius:4px;" />`;
+                return `<img src="${escAttr(src)}" alt="${escAttr(alt)}"${title ? ` title="${escAttr(title)}"` : ''} style="max-width:100%;border-radius:4px;" onerror="this.style.display='none'" />`;
             };
             // Alertas estilo GitHub: blockquote cuyo primer párrafo es [!NOTE]/[!TIP]/[!IMPORTANT]/[!WARNING]/[!CAUTION].
             // El renderer de blockquote recibe el HTML interno ya renderizado; se sustituye el marcador por el título.
@@ -10374,7 +10627,7 @@
                         ? `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${currentBranch()}/`
                         : `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/`)
                     : rv.provider === 'gh'
-                        ? `https://raw.githubusercontent.com/${rv.owner}/${rv.repo}/${currentBranch()}/`
+                        ? `${getApiBase()}/api/gh-raw/${rv.owner}/${rv.repo}/${currentBranch()}/`
                         : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/`);
             result = result.replace(/<img\s+[^>]*?src=("[^"]+"|'[^']+')([^>]*?)>/gi, (match, srcQuoted, rest) => {
                 const quote = srcQuoted[0];

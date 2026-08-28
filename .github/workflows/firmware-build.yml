@@ -23,12 +23,12 @@ jobs:
       artifact-id: ${{ steps.upload-firmware.outputs.artifact-id }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v8
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           submodules: recursive
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.11'
 
@@ -70,7 +70,7 @@ jobs:
 
       - name: Upload firmware artifact
         id: upload-firmware
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: "firmware-${{ inputs.platform }}-${{ inputs.pio_env }}-${{ steps.sanitize.outputs.version }}"
           overwrite: true

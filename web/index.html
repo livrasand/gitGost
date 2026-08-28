@@ -2865,7 +2865,7 @@
                 const controller = new AbortController();
                 const timeout = setTimeout(() => controller.abort(), 3000);
                 try {
-                    const res = await fetch('colors.json', { signal: controller.signal });
+                    const res = await fetch('/colors.json', { signal: controller.signal });
                     if (!res.ok) return false;
                     const data = await res.json();
                     if (data && typeof data === 'object') {

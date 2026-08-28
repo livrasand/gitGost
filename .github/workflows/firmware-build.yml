@@ -1,0 +1,79 @@
+name: Firmware Build
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      platform:
+        required: true
+        type: string
+      pio_env:
+        required: true
+        type: string
+
+permissions: read-all
+
+jobs:
+  pio-build:
+    name: build-${{ inputs.platform }}
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-id: ${{ steps.upload-firmware.outputs.artifact-id }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v8
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Build ${{ inputs.platform }}
+        id: build
+        run: |
+          cd firmware
+          pio run -e ${{ inputs.pio_env }}
+
+      - name: Prepare firmware package
+        id: package
+        run: |
+          mkdir -p firmware/release
+          cp firmware/.pio/build/${{ inputs.pio_env }}/firmware.bin firmware/release/
+          cp firmware/.pio/build/${{ inputs.pio_env }}/bootloader.bin firmware/release/
+          cp firmware/.pio/build/${{ inputs.pio_env }}/partitions.bin firmware/release/
+
+          cd firmware/release
+          sha256sum firmware.bin bootloader.bin partitions.bin > SHA256SUMS
+
+      - name: Job summary
+        run: |
+          echo "## ${{ inputs.pio_env }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Firmware" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat firmware/release/SHA256SUMS >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Sanitize version
+        id: sanitize
+        run: echo "version=${VERSION//\//-}" >> "$GITHUB_OUTPUT"
+        env:
+          VERSION: ${{ inputs.version }}
+
+      - name: Upload firmware artifact
+        id: upload-firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: "firmware-${{ inputs.platform }}-${{ inputs.pio_env }}-${{ steps.sanitize.outputs.version }}"
+          overwrite: true
+          path: |
+            firmware/release/*.bin
+            firmware/release/SHA256SUMS

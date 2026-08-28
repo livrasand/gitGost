@@ -299,6 +299,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.StaticFile("/repo.html", "./web/repo.html")
 	r.StaticFile("/profile.html", "./web/profile.html")
 	r.StaticFile("/sw.js", "./web/sw.js")
+	r.StaticFile("/colors.json", "./web/colors.json")
 	r.StaticFile("/.well-known/security.txt", "./web/.well-known/security.txt")
 	r.Static("/assets", "./web/assets")
 	r.StaticFile("/ethicalmetrics.js", "./web/ethicalmetrics.js")

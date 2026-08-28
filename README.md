@@ -226,6 +226,17 @@ You can download the app from GitHub's [Releases](https://github.com/livrasand/g
     alt="Get it on Obtainium"
     height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/livrasand/gitGost)
 
+
+<!-- Screenshots -->
+<p align="center">
+  <img src="./web/assets/phone-screenshots/1.jpeg" width="180" />
+  <img src="./web/assets/phone-screenshots/2.jpeg" width="180" />
+  <img src="./web/assets/phone-screenshots/3.jpeg" width="180" />
+  <img src="./web/assets/phone-screenshots/4.jpeg" width="180" />
+  <img src="./web/assets/phone-screenshots/5.jpeg" width="180" />
+  <img src="./web/assets/phone-screenshots/6.jpeg" width="180" />
+</p>
+
 ## Why developers love gitGost
 
 > “Your commit history shouldn’t be an HR liability forever.”
@@ -478,7 +489,7 @@ My goal is to make Git more resilient when the network isn't.
 >       │
 >       └── Your repositories
 > ```
->
+
 > [!WARNING]
 > **Experimental software**
 >
@@ -582,7 +593,11 @@ Download the latest gitGost Forge firmware for your ESP32.
 
 ## 2. Flash the ESP32
 
-Flash the gitGost Forge firmware onto your ESP32 using the recommended flashing tool.
+Flash the gitGost Forge firmware onto your ESP32 using:
+
+```bash
+pio run -e esp32 --target upload                                                                                            
+```
 
 ## 3. Connect to the gitGost Wi-Fi Network
 

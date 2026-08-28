@@ -13,7 +13,9 @@ on:
         required: true
         type: string
 
-permissions: read-all
+permissions:
+  actions: write
+  contents: read
 
 jobs:
   pio-build:

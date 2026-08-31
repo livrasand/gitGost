@@ -206,13 +206,6 @@ A dedicated service account lets gitGost:
 
 ## Download Android app
 
-> [!Warning]
-> **Free and Open-Source Android is under threat.**
->
-> Google will turn Android into a locked-down platform, restricting your essential freedom to install apps of your choice. Make your voice heard
->
-> [**Keep Android Open**](https://keepandroidopen.org/).
-
 You can download the app from GitHub's [Releases](https://github.com/livrasand/gitGost/releases/) page or install it from the [livrasand F-Droid Repo](https://fdroid.livrasand.com/).
 
 

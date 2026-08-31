@@ -896,6 +896,18 @@ This closes up to 2 hours of recorded PRs in parallel via the GitHub API. PRs ol
 
 _gitGost does not host any content. All content on gitGost is from GitHub, GitLab and Codeberg. GitHub is a trademark of GitHub, Inc. GitLab es a trademark of GitLab Inc. Codeberg is a trademark of Codeberg e.V._
 
+### Political Neutrality and Legal Compliance
+
+gitGost is a politically neutral, privacy-focused open-source project. The project does not endorse, represent, finance, promote, or affiliate with any political party, political movement, activist organization, ideological group, or other political entity. The project's purpose is to provide privacy-preserving software that enables developers to participate in public software projects without unnecessarily exposing their personal identity.
+
+Users are solely responsible for their use of gitGost and for complying with applicable laws and the gitGost Terms of Service. gitGost is not intended to facilitate illegal activity, violence, terrorism, harassment, fraud, or other unlawful conduct.
+
+If a user violates the gitGost Terms of Service, abuses the service, or uses gitGost for unlawful purposes, gitGost reserves the right to terminate or restrict the user's access and discontinue any relationship with that user. Where appropriate and legally permitted, gitGost may take reasonable measures to document or preserve relevant information concerning the violation.
+
+gitGost will cooperate with competent law-enforcement or governmental authorities when required to do so by applicable law or a valid and legally binding request. Any disclosure of user information will be limited to what is legally required or otherwise permitted under applicable law.
+
+Nothing in this policy should be interpreted as an endorsement of any political position or as a guarantee of anonymity or immunity from legal responsibility. Privacy protections are intended to minimize unnecessary exposure of users' personal information, not to exempt users from applicable laws or legal obligations.
+
 ---
 
 > [!IMPORTANT]

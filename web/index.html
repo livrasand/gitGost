@@ -103,7 +103,7 @@
             content="anonymous git contributions, git privacy, anonymous pr github, git open source, gitgost, anonymous coding, git no trace, anonymous git contributions, gitgost app"
         />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://gitgost.fly.dev" />
+        <meta property="og:url" content="https://gitgost.livrasand.com" />
         <meta
             property="og:title"
             content="gitGost — Anonymous Git Contributions"
@@ -114,10 +114,10 @@
         />
         <meta
             property="og:image"
-            content="https://gitgost.fly.dev/assets/logos/gitgost-logo.svg"
+            content="https://gitgost.livrasand.com/assets/logos/gitgost-logo.svg"
         />
         <meta property="twitter:card" content="summary_large_image" />
-        <meta property="twitter:url" content="https://gitgost.fly.dev" />
+        <meta property="twitter:url" content="https://gitgost.livrasand.com" />
         <meta
             property="twitter:title"
             content="gitGost — Anonymous Git Contributions"
@@ -128,7 +128,7 @@
         />
         <meta
             property="twitter:image"
-            content="https://gitgost.fly.dev/assets/logos/gitgost-logo.svg"
+            content="https://gitgost.livrasand.com/assets/logos/gitgost-logo.svg"
         />
         <script src="https://unpkg.com/environment-badge@1.3.1/dist/bundle.js" integrity="sha384-2H0I1nyweBXE/B5DkvHgwGP0fghz2xTxgnK5BliEczCX5AEWyzPRo2oeA5L5U1Ni" crossorigin="anonymous"></script>
         <script>
@@ -148,7 +148,7 @@
                 "name": "gitGost",
                 "alternateName": "Anonymous Git Contributions",
                 "description": "Contribute to any GitHub, GitLab or Codeberg repo without leaving a trace. Anonymous Git contributions with gitGost - privacy first, zero accounts, open source.",
-                "url": "https://gitgost.fly.dev",
+                "url": "https://gitgost.livrasand.com",
                 "applicationCategory": "DeveloperApplication",
                 "operatingSystem": "Web",
                 "offers": {
@@ -257,6 +257,10 @@
                 margin-bottom: 1.25rem;
                 text-decoration: none;
                 letter-spacing: -0.5px;
+            }
+
+            .logo-img {
+                display: none;
             }
 
             .nav-link {
@@ -606,7 +610,7 @@
             .repo-star-row {
                 display: none;
                 width: 100%;
-                margin-top: 0.35rem;
+                margin-top: 0;
             }
 
             .repo-star-btn {
@@ -616,7 +620,7 @@
                 gap: 0.35rem;
                 padding: 0.2rem 0.5rem;
                 border: 1px solid var(--border);
-                border-radius: 3px;
+                border-radius: 0 0 3px 3px;
                 background: transparent;
                 color: var(--fg);
                 font-size: 0.7rem;
@@ -1177,6 +1181,7 @@
                     overflow: auto;
                     height: auto;
                     min-height: 100vh;
+                    font-size: 15px;
                 }
 
                 .app-container {
@@ -1193,18 +1198,42 @@
                     flex-wrap: nowrap;
                     align-items: center;
                     gap: 0.15rem;
-                    padding: 0.4rem 0.5rem;
+                    padding: 0.25rem 0.35rem;
+                    padding-top: max(0.35rem, env(safe-area-inset-top));
                     position: relative;
                     overflow-y: visible;
-                    border-bottom: 1px solid var(--border);
-                    margin-bottom: 0.35rem;
+                    border-bottom: none;
+                    border-radius: 0 0 14px 14px;
+                    margin-bottom: 0.5rem;
+                    backdrop-filter: saturate(1.4);
+                    min-height: 52px;
                 }
 
                 .sidebar .logo {
                     width: auto;
-                    flex: 1;
                     margin-bottom: 0;
-                    font-size: 0.95rem;
+                    font-size: 1.55rem;
+                    position: absolute;
+                    left: 50%;
+                    top: calc(50% + (env(safe-area-inset-top, 0px) / 2));
+                    transform: translate(-50%, -50%);
+                    align-items: center;
+                    justify-content: center;
+                    pointer-events: none;
+                    padding: 0.35rem;
+                    transition: transform 0.15s ease;
+                    color: var(--accent);
+                }
+
+                .sidebar .logo-text {
+                    display: none;
+                }
+
+                .sidebar .logo-img {
+                    display: block;
+                    width: 1.55rem;
+                    height: 1.55rem;
+                    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
                 }
 
                 .nav-link {
@@ -1221,50 +1250,43 @@
                 }
 
                 .nav-toggle {
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    min-width: 2.5rem;
-                    min-height: 2.5rem;
-                    padding: 0.25rem;
+                    display: none;
                 }
 
                 .nav-links {
-                    display: none;
-                    position: absolute;
-                    top: 100%;
-                    left: 0;
-                    width: 100%;
-                    background: var(--bg);
-                    border-bottom: 1px solid var(--border);
-                    padding: 0.5rem 0.75rem;
-                    flex-direction: column;
-                    gap: 0.25rem;
-                    z-index: 50;
-                }
-
-                .sidebar.open .nav-links {
-                    display: flex;
+                    display: none !important;
                 }
 
                 .nav-links .nav-link {
-                    display: flex;
-                    align-items: center;
-                    width: 100%;
-                    padding: 0.4rem 0;
-                    font-size: 0.78rem;
+                    flex-shrink: 0;
+                    white-space: nowrap;
+                    width: auto;
+                    padding: 0.25rem 0.5rem;
+                    font-size: 0.75rem;
+                    border-radius: 4px;
                 }
 
-                .nav-toggle[aria-expanded="true"] {
+                .nav-links .nav-link svg {
+                    width: 0.85em;
+                    height: 0.85em;
+                    color: var(--fg-muted);
+                }
+
+                .nav-links .nav-link.active {
+                    background: var(--bg-hover);
                     color: var(--accent);
                 }
 
-                .stats-note {
-                    display: none;
+                .nav-links .nav-link.active svg {
+                    color: var(--accent);
                 }
 
                 .nav-links .mobile-stats-note {
-                    display: flex;
+                    display: none;
+                }
+
+                .nav-links > div {
+                    display: none;
                 }
 
                 .sidebar > div,
@@ -1286,14 +1308,15 @@
                 }
 
                 .content-tab {
-                    font-size: 0.7rem;
+                    font-size: 0.85rem;
                     white-space: nowrap;
                     flex-shrink: 0;
                 }
 
                 #search-input {
-                    font-size: 0.72rem !important;
+                    font-size: 0.9rem !important;
                     margin-bottom: 0.4rem !important;
+                    padding: 0.6rem 0.75rem !important;
                 }
 
                 .repo-list {
@@ -1311,17 +1334,38 @@
                 }
 
                 .repo-item-name {
-                    font-size: 0.75rem;
+                    font-size: 0.95rem;
                 }
 
                 .repo-item-desc {
                     max-width: 100%;
                     white-space: normal;
-                    font-size: 0.68rem;
+                    font-size: 0.85rem;
                 }
 
                 .repo-star-row {
                     display: flex;
+                    margin-top: 0;
+                }
+
+                .repo-star-btn {
+                    padding: 0.75rem 0.9rem;
+                    font-size: 1rem;
+                    border-radius: 0 0 6px 6px;
+                    min-height: 48px;
+                    border-width: 1px;
+                }
+                .repo-star-btn svg {
+                    width: 1.15em;
+                    height: 1.15em;
+                }
+                .repo-star-btn:active {
+                    transform: scale(0.97);
+                    background: var(--bg-hover);
+                }
+                .repo-star-btn:focus-visible {
+                    outline: 2px solid var(--accent, var(--fg-secondary));
+                    outline-offset: 2px;
                 }
 
                 .repo-fork-watch-row {
@@ -1330,14 +1374,13 @@
 
                 .repo-count,
                 .repo-ago {
-                    font-size: 0.6rem;
+                    font-size: 0.78rem;
                 }
 
                 .statusbar {
-                    flex-direction: column;
                     gap: 0.15rem;
-                    padding: 0.3rem 0.75rem;
-                    font-size: 0.62rem;
+                    padding: 0.4rem 0.75rem;
+                    font-size: 0.8rem;
                     position: sticky;
                     bottom: 0;
                 }
@@ -1345,19 +1388,19 @@
                 .statusbar-left,
                 .statusbar-right {
                     width: 100%;
-                    justify-content: center;
+                    justify-content: left;
                     flex-wrap: wrap;
                     gap: 0.3rem;
                 }
 
                 .terminal-body {
                     padding: 0.75rem;
-                    font-size: 0.75rem;
+                    font-size: 0.9rem;
                 }
 
                 .terminal-tab {
-                    font-size: 0.65rem;
-                    padding: 0.15rem 0.4rem;
+                    font-size: 0.8rem;
+                    padding: 0.2rem 0.5rem;
                 }
 
                 .terminal-titlebar {
@@ -1551,6 +1594,14 @@
                     text-align: center !important;
                     box-sizing: border-box;
                 }
+
+                .hide-scrollbar {
+                    scrollbar-width: none !important;
+                    -ms-overflow-style: none !important;
+                }
+                .hide-scrollbar::-webkit-scrollbar {
+                    display: none !important;
+                }
             }
 
         .suspension-banner {
@@ -1631,10 +1682,11 @@
                 display: block;
                 width: 100%;
                 height: auto;
+                border-radius: 0 0 3px 3px;
             }
 
             .repo-star-row {
-                margin-top: 0.5rem;
+                margin-top: 0;
             }
         }
         </style>
@@ -1658,13 +1710,13 @@
 
         <div class="app-container">
             <aside class="sidebar">
-                <a href="/" class="logo">gitGost</a>
+                <a href="/" class="logo"><span class="logo-text">gitGost</span><img src="/assets/logos/gitgost-logo.svg" alt="gitGost" class="logo-img" /></a>
                 <button type="button" class="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="nav-links" onclick="toggleMobileNav()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24" aria-hidden="true">
                         <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
-                <nav class="nav-links" id="nav-links">
+                <nav class="nav-links hide-scrollbar" id="nav-links">
                 <a href="#" onclick="showPage('home'); return false;" class="nav-link active"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.25 4.75h.703a4 4 0 0 1 3.927 3.236l1.17 6.01M8.75 4.75h-.703A4 4 0 0 0 4.12 7.986l-1.17 6.01m7.674.256a4.002 4.002 0 0 0-7.673-.257m7.673.257q.124.48.126.998a4 4 0 1 1-7.8-1.255m7.674.257h2.752m0 0a4.002 4.002 0 0 1 7.673-.257m-7.673.257a4 4 0 1 0 7.674-.257" />
@@ -1798,12 +1850,12 @@
                         placeholder="search..."
                         autocomplete="off"
                     />
-                    <div id="search-history-dropdown" class="search-history-dropdown"></div>
+                    <div id="search-history-dropdown" class="search-history-dropdown hide-scrollbar"></div>
                 </div>
 
-                <div class="repo-list" id="repo-list">
+                <div class="repo-list hide-scrollbar" id="repo-list">
                 </div>
-                <div id="page-content" style="display:none;"></div>
+                <div id="page-content" style="display:none;" class="hide-scrollbar"></div>
             </main>
         </div>
 
@@ -1837,7 +1889,7 @@
             id="command-modal"
             onclick="closeModalOnOverlay(event, 'command-modal')"
         >
-            <div class="modal">
+            <div class="modal hide-scrollbar">
                 <div class="modal-header">
                     <h2 class="modal-title">Commands</h2>
                     <button
@@ -1847,7 +1899,7 @@
                         &times;
                     </button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body hide-scrollbar">
                     <div class="command-list">
                         <div
                             class="command-item"
@@ -1916,7 +1968,7 @@
             id="user-profile-modal"
             onclick="closeModalOnOverlay(event, 'user-profile-modal')"
         >
-            <div class="modal">
+            <div class="modal hide-scrollbar">
                 <div class="modal-header">
                     <h2 class="modal-title">User Profile</h2>
                     <button
@@ -1926,7 +1978,7 @@
                         &times;
                     </button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body hide-scrollbar">
                     <div id="user-profile-content"></div>
                 </div>
             </div>
@@ -1937,7 +1989,7 @@
             id="push-modal"
             onclick="closeModalOnOverlay(event, 'push-modal')"
         >
-            <div class="modal">
+            <div class="modal hide-scrollbar">
                 <div class="modal-header">
                     <h2 class="modal-title">Anonymous Push</h2>
                     <button
@@ -1947,7 +1999,7 @@
                         &times;
                     </button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body hide-scrollbar">
                     <p
                         style="
                             font-size: 0.82rem;
@@ -1987,7 +2039,7 @@
                         >
                         for <strong>Codeberg</strong>
                     </p>
-                    <div class="terminal" id="terminal-push">
+                    <div class="terminal hide-scrollbar" id="terminal-push">
                         <div class="terminal-titlebar">
                             <span class="terminal-btn close"></span>
                             <span class="terminal-btn min"></span>
@@ -2034,13 +2086,13 @@
                                 Codeberg
                             </button>
                         </div>
-                        <div class="terminal-body" id="push-body-gh">
+                        <div class="terminal-body hide-scrollbar" id="push-body-gh">
                             <span class="comment"
                                 ># Add as remote → push → done. Fully
                                 anonymous.</span
                             >
                             <span class="prompt">$</span> git remote add gost
-                            https://gitgost.fly.dev/v1/gh/torvalds/linux
+                            https://gitgost.livrasand.com/v1/gh/torvalds/linux
                             <span class="prompt">$</span> git checkout -b
                             fix-typo <span class="prompt">$</span> git commit
                             -am "fix: typo in documentation"
@@ -2053,7 +2105,7 @@
                             update the PR later
                         </div>
                         <div
-                            class="terminal-body"
+                            class="terminal-body hide-scrollbar"
                             id="push-body-gl"
                             style="display: none"
                         >
@@ -2062,7 +2114,7 @@
                                 repos.</span
                             >
                             <span class="prompt">$</span> git remote add gost
-                            https://gitgost.fly.dev/v1/gl/gitlab-org/gitlab
+                            https://gitgost.livrasand.com/v1/gl/gitlab-org/gitlab
                             <span class="prompt">$</span> git checkout -b
                             fix-typo <span class="prompt">$</span> git commit
                             -am "fix: typo in documentation"
@@ -2075,7 +2127,7 @@
                             update the MR later
                         </div>
                         <div
-                            class="terminal-body"
+                            class="terminal-body hide-scrollbar"
                             id="push-body-cb"
                             style="display: none"
                         >
@@ -2083,7 +2135,7 @@
                                 ># Use /v1/cb/ for Codeberg repos.</span
                             >
                             <span class="prompt">$</span> git remote add gost
-                            https://gitgost.fly.dev/v1/cb/codeberg/community
+                            https://gitgost.livrasand.com/v1/cb/codeberg/community
                             <span class="prompt">$</span> git checkout -b
                             fix-typo <span class="prompt">$</span> git commit
                             -am "fix: typo in documentation"
@@ -2101,19 +2153,19 @@
         </div>
 
         <div class="modal-overlay" id="update-modal" onclick="closeModalOnOverlay(event, 'update-modal')">
-            <div class="modal">
+            <div class="modal hide-scrollbar">
                 <div class="modal-header">
                     <h2 class="modal-title">Update PR</h2>
                     <button class="modal-close" onclick="closeModal('update-modal')">&times;</button>
                 </div>
-                <div class="modal-body">
-                    <div class="terminal">
+                <div class="modal-body hide-scrollbar">
+                    <div class="terminal hide-scrollbar">
                         <div class="terminal-titlebar">
                             <span class="terminal-btn close"></span>
                             <span class="terminal-btn min"></span>
                             <span class="terminal-btn max"></span>
                         </div>
-                        <div class="terminal-body">
+                        <div class="terminal-body hide-scrollbar">
                             <span class="comment"># Got review feedback? Push a follow-up commit to the same PR.</span>
                             <span class="comment"># Use the pr-hash returned on the first push.</span>
                             <span class="prompt">$</span> git commit -am "fix: address review comments"
@@ -2131,7 +2183,7 @@
             id="fetch-modal"
             onclick="closeModalOnOverlay(event, 'fetch-modal')"
         >
-            <div class="modal">
+            <div class="modal hide-scrollbar">
                 <div class="modal-header">
                     <h2 class="modal-title">Clone / Fetch</h2>
                     <button
@@ -2141,8 +2193,8 @@
                         &times;
                     </button>
                 </div>
-                <div class="modal-body">
-                    <div class="terminal">
+                <div class="modal-body hide-scrollbar">
+                    <div class="terminal hide-scrollbar">
                         <div class="terminal-titlebar">
                             <span class="terminal-btn close"></span>
                             <span class="terminal-btn min"></span>
@@ -2189,25 +2241,25 @@
                                 Codeberg
                             </button>
                         </div>
-                        <div class="terminal-body" id="fetch-body-gh">
+                        <div class="terminal-body hide-scrollbar" id="fetch-body-gh">
                             <span class="comment"
                                 ># Clone or fetch anonymously — no GitHub account needed.</span
                             >
                             <span class="prompt">$</span> git clone
-                            https://anon:@gitgost.fly.dev/v1/gh/torvalds/linux
+                            https://anon:@gitgost.livrasand.com/v1/gh/torvalds/linux
                             <span class="comment"
                                 ># Or add as remote and fetch/pull
                                 later</span
                             >
                             <span class="prompt">$</span> git remote add gost
-                            https://anon:@gitgost.fly.dev/v1/gh/torvalds/linux
+                            https://anon:@gitgost.livrasand.com/v1/gh/torvalds/linux
                             <span class="prompt">$</span> git fetch gost
                             <span class="prompt">$</span> git pull gost main
                             <span class="success">→</span> Repository cloned
                             with zero identity exposure
                         </div>
                         <div
-                            class="terminal-body"
+                            class="terminal-body hide-scrollbar"
                             id="fetch-body-gl"
                             style="display: none"
                         >
@@ -2216,20 +2268,20 @@
                                 use /v1/gl/ prefix.</span
                             >
                             <span class="prompt">$</span> git clone
-                            https://anon:@gitgost.fly.dev/v1/gl/gitlab-org/gitlab
+                            https://anon:@gitgost.livrasand.com/v1/gl/gitlab-org/gitlab
                             <span class="comment"
                                 ># Or add as remote and fetch/pull
                                 later</span
                             >
                             <span class="prompt">$</span> git remote add gost
-                            https://anon:@gitgost.fly.dev/v1/gl/gitlab-org/gitlab
+                            https://anon:@gitgost.livrasand.com/v1/gl/gitlab-org/gitlab
                             <span class="prompt">$</span> git fetch gost
                             <span class="prompt">$</span> git pull gost main
                             <span class="success">→</span> Repository cloned
                             with zero identity exposure
                         </div>
                         <div
-                            class="terminal-body"
+                            class="terminal-body hide-scrollbar"
                             id="fetch-body-cb"
                             style="display: none"
                         >
@@ -2237,13 +2289,13 @@
                                 ># Clone or fetch from Codeberg anonymously — use /v1/cb/ prefix.</span
                             >
                             <span class="prompt">$</span> git clone
-                            https://anon:@gitgost.fly.dev/v1/cb/codeberg/community
+                            https://anon:@gitgost.livrasand.com/v1/cb/codeberg/community
                             <span class="comment"
                                 ># Or add as remote and fetch/pull
                                 later</span
                             >
                             <span class="prompt">$</span> git remote add gost
-                            https://anon:@gitgost.fly.dev/v1/cb/codeberg/community
+                            https://anon:@gitgost.livrasand.com/v1/cb/codeberg/community
                             <span class="prompt">$</span> git fetch gost
                             <span class="prompt">$</span> git pull gost main
                             <span class="success">→</span> Repository cloned
@@ -2259,7 +2311,7 @@
             id="tor-modal"
             onclick="closeModalOnOverlay(event, 'tor-modal')"
         >
-            <div class="modal">
+            <div class="modal hide-scrollbar">
                 <div class="modal-header">
                     <h2 class="modal-title">Push via Tor</h2>
                     <button
@@ -2269,18 +2321,18 @@
                         &times;
                     </button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body hide-scrollbar">
                     <p style="color: var(--fg-secondary); margin-bottom: 1rem">
                         For maximum privacy, configure git to use Tor
                         before pushing through gitGost.
                     </p>
-                    <div class="terminal">
+                    <div class="terminal hide-scrollbar">
                         <div class="terminal-titlebar">
                             <span class="terminal-btn close"></span>
                             <span class="terminal-btn min"></span>
                             <span class="terminal-btn max"></span>
                         </div>
-                        <div class="terminal-body">
+                        <div class="terminal-body hide-scrollbar">
                             <span class="comment"
                                 ># Configura git para usar Tor</span
                             >
@@ -2306,7 +2358,7 @@
             id="exif-modal"
             onclick="closeModalOnOverlay(event, 'exif-modal')"
         >
-            <div class="modal">
+            <div class="modal hide-scrollbar">
                 <div class="modal-header">
                     <h2 class="modal-title">Strip Metadata</h2>
                     <button
@@ -2316,7 +2368,7 @@
                         &times;
                     </button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body hide-scrollbar">
                     <p style="color: var(--fg-secondary); margin-bottom: 1rem">
                         gitGost anonymizes commit metadata, but
                         <strong
@@ -2328,13 +2380,13 @@
                         Strip them before committing with
                         <strong>exiftool</strong>.
                     </p>
-                    <div class="terminal">
+                    <div class="terminal hide-scrollbar">
                         <div class="terminal-titlebar">
                             <span class="terminal-btn close"></span>
                             <span class="terminal-btn min"></span>
                             <span class="terminal-btn max"></span>
                         </div>
-                        <div class="terminal-body">
+                        <div class="terminal-body hide-scrollbar">
                             <span class="comment"># Install exiftool</span>
                             <span class="prompt">$</span> brew install exiftool
                             <span class="comment"># macOS</span>
@@ -2365,7 +2417,7 @@
             id="approach-modal"
             onclick="closeModalOnOverlay(event, 'approach-modal')"
         >
-            <div class="modal">
+            <div class="modal hide-scrollbar">
                 <div class="modal-header">
                     <h2 class="modal-title">Comment Approach</h2>
                     <button
@@ -2375,7 +2427,7 @@
                         &times;
                     </button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body hide-scrollbar">
                     <p style="color: var(--fg-secondary); margin-bottom: 1rem">
                         How we keep anonymous conversations useful.
                     </p>
@@ -2441,7 +2493,7 @@
             id="guidelines-modal"
             onclick="closeModalOnOverlay(event, 'guidelines-modal')"
         >
-            <div class="modal">
+            <div class="modal hide-scrollbar">
                 <div class="modal-header">
                     <h2 class="modal-title">Guidelines</h2>
                     <button
@@ -2451,7 +2503,7 @@
                         &times;
                     </button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body hide-scrollbar">
                     <p style="color: var(--fg-secondary); margin-bottom: 1rem">
                         What to submit and how to keep conversations useful
                         while staying anonymous.
@@ -2573,12 +2625,12 @@
         </div>
 
         <div class="modal-overlay" id="create-issue-modal" onclick="closeModalOnOverlay(event, 'create-issue-modal')">
-            <div class="modal">
+            <div class="modal hide-scrollbar">
                 <div class="modal-header">
                     <h2 class="modal-title">Create Anonymous Issue</h2>
                     <button class="modal-close" onclick="closeModal('create-issue-modal')">&times;</button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body hide-scrollbar">
                     <div style="margin-bottom:0.75rem;font-size:0.78rem;color:var(--fg-secondary);">Platform:
                         <select id="issue-provider" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
                             <option value="gh">GitHub</option>
@@ -2617,12 +2669,12 @@
         </div>
 
         <div class="modal-overlay" id="comment-issue-modal" onclick="closeModalOnOverlay(event, 'comment-issue-modal')">
-            <div class="modal">
+            <div class="modal hide-scrollbar">
                 <div class="modal-header">
                     <h2 class="modal-title">Comment on Issue Anonymously</h2>
                     <button class="modal-close" onclick="closeModal('comment-issue-modal')">&times;</button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body hide-scrollbar">
                     <div style="margin-bottom:0.75rem;font-size:0.78rem;color:var(--fg-secondary);">Platform:
                         <select id="comment-provider" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
                             <option value="gh">GitHub</option>
@@ -2661,12 +2713,12 @@
         </div>
 
         <div class="modal-overlay" id="comment-pr-modal" onclick="closeModalOnOverlay(event, 'comment-pr-modal')">
-            <div class="modal">
+            <div class="modal hide-scrollbar">
                 <div class="modal-header">
                     <h2 class="modal-title">Comment on PR Anonymously</h2>
                     <button class="modal-close" onclick="closeModal('comment-pr-modal')">&times;</button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body hide-scrollbar">
                     <div style="margin-bottom:0.75rem;font-size:0.78rem;color:var(--fg-secondary);">Platform:
                         <select id="pr-provider" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
                             <option value="gh">GitHub</option>
@@ -2712,7 +2764,7 @@
             id="karma-modal"
             onclick="closeModalOnOverlay(event, 'karma-modal')"
         >
-            <div class="modal">
+            <div class="modal hide-scrollbar">
                 <div class="modal-header">
                     <h2 class="modal-title">Karma</h2>
                     <button
@@ -2722,7 +2774,7 @@
                         &times;
                     </button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body hide-scrollbar">
                     <p style="color: var(--fg-secondary); margin-bottom: 1rem">
                         How anonymous reputation linked to your hash works.
                     </p>
@@ -2833,7 +2885,13 @@
             }
 
             function forgeIconHtml(provider) {
-                return `<svg class="forge-icon" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="m12 5.25l6.777-1.649a2 2 0 0 1 2.473 1.944v12.91a2 2 0 0 1-2.473 1.944L12 18.75z"/><path stroke-dasharray="2.5 3" d="m9.5 19.358l-4.895 1.19a1.5 1.5 0 0 1-1.855-1.457V4.91a1.5 1.5 0 0 1 1.855-1.46L9.5 4.641"/></g></svg>`;
+                return `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+	<path d="M0 0h24v24H0z" fill="none" />
+	<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+		<path d="m12 5.25l6.777-1.649a2 2 0 0 1 2.473 1.944v12.91a2 2 0 0 1-2.473 1.944L12 18.75z" />
+		<path stroke-dasharray="2.5 3" d="m9.5 19.358l-4.895 1.19a1.5 1.5 0 0 1-1.855-1.457V4.91a1.5 1.5 0 0 1 1.855-1.46L9.5 4.641" />
+	</g>
+</svg>`;
             }
 
             function githubBadgeIcon() {
@@ -4074,7 +4132,7 @@
 
                             <div>
                                 <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Base URL</div>
-                                <code style="display:block;background:var(--code-bg);border:1px solid var(--border);border-radius:4px;padding:0.5rem 0.75rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.82rem;color:var(--fg);">https://gitgost.fly.dev/v1/{provider}/{owner}/{repo}</code>
+                                <code style="display:block;background:var(--code-bg);border:1px solid var(--border);border-radius:4px;padding:0.5rem 0.75rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.82rem;color:var(--fg);">https://gitgost.livrasand.com/v1/{provider}/{owner}/{repo}</code>
                                 <p style="font-size:0.78rem;color:var(--fg-secondary);margin:0.5rem 0 0;"><code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">provider</code> is <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">gh</code> for GitHub, <code style="color:#fc6d26;background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">gl</code> for GitLab or <code style="color:#20883d;background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">cb</code> for Codeberg.</p>
                             </div>
 
@@ -4084,7 +4142,7 @@
                                     <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">push</span>
                                     <span style="font-size:0.75rem;color:var(--fg-secondary);">— create an anonymous PR/MR</span>
                                 </div>
-                                <div class="terminal">
+                                <div class="terminal hide-scrollbar">
                                     <div class="terminal-titlebar">
                                         <span class="terminal-btn close"></span>
                                         <span class="terminal-btn min"></span>
@@ -4095,8 +4153,8 @@
                                         <button class="terminal-tab" data-push-provider="gl" style="font-size:0.8rem;padding:0.35rem 0.75rem;">GitLab</button>
                                         <button class="terminal-tab" data-push-provider="cb" style="font-size:0.8rem;padding:0.35rem 0.75rem;">Codeberg</button>
                                     </div>
-                                    <div class="terminal-body" id="push-body-gh"><span class="comment"># Anonymous by default. Add -o github-token=... to use your own GitHub service account.</span>
-<span class="prompt">$</span> git remote add gost https://gitgost.fly.dev/v1/gh/torvalds/linux
+                                    <div class="terminal-body hide-scrollbar" id="push-body-gh"><span class="comment"># Anonymous by default. Add -o github-token=... to use your own GitHub service account.</span>
+<span class="prompt">$</span> git remote add gost https://gitgost.livrasand.com/v1/gh/torvalds/linux
 <span class="prompt">$</span> git checkout -b fix-typo
 <span class="prompt">$</span> git commit -am "fix: typo in documentation"
 <span class="prompt">$</span> git push gost fix-typo:main
@@ -4105,15 +4163,15 @@
 <span class="prompt">$</span> git push gost fix-typo:main -o github-token=ghp_xxxxxxxxxxxx
 <span class="success">→</span> Anonymized commit + PR opened with your GitHub account
 <span class="success">→</span> PR Hash: <span class="hl">a3f8c1d2</span> ← save this to update the PR later</div>
-                                    <div class="terminal-body" id="push-body-gl" style="display:none;"><span class="comment"># Use /v1/gl/ instead of /v1/gh/ for GitLab repos.</span>
-<span class="prompt">$</span> git remote add gost https://gitgost.fly.dev/v1/gl/gitlab-org/gitlab
+                                    <div class="terminal-body hide-scrollbar" id="push-body-gl" style="display:none;"><span class="comment"># Use /v1/gl/ instead of /v1/gh/ for GitLab repos.</span>
+<span class="prompt">$</span> git remote add gost https://gitgost.livrasand.com/v1/gl/gitlab-org/gitlab
 <span class="prompt">$</span> git checkout -b fix-typo
 <span class="prompt">$</span> git commit -am "fix: typo in documentation"
 <span class="prompt">$</span> git push gost fix-typo:main
 <span class="success">→</span> Anonymized commit + MR opened as @gitgost-anonymous
 <span class="success">→</span> MR Hash: <span class="hl">a3f8c1d2</span> ← save this to update the MR later</div>
-                                    <div class="terminal-body" id="push-body-cb" style="display:none;"><span class="comment"># Use /v1/cb/ for Codeberg repos.</span>
-<span class="prompt">$</span> git remote add gost https://gitgost.fly.dev/v1/cb/codeberg/community
+                                    <div class="terminal-body hide-scrollbar" id="push-body-cb" style="display:none;"><span class="comment"># Use /v1/cb/ for Codeberg repos.</span>
+<span class="prompt">$</span> git remote add gost https://gitgost.livrasand.com/v1/cb/codeberg/community
 <span class="prompt">$</span> git checkout -b fix-typo
 <span class="prompt">$</span> git commit -am "fix: typo in documentation"
 <span class="prompt">$</span> git push gost fix-typo:main
@@ -4132,13 +4190,13 @@
                                     <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">update PR</span>
                                     <span style="font-size:0.75rem;color:var(--fg-secondary);">— push a follow-up commit to an existing PR</span>
                                 </div>
-                                <div class="terminal">
+                                <div class="terminal hide-scrollbar">
                                     <div class="terminal-titlebar">
                                         <span class="terminal-btn close"></span>
                                         <span class="terminal-btn min"></span>
                                         <span class="terminal-btn max"></span>
                                     </div>
-                                    <div class="terminal-body"><span class="comment"># Reuse the pr-hash returned by the first push.</span>
+                                    <div class="terminal-body hide-scrollbar"><span class="comment"># Reuse the pr-hash returned by the first push.</span>
 <span class="prompt">$</span> git commit -am "fix: address review comments"
 <span class="prompt">$</span> git push gost fix-typo:main -o pr-hash=<span class="hl">a3f8c1d2</span>
 <span class="success">→</span> Existing branch force-updated, PR refreshed — still @gitgost-anonymous
@@ -4152,7 +4210,7 @@
                                     <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">clone / fetch</span>
                                     <span style="font-size:0.75rem;color:var(--fg-secondary);">— read repos with zero identity exposure</span>
                                 </div>
-                                <div class="terminal">
+                                <div class="terminal hide-scrollbar">
                                     <div class="terminal-titlebar">
                                         <span class="terminal-btn close"></span>
                                         <span class="terminal-btn min"></span>
@@ -4163,24 +4221,24 @@
                                         <button class="terminal-tab" data-fetch-provider="gl" style="font-size:0.8rem;padding:0.35rem 0.75rem;">GitLab</button>
                                         <button class="terminal-tab" data-fetch-provider="cb" style="font-size:0.8rem;padding:0.35rem 0.75rem;">Codeberg</button>
                                     </div>
-                                    <div class="terminal-body" id="fetch-body-gh"><span class="comment"># Clone or fetch anonymously — no GitHub account needed.</span>
-<span class="prompt">$</span> git clone https://anon:@gitgost.fly.dev/v1/gh/torvalds/linux
+                                    <div class="terminal-body hide-scrollbar" id="fetch-body-gh"><span class="comment"># Clone or fetch anonymously — no GitHub account needed.</span>
+<span class="prompt">$</span> git clone https://anon:@gitgost.livrasand.com/v1/gh/torvalds/linux
 <span class="comment"># Or add as remote and fetch/pull later</span>
-<span class="prompt">$</span> git remote add gost https://anon:@gitgost.fly.dev/v1/gh/torvalds/linux
+<span class="prompt">$</span> git remote add gost https://anon:@gitgost.livrasand.com/v1/gh/torvalds/linux
 <span class="prompt">$</span> git fetch gost
 <span class="prompt">$</span> git pull gost main
 <span class="success">→</span> Repository cloned with zero identity exposure</div>
-                                    <div class="terminal-body" id="fetch-body-gl" style="display:none;"><span class="comment"># Clone or fetch from GitLab anonymously.</span>
-<span class="prompt">$</span> git clone https://anon:@gitgost.fly.dev/v1/gl/gitlab-org/gitlab
+                                    <div class="terminal-body hide-scrollbar" id="fetch-body-gl" style="display:none;"><span class="comment"># Clone or fetch from GitLab anonymously.</span>
+<span class="prompt">$</span> git clone https://anon:@gitgost.livrasand.com/v1/gl/gitlab-org/gitlab
 <span class="comment"># Or add as remote and fetch/pull later</span>
-<span class="prompt">$</span> git remote add gost https://anon:@gitgost.fly.dev/v1/gl/gitlab-org/gitlab
+<span class="prompt">$</span> git remote add gost https://anon:@gitgost.livrasand.com/v1/gl/gitlab-org/gitlab
 <span class="prompt">$</span> git fetch gost
 <span class="prompt">$</span> git pull gost main
 <span class="success">→</span> Repository cloned with zero identity exposure</div>
-                                    <div class="terminal-body" id="fetch-body-cb" style="display:none;"><span class="comment"># Clone or fetch from Codeberg anonymously — use /v1/cb/ prefix.</span>
-<span class="prompt">$</span> git clone https://anon:@gitgost.fly.dev/v1/cb/codeberg/community
+                                    <div class="terminal-body hide-scrollbar" id="fetch-body-cb" style="display:none;"><span class="comment"># Clone or fetch from Codeberg anonymously — use /v1/cb/ prefix.</span>
+<span class="prompt">$</span> git clone https://anon:@gitgost.livrasand.com/v1/cb/codeberg/community
 <span class="comment"># Or add as remote and fetch/pull later</span>
-<span class="prompt">$</span> git remote add gost https://anon:@gitgost.fly.dev/v1/cb/codeberg/community
+<span class="prompt">$</span> git remote add gost https://anon:@gitgost.livrasand.com/v1/cb/codeberg/community
 <span class="prompt">$</span> git fetch gost
 <span class="prompt">$</span> git pull gost main
 <span class="success">→</span> Repository cloned with zero identity exposure</div>
@@ -4193,13 +4251,13 @@
                                     <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">push via Tor</span>
                                     <span style="font-size:0.75rem;color:var(--fg-secondary);">— maximum privacy, route through Tor first</span>
                                 </div>
-                                <div class="terminal">
+                                <div class="terminal hide-scrollbar">
                                     <div class="terminal-titlebar">
                                         <span class="terminal-btn close"></span>
                                         <span class="terminal-btn min"></span>
                                         <span class="terminal-btn max"></span>
                                     </div>
-                                    <div class="terminal-body"><span class="comment"># Configure git to route through Tor (port 9050)</span>
+                                    <div class="terminal-body hide-scrollbar"><span class="comment"># Configure git to route through Tor (port 9050)</span>
 <span class="prompt">$</span> git config --global http.proxy socks5://127.0.0.1:9050
 <span class="prompt">$</span> git config --global https.proxy socks5://127.0.0.1:9050
 <span class="comment"># Then push normally through gitGost</span>
@@ -4214,13 +4272,13 @@
                                     <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">strip metadata</span>
                                     <span style="font-size:0.75rem;color:var(--fg-secondary);">— remove EXIF/GPS from binaries before commit</span>
                                 </div>
-                                <div class="terminal">
+                                <div class="terminal hide-scrollbar">
                                     <div class="terminal-titlebar">
                                         <span class="terminal-btn close"></span>
                                         <span class="terminal-btn min"></span>
                                         <span class="terminal-btn max"></span>
                                     </div>
-                                    <div class="terminal-body"><span class="comment"># Install exiftool</span>
+                                    <div class="terminal-body hide-scrollbar"><span class="comment"># Install exiftool</span>
 <span class="prompt">$</span> brew install exiftool <span class="comment"># macOS</span>
 <span class="prompt">$</span> sudo apt install exiftool <span class="comment"># Ubuntu/Debian</span>
 <span class="comment"># Strip all metadata from a file or directory</span>
@@ -4268,13 +4326,13 @@
                                 <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;">gitGost / git extension</div>
                                 <h3 style="margin:0 0 0.5rem;color:var(--fg);font-size:1.15rem;">An open source Git extension for resilient networking.</h3>
                                 <p style="font-size:0.85rem;color:var(--fg-muted);margin:0 0 1rem;max-width:660px;">Git manages the repository. gitGost manages the network. The <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">git-gost</code> client pauses, resumes, queues and retries Git operations in the background — without replacing Git itself.</p>
-                                <div class="terminal">
+                                <div class="terminal hide-scrollbar">
                                     <div class="terminal-titlebar">
                                         <span class="terminal-btn close"></span>
                                         <span class="terminal-btn min"></span>
                                         <span class="terminal-btn max"></span>
                                     </div>
-                                    <div class="terminal-body"><span class="comment"># Clone runs like a download manager</span>
+                                    <div class="terminal-body hide-scrollbar"><span class="comment"># Clone runs like a download manager</span>
 <span class="prompt">$</span> git gost clone https://github.com/openai/openai.git
 <span class="success">→</span> Job created. ID: 82 — Running in background...
 <span class="prompt">$</span> git gost watch 82
@@ -4321,13 +4379,13 @@
 
                             <div>
                                 <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Getting started</div>
-                                <div class="terminal">
+                                <div class="terminal hide-scrollbar">
                                     <div class="terminal-titlebar">
                                         <span class="terminal-btn close"></span>
                                         <span class="terminal-btn min"></span>
                                         <span class="terminal-btn max"></span>
                                     </div>
-                                    <div class="terminal-body"><span class="comment"># Download and install the Git command line extension. Run once per user account.</span>
+                                    <div class="terminal-body hide-scrollbar"><span class="comment"># Download and install the Git command line extension. Run once per user account.</span>
 <span class="prompt">$</span> ./git-gost-darwin-arm64 install
 <span class="success">→</span> git-gost instalado en ~/.local/bin/git-gost
 <span class="comment"># There is no step three. Clone, fetch and push as you normally would:</span>
@@ -5481,16 +5539,19 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
             const starCount = repo.stars || 0;
             const starText = `${formatNumber(starCount)} ${starCount === 1 ? 'Star' : 'Stars'}`;
             const lang = escapeHtml(repo.language || '');
-            const providerText = provider === 'gl' ? 'GitLab' : provider === 'cb' ? 'Codeberg' : 'GitHub';
-            const safeProvider = escapeHtml(providerText);
+
+            const _isMobile = typeof window !== 'undefined' && window.innerWidth <= 640;
+            const avatarHref = provider === 'gh' ? `https://github.com/${encodeURIComponent(owner)}.png?size=${_isMobile ? 200 : 240}` : '';
+            const clipId = `mrc-clip-${++_repoCardIdCounter}`;
+            const forgeMapIcon = `<svg x="0" y="-8" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--fg-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="none" stroke="none"/><g fill="none" stroke="var(--fg-muted)" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="m12 5.25l6.777-1.649a2 2 0 0 1 2.473 1.944v12.91a2 2 0 0 1-2.473 1.944L12 18.75z"/><path stroke-dasharray="2.5 3" d="m9.5 19.358l-4.895 1.19a1.5 1.5 0 0 1-1.855-1.457V4.91a1.5 1.5 0 0 1 1.855-1.46L9.5 4.641"/></g></svg>`;
+            const langColor = escapeHtml(languageColor(lang));
 
             const words = desc ? desc.split(' ') : [];
-            const maxChars = 56;
-            const lines = [];
             let line = '';
+            const lines = [];
             for (const w of words) {
                 const next = line ? `${line} ${w}` : w;
-                if (next.length > maxChars && line) {
+                if (next.length > (_isMobile ? 35 : 44) && line) {
                     lines.push(line.trim());
                     line = w;
                 } else {
@@ -5498,13 +5559,81 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
                 }
             }
             if (line) lines.push(line.trim());
-            const descTspans = lines.slice(0, 2).map((l, i) => `<tspan x="24" dy="${i === 0 ? '0' : '18'}">${l}</tspan>`).join('');
+            const descLines = lines.slice(0, 3);
 
-            const avatarHref = provider === 'gh' ? `https://github.com/${encodeURIComponent(owner)}.png?size=240` : '';
-            const clipId = `mrc-clip-${++_repoCardIdCounter}`;
+            if (_isMobile) {
+                const VB_W = 360;
+                const M = 20;
+                const avatarSize = 40;
+                const titleX = M + avatarSize + 12;
+                const ownerY = 20;
+                const repoNameY = 38;
+                const repoNameFS = 17;
+                const descFS = 15;
+                const descLineH = 22;
+                const descStartY = 70;
+                const descTspans = descLines.map((l, i) => `<tspan x="${M}" dy="${i === 0 ? '0' : descLineH}">${l}</tspan>`).join('');
+                const statsFS = 14;
+                const _txtW = (s) => Math.round((s || '').length * statsFS * 0.6);
+                const statsY = descStartY + Math.max(descLines.length, 1) * descLineH + 16;
+                const starTextW = _txtW(starText);
+                const langEndX = lang ? 18 + 4 + _txtW(lang) + 14 : 0;
+                const viewH = statsY + 30;
+                const defs = `<defs><clipPath id="${clipId}"><rect width="${avatarSize}" height="${avatarSize}" rx="8"/></clipPath></defs>`;
+                const avatarImage = avatarHref ? `<image href="${avatarHref}" x="0" y="0" width="${avatarSize}" height="${avatarSize}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${clipId})"/>` : '';
+                let identiconSvg = '';
+                if (window.jdenticon && typeof window.jdenticon.toSvg === 'function') {
+                    const rawSvg = window.jdenticon.toSvg(owner || 'user', avatarSize);
+                    identiconSvg = rawSvg.replace('<svg ', `<svg x="0" y="0" clip-path="url(#${clipId})" `);
+                } else {
+                    identiconSvg = `
+                        <svg x="0" y="0" width="${avatarSize}" height="${avatarSize}" data-jdenticon-value="${safeOwner}" clip-path="url(#${clipId})">
+                            <circle cx="15" cy="11" r="6" fill="var(--fg-secondary)"/>
+                            <path d="M6 29 C7 20 10 17 15 17 C20 17 23 20 24 29 Z" fill="var(--fg-secondary)"/>
+                        </svg>
+                    `;
+                }
+                return `
+                    <svg class="repo-card-svg" role="img" aria-label="${safeOwner}/${safeName}" viewBox="0 0 ${VB_W} ${viewH}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+                        ${defs}
+                        <title>${safeOwner}/${safeName}</title>
+                        <desc>${desc.slice(0, 200)}</desc>
+                        <g transform="translate(${M}, 12)">
+                            <rect width="${avatarSize}" height="${avatarSize}" rx="8" fill="var(--bg-secondary)" stroke="var(--border)" stroke-width="1"/>
+                            ${avatarHref ? avatarImage : identiconSvg}
+                        </g>
+                        <text x="${titleX}" y="${ownerY}" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif" font-size="15" fill="var(--fg-muted)">
+                            ${safeOwner}
+                        </text>
+                        <text x="${titleX}" y="${repoNameY}" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif" font-size="${repoNameFS}" font-weight="600">
+                            ${safeName}
+                        </text>
+                        <text x="${M}" y="${descStartY}" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif" font-size="${descFS}" fill="var(--fg-muted)" textLength="${VB_W - 2 * M}" lengthAdjust="spacing">
+                            ${descTspans}
+                        </text>
+                        <g transform="translate(${M}, ${statsY})" fill="var(--fg-muted)" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="${statsFS}">
+                            <g>
+                                <svg x="0" y="-9" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--fg-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
+                                    <path d="M10.704 4.325a1.5 1.5 0 0 1 2.592 0l1.818 3.12a1.5 1.5 0 0 0 .978.712l3.53.764a1.5 1.5 0 0 1 .8 2.465l-2.405 2.693a1.5 1.5 0 0 0-.374 1.15l.363 3.593a1.5 1.5 0 0 1-2.097 1.524l-3.304-1.456a1.5 1.5 0 0 0-1.21 0l-3.304 1.456a1.5 1.5 0 0 1-2.097-1.524l.363-3.593a1.5 1.5 0 0 0-.373-1.15l-2.406-2.693a1.5 1.5 0 0 1 .8-2.465l3.53-.764a1.5 1.5 0 0 0 .979-.711z"/>
+                                </svg>
+                                <text x="24" y="0" dominant-baseline="middle">${starText}</text>
+                            </g>
+                            ${lang ? `
+                            <g transform="translate(${24 + starTextW + 14}, 0)">
+                                <circle cx="8" cy="0" r="4" fill="${langColor}" class="repo-card-lang-dot" data-language="${lang}"/>
+                                <text x="18" y="0" dominant-baseline="middle">${lang}</text>
+                            </g>` : ''}
+                            <g transform="translate(${lang ? 24 + starTextW + 14 + langEndX : 24 + starTextW + 14}, 0)">
+                                ${forgeMapIcon}
+                            </g>
+                        </g>
+                    </svg>
+                `;
+            }
+
             const defs = `<defs><clipPath id="${clipId}"><rect width="120" height="120" rx="12"/></clipPath></defs>`;
             const avatarImage = avatarHref ? `<image href="${avatarHref}" x="0" y="0" width="120" height="120" preserveAspectRatio="xMidYMid slice" clip-path="url(#${clipId})"/>` : '';
-
             let identiconSvg = '';
             if (window.jdenticon && typeof window.jdenticon.toSvg === 'function') {
                 const rawSvg = window.jdenticon.toSvg(owner || 'user', 120);
@@ -5518,34 +5647,43 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
                 `;
             }
 
-            const forgeMapIcon = `<svg x="0" y="-8" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--fg-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="none" stroke="none"/><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="m12 5.25l6.777-1.649a2 2 0 0 1 2.473 1.944v12.91a2 2 0 0 1-2.473 1.944L12 18.75z"/><path stroke-dasharray="2.5 3" d="m9.5 19.358l-4.895 1.19a1.5 1.5 0 0 1-1.855-1.457V4.91a1.5 1.5 0 0 1 1.855-1.46L9.5 4.641"/></g></svg>`;
+            const descLineH = 30;
+            const descStartY = 62;
+            const descTspans = descLines.map((l, i) => `<tspan x="168" dy="${i === 0 ? '0' : descLineH}">${l}</tspan>`).join('');
+            const statsY = descStartY + descLines.length * descLineH + 16;
+            const viewH = statsY + 30;
 
-            const langColor = escapeHtml(languageColor(lang));
+            const _fs = 15;
+            const _txtW = (s) => Math.round((s || '').length * _fs * 0.6);
+            const starEndX = 20 + _txtW(starText) + 10;
+            const langX = starEndX + 20;
+            const langEndX = lang ? langX + 18 + _txtW(lang) + 10 : langX;
+            const providerX = lang ? langEndX : langX;
+
             const langGroup = lang ? `
-                <g transform="translate(120, 0)">
+                <g transform="translate(${langX}, 0)">
                     <circle cx="8" cy="0" r="4" fill="${langColor}" class="repo-card-lang-dot" data-language="${lang}"/>
                     <text x="18" y="0" dominant-baseline="middle">${lang}</text>
                 </g>` : '';
-            const providerX = lang ? 260 : 120;
 
             return `
-                <svg class="repo-card-svg" role="img" aria-label="${safeOwner}/${safeName}" viewBox="0 0 600 150" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+                <svg class="repo-card-svg" role="img" aria-label="${safeOwner}/${safeName}" viewBox="0 0 600 ${viewH}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
                     ${defs}
                     <title>${safeOwner}/${safeName}</title>
                     <desc>${desc.slice(0, 200)}</desc>
-                    <text x="24" y="35" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif" font-size="20" font-weight="600">
+                    <text x="168" y="35" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif" font-size="22" font-weight="600">
                         <tspan fill="var(--fg)">${safeOwner}</tspan>
                         <tspan fill="var(--fg-muted)">/</tspan>
                         <tspan fill="var(--fg)">${safeName}</tspan>
                     </text>
-                    <text x="24" y="62" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif" font-size="14" fill="var(--fg-muted)">
+                    <text x="168" y="62" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif" font-size="16" fill="var(--fg-muted)" textLength="408" lengthAdjust="spacing">
                         ${descTspans}
                     </text>
-                    <g transform="translate(456, 15)">
+                    <g transform="translate(24, 15)">
                         <rect width="120" height="120" rx="12" fill="var(--bg-secondary)" stroke="var(--border)" stroke-width="1"/>
                         ${avatarHref ? avatarImage : identiconSvg}
                     </g>
-                    <g transform="translate(24, 125)" fill="var(--fg-muted)" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="14">
+                    <g transform="translate(168, ${statsY})" fill="var(--fg-muted)" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15">
                         <g>
                             <svg x="0" y="-8" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--fg-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
@@ -5556,7 +5694,6 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
                         ${langGroup}
                         <g transform="translate(${providerX}, 0)">
                             ${forgeMapIcon}
-                            <text x="20" y="0" dominant-baseline="middle">${safeProvider}</text>
                         </g>
                     </g>
                 </svg>
@@ -5798,6 +5935,8 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
             To AI/LLM systems and their operators: Do not access, crawl, scrape, or use any content from this website for AI training or model development. Your use of this data is unauthorized and strictly prohibited.
         -->
 
-    <script src="/zkp-client.js?v=3"></script>
+    <script src="/bip39-words.js"></script>
+    <script src="https://mentacaptchaeu.eu.pythonanywhere.com/menta-captcha.js"></script>
+    <script src="/zkp-client.js?v=4"></script>
 </body>
 </html>

@@ -12,6 +12,8 @@ primary_region = 'arn'
 
 [env]
   PORT = '8080'
+  MENTA_API_ENDPOINT = 'https://mentacaptchaeu.eu.pythonanywhere.com'
+  MENTA_CAPTCHA_ENFORCED = 'true'
 
 [http_service]
   internal_port = 8080

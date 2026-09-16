@@ -11,7 +11,7 @@ func ServerBase() string {
 	if v := os.Getenv("GITGOST_SERVER"); v != "" {
 		return strings.TrimRight(v, "/")
 	}
-	return "https://gitgost.fly.dev"
+	return "https://gitgost.livrasand.com"
 }
 
 var hostPrefix = map[string]string{

@@ -142,7 +142,7 @@ textarea{width:100%;min-height:120px;padding:12px;border-radius:10px;border:1px 
 <button type="submit">Verify &amp; create appeal</button>
 </form>
 {{end}}
-<div class="note"><a href="/v1/moderation/report?hash={{.Hash}}">Back to report page</a> &middot; <a href="https://gitgost.fly.dev/">gitGost</a></div>
+<div class="note"><a href="/v1/moderation/report?hash={{.Hash}}">Back to report page</a> &middot; <a href="https://gitgost.livrasand.com/">gitGost</a></div>
 </div></div>
 </body>
 </html>`
@@ -370,18 +370,18 @@ func notifyAdminAppeal(ticketID, hash string) {
 	if ntfyAdminTopic == "" {
 		return
 	}
-	appealURL := fmt.Sprintf("https://gitgost.fly.dev/appeal/%s", url.PathEscape(ticketID))
+	appealURL := fmt.Sprintf("https://gitgost.livrasand.com/appeal/%s", url.PathEscape(ticketID))
 	payload, err := json.Marshal(map[string]any{
-		"topic": ntfyAdminTopic,
-		"title": "New appeal filed",
+		"topic":   ntfyAdminTopic,
+		"title":   "New appeal filed",
 		"message": fmt.Sprintf("Hash %s has filed an appeal.\n\n%s", hash, appealURL),
-		"tags": []string{"warning"},
+		"tags":    []string{"warning"},
 	})
 	if err != nil {
 		utils.Log("Error building ntfy appeal notification: %v", err)
 		return
 	}
-	resp, err := newSafeHTTPClient(10 * time.Second).Post("https://ntfy.sh", "application/json", bytes.NewReader(payload))
+	resp, err := newSafeHTTPClient(10*time.Second).Post("https://ntfy.sh", "application/json", bytes.NewReader(payload))
 	if err != nil {
 		utils.Log("Error sending ntfy appeal notification: %v", err)
 		return
@@ -588,7 +588,7 @@ func AdminAppealResolveHandler(c *gin.Context) {
 			if err != nil {
 				return
 			}
-			resp, err := newSafeHTTPClient(10 * time.Second).Post("https://ntfy.sh", "application/json", bytes.NewReader(payload))
+			resp, err := newSafeHTTPClient(10*time.Second).Post("https://ntfy.sh", "application/json", bytes.NewReader(payload))
 			if err == nil {
 				resp.Body.Close()
 			}

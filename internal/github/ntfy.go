@@ -48,7 +48,7 @@ func NtfyServiceURL() string {
 	if u := os.Getenv("SERVICE_URL"); u != "" {
 		return u
 	}
-	return "https://gitgost.fly.dev"
+	return "https://gitgost.livrasand.com"
 }
 
 // NtfyToken devuelve un token opcional (NTFY_TOKEN) para autenticar las

@@ -73,7 +73,7 @@ func serverBase() string {
 	if v := os.Getenv("GITGOST_SERVER"); v != "" {
 		return strings.TrimRight(v, "/")
 	}
-	return "https://gitgost.fly.dev"
+	return "https://gitgost.livrasand.com"
 }
 
 // runCloneBundle ejecuta el flujo de Fase 2: job remoto en el servidor,

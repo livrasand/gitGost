@@ -220,6 +220,79 @@
     return new Uint8Array(hash);
   }
 
+  /* ── BIP39 recovery phrase (12 words, 128-bit entropy) ─────────── */
+  function bytesToBits(bytes) {
+    let bits = '';
+    for (let i = 0; i < bytes.length; i++) bits += bytes[i].toString(2).padStart(8, '0');
+    return bits;
+  }
+
+  function bitsToBytes(bits) {
+    const bytes = new Uint8Array(Math.ceil(bits.length / 8));
+    for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt((bits.substr(i * 8, 8) + '00000000').substr(0, 8), 2);
+    return bytes;
+  }
+
+  async function generateMnemonic() {
+    const words = window.GITGOST_BIP39_EN;
+    if (!words || !Array.isArray(words) || words.length !== 2048) throw new Error('BIP39 wordlist not loaded');
+    const entropy = new Uint8Array(16); // 128 bits
+    crypto.getRandomValues(entropy);
+    const hash = await sha256(entropy);
+    const bits = bytesToBits(entropy) + bytesToBits(hash).substr(0, 4); // 128 + 4 checksum = 132
+    const out = [];
+    for (let i = 0; i < 12; i++) out.push(words[parseInt(bits.substr(i * 11, 11), 2)]);
+    return out.join(' ');
+  }
+
+  async function validateMnemonic(phrase) {
+    const words = window.GITGOST_BIP39_EN;
+    if (!words || !Array.isArray(words) || words.length !== 2048) return false;
+    if (typeof phrase !== 'string') return false;
+    const list = phrase.trim().toLowerCase().split(/\s+/);
+    if (list.length !== 12) return false;
+    const indexMap = new Map();
+    for (let i = 0; i < words.length; i++) indexMap.set(words[i], i);
+    let bits = '';
+    for (const w of list) {
+      const idx = indexMap.get(w);
+      if (idx === undefined) return false;
+      bits += idx.toString(2).padStart(11, '0');
+    }
+    const entropyBits = bits.substr(0, 128);
+    const csBits = bits.substr(128, 4);
+    const hash = await sha256(bitsToBytes(entropyBits));
+    return bytesToBits(hash).substr(0, 4) === csBits;
+  }
+
+  /* ── PBKDF2-HMAC-SHA512 seed derivation ────────────────────────── */
+  async function pbkdf2Sha512(passwordStr, saltStr, iterations, keyLen) {
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(passwordStr),
+      'PBKDF2',
+      false,
+      ['deriveBits']
+    );
+    const bits = await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', hash: 'SHA-512', salt: new TextEncoder().encode(saltStr), iterations },
+      key,
+      keyLen * 8
+    );
+    return new Uint8Array(bits);
+  }
+
+  /* Recover a keypair from the phrase + identity.
+     salt = "mnemonic" + "gitgost:<identity>"; seed = PBKDF2-SHA512(phrase, salt, 2048, 64). */
+  async function phraseToKey(phrase, identity) {
+    const normalized = String(phrase).trim().toLowerCase();
+    const seed = await pbkdf2Sha512(normalized, 'mnemonicgitgost:' + identity, 2048, 64);
+    const privKey = 1n + (bytesToBigInt(seed.slice(0, 32)) % (N - 1n)); // in [1, N-1]
+    const pubKey = scalarMul(privKey, G);
+    if (!pubKey) throw new Error('degenerate key');
+    return { privateKey: privKey, publicKey: pubKey, publicKeyBytes: pointToBytes(pubKey) };
+  }
+
   /* ── Key generation ────────────────────────────────────────────── */
   function generateKey() {
     const privBytes = new Uint8Array(32);
@@ -265,11 +338,11 @@
   /* ── API Client ────────────────────────────────────────────────── */
   const API_BASE = window.GITGOST_API || '';
 
-  async function apiRegister(identity, publicKeyBase64url) {
+  async function apiRegister(identity, publicKeyBase64url, captchaToken, website) {
     const res = await fetch(API_BASE + '/api/zkp/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identity, public_key: publicKeyBase64url })
+      body: JSON.stringify({ identity, public_key: publicKeyBase64url, captcha_token: captchaToken || '', website: website || '' })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'registration failed');
@@ -434,12 +507,23 @@
 .command-statusbar .statusbar-command-menu a[hidden],.command-statusbar .statusbar-command-menu button[hidden]{display:none}
 .command-statusbar .statusbar-command-menu a:hover,.command-statusbar .statusbar-command-menu button:hover,.command-statusbar .statusbar-command-menu a:focus-visible,.command-statusbar .statusbar-command-menu button:focus-visible{background:var(--bg-hover,#ebebeb);outline:none}
 .command-statusbar .statusbar-command-menu-divider{height:1px;margin:.25rem 0;background:var(--border,#30363d)}
+.zkp-phrase{display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem;margin:.5rem 0}
+.zkp-phrase .zkp-word{display:flex;align-items:center;gap:.35rem;background:var(--bg-hover,#161b22);border:1px solid var(--border,#30363d);border-radius:4px;padding:.3rem .45rem;font-size:.72rem}
+.zkp-phrase .zkp-word i{font-style:normal;color:var(--fg-muted,#8b949e);min-width:1.1rem;text-align:right;font-size:.62rem}
+.zkp-field textarea{width:100%;box-sizing:border-box;background:var(--bg,#0d1117);color:var(--fg,#e6edf3);border:1px solid var(--border,#30363d);border-radius:4px;padding:.45rem .5rem;font-size:.78rem;font-family:inherit}
+.zkp-check{display:flex;align-items:center;gap:.45rem;margin:.65rem 0 .4rem;font-size:.72rem;color:var(--fg-muted,#8b949e);cursor:pointer}
+.zkp-check input{accent-color:var(--accent,#2da44e);cursor:pointer}
+.zkp-phrase-actions{display:flex;gap:.4rem;flex-wrap:wrap;margin:.4rem 0}
+.zkp-captcha{margin:.6rem 0}
+.zkp-reg-notice{font-size:.68rem;color:var(--fg-muted,#8b949e);margin:.4rem 0;line-height:1.45}
 `;
     const style = document.createElement('style');
     style.id = 'zkp-auth-styles';
     style.textContent = css;
     document.head.appendChild(style);
   }
+
+  let pendingReg = null;
 
   function createModal() {
     if (document.getElementById('zkp-overlay')) return;
@@ -456,15 +540,31 @@
   <div class="zkp-tabs">
     <button class="zkp-tab active" data-zkp-tab="register">register</button>
     <button class="zkp-tab" data-zkp-tab="login">login</button>
+    <button class="zkp-tab" data-zkp-tab="recover">recover</button>
   </div>
   <!-- Register -->
   <div class="zkp-tab-content" data-zkp-panel="register">
     <div class="zkp-field"><label>identity</label>
       <input type="text" id="zkp-reg-identity" placeholder="pick a username" maxlength="128" autocomplete="off" spellcheck="false">
     </div>
-    <p class="zkp-hint">generates a keypair stored locally in this browser. no password needed.</p>
+    <p class="zkp-hint">generates a 12-word recovery phrase and a keypair stored locally in this browser. no password needed — keep the phrase secret; it is the only way to log in again on a new device.</p>
     <button class="zkp-btn" id="zkp-reg-btn">generate &amp; register</button>
     <div class="zkp-status" id="zkp-reg-status"></div>
+    <div id="zkp-reg-phrase" style="display:none">
+      <p class="zkp-hint">your recovery phrase — write it down now, you will only see it once:</p>
+      <div class="zkp-phrase" id="zkp-reg-phrase-words"></div>
+      <div class="zkp-phrase-actions">
+        <button class="zkp-btn-ghost" id="zkp-reg-copy" type="button">copy phrase</button>
+        <button class="zkp-btn-ghost" id="zkp-reg-download" type="button">save as .txt</button>
+      </div>
+      <div class="zkp-captcha">
+        <menta-widget id="zkp-reg-captcha" data-cap-api-endpoint="${API_BASE || ''}/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+      </div>
+      <input type="text" id="zkp-reg-website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+      <label class="zkp-check"><input type="checkbox" id="zkp-reg-confirm"> I have stored my recovery phrase somewhere safe</label>
+      <p class="zkp-reg-notice">gitgost forge users only. registrations without a node are removed from the server after 7 days.</p>
+      <button class="zkp-btn" id="zkp-reg-continue" disabled>I understand — finish registration</button>
+    </div>
   </div>
   <!-- Login -->
   <div class="zkp-tab-content" data-zkp-panel="login" style="display:none">
@@ -475,6 +575,18 @@
     <div class="zkp-ids-list" id="zkp-ids-list"></div>
     <button class="zkp-btn" id="zkp-login-btn">authenticate</button>
     <div class="zkp-status" id="zkp-login-status"></div>
+  </div>
+  <!-- Recover -->
+  <div class="zkp-tab-content" data-zkp-panel="recover" style="display:none">
+    <div class="zkp-field"><label>identity</label>
+      <input type="text" id="zkp-rec-identity" placeholder="the identity you registered" maxlength="128" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="zkp-field"><label>12-word recovery phrase</label>
+      <textarea id="zkp-rec-phrase" rows="3" placeholder="abandon ability able about above absent …" autocomplete="off" spellcheck="false"></textarea>
+    </div>
+    <p class="zkp-hint">restores the keypair for this identity on this device so you can log in again.</p>
+    <button class="zkp-btn" id="zkp-rec-btn">restore &amp; authenticate</button>
+    <div class="zkp-status" id="zkp-recover-status"></div>
   </div>
   <!-- Session bar (shown when authed) -->
   <div class="zkp-session-bar" id="zkp-session-bar" style="display:none">
@@ -503,8 +615,17 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
     // Register
     overlay.querySelector('#zkp-reg-btn').addEventListener('click', doRegister);
+    // Register phrase step
+    overlay.querySelector('#zkp-reg-confirm').addEventListener('change', e => {
+      document.getElementById('zkp-reg-continue').disabled = !e.target.checked;
+    });
+    overlay.querySelector('#zkp-reg-continue').addEventListener('click', confirmRegPhrase);
+    overlay.querySelector('#zkp-reg-copy').addEventListener('click', copyRegPhrase);
+    overlay.querySelector('#zkp-reg-download').addEventListener('click', downloadRegPhrase);
     // Login
     overlay.querySelector('#zkp-login-btn').addEventListener('click', doLogin);
+    // Recover
+    overlay.querySelector('#zkp-rec-btn').addEventListener('click', doRecover);
     // Logout
     overlay.querySelector('#zkp-logout-btn').addEventListener('click', doLogout);
   }
@@ -513,6 +634,7 @@
     createModal();
     const overlay = document.getElementById('zkp-overlay');
     overlay.style.display = '';
+    if (pendingReg) showRegPhrase(pendingReg.mnemonic, pendingReg.identity);
     refreshSessionUI();
     refreshIdsList();
   }
@@ -546,7 +668,7 @@
       div.addEventListener('click', e => {
         if (e.target.dataset.del) {
           const target = e.target.dataset.del;
-          if (!window.confirm('Remove "' + target + '" from this browser? Its private key cannot be recovered and you will not be able to log in as this identity again.')) return;
+          if (!window.confirm('Remove "' + target + '" from this browser? Unless you saved its 12-word recovery phrase you will never be able to log in as this identity again.')) return;
           removeIdentity(target);
           refreshIdsList();
           return;
@@ -585,21 +707,152 @@
     if (identity.length > 128) return setStatus('reg', 'err', 'max 128 chars');
     const btn = document.getElementById('zkp-reg-btn');
     btn.disabled = true;
-    setStatus('reg', 'busy', 'generating keypair…');
+    setStatus('reg', 'busy', 'generating recovery phrase…');
     try {
-      const key = generateKey();
+      const mnemonic = await generateMnemonic();
+      const key = await phraseToKey(mnemonic, identity);
+      pendingReg = { identity, mnemonic, key };
+      setStatus('reg', '', '');
+      showRegPhrase(mnemonic, identity);
+    } catch (e) {
+      setStatus('reg', 'err', e.message || 'phrase generation failed');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function showRegPhrase(mnemonic, identity) {
+    const wordsEl = document.getElementById('zkp-reg-phrase-words');
+    if (wordsEl) wordsEl.innerHTML = mnemonic.split(' ').map((w, i) => `<div class="zkp-word"><i>${i + 1}</i><span>${escHtml(w)}</span></div>`).join('');
+    const identityInput = document.getElementById('zkp-reg-identity');
+    if (identityInput) identityInput.disabled = true;
+    const confirmEl = document.getElementById('zkp-reg-confirm');
+    if (confirmEl) confirmEl.checked = false;
+    const continueBtn = document.getElementById('zkp-reg-continue');
+    if (continueBtn) continueBtn.disabled = true;
+    if (identity) setStatus('reg', 'ok', 'phrase generated for "' + identity + '" — save it now');
+    const phraseEl = document.getElementById('zkp-reg-phrase');
+    if (phraseEl) phraseEl.style.display = '';
+  }
+
+  function hideRegPhrase() {
+    const identityInput = document.getElementById('zkp-reg-identity');
+    if (identityInput) identityInput.disabled = false;
+    const phraseEl = document.getElementById('zkp-reg-phrase');
+    if (phraseEl) phraseEl.style.display = 'none';
+    const confirmEl = document.getElementById('zkp-reg-confirm');
+    if (confirmEl) confirmEl.checked = false;
+    const continueBtn = document.getElementById('zkp-reg-continue');
+    if (continueBtn) continueBtn.disabled = true;
+    pendingReg = null;
+  }
+
+  async function confirmRegPhrase() {
+    if (!pendingReg) return;
+    const confirmEl = document.getElementById('zkp-reg-confirm');
+    if (!confirmEl || !confirmEl.checked) return;
+    const captchaToken = getRegCaptchaToken();
+    if (!captchaToken) {
+      setStatus('reg', 'err', 'please complete the captcha before finishing registration');
+      if (confirmEl) confirmEl.checked = false;
+      const continueBtn = document.getElementById('zkp-reg-continue');
+      if (continueBtn) continueBtn.disabled = true;
+      return;
+    }
+    const identity = pendingReg.identity;
+    const key = pendingReg.key;
+    const website = (document.getElementById('zkp-reg-website')?.value || '').trim();
+    const continueBtn = document.getElementById('zkp-reg-continue');
+    if (continueBtn) continueBtn.disabled = true;
+    setStatus('reg', 'busy', 'registering…');
+    try {
       const pubB64 = base64urlEncode(key.publicKeyBytes);
-      setStatus('reg', 'busy', 'registering…');
-      await apiRegister(identity, pubB64);
+      await apiRegister(identity, pubB64, captchaToken, website);
+      resetRegCaptcha();
       saveIdentity(identity, { priv: '0x' + key.privateKey.toString(16), pubB64 });
       setStatus('reg', 'busy', 'authenticating…');
       const verifyData = await authenticateIdentity(identity, { privateKey: key.privateKey, publicKeyBytes: key.publicKeyBytes });
       setSession(identity, verifyData.session_token);
       setStatus('reg', 'ok', 'registered & authenticated as ' + identity);
+      hideRegPhrase();
       refreshSessionUI();
       refreshIdsList();
     } catch (e) {
+      resetRegCaptcha();
       setStatus('reg', 'err', e.message || 'registration failed');
+      if (confirmEl) confirmEl.checked = false;
+      if (continueBtn) continueBtn.disabled = true;
+    }
+  }
+
+  async function copyRegPhrase() {
+    if (!pendingReg) return;
+    try {
+      await navigator.clipboard.writeText(pendingReg.mnemonic);
+      setStatus('reg', 'ok', 'phrase copied — paste it somewhere safe');
+    } catch (e) {
+      setStatus('reg', 'err', 'could not copy — write it down manually');
+    }
+  }
+
+  function getRegCaptchaToken() {
+    const w = document.getElementById('zkp-reg-captcha');
+    return w && w.token ? w.token : '';
+  }
+
+  async function resetRegCaptcha() {
+    const w = document.getElementById('zkp-reg-captcha');
+    if (w) {
+      w.token = null;
+      w.sessionId = null;
+      w.sessionSignature = null;
+      try { if (typeof w.render === 'function') await w.render(); } catch (e) { /* noop */ }
+      try { if (typeof w.initSession === 'function') await w.initSession(); } catch (e) { /* noop */ }
+    }
+    const websiteInput = document.getElementById('zkp-reg-website');
+    if (websiteInput) websiteInput.value = '';
+  }
+
+  function downloadRegPhrase() {
+    if (!pendingReg) return;
+    try {
+      const safeName = (pendingReg.identity || 'identity').replace(/[^a-zA-Z0-9._-]+/g, '_').slice(0, 64);
+      const blob = new Blob([pendingReg.mnemonic + '\n'], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'gitgost-recovery-' + safeName + '.txt';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setStatus('reg', 'ok', 'phrase saved to .txt — keep it offline');
+    } catch (e) {
+      setStatus('reg', 'err', 'could not save file — write the phrase down manually');
+    }
+  }
+
+  async function doRecover() {
+    const identity = (document.getElementById('zkp-rec-identity')?.value || '').trim();
+    if (!identity) return setStatus('recover', 'err', 'enter an identity');
+    const phrase = (document.getElementById('zkp-rec-phrase')?.value || '').trim().toLowerCase().split(/\s+/).join(' ');
+    if (!phrase) return setStatus('recover', 'err', 'enter your 12-word recovery phrase');
+    const btn = document.getElementById('zkp-rec-btn');
+    btn.disabled = true;
+    setStatus('recover', 'busy', 'recovering…');
+    try {
+      if (!(await validateMnemonic(phrase))) return setStatus('recover', 'err', 'invalid recovery phrase — check the words and order');
+      const key = await phraseToKey(phrase, identity);
+      const pubB64 = base64urlEncode(key.publicKeyBytes);
+      saveIdentity(identity, { priv: '0x' + key.privateKey.toString(16), pubB64 });
+      setStatus('recover', 'busy', 'authenticating…');
+      const verifyData = await authenticateIdentity(identity, { privateKey: key.privateKey, publicKeyBytes: key.publicKeyBytes });
+      setSession(identity, verifyData.session_token);
+      setStatus('recover', 'ok', 'restored & authenticated as ' + identity);
+      refreshSessionUI();
+      refreshIdsList();
+    } catch (e) {
+      setStatus('recover', 'err', e.message || 'recovery failed');
     } finally {
       btn.disabled = false;
     }
@@ -609,7 +862,7 @@
     const identity = (document.getElementById('zkp-login-identity')?.value || '').trim();
     if (!identity) return setStatus('login', 'err', 'enter an identity');
     const stored = loadKey(identity);
-    if (!stored) return setStatus('login', 'err', 'no private key for "' + identity + '" in this browser — keys never leave the device they were created on, so registering elsewhere or clearing storage means this identity can\'t log in here again; register a new identity instead');
+    if (!stored) return setStatus('login', 'err', 'no private key for "' + identity + '" in this browser — keys never leave the device they were created on. If you saved the 12-word recovery phrase for this identity, open the "recover" tab to restore it; otherwise register a new identity instead');
     const btn = document.getElementById('zkp-login-btn');
     btn.disabled = true;
     setStatus('login', 'busy', 'requesting challenge…');
@@ -652,8 +905,7 @@
   /* ── Authenticated statusbar identity (for repo.html / profile.html) ── */
   function renderStatusbarSession() {
     const session = getSession();
-    const statusbarRights = document.querySelectorAll('.command-statusbar .statusbar-right');
-    const containers = statusbarRights.length ? statusbarRights : document.querySelectorAll('.statusbar-right');
+    const containers = document.querySelectorAll('.command-statusbar .statusbar-right');
     containers.forEach(container => {
       container.querySelectorAll('.zkp-statusbar-session, .zkp-statusbar-guest, .zkp-actions-menu').forEach(el => el.remove());
       if (!session) {

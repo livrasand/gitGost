@@ -18,7 +18,7 @@ func testStore(t *testing.T) *Store {
 func TestCreateAndGet(t *testing.T) {
 	s := testStore(t)
 
-	id, err := s.Create(&Job{Operation: "clone", URL: "https://gitgost.fly.dev/v1/gh/foo/bar"})
+	id, err := s.Create(&Job{Operation: "clone", URL: "https://gitgost.livrasand.com/v1/gh/foo/bar"})
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -33,7 +33,7 @@ func TestCreateAndGet(t *testing.T) {
 	if job.State != StateQueued {
 		t.Errorf("estado inicial = %s, se esperaba queued", job.State)
 	}
-	if job.Operation != "clone" || job.URL != "https://gitgost.fly.dev/v1/gh/foo/bar" {
+	if job.Operation != "clone" || job.URL != "https://gitgost.livrasand.com/v1/gh/foo/bar" {
 		t.Errorf("job inesperado: %+v", job)
 	}
 	if job.CreatedAt.IsZero() || job.UpdatedAt.IsZero() {

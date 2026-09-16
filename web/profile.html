@@ -761,10 +761,76 @@
         }
         .suspension-banner.active { display: flex; }
 
+        .mobile-profile-nav,
+        .mobile-profile-about {
+            display: none;
+        }
+
+        .mobile-profile-nav {
+            position: sticky;
+            top: 2.25rem;
+            z-index: 90;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            scrollbar-width: none;
+        }
+        .mobile-profile-nav::-webkit-scrollbar { display: none; }
+        .mobile-profile-nav-inner {
+            display: flex;
+            min-width: max-content;
+            padding: 0 0.5rem;
+        }
+        .mobile-profile-nav button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            min-height: 2.35rem;
+            padding: 0.45rem 0.7rem;
+            border: 0;
+            border-bottom: 2px solid transparent;
+            background: transparent;
+            color: var(--fg-muted);
+            font: 0.72rem ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .mobile-profile-nav button:hover,
+        .mobile-profile-nav button.active { color: var(--fg); }
+        .mobile-profile-nav button.active { border-bottom-color: var(--accent); }
+        .mobile-profile-nav .count { color: var(--fg-secondary); font-size: 0.65rem; }
+        .mobile-profile-about {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            overflow-y: auto;
+            padding: 3.5rem 1rem 1.5rem;
+            background: var(--bg);
+        }
+        .mobile-profile-about.open { display: block; }
+        .mobile-profile-about-close {
+            position: fixed;
+            top: 0.55rem;
+            right: 0.75rem;
+            width: 2rem;
+            height: 2rem;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            background: var(--bg-secondary);
+            color: var(--fg);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        .mobile-profile-about-content { max-width: 34rem; margin: 0 auto; }
+        .mobile-profile-about-content .section-title { margin-top: 0; }
+        body.mobile-profile-panel-open { overflow: hidden; }
+
         @media (max-width: 900px) {
+            .profile-layout { display: block; }
             .left-nav { display: none; }
             .right-sidebar { display: none; }
             .main-content { padding: 1rem; }
+            .mobile-profile-nav { display: block; }
         }
         @media (max-width: 560px) {
             .profile-header { flex-direction: column; align-items: flex-start; }
@@ -772,6 +838,49 @@
             .statusbar { padding: 0.5rem 0.9rem; }
             .readme-content { padding: 1rem; }
             .hm-months { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
+
+            .profile-header .avatar {
+                width: 56px;
+                height: 56px;
+                font-size: 1.3rem;
+            }
+
+            .sb-btn {
+                font-size: 0.76rem;
+                padding: 0.5rem 0.6rem;
+            }
+
+            .repo-card {
+                padding: 1rem 0;
+            }
+
+            .repo-name {
+                font-size: 0.95rem;
+            }
+
+            .repo-desc {
+                font-size: 0.8rem;
+            }
+
+            .repo-meta {
+                font-size: 0.72rem;
+            }
+
+            .stat .v {
+                font-size: 0.95rem;
+            }
+
+            .stat .l {
+                font-size: 0.7rem;
+            }
+
+            .statusbar .crumb {
+                font-size: 0.8rem;
+            }
+
+            .section-title {
+                font-size: 0.75rem;
+            }
         }
         /* New Repository Modal Styles */
         .new-repo-overlay {
@@ -1296,6 +1405,28 @@
     </div>
 
     <div class="profile-layout">
+        <nav class="mobile-profile-nav" aria-label="Profile sections">
+            <div class="mobile-profile-nav-inner">
+                <button type="button" data-mobile-view="overview" class="active">overview</button>
+                <button type="button" data-mobile-view="overview" data-mobile-repos>repositories <span class="count" id="mobile-repo-count"></span></button>
+                <button type="button" data-mobile-view="stars" id="mobile-nav-stars" hidden>stars <span class="count" id="mobile-star-count"></span></button>
+                <button type="button" data-mobile-view="projects" id="mobile-nav-projects" hidden>projects <span class="count" id="mobile-projects-count"></span></button>
+                <button type="button" data-mobile-view="packages" id="mobile-nav-packages" hidden>packages <span class="count" id="mobile-packages-count"></span></button>
+                <button type="button" data-mobile-view="members" id="mobile-nav-members" hidden>members <span class="count" id="mobile-members-count"></span></button>
+                <button type="button" data-mobile-view="nodes" id="mobile-nav-nodes" hidden>nodes <span class="count" id="mobile-nodes-count"></span></button>
+                <button type="button" data-mobile-about>about</button>
+            </div>
+        </nav>
+
+        <div class="mobile-profile-about" id="mobile-profile-about" aria-hidden="true">
+            <button type="button" class="mobile-profile-about-close" data-mobile-about-close aria-label="Close">&times;</button>
+            <div class="mobile-profile-about-content">
+                <div class="section-title">about</div>
+                <div id="mobile-sb-about"></div>
+                <div id="mobile-sb-contributions"></div>
+            </div>
+        </div>
+
         <nav class="left-nav">
             <a href="#" class="active" onclick="navOverview(); return false;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
@@ -1312,7 +1443,7 @@
                 repositories
                 <span class="count" id="nav-repo-count"></span>
             </a>
-            <a href="#" onclick="openStars(); return false;">
+            <a href="#" id="nav-stars" style="display:none;" onclick="openStars(); return false;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
                     <path d="M0 0h24v24H0z" fill="none" />
                     <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.704 4.325a1.5 1.5 0 0 1 2.592 0l1.818 3.12a1.5 1.5 0 0 0 .978.712l3.53.764a1.5 1.5 0 0 1 .8 2.465l-2.405 2.693a1.5 1.5 0 0 0-.374 1.15l.363 3.593a1.5 1.5 0 0 1-2.097 1.524l-3.304-1.456a1.5 1.5 0 0 0-1.21 0l-3.304 1.456a1.5 1.5 0 0 1-2.097-1.524l.363-3.593a1.5 1.5 0 0 0-.373-1.15l-2.406-2.693a1.5 1.5 0 0 1 .8-2.465l3.53-.764a1.5 1.5 0 0 0 .979-.711z" />
@@ -1829,10 +1960,18 @@
             if (navCount && p.public_repos !== undefined && p.public_repos !== null) {
                 navCount.textContent = formatNumber(p.public_repos);
             }
+            const mobileRepoCount = document.getElementById('mobile-repo-count');
+            if (mobileRepoCount && p.public_repos !== undefined && p.public_repos !== null) {
+                mobileRepoCount.textContent = formatNumber(p.public_repos);
+            }
 
             const navPackagesCount = document.getElementById('nav-packages-count');
             if (navPackagesCount && p.packages !== undefined && p.packages !== null) {
                 navPackagesCount.textContent = formatNumber(p.packages);
+            }
+            const mobilePackagesCount = document.getElementById('mobile-packages-count');
+            if (mobilePackagesCount && p.packages !== undefined && p.packages !== null) {
+                mobilePackagesCount.textContent = formatNumber(p.packages);
             }
 
             // Miembros: solo Codeberg los expone (public_members) y solo para organizaciones.
@@ -1843,10 +1982,17 @@
                     navMembers.style.display = '';
                     const navMembersCount = document.getElementById('nav-members-count');
                     if (navMembersCount) navMembersCount.textContent = formatNumber(members.length);
+                    const mobileMembers = document.getElementById('mobile-nav-members');
+                    const mobileMembersCount = document.getElementById('mobile-members-count');
+                    if (mobileMembers) mobileMembers.hidden = false;
+                    if (mobileMembersCount) mobileMembersCount.textContent = formatNumber(members.length);
                 } else {
                     navMembers.style.display = 'none';
+                    const mobileMembers = document.getElementById('mobile-nav-members');
+                    if (mobileMembers) mobileMembers.hidden = true;
                 }
             }
+            syncMobileProfileAbout();
         }
 
         function repoCardHtml(r) {
@@ -2028,8 +2174,15 @@
         let _starredCache = null;
         async function loadStarred() {
             const starred = _starredCache || (_starredCache = await fetchStarred());
+            const navStarsLink = document.getElementById('nav-stars');
             const navStars = document.getElementById('nav-star-count');
-            if (navStars && starred.length > 0) navStars.textContent = formatNumber(starred.length);
+            const mobileStarsBtn = document.getElementById('mobile-nav-stars');
+            const mobileStars = document.getElementById('mobile-star-count');
+            const showStars = starred.length > 0;
+            if (navStarsLink) navStarsLink.style.display = showStars ? '' : 'none';
+            if (mobileStarsBtn) mobileStarsBtn.hidden = !showStars;
+            if (navStars && showStars) navStars.textContent = formatNumber(starred.length);
+            if (mobileStars && showStars) mobileStars.textContent = formatNumber(starred.length);
         }
 
         // ---- Vista SPA de repos con star (alterna secciones sin recargar, igual que repo.html) ----
@@ -2038,10 +2191,12 @@
 
         function navOverview() {
             if (_currentView !== 'overview') switchView('overview');
+            updateMobileProfileNav('overview');
             scrollToTop();
         }
         function navRepos() {
             if (_currentView !== 'overview') switchView('overview');
+            updateMobileProfileNav('repositories');
             scrollToRepos();
         }
         function openStars() {
@@ -2118,6 +2273,63 @@
             if (isProjects) _loadProjects();
             if (isPackages) _loadPackages();
             if (isNodes) window._loadNodes();
+            updateMobileProfileNav(view);
+        }
+
+        function updateMobileProfileNav(view) {
+            document.querySelectorAll('[data-mobile-view]').forEach(button => {
+                const active = view === 'repositories'
+                    ? button.hasAttribute('data-mobile-repos')
+                    : button.dataset.mobileView === view && !button.hasAttribute('data-mobile-repos');
+                button.classList.toggle('active', active);
+            });
+        }
+
+        function syncMobileProfileAbout() {
+            const sourceAbout = document.getElementById('sb-about');
+            const sourceContributions = document.getElementById('sb-contributions');
+            const mobileAbout = document.getElementById('mobile-sb-about');
+            const mobileContributions = document.getElementById('mobile-sb-contributions');
+            if (sourceAbout && mobileAbout) mobileAbout.innerHTML = sourceAbout.innerHTML;
+            if (sourceContributions && mobileContributions) mobileContributions.innerHTML = sourceContributions.innerHTML;
+        }
+
+        function openMobileProfileAbout() {
+            const panel = document.getElementById('mobile-profile-about');
+            if (!panel) return;
+            syncMobileProfileAbout();
+            panel.classList.add('open');
+            panel.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('mobile-profile-panel-open');
+        }
+
+        function closeMobileProfileAbout() {
+            const panel = document.getElementById('mobile-profile-about');
+            if (!panel) return;
+            panel.classList.remove('open');
+            panel.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('mobile-profile-panel-open');
+        }
+
+        function initMobileProfileNavigation() {
+            document.querySelectorAll('[data-mobile-view]').forEach(button => {
+                button.addEventListener('click', () => {
+                    closeMobileProfileAbout();
+                    if (button.hasAttribute('data-mobile-repos')) {
+                        navRepos();
+                    } else {
+                        switchView(button.dataset.mobileView);
+                    }
+                });
+            });
+            document.querySelector('[data-mobile-about]')?.addEventListener('click', openMobileProfileAbout);
+            document.querySelector('[data-mobile-about-close]')?.addEventListener('click', closeMobileProfileAbout);
+            document.getElementById('mobile-profile-about')?.addEventListener('click', event => {
+                if (event.target.id === 'mobile-profile-about') closeMobileProfileAbout();
+            });
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape') closeMobileProfileAbout();
+            });
         }
 
         async function _loadStars() {
@@ -2126,8 +2338,15 @@
             if (!starredTitle || !starredSec) return;
             starredTitle.innerHTML = '<a class="stars-back" href="' + profileViewUrl('overview') + '" onclick="switchView(\'overview\'); return false;">&#x2039; back to profile</a>';
             const starred = _starredCache || (_starredCache = await fetchStarred());
+            const navStarsLink = document.getElementById('nav-stars');
             const navStars = document.getElementById('nav-star-count');
-            if (navStars && starred.length > 0) navStars.textContent = formatNumber(starred.length);
+            const mobileStarsBtn = document.getElementById('mobile-nav-stars');
+            const mobileStars = document.getElementById('mobile-star-count');
+            const showStars = starred.length > 0;
+            if (navStarsLink) navStarsLink.style.display = showStars ? '' : 'none';
+            if (mobileStarsBtn) mobileStarsBtn.hidden = !showStars;
+            if (navStars && showStars) navStars.textContent = formatNumber(starred.length);
+            if (mobileStars && showStars) mobileStars.textContent = formatNumber(starred.length);
             if (!starred.length) {
                 starredSec.innerHTML = '<div class="repo-empty">no starred repositories found</div>';
                 return;
@@ -2178,8 +2397,15 @@
             if (!titleEl || !listEl) return;
             titleEl.innerHTML = '<a class="stars-back" href="' + profileViewUrl('overview') + '" onclick="switchView(\'overview\'); return false;">&#x2039; back to profile</a>';
             const projects = _projectsCache || (_projectsCache = await fetchProjects());
+            const navProjects = document.getElementById('nav-projects');
             const navCount = document.getElementById('nav-projects-count');
-            if (navCount && projects.length > 0) navCount.textContent = formatNumber(projects.length);
+            const mobileProjects = document.getElementById('mobile-nav-projects');
+            const mobileProjectsCount = document.getElementById('mobile-projects-count');
+            const showProjects = projects.length > 0;
+            if (navProjects) navProjects.style.display = showProjects ? '' : 'none';
+            if (mobileProjects) mobileProjects.hidden = !showProjects;
+            if (navCount && showProjects) navCount.textContent = formatNumber(projects.length);
+            if (mobileProjectsCount && showProjects) mobileProjectsCount.textContent = formatNumber(projects.length);
             if (!projects.length) {
                 listEl.innerHTML = '<div class="repo-empty">no projects found</div>';
                 return;
@@ -2238,8 +2464,15 @@
             if (!titleEl || !listEl) return;
             titleEl.innerHTML = '<a class="stars-back" href="' + profileViewUrl('overview') + '" onclick="switchView(\'overview\'); return false;">&#x2039; back to profile</a>';
             const packages = _packagesCache || (_packagesCache = await fetchPackages());
+            const navPackages = document.getElementById('nav-packages');
             const navCount = document.getElementById('nav-packages-count');
-            if (navCount && packages.length > 0) navCount.textContent = formatNumber(packages.length);
+            const mobilePackages = document.getElementById('mobile-nav-packages');
+            const mobilePackagesCount = document.getElementById('mobile-packages-count');
+            const showPackages = packages.length > 0;
+            if (navPackages) navPackages.style.display = showPackages ? '' : 'none';
+            if (mobilePackages) mobilePackages.hidden = !showPackages;
+            if (navCount && showPackages) navCount.textContent = formatNumber(packages.length);
+            if (mobilePackagesCount && showPackages) mobilePackagesCount.textContent = formatNumber(packages.length);
             if (!packages.length) {
                 listEl.innerHTML = '<div class="repo-empty">no packages found</div>';
                 return;
@@ -2337,6 +2570,10 @@
                 const nodes = (data && Array.isArray(data.nodes)) ? data.nodes : [];
                 window._nodesCache = nodes;
                 if (navCount) navCount.textContent = nodes.length || '';
+                const mobileNodes = document.getElementById('mobile-nav-nodes');
+                const mobileNodesCount = document.getElementById('mobile-nodes-count');
+                if (mobileNodes) mobileNodes.hidden = false;
+                if (mobileNodesCount) mobileNodesCount.textContent = nodes.length || '';
                 if (!nodes.length) {
                     listEl.innerHTML = '<div class="node-empty">no nodes paired yet — use "pair node" to add one</div>';
                     window.renderRepos([]);
@@ -2775,6 +3012,7 @@
                 return;
             }
             renderContributions(container, data, p);
+            syncMobileProfileAbout();
         }
 
         function scrollToTop() {
@@ -2810,6 +3048,7 @@
         }
 
         async function init() {
+            initMobileProfileNavigation();
             const sbProvider = document.getElementById('sb-provider');
             if (sbProvider) sbProvider.textContent = PROVIDER;
             const sbUser = document.getElementById('sb-username');
@@ -2821,10 +3060,14 @@
             if (PROVIDER === 'gh') {
                 const navProjects = document.getElementById('nav-projects');
                 if (navProjects) navProjects.style.display = '';
+                const mobileProjects = document.getElementById('mobile-nav-projects');
+                if (mobileProjects) mobileProjects.hidden = false;
             }
             if (PROVIDER === 'gh' || PROVIDER === 'cb') {
                 const navPackages = document.getElementById('nav-packages');
                 if (navPackages) navPackages.style.display = '';
+                const mobilePackages = document.getElementById('mobile-nav-packages');
+                if (mobilePackages) mobilePackages.hidden = false;
             }
 
             if (!USERNAME) {
@@ -2861,6 +3104,8 @@
                     window._loadNodes();
                     const navNodes = document.getElementById('nav-nodes');
                     if (navNodes) navNodes.style.display = '';
+                    const mobileNodes = document.getElementById('mobile-nav-nodes');
+                    if (mobileNodes) mobileNodes.hidden = false;
                     const navProjects = document.getElementById('nav-projects');
                     if (navProjects) navProjects.style.display = 'none';
                     const navPackages = document.getElementById('nav-packages');
@@ -2873,6 +3118,8 @@
                     if (navPackages) navPackages.style.display = 'none';
                     const navNodes = document.getElementById('nav-nodes');
                     if (navNodes) navNodes.style.display = 'none';
+                    const mobileNodes = document.getElementById('mobile-nav-nodes');
+                    if (mobileNodes) mobileNodes.hidden = true;
                 }
 
                 if (_initialView !== 'overview') switchView(_initialView, false);
@@ -3113,6 +3360,7 @@
         </div>
         <div class="statusbar-right"></div>
     </footer>
+    <script src="/bip39-words.js"></script>
     <script src="/zkp-client.js?v=3"></script>
 </body>
 </html>

@@ -2,13 +2,13 @@
 #
 # Instalador de git-gost (extensión Git de gitGost).
 # Uso:
-#   curl -fsSL https://gitgost.fly.dev/install | bash
-#   curl -fsSL https://gitgost.fly.dev/install | GITGOST_SERVER=https://mi.instancia.com bash
+#   curl -fsSL https://gitgost.livrasand.com/install | bash
+#   curl -fsSL https://gitgost.livrasand.com/install | GITGOST_SERVER=https://mi.instancia.com bash
 #
 set -euo pipefail
 
 REPO="livrasand/gitGost"
-DEFAULT_SERVER="https://gitgost.fly.dev"
+DEFAULT_SERVER="https://gitgost.livrasand.com"
 tmp=""
 
 # Permite apuntar el cliente a otra instancia de gitGost.

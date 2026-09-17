@@ -3715,8 +3715,19 @@
         for (const [k, v] of Object.entries(VIEW_TO_PATH)) {
             if (v) PATH_TO_VIEW[v] = k;
         }
+        function sanitizeProvider(p) {
+            const v = String(p || 'gh');
+            return (v === 'gh' || v === 'gl' || v === 'cb' || v === 'gg') ? v : 'gh';
+        }
+        function sanitizeRepoPart(v) {
+            const s = String(v || '');
+            return /^[A-Za-z0-9._-]{1,100}$/.test(s) ? s : '';
+        }
+        function safeProvider() { return sanitizeProvider(rv.provider); }
+        function safeOwner() { return sanitizeRepoPart(rv.owner); }
+        function safeRepo() { return sanitizeRepoPart(rv.repo); }
         function repoBasePath() {
-            return `/${rv.provider}/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}`;
+            return `/${safeProvider()}/${encodeURIComponent(safeOwner())}/${encodeURIComponent(safeRepo())}`;
         }
         function buildViewUrl(view) {
             const suffix = VIEW_TO_PATH[view] || '';
@@ -3893,8 +3904,8 @@
             sep.style.color = 'var(--fg-muted)';
 
             el.appendChild(makePathLink(
-                `/${encodeURIComponent(rv.provider)}/${encodeURIComponent(rv.owner)}`,
-                rv.owner
+                `/${safeProvider()}/${encodeURIComponent(safeOwner())}`,
+                safeOwner()
             ));
             el.appendChild(sep.cloneNode(true));
             el.appendChild(makePathLink(repoBasePath(), rv.repo, () => showView('home')));

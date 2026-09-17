@@ -6,6 +6,55 @@ import (
 	"time"
 )
 
+const mentaTestEndpoint = "https://mentacaptchaeu.eu.pythonanywhere.com"
+
+func setMentaAPIEndpoint(t *testing.T, ep string) {
+	t.Helper()
+	orig := mentaAPIEndpoint
+	mentaAPIEndpoint = ep
+	t.Cleanup(func() { mentaAPIEndpoint = orig })
+}
+
+func TestMentaSafeTargetAllowsSameHost(t *testing.T) {
+	setMentaAPIEndpoint(t, mentaTestEndpoint)
+	target, ok := mentaSafeTarget("/challenge")
+	if !ok {
+		t.Fatal("same-host path must be allowed")
+	}
+	if target.Host != "mentacaptchaeu.eu.pythonanywhere.com" || target.Scheme != "https" {
+		t.Fatalf("unexpected target: %s", target)
+	}
+}
+
+func TestMentaSafeTargetRejectsCrossHost(t *testing.T) {
+	setMentaAPIEndpoint(t, mentaTestEndpoint)
+	for _, path := range []string{
+		".//evil.example.com/steal",
+		"//evil.example.com/steal",
+		`\@evil.example.com/steal`,
+		"..@evil.example.com/steal",
+		"@evil.example.com/steal",
+	} {
+		if _, ok := mentaSafeTarget(path); ok {
+			t.Fatalf("path %q must be rejected", path)
+		}
+	}
+}
+
+func TestMentaSafeTargetRejectsPathTraversal(t *testing.T) {
+	setMentaAPIEndpoint(t, mentaTestEndpoint)
+	for _, path := range []string{
+		"/../../admin",
+		"/x/../y",
+		"//api/verify",
+		"/back\\slash",
+	} {
+		if _, ok := mentaSafeTarget(path); ok {
+			t.Fatalf("path %q must be rejected", path)
+		}
+	}
+}
+
 func TestSafeRedirectsAllowsSameHostHTTPS(t *testing.T) {
 	policy := safeSameHostRedirects(3)
 	first, _ := http.NewRequest(http.MethodGet, "https://codeberg.org/api/v1/x", nil)

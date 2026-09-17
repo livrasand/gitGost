@@ -1148,12 +1148,18 @@ var mentaProxyClient = newSafeHTTPClient(15 * time.Second)
 // por el cliente, garantizando que la petición solo pueda alcanzar el endpoint
 // de Menta configurado (mismo esquema y host). Devolver false impide cualquier
 // intento de request forgery / open-proxy hacia otros orígenes.
+//
+// El target se construye concatenando el endpoint fijo del servidor con un
+// separador literal "/" y el path del cliente: la cadena que fluye hacia el
+// request es, por tanto, un prefijo constante del servidor seguido del path,
+// de modo que el valor del cliente nunca puede alterar scheme ni host (lo que
+// CodeQL reconoce como hostname sanitizing y no señala SSRF).
 func mentaSafeTarget(path string) (*url.URL, bool) {
 	base, err := url.Parse(mentaAPIEndpoint)
 	if err != nil || base.Scheme == "" || base.Host == "" {
 		return nil, false
 	}
-	target, err := url.Parse(base.String() + path)
+	target, err := url.Parse(mentaAPIEndpoint + "/" + strings.TrimPrefix(path, "/"))
 	if err != nil {
 		return nil, false
 	}

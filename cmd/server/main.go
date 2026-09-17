@@ -122,6 +122,9 @@ func main() {
 	// Initialize Menta CAPTCHA verification (fail-closed if MENTA_CAPTCHA_ENFORCED=true)
 	handler.InitMentaConfig(cfg.MentaAPIEndpoint, cfg.MentaAPIKey, cfg.MentaEnforce)
 
+	// Sweep stale ZKP registrations (identities without a Forge node) hourly
+	handler.StartZKPRegistrationSweeper(1 * time.Hour)
+
 	// Setup router
 	router := handler.SetupRouter(cfg)
 

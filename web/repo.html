@@ -486,8 +486,31 @@
             font-size: 0.9rem;
             line-height: 1.75;
             color: var(--fg);
-            /* Parte URLs largas, fingerprints, permisos y tablas en vez de desbordar el panel. */
             overflow-wrap: anywhere;
+            min-width: 0;
+        }
+        .readme img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        .readme pre {
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .readme pre code {
+            max-width: 100%;
+        }
+        .readme > table {
+            display: block;
+            overflow-x: auto;
+            max-width: 100%;
+            -webkit-overflow-scrolling: touch;
+        }
+        .readme > table th, .readme > table td {
+            white-space: nowrap;
         }
         .readme h1, .readme h2, .readme h3, .readme h4, .readme h5, .readme h6 {
             margin: 1.5rem 0 0.75rem;
@@ -519,7 +542,6 @@
             white-space: pre;
         }
         .readme pre code { background: none; padding: 0; border: none; font-size: 0.82rem; }
-        /* Diagramas Mermaid: el bloque sin renderizar se muestra como código y el gráfico ya renderizado permite scroll horizontal. */
         .mermaid {
             white-space: pre;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -530,8 +552,9 @@
             padding: 1rem 1.25rem;
             overflow-x: auto;
             margin: 1rem 0;
+            max-width: 100%;
         }
-        .mermaid-graph { margin: 1rem 0; overflow-x: auto; }
+        .mermaid-graph { margin: 1rem 0; overflow-x: auto; max-width: 100%; }
         .readme a { color: var(--accent); text-decoration: none; }
         .readme a:hover { text-decoration: underline; }
         .readme blockquote {
@@ -545,29 +568,10 @@
         .readme blockquote p { margin: 0; }
         .readme ul, .readme ol { padding-left: 2rem; margin: 0.5rem 0; }
         .readme li { margin: 0.3rem 0; }
-        .readme img {
-            max-width: 100%;
-            height: auto;   /* escala proporcional; las que no caben bajan a la siguiente línea */
-            border-radius: 4px;
-        }
-        .readme table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 1rem 0;
-            font-size: 0.85rem;
-        }
-        .readme th, .readme td {
-            border: 1px solid var(--border);
-            padding: 0.5rem 0.85rem;
-            text-align: left;
-        }
-        .readme th { background: var(--bg-secondary); font-weight: 600; }
-        .readme tr:nth-child(even) { background: var(--bg-secondary); }
         .readme hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
         .readme input[type="checkbox"] { margin-right: 0.4rem; }
 
         /* Alertas estilo GitHub: > [!NOTE] [!TIP] [!IMPORTANT] [!WARNING] [!CAUTION] */
-        .markdown-alert {
             padding: 0.5rem 1rem;
             margin: 1rem 0;
             color: inherit;
@@ -1910,6 +1914,7 @@
         .statusbar a:hover { text-decoration: underline; }
         .statusbar:not(.command-statusbar) {
             display: flex;
+            justify-content: space-between;
         }
         .statusbar:not(.command-statusbar) .statusbar-left {
             flex: 1 1 auto;
@@ -2026,7 +2031,57 @@
                     }
                 }
 
-                /* Mobile sidebar panel (full-screen overlay) */
+                @media (max-width: 768px) {
+                    .readme {
+                        padding: 1rem;
+                        font-size: 0.85rem;
+                        line-height: 1.65;
+                    }
+                    .readme h1 { font-size: 1.3rem; }
+                    .readme h2 { font-size: 1.1rem; }
+                    .readme h3 { font-size: 1rem; }
+                    .readme pre {
+                        padding: 0.75rem;
+                        font-size: 0.72rem;
+                    }
+                    .readme code {
+                        font-size: 0.78em;
+                    }
+                    .readme table {
+                        font-size: 0.78rem;
+                    }
+                    .readme img {
+                        max-width: 100%;
+                        height: auto;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    .mobile-sidebar-panel .msb-grid {
+                        grid-template-columns: 1fr;
+                    }
+
+                    .issue-detail-main {
+                        padding: 0.85rem 0.9rem;
+                    }
+
+                    .issue-detail-meta .issue-ext-link {
+                        white-space: normal;
+                        overflow-wrap: anywhere;
+                    }
+
+                    .comment-avatar {
+                        display: none;
+                    }
+
+                    .reply-footer {
+                        justify-content: flex-end;
+                    }
+
+                    .reply-token {
+                        flex: 1 1 100%;
+                    }
+                }
                 .mobile-sidebar-panel {
                     position: fixed;
                     inset: 0;
@@ -2069,9 +2124,9 @@
                     border: 1px solid var(--border);
                     border-radius: 4px;
                     color: var(--fg-muted);
-                    font-size: 1rem;
+                    font-size: 1.15rem;
                     line-height: 1;
-                    padding: 0.25rem 0.5rem;
+                    padding: 0.45rem 0.7rem;
                     cursor: pointer;
                 }
                 .mobile-sidebar-panel .msb-close:hover {
@@ -2083,32 +2138,6 @@
                     grid-template-columns: 1fr 1fr;
                     gap: 0.75rem 1rem;
                 }
-                @media (max-width: 480px) {
-                    .mobile-sidebar-panel .msb-grid {
-                        grid-template-columns: 1fr;
-                    }
-
-                    .issue-detail-main {
-                        padding: 0.85rem 0.9rem;
-                    }
-
-                    .issue-detail-meta .issue-ext-link {
-                        white-space: normal;
-                        overflow-wrap: anywhere;
-                    }
-
-                    .comment-avatar {
-                        display: none;
-                    }
-
-                    .reply-footer {
-                        justify-content: flex-end;
-                    }
-
-                    .reply-token {
-                        flex: 1 1 100%;
-                    }
-                }
                 .mobile-sidebar-panel .msb-section {
                     min-width: 0;
                 }
@@ -2116,7 +2145,7 @@
                     grid-column: 1 / -1;
                 }
                 .mobile-sidebar-panel .msb-label {
-                    font-size: 0.62rem;
+                    font-size: 0.68rem;
                     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                     color: var(--fg-secondary);
                     text-transform: uppercase;
@@ -2124,7 +2153,7 @@
                     margin-bottom: 0.3rem;
                 }
                 .mobile-sidebar-panel .msb-desc {
-                    font-size: 0.75rem;
+                    font-size: 0.8rem;
                     color: var(--fg-muted);
                     line-height: 1.5;
                     margin-bottom: 0.3rem;
@@ -2136,20 +2165,20 @@
                 }
                 .mobile-sidebar-panel .msb-tag {
                     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-                    font-size: 0.62rem;
+                    font-size: 0.65rem;
                     color: var(--accent);
                     text-decoration: none;
                     border: 1px solid var(--accent);
                     border-radius: 3px;
-                    padding: 0.1em 0.4em;
+                    padding: 0.15em 0.5em;
                     opacity: 0.85;
                 }
                 .mobile-sidebar-panel .msb-row {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    padding: 0.15rem 0;
-                    font-size: 0.72rem;
+                    padding: 0.35rem 0;
+                    font-size: 0.75rem;
                     color: var(--fg-muted);
                 }
                 .mobile-sidebar-panel .msb-row .val {
@@ -2167,12 +2196,12 @@
                     display: inline-flex;
                     align-items: center;
                     gap: 0.3rem;
-                    padding: 0.28rem 0.6rem;
+                    padding: 0.45rem 0.7rem;
                     border: 1px solid var(--border);
                     border-radius: 3px;
                     background: transparent;
                     color: var(--fg);
-                    font-size: 0.7rem;
+                    font-size: 0.76rem;
                     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                     cursor: pointer;
                     text-decoration: none;
@@ -2696,13 +2725,13 @@
                     }
 
                     .rv-btn {
-                        font-size: 0.68rem;
-                        padding: 0.2rem 0.45rem;
+                        font-size: 0.72rem;
+                        padding: 0.3rem 0.55rem;
                     }
 
                     .breadcrumb {
-                        font-size: 0.68rem;
-                        padding: 0.3rem 0.75rem;
+                        font-size: 0.72rem;
+                        padding: 0.4rem 0.75rem;
                         overflow-x: auto;
                         flex-wrap: nowrap;
                         -webkit-overflow-scrolling: touch;
@@ -2737,8 +2766,8 @@
                     .left-nav a {
                         white-space: nowrap;
                         flex-shrink: 0;
-                        padding: 0.35rem 0.6rem;
-                        font-size: 0.7rem;
+                        padding: 0.5rem 0.7rem;
+                        font-size: 0.74rem;
                         border-left: none;
                         border-bottom: 2px solid transparent;
                     }
@@ -2748,6 +2777,32 @@
                         border-bottom-color: var(--accent);
                     }
 
+                    .left-nav.collapsed {
+                        width: 100%;
+                    }
+
+                    .left-nav.collapsed a {
+                        justify-content: flex-start;
+                        padding: 0.5rem 0.7rem;
+                        gap: 0.65rem;
+                        border-left-width: 0;
+                    }
+
+                    .left-nav.collapsed a svg {
+                        width: 1em;
+                        height: 1em;
+                    }
+
+                    .left-nav.collapsed a > span:not(.val),
+                    .left-nav.collapsed .val {
+                        display: inline;
+                    }
+
+                    .left-nav.collapsed + .file-tree {
+                        width: 100%;
+                        flex-basis: auto;
+                    }
+
                     .file-tree {
                         width: 100%;
                         max-height: none;
@@ -2755,6 +2810,11 @@
                         min-height: 0;
                         border-right: none;
                         border-bottom: 1px solid var(--border);
+                    }
+
+                    .tree-item {
+                        padding: 0.45rem 0.6rem;
+                        font-size: 0.8rem;
                     }
 
                     /* Flujo lista-detalle en móvil: al abrir un archivo se oculta el árbol
@@ -2773,6 +2833,10 @@
 
                     .file-toolbar {
                         padding: 0.35rem 0.5rem;
+                    }
+                    .file-toolbar .ft-btn {
+                        font-size: 0.72rem;
+                        padding: 0.3rem 0.6rem;
                     }
                     .file-toolbar .ft-name {
                         flex-basis: 100%;
@@ -2800,8 +2864,8 @@
                     .repo-info {
                         flex-wrap: wrap;
                         gap: 0.5rem;
-                        padding: 0.4rem 0.75rem;
-                        font-size: 0.68rem;
+                        padding: 0.5rem 0.75rem;
+                        font-size: 0.72rem;
                     }
 
                     .issue-list {
@@ -2811,13 +2875,13 @@
                     .issue-item {
                         flex-wrap: wrap;
                         gap: 0.3rem;
-                        padding: 0.35rem 0;
-                        font-size: 0.75rem;
+                        padding: 0.55rem 0;
+                        font-size: 0.78rem;
                     }
 
                     .issue-num {
                         min-width: 2.5rem;
-                        font-size: 0.65rem;
+                        font-size: 0.68rem;
                     }
 
                     .issue-title {
@@ -2829,7 +2893,7 @@
                     }
 
                     .issue-label {
-                        font-size: 0.6rem;
+                        font-size: 0.64rem;
                     }
 
                     .bugs-toolbar {
@@ -2839,7 +2903,7 @@
                     }
 
                     .bugs-tab {
-                        font-size: 0.68rem;
+                        font-size: 0.72rem;
                     }
 
                     .issue-detail {
@@ -2911,7 +2975,7 @@
                     }
 
                     .reply-send-btn {
-                        padding: 0.25rem 0.45rem;
+                        padding: 0.35rem 0.6rem;
                     }
 
                     .comment-list {
@@ -2923,8 +2987,8 @@
                     }
 
                     .comment-bubble {
-                        font-size: 0.75rem;
-                        padding: 0.4rem 0.6rem;
+                        font-size: 0.78rem;
+                        padding: 0.5rem 0.7rem;
                     }
 
                     .comment-meta {
@@ -2962,8 +3026,28 @@
                         font-size: 0.65rem;
                     }
 
-                    .statusbar-right span {
-                        display: none;
+                    /* En móvil, si la parte izquierda supera el 50% de la pantalla se trunca con ellipsis. */
+                    .statusbar-left {
+                        max-width: 50vw;
+                        min-width: 0;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                    }
+
+                    .statusbar-left > * {
+                        min-width: 0;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                    }
+
+                    /* statusbar-path es un flex container; sus enlaces necesitan ellipsis para truncar owner/repo largos. */
+                    #statusbar-path a {
+                        min-width: 0;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
                     }
 
                     .commit-list {
@@ -2972,7 +3056,7 @@
 
                     .commit-item {
                         gap: 0.5rem;
-                        padding: 0.5rem 0;
+                        padding: 0.6rem 0;
                     }
 
                     .commit-avatar {
@@ -2981,7 +3065,7 @@
                     }
 
                     .commit-msg {
-                        font-size: 0.75rem;
+                        font-size: 0.78rem;
                     }
 
                     .commit-meta {
@@ -3081,6 +3165,47 @@
                     .release-item { padding: 0.5rem 0.6rem; }
                     .release-detail { padding: 0.75rem; }
                     .release-detail-body { font-size: 0.82rem; }
+
+                    /* En móvil el buscador de archivos se colapsa a un icono. */
+                    .statusbar-center {
+                        display: flex;
+                        align-items: center;
+                        justify-content: flex-end;
+                    }
+
+                    .statusbar-center .statusbar-file-search {
+                        display: none;
+                    }
+
+                    .statusbar-center .statusbar-file-search-icon {
+                        position: static;
+                        transform: none;
+                        pointer-events: auto;
+                        cursor: pointer;
+                        color: var(--fg);
+                        border: 1px solid var(--border);
+                        border-radius: 3px;
+                        background: var(--bg-secondary);
+                        padding: 0.25rem 0.6rem;
+                        line-height: 1;
+                    }
+
+                    .statusbar-center.search-expanded {
+                        justify-content: flex-start;
+                    }
+
+                    .statusbar-center.search-expanded .statusbar-file-search-icon {
+                        display: none;
+                    }
+
+                    .statusbar-center.search-expanded .statusbar-file-search {
+                        display: block;
+                        min-width: 0;
+                    }
+
+                    .statusbar-center:not(.search-expanded) .statusbar-file-results {
+                        display: none;
+                    }
                 }
                 .toast-container {
                     position: fixed;
@@ -8002,7 +8127,7 @@
                 const parsed = new URL(url, window.location.href);
                 return (parsed.hostname === 'localhost' && parsed.port === '8080')
                     || parsed.hostname === 'gitgost.livrasand.com'
-                    || parsed.hostname === 'gitgost.fly.dev';
+                    || parsed.hostname === 'gitgost.livrasand.com';
             } catch (_) {
                 return false;
             }
@@ -8848,10 +8973,14 @@
         let _statusbarFileIndex = -1;
         let _statusbarFileSearchTimer = null;
 
-        function _closeStatusbarFileSearch() {
+        function _closeStatusbarFileSearch(collapse) {
             const results = document.getElementById('statusbar-file-results');
             if (results) results.classList.remove('open');
             _statusbarFileIndex = -1;
+            if (collapse) {
+                const center = document.querySelector('.statusbar-center');
+                if (center) center.classList.remove('search-expanded');
+            }
         }
 
         function _selectStatusbarFile(item) {
@@ -8925,6 +9054,28 @@
         function initStatusbarFileSearch() {
             const input = document.getElementById('statusbar-file-search');
             if (!input) return;
+            const searchCenter = input.closest('.statusbar-center');
+            const searchIcon = searchCenter && searchCenter.querySelector('.statusbar-file-search-icon');
+            if (searchIcon) {
+                searchIcon.addEventListener('click', () => {
+                    if (searchCenter) {
+                        searchCenter.classList.add('search-expanded');
+                        input.focus();
+                    }
+                });
+            }
+            if (searchCenter) {
+                input.addEventListener('blur', () => {
+                    if (!input.value) {
+                        setTimeout(() => {
+                            if (searchCenter.classList.contains('search-expanded') &&
+                                !searchCenter.contains(document.activeElement)) {
+                                searchCenter.classList.remove('search-expanded');
+                            }
+                        }, 0);
+                    }
+                });
+            }
             input.addEventListener('input', () => {
                 clearTimeout(_statusbarFileSearchTimer);
                 const query = input.value.trim().toLowerCase();
@@ -8947,7 +9098,9 @@
                 }
             });
             document.addEventListener('click', event => {
-                if (!event.target.closest('.statusbar-center')) _closeStatusbarFileSearch();
+                if (!event.target.closest('.statusbar-center')) {
+                    _closeStatusbarFileSearch(true);
+                }
             });
         }
 
@@ -10167,7 +10320,7 @@
 
         function doClone() {
             if (document.getElementById('clone-modal-overlay')) return;
-            const host = `gitgost.fly.dev/v1/${rv.provider}/${rv.owner}/${rv.repo}`;
+            const host = `gitgost.livrasand.com/v1/${rv.provider}/${rv.owner}/${rv.repo}`;
             let githubBase = `https://gitlab.com/${rv.owner}/${rv.repo}`;
             if (rv.provider === 'gh') githubBase = `https://github.com/${rv.owner}/${rv.repo}`;
             else if (rv.provider === 'cb') githubBase = `https://codeberg.org/${rv.owner}/${rv.repo}`;
@@ -10808,6 +10961,7 @@
         </div>
         <div class="statusbar-right"></div>
     </footer>
+    <script src="/bip39-words.js"></script>
     <script src="/zkp-client.js?v=3"></script>
     <script src="/ethicalmetrics.js" data-site-key="gitgost-repo"></script>
 </body>

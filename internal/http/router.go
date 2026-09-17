@@ -304,6 +304,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.Static("/assets", "./web/assets")
 	r.StaticFile("/ethicalmetrics.js", "./web/ethicalmetrics.js")
 	r.StaticFile("/zkp-client.js", "./web/zkp-client.js")
+	r.StaticFile("/bip39-words.js", "./web/bip39-words.js")
 
 	v1 := r.Group("/v1")
 	v1.Use(sizeLimitMiddleware())

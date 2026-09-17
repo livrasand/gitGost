@@ -1,8 +1,9 @@
-const CACHE_NAME = 'gitgost-v4';
+const CACHE_NAME = 'gitgost-v6';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/repo.html',
+  '/bip39-words.js',
   '/assets/logos/android-icon-192x192.png',
   '/assets/logos/apple-icon-180x180.png',
   '/assets/logos/favicon.ico',

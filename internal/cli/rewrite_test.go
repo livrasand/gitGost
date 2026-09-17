@@ -3,17 +3,17 @@ package cli
 import "testing"
 
 func TestRewriteURL(t *testing.T) {
-	base := "https://gitgost.fly.dev"
+	base := "https://gitgost.livrasand.com"
 	cases := []struct {
 		name string
 		raw  string
 		want string
 	}{
-		{"github https", "https://github.com/openai/openai.git", "https://gitgost.fly.dev/v1/gh/openai/openai"},
-		{"github sin .git", "https://github.com/livrasand/gitGost", "https://gitgost.fly.dev/v1/gh/livrasand/gitGost"},
-		{"github ssh scp-like", "git@github.com:torvalds/linux.git", "https://gitgost.fly.dev/v1/gh/torvalds/linux"},
-		{"gitlab", "https://gitlab.com/group/repo.git", "https://gitgost.fly.dev/v1/gl/group/repo"},
-		{"codeberg", "https://codeberg.org/user/repo.git", "https://gitgost.fly.dev/v1/cb/user/repo"},
+		{"github https", "https://github.com/openai/openai.git", "https://gitgost.livrasand.com/v1/gh/openai/openai"},
+		{"github sin .git", "https://github.com/livrasand/gitGost", "https://gitgost.livrasand.com/v1/gh/livrasand/gitGost"},
+		{"github ssh scp-like", "git@github.com:torvalds/linux.git", "https://gitgost.livrasand.com/v1/gh/torvalds/linux"},
+		{"gitlab", "https://gitlab.com/group/repo.git", "https://gitgost.livrasand.com/v1/gl/group/repo"},
+		{"codeberg", "https://codeberg.org/user/repo.git", "https://gitgost.livrasand.com/v1/cb/user/repo"},
 	}
 
 	for _, tc := range cases {
@@ -28,7 +28,7 @@ func TestRewriteURL(t *testing.T) {
 		})
 	}
 
-	if got, err := RewriteURL("https://gitgost.fly.dev/", "https://github.com/foo/bar"); err != nil || got != "https://gitgost.fly.dev/v1/gh/foo/bar" {
+	if got, err := RewriteURL("https://gitgost.livrasand.com/", "https://github.com/foo/bar"); err != nil || got != "https://gitgost.livrasand.com/v1/gh/foo/bar" {
 		t.Errorf("base con slash final: got=%q err=%v", got, err)
 	}
 }
@@ -48,7 +48,7 @@ func TestRewriteURLInvalid(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if _, err := RewriteURL("https://gitgost.fly.dev", tc.raw); err == nil {
+			if _, err := RewriteURL("https://gitgost.livrasand.com", tc.raw); err == nil {
 				t.Errorf("RewriteURL(%q) debería fallar", tc.raw)
 			}
 		})

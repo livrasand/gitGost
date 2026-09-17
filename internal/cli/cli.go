@@ -548,7 +548,7 @@ Opciones de jobs:
   -f, --foreground   Ejecutar en primer plano mostrando el progreso en vivo
 
 Variables de entorno:
-  GITGOST_SERVER   URL base del servidor gitGost (por defecto https://gitgost.fly.dev)
+  GITGOST_SERVER   URL base del servidor gitGost (por defecto https://gitgost.livrasand.com)
   GITGOST_HOME     Directorio de datos (por defecto ~/.gitgost)
 `)
 }

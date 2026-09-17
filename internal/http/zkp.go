@@ -99,7 +99,10 @@ func zkpAuthMiddlewareOptional() gin.HandlerFunc {
 	}
 }
 
-type zkpRegistration struct{ PublicKey zkp.PublicKey }
+type zkpRegistration struct {
+	PublicKey zkp.PublicKey
+	CreatedAt time.Time
+}
 type zkpChallenge struct {
 	Identity string
 	Nonce    []byte
@@ -115,8 +118,10 @@ var zkpState = struct {
 }{registrations: make(map[string]zkpRegistration), challenges: make(map[string]*zkpChallenge)}
 
 type zkpRegisterRequest struct {
-	Identity  string `json:"identity"`
-	PublicKey string `json:"public_key"`
+	Identity     string `json:"identity"`
+	PublicKey    string `json:"public_key"`
+	CaptchaToken string `json:"captcha_token"`
+	Website      string `json:"website"`
 }
 type zkpChallengeRequest struct {
 	Identity string `json:"identity"`
@@ -163,6 +168,17 @@ func ZKPRegisterHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid public_key"})
 		return
 	}
+	if !verifyMentaCaptcha(req.CaptchaToken) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "captcha verification failed"})
+		return
+	}
+	// Honeypot: silently accept bots/crawlers that filled the hidden field
+	// without ever storing a registration. The 201 reply is identical to a
+	// real success so the trap is never revealed.
+	if strings.TrimSpace(req.Website) != "" {
+		c.JSON(http.StatusCreated, gin.H{"identity": req.Identity})
+		return
+	}
 	zkpState.Lock()
 	defer zkpState.Unlock()
 	if _, exists := zkpState.registrations[req.Identity]; exists {
@@ -174,9 +190,77 @@ func ZKPRegisterHandler(c *gin.Context) {
 		zkpState.order = zkpState.order[1:]
 		delete(zkpState.registrations, oldest)
 	}
-	zkpState.registrations[req.Identity] = zkpRegistration{PublicKey: publicKey}
+	zkpState.registrations[req.Identity] = zkpRegistration{PublicKey: publicKey, CreatedAt: time.Now()}
 	zkpState.order = append(zkpState.order, req.Identity)
 	c.JSON(http.StatusCreated, gin.H{"identity": req.Identity})
+}
+
+// zkpRegistrationGracePeriod is how long a ZKP registration may exist without
+// a provisioned gitGost Forge node before it is automatically removed.
+const zkpRegistrationGracePeriod = 7 * 24 * time.Hour
+
+var zkpSweepOnce sync.Once
+
+// StartZKPRegistrationSweeper launches a background task that deletes ZKP
+// registrations older than zkpRegistrationGracePeriod whose identity has no
+// provisioned gitGost Forge node. Such an identity cannot prove ownership of a
+// node, so it is treated as a stale registration. NodeStore must be
+// initialized (and LoadProvisioned called) before the sweeper takes effect.
+// The task runs for the lifetime of the process.
+func StartZKPRegistrationSweeper(interval time.Duration) {
+	if interval <= 0 {
+		interval = time.Hour
+	}
+	zkpSweepOnce.Do(func() {
+		go func() {
+			sweepZKPRegistrations()
+			ticker := time.NewTicker(interval)
+			defer ticker.Stop()
+			for range ticker.C {
+				sweepZKPRegistrations()
+			}
+		}()
+	})
+}
+
+func sweepZKPRegistrations() {
+	zkpState.Lock()
+	now := time.Now()
+	var candidates []string
+	for identity, reg := range zkpState.registrations {
+		if now.Sub(reg.CreatedAt) > zkpRegistrationGracePeriod {
+			candidates = append(candidates, identity)
+		}
+	}
+	zkpState.Unlock()
+
+	for _, identity := range candidates {
+		if zkpIdentityHasNode(identity) {
+			continue
+		}
+		zkpState.Lock()
+		if reg, ok := zkpState.registrations[identity]; ok && time.Since(reg.CreatedAt) > zkpRegistrationGracePeriod {
+			delete(zkpState.registrations, identity)
+			for i, id := range zkpState.order {
+				if id == identity {
+					zkpState.order = append(zkpState.order[:i], zkpState.order[i+1:]...)
+					break
+				}
+			}
+		}
+		zkpState.Unlock()
+	}
+}
+
+func zkpIdentityHasNode(identity string) bool {
+	if nodepkg.NodeStore == nil {
+		return false
+	}
+	nodes, err := nodepkg.NodeStore.LoadByAccount(identity)
+	if err != nil {
+		return false
+	}
+	return len(nodes) > 0
 }
 
 func ZKPChallengeHandler(c *gin.Context) {

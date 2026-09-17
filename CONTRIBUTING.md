@@ -323,6 +323,21 @@ Documentation should remain accurate with the current implementation.
 
 ---
 
+## Pull Request Policy
+
+To keep the project history clean and pull requests easy to review, the following rules apply to all external contributors:
+
+* **One commit per pull request.** Pull requests containing more than one commit will be rejected.
+* **Do not send additional commits after opening a pull request.** If changes or corrections are required after submission, **close the pull request and open a new one** containing the complete, corrected change as a single commit.
+* **Maximum 5 modified files per pull request.** Pull requests modifying more than 5 files will be rejected.
+* **Maintainers are exempt from the 5-file limit** when the change genuinely requires modifications to more than 5 files.
+* Keep each pull request **focused on a single change**. Avoid mixing unrelated fixes, refactors, formatting changes, or features.
+* Pull requests that do not follow these rules may be **closed without review**.
+
+These restrictions are intentional. They help maintain a clean Git history, make changes easier to review, and prevent unnecessarily large or difficult-to-audit contributions.
+
+---
+
 ## Review Process
 
 Pull requests are reviewed by maintainers and may receive requests for:

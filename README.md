@@ -31,7 +31,7 @@ A community-led free and open-source Git collaboration platform built for privac
 
 ```bash
 # Add as remote → fix → push → done. Designed to minimize identifiable traces.
-git remote add gost https://gitgost.fly.dev/v1/gh/torvalds/linux
+git remote add gost https://gitgost.livrasand.com/v1/gh/torvalds/linux
 git checkout -b fix-typo
 git commit -am "fix: obvious typo in README"
 git push gost fix-typo:main
@@ -117,7 +117,7 @@ gitGost also includes a privacy-first web interface for browsing and contributin
 
 ```bash
 # 1. Add the remote (replace with any public repo)
-git remote add gost https://gitgost.fly.dev/v1/gh/username/repo
+git remote add gost https://gitgost.livrasand.com/v1/gh/username/repo
 
 # 2. Create your branch and commit with a detailed message
 git checkout -b my-cool-fix
@@ -252,7 +252,9 @@ Please consider a regular donation through [GitHub Sponsors](https://github.com/
 
 ## Discussion
 
-There is a community-managed chat group for gitGost using Openbin at [https://openbin.livrasand.com/group/gitgost](https://openbin.livrasand.com/group/gitgost). Any web browser should be able to connect. This chat is not private; it is only anonymous. Anyone inside or outside Openbin can see the group and its messages. But as I have mentioned on several occasions, anonymity depends on you—on whether you use Tor or a VPN and avoid sharing data in your messages that could link back to you.
+There is a community-managed chat group for gitGost using Openbin at [https://openbin.livrasand.com/group/gitgost](https://openbin.livrasand.com/group/gitgost). Any web browser should be able to connect. This chat is not private; it is only anonymous. Anyone inside or outside Openbin can see the group and its messages. But as I have mentioned on several occasions, anonymity depends on you—on whether you use Tor or a VPN and avoid sharing data in your messages that could link back to you. 
+
+You can also join the gitGost community on Reddit: [https://www.reddit.com/r/gitgost/](https://www.reddit.com/r/gitgost/)
 
 ## Repository Opt-Out
 
@@ -672,7 +674,7 @@ Hopefully a more comprehensive guide will be written at some point, but for now 
 ### Contributing Anonymously
 
 ```bash
-git remote add gost https://gitgost.fly.dev/v1/gh/livrasand/gitGost
+git remote add gost https://gitgost.livrasand.com/v1/gh/livrasand/gitGost
 git push gost my-feature:main
 ```
 
@@ -840,7 +842,7 @@ If abusive activity is detected (bot submissions, coordinated spam), you can sus
 **Suspend the service:**
 
 ```bash
-curl -X POST https://gitgost.fly.dev/admin/panic \
+curl -X POST https://gitgost.livrasand.com/admin/panic \
   -H "Content-Type: application/json" \
   -d '{"password":"<PANIC_PASSWORD>","active":true}'
 ```
@@ -848,7 +850,7 @@ curl -X POST https://gitgost.fly.dev/admin/panic \
 **Restore the service:**
 
 ```bash
-curl -X POST https://gitgost.fly.dev/admin/panic \
+curl -X POST https://gitgost.livrasand.com/admin/panic \
   -H "Content-Type: application/json" \
   -d '{"password":"<PANIC_PASSWORD>","active":false}'
 ```
@@ -860,11 +862,11 @@ curl -X POST https://gitgost.fly.dev/admin/panic \
 ```bash
 export PANIC_PASSWORD="your-password-here"
 
-alias gitgost-suspend='curl -s -X POST https://gitgost.fly.dev/admin/panic \
+alias gitgost-suspend='curl -s -X POST https://gitgost.livrasand.com/admin/panic \
   -H "Content-Type: application/json" \
   -d "{\"password\":\"$PANIC_PASSWORD\",\"active\":true}"'
 
-alias gitgost-restore='curl -s -X POST https://gitgost.fly.dev/admin/panic \
+alias gitgost-restore='curl -s -X POST https://gitgost.livrasand.com/admin/panic \
   -H "Content-Type: application/json" \
   -d "{\"password\":\"$PANIC_PASSWORD\",\"active\":false}"'
 ```
@@ -876,7 +878,7 @@ Then simply run `gitgost-restore` to bring the service back online.
 After a burst attack, close all PRs created during the attack window:
 
 ```bash
-curl -X POST https://gitgost.fly.dev/admin/rollback \
+curl -X POST https://gitgost.livrasand.com/admin/rollback \
   -H "Content-Type: application/json" \
   -d '{"password":"<PANIC_PASSWORD>"}'
 # → {"closed": 12, "failed": 0, "closed_urls": [...]}

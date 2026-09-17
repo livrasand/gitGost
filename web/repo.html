@@ -9420,7 +9420,7 @@
                             });
                             loaded = true;
                         } catch(e) {
-                            children.innerHTML = `<div class="tree-loading" style="color:var(--accent);padding:0.3rem 0.5rem;">${e.message}</div>`;
+                            children.innerHTML = `<div class="tree-loading" style="color:var(--accent);padding:0.3rem 0.5rem;">${escHtml(e && e.message ? e.message : e)}</div>`;
                         }
                     }
                 };

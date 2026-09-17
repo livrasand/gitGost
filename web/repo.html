@@ -3873,12 +3873,45 @@
         function updateStatusbarPath() {
             const el = document.getElementById('statusbar-path');
             if (!el) return;
-            const branchName = rv.branch ? escHtml(rv.branch) : '';
-            el.innerHTML =
-                `<a href="/${encodeURIComponent(rv.provider)}/${encodeURIComponent(rv.owner)}" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.owner)}</a>`+
-                `<span style="color:var(--fg-muted);">/</span>`+
-                `<a href="${repoBasePath()}" onclick="showView('home');return false;" style="color:var(--fg-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--fg-muted)'">${escHtml(rv.repo)}</a>`+
-                (branchName ? `<span style="color:var(--fg-muted);">/</span><span style="display:inline-flex;align-items:center;gap:0.2rem;">${BRANCH_SVG}</span>` : '');
+            const branchName = rv.branch || '';
+            el.replaceChildren();
+
+            const makePathLink = (url, text, onClick) => {
+                const a = document.createElement('a');
+                a.href = url;
+                a.style.color = 'var(--fg-muted)';
+                a.style.textDecoration = 'none';
+                a.textContent = text;
+                a.addEventListener('mouseover', () => { a.style.color = 'var(--accent)'; });
+                a.addEventListener('mouseout', () => { a.style.color = 'var(--fg-muted)'; });
+                if (onClick) a.addEventListener('click', (e) => { e.preventDefault(); onClick(); });
+                return a;
+            };
+
+            const sep = document.createElement('span');
+            sep.textContent = '/';
+            sep.style.color = 'var(--fg-muted)';
+
+            el.appendChild(makePathLink(
+                `/${encodeURIComponent(rv.provider)}/${encodeURIComponent(rv.owner)}`,
+                rv.owner
+            ));
+            el.appendChild(sep.cloneNode(true));
+            el.appendChild(makePathLink(repoBasePath(), rv.repo, () => showView('home')));
+
+            if (branchName) {
+                const sep2 = document.createElement('span');
+                sep2.textContent = '/';
+                sep2.style.color = 'var(--fg-muted)';
+                el.appendChild(sep2);
+                const branch = document.createElement('span');
+                branch.style.display = 'inline-flex';
+                branch.style.alignItems = 'center';
+                branch.style.gap = '0.2rem';
+                branch.insertAdjacentHTML('beforeend', BRANCH_SVG);
+                el.appendChild(branch);
+            }
+
             const sel = document.getElementById('ref-select');
             if (sel) {
                 sel.style.display = branchName ? 'inline-block' : 'none';
@@ -3997,6 +4030,14 @@
                 e.stopPropagation();
             }, true);
 
+            function sameOriginHref(href) {
+                try {
+                    const u = new URL(href, window.location.origin);
+                    if ((u.protocol === 'http:' || u.protocol === 'https:') && u.origin === window.location.origin) return u.href;
+                } catch(_) {}
+                return null;
+            }
+
             // Filas clicables (data-goto): click normal navega dentro de la SPA;
             // Ctrl/Cmd+click abre en pestaña nueva (las filas son divs, sin
             // comportamiento nativo del navegador).
@@ -4017,7 +4058,10 @@
                 try { route = parseRepoRoute(new URL(href, window.location.origin).pathname); } catch(_) {}
                 e.preventDefault();
                 if (isCurrentRepo(route)) navigateTo(route, true);
-                else window.location.href = href;
+                else {
+                    const target = sameOriginHref(href);
+                    if (target) window.location.href = target;
+                }
             });
 
             // Botón central sobre filas data-goto: abre en pestaña nueva.
@@ -8607,6 +8651,39 @@
             }
         }
 
+        function renderLatestRelease(el, name, ago) {
+            const link = document.createElement('a');
+            link.href = buildViewUrl('releases');
+            link.style.color = 'var(--fg)';
+            link.style.textDecoration = 'none';
+            link.style.display = 'block';
+            link.style.padding = '0.3rem 0';
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                showView('releases');
+            });
+            const title = document.createElement('div');
+            title.style.fontSize = '0.82rem';
+            title.style.fontWeight = '500';
+            title.style.lineHeight = '1.3';
+            title.appendChild(document.createTextNode(name));
+            title.appendChild(document.createTextNode('  '));
+            const badge = document.createElement('span');
+            badge.className = 'release-latest-badge';
+            badge.textContent = 'Latest';
+            title.appendChild(badge);
+            link.appendChild(title);
+            if (ago) {
+                const meta = document.createElement('div');
+                meta.style.fontSize = '0.7rem';
+                meta.style.color = 'var(--fg-muted)';
+                meta.style.marginTop = '0.15rem';
+                meta.textContent = ago;
+                link.appendChild(meta);
+            }
+            el.replaceChildren(link);
+        }
+
         async function loadReleaseCount() {
             const el = document.getElementById('sb-releases');
             const section = document.getElementById('sb-releases-section');
@@ -8627,10 +8704,7 @@
                             const tag = latest.tag_name || latest.name || '';
                             const name = latest.name || tag;
                             const ago = timeAgo(latest.published_at || latest.created_at);
-                            latestEl.innerHTML = `<a href="${buildViewUrl('releases')}" onclick="showView('releases'); return false;" style="color:var(--fg);text-decoration:none;display:block;padding:0.3rem 0;">
-                                <div style="font-size:0.82rem;font-weight:500;line-height:1.3;">${escHtml(name)}  <span class="release-latest-badge">Latest</span></div>
-                                ${ago ? `<div style="font-size:0.7rem;color:var(--fg-muted);margin-top:0.15rem;">${ago}</div>` : ''}
-                            </a>`;
+                            renderLatestRelease(latestEl, name, ago);
                         }
                         if (section) section.style.display = '';
                     } else {
@@ -8651,10 +8725,7 @@
                                 const tag = latest.tag_name || latest.tag || '';
                                 const name = latest.name || tag;
                                 const ago = timeAgo(latest.released_at || latest.created_at);
-                                latestEl.innerHTML = `<a href="${buildViewUrl('releases')}" onclick="showView('releases'); return false;" style="color:var(--fg);text-decoration:none;display:block;padding:0.3rem 0;">
-                                    <div style="font-size:0.82rem;font-weight:500;line-height:1.3;">${escHtml(name)}  <span class="release-latest-badge">Latest</span></div>
-                                    ${ago ? `<div style="font-size:0.7rem;color:var(--fg-muted);margin-top:0.15rem;">${ago}</div>` : ''}
-                                </a>`;
+                                renderLatestRelease(latestEl, name, ago);
                             }
                             if (section) section.style.display = '';
                         } else {
@@ -8677,10 +8748,7 @@
                             const tag = latest.tag_name || latest.tag || '';
                             const name = latest.name || tag;
                             const ago = timeAgo(latest.published_at || latest.created_at);
-                            latestEl.innerHTML = `<a href="${buildViewUrl('releases')}" onclick="showView('releases'); return false;" style="color:var(--fg);text-decoration:none;display:block;padding:0.3rem 0;">
-                                <div style="font-size:0.82rem;font-weight:500;line-height:1.3;">${escHtml(name)}  <span class="release-latest-badge">Latest</span></div>
-                                ${ago ? `<div style="font-size:0.7rem;color:var(--fg-muted);margin-top:0.15rem;">${ago}</div>` : ''}
-                            </a>`;
+                            renderLatestRelease(latestEl, name, ago);
                         }
                         if (section) section.style.display = '';
                     } else {

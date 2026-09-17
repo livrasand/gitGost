@@ -1144,13 +1144,50 @@ func verifyMentaCaptcha(token string) bool {
 
 var mentaProxyClient = newSafeHTTPClient(15 * time.Second)
 
+// mentaSafeTarget construye la URL de destino a partir de un path controlado
+// por el cliente, garantizando que la petición solo pueda alcanzar el endpoint
+// de Menta configurado (mismo esquema y host). Devolver false impide cualquier
+// intento de request forgery / open-proxy hacia otros orígenes.
+func mentaSafeTarget(path string) (*url.URL, bool) {
+	base, err := url.Parse(mentaAPIEndpoint)
+	if err != nil || base.Scheme == "" || base.Host == "" {
+		return nil, false
+	}
+	target, err := url.Parse(base.String() + path)
+	if err != nil {
+		return nil, false
+	}
+	if target.Scheme != base.Scheme || target.Host != base.Host || target.User != nil {
+		return nil, false
+	}
+	if p := target.EscapedPath(); p != "" {
+		dec, err := url.PathUnescape(p)
+		if err != nil || strings.ContainsAny(dec, "\\@") || strings.Contains(dec, "//") || strings.Contains(dec, "..") {
+			return nil, false
+		}
+	}
+	return target, true
+}
+
 func MentaCaptchaProxyHandler(c *gin.Context) {
 	if mentaAPIEndpoint == "" {
 		c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"error": "Captcha unavailable"})
 		return
 	}
-	target := mentaAPIEndpoint + c.Param("path")
-	req, err := http.NewRequestWithContext(c.Request.Context(), c.Request.Method, target, c.Request.Body)
+	if c.Request.Method != http.MethodGet && c.Request.Method != http.MethodPost {
+		c.AbortWithStatusJSON(http.StatusMethodNotAllowed, gin.H{"error": "Captcha proxy error"})
+		return
+	}
+	target, ok := mentaSafeTarget(c.Param("path"))
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Captcha proxy error"})
+		return
+	}
+	var body io.Reader
+	if c.Request.Method == http.MethodPost {
+		body = c.Request.Body
+	}
+	req, err := http.NewRequestWithContext(c.Request.Context(), c.Request.Method, target.String(), body)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "Captcha proxy error"})
 		return

@@ -3692,6 +3692,15 @@
 
         const _pathParts = window.location.pathname.split('/').filter(Boolean);
         const _isCleanPath = _pathParts.length >= 3 && (_pathParts[0] === 'gh' || _pathParts[0] === 'gl' || _pathParts[0] === 'cb' || _pathParts[0] === 'gg');
+        const SAFE_PROVIDERS = new Set(['gh', 'gl', 'cb', 'gg']);
+        function sanitizeProvider(p) {
+            const v = String(p || '').toLowerCase();
+            return SAFE_PROVIDERS.has(v) ? v : 'gh';
+        }
+        function sanitizePathAtom(s) {
+            const v = String(s || '').trim();
+            return /^[A-Za-z0-9._-]{1,100}$/.test(v) ? v : '';
+        }
         const rv = {
             owner:    _isCleanPath ? decodeURIComponent(_pathParts[1] || '') : (params.get('owner') || ''),
             repo:     _isCleanPath ? decodeURIComponent(_pathParts[2] || '') : (params.get('repo')  || ''),
@@ -3704,6 +3713,9 @@
             else if (rv.provider === 'gitlab') rv.provider = 'gl';
             else if (rv.provider === 'codeberg') rv.provider = 'cb';
         }
+        rv.provider = sanitizeProvider(rv.provider);
+        rv.owner = sanitizePathAtom(rv.owner);
+        rv.repo = sanitizePathAtom(rv.repo);
 
         const VIEW_TO_PATH = {
             home: '', files: 'tree', commits: 'commits', branches: 'branches',

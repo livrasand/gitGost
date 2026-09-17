@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -35,6 +36,12 @@ var releaseAssetHosts = map[string][]string{
 	},
 }
 
+var (
+	errInvalidURLProvider = errors.New("unsupported provider")
+	errInvalidURL         = errors.New("invalid url")
+	errURLHostNotAllowed  = errors.New("host not allowed for this provider")
+)
+
 func releaseAssetHostAllowed(provider, host string) bool {
 	host = strings.ToLower(host)
 	for _, h := range releaseAssetHosts[provider] {
@@ -49,6 +56,37 @@ func releaseAssetHostAllowed(provider, host string) bool {
 		}
 	}
 	return false
+}
+
+// resolveUpstreamURL valida la URL cruda aportada por el cliente contra el
+// allowlist de hosts del proveedor y devuelve una URL reconstruida campo a
+// campo a partir del parseo validado. La petición saliente se construye
+// siempre con esta URL reconstruida, nunca con la cadena cruda del cliente,
+// de modo que el valor usado en el request es una constante del servidor
+// (bloqueando SSRF via userinfo, scheme, host o discrepancias de parseo).
+func resolveUpstreamURL(rawURL, provider string) (*url.URL, error) {
+	if _, ok := releaseAssetHosts[provider]; !ok {
+		return nil, errInvalidURLProvider
+	}
+	parsed, err := url.Parse(strings.TrimSpace(rawURL))
+	if err != nil || parsed.Scheme != "https" || parsed.Host == "" {
+		return nil, errInvalidURL
+	}
+	if parsed.User != nil {
+		return nil, errInvalidURL
+	}
+	if !releaseAssetHostAllowed(provider, parsed.Host) {
+		return nil, errURLHostNotAllowed
+	}
+	// Reconstruye la URL desde las partes validadas: el host ya pasó el
+	// allowlist y el scheme se fuerza a https.
+	return &url.URL{
+		Scheme:   "https",
+		Host:     parsed.Host,
+		Path:     parsed.Path,
+		RawPath:  parsed.RawPath,
+		RawQuery: parsed.RawQuery,
+	}, nil
 }
 
 // streamProxiedFile transmite en stream un archivo desde la forja original
@@ -70,22 +108,22 @@ func streamProxiedFile(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "unsupported provider"})
 		return
 	}
-	rawURL := strings.TrimSpace(c.Query("url"))
+	rawURL := c.Query("url")
 	if rawURL == "" {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "url is required"})
 		return
 	}
-	parsed, err := url.Parse(rawURL)
-	if err != nil || parsed.Scheme != "https" || parsed.Host == "" {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid url"})
+	target, err := resolveUpstreamURL(rawURL, provider)
+	switch {
+	case errors.Is(err, errURLHostNotAllowed):
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": errURLHostNotAllowed.Error()})
 		return
-	}
-	if !releaseAssetHostAllowed(provider, parsed.Host) {
-		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "host not allowed for this provider"})
+	case err != nil:
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	req, err := http.NewRequestWithContext(c.Request.Context(), http.MethodGet, rawURL, nil)
+	req, err := http.NewRequestWithContext(c.Request.Context(), http.MethodGet, target.String(), nil)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to build request"})
 		return
@@ -117,7 +155,7 @@ func streamProxiedFile(c *gin.Context) {
 		return
 	}
 
-	filename := path.Base(parsed.Path)
+	filename := path.Base(target.Path)
 	if cd := resp.Header.Get("Content-Disposition"); cd != "" {
 		if _, params, e := mime.ParseMediaType(cd); e == nil && params["filename"] != "" {
 			filename = params["filename"]

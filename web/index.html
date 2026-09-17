@@ -3224,6 +3224,14 @@
                 }
             });
 
+            function sameOriginHref(href) {
+                try {
+                    const u = new URL(href, window.location.origin);
+                    if ((u.protocol === 'http:' || u.protocol === 'https:') && u.origin === window.location.origin) return u.href;
+                } catch(_) {}
+                return null;
+            }
+
             // Filas clicables (data-href): click normal navega; Ctrl/Cmd+click
             // abre en pestaña nueva (las filas son divs, sin comportamiento nativo).
             document.addEventListener('click', function(e) {
@@ -3238,7 +3246,8 @@
                     window.open(href, '_blank', 'noopener');
                     return;
                 }
-                window.location.href = href;
+                const target = sameOriginHref(href);
+                if (target) window.location.href = target;
             });
 
             document.addEventListener('auxclick', function(e) {

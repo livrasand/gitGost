@@ -853,6 +853,7 @@ var (
 	blockedStore        = newBoundedMap[bool](blockedStoreMax, 0)
 	panicMode           bool
 	panicMu             sync.Mutex
+	maintenanceMode     bool
 	panicPassword       string
 	ntfyAdminTopic      string
 	mentaAPIEndpoint    string
@@ -1240,6 +1241,33 @@ func isPanicMode() bool {
 	return panicMode
 }
 
+// isMaintenanceMode reporta si el modo mantenimiento está activo
+// (estado protegido por panicMode: se activa junto a panicMode).
+func isMaintenanceMode() bool {
+	panicMu.Lock()
+	defer panicMu.Unlock()
+	return maintenanceMode
+}
+
+// InitMaintenance activa o desactiva el modo mantenimiento al arranque.
+// La activación fuerza panicMode=true (bloquea pushes); la desactivación
+// no toca panicMode para no desactivar un panic humano por accidente.
+func InitMaintenance(active bool, source string) {
+	panicMu.Lock()
+	defer panicMu.Unlock()
+	if active {
+		maintenanceMode = true
+		panicMode = true
+	} else {
+		maintenanceMode = false
+	}
+	state := "off"
+	if active {
+		state = "on"
+	}
+	utils.Log("maintenance mode %s (source: %s)", state, source)
+}
+
 func isGlobalBurstAlertActive() bool {
 	globalBurstMu.Lock()
 	defer globalBurstMu.Unlock()
@@ -1341,9 +1369,10 @@ func notifyAdminRateLimit(ip string, count int) {
 
 func PanicHandler(c *gin.Context) {
 	var req struct {
-		Password string `json:"password"`
-		Token    string `json:"token"`
-		Active   bool   `json:"active"`
+		Password    string `json:"password"`
+		Token       string `json:"token"`
+		Active      bool   `json:"active"`
+		Maintenance *bool  `json:"maintenance"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
@@ -1357,6 +1386,13 @@ func PanicHandler(c *gin.Context) {
 	}
 	panicMu.Lock()
 	panicMode = req.Active
+	if req.Maintenance != nil {
+		maintenanceMode = *req.Maintenance
+		if *req.Maintenance {
+			panicMode = true
+		}
+	}
+	maint := maintenanceMode
 	panicMu.Unlock()
 
 	state := "deactivated"
@@ -1364,12 +1400,24 @@ func PanicHandler(c *gin.Context) {
 		state = "activated"
 	}
 	utils.Log("panic mode %s", state)
-	c.JSON(http.StatusOK, gin.H{"panic_mode": req.Active, "state": state})
+	if req.Maintenance != nil {
+		maintState := "off"
+		if maint {
+			maintState = "on"
+		}
+		utils.Log("maintenance mode %s", maintState)
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"panic_mode":       req.Active,
+		"maintenance_mode": maint,
+		"state":            state,
+	})
 }
 
 func ServiceStatusHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"panic_mode": isPanicMode(),
+		"panic_mode":       isPanicMode(),
+		"maintenance_mode": isMaintenanceMode(),
 	})
 }
 
@@ -1543,6 +1591,10 @@ func RecentPRsHandler(c *gin.Context) {
 }
 
 func CreateAnonymousIssueHandler(c *gin.Context) {
+	if isPanicMode() {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "service temporarily suspended"})
+		return
+	}
 	var req anonymousIssueRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
@@ -2512,6 +2564,10 @@ func GitLabWikiProxyHandler(c *gin.Context) {
 }
 
 func CreateAnonymousCommentHandler(c *gin.Context) {
+	if isPanicMode() {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "service temporarily suspended"})
+		return
+	}
 	var req anonymousCommentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
@@ -2652,6 +2708,10 @@ func publishIssueCommentNtfy(owner, repo string, number int, commentURL string) 
 }
 
 func CreateAnonymousPRCommentHandler(c *gin.Context) {
+	if isPanicMode() {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "service temporarily suspended"})
+		return
+	}
 	var req anonymousCommentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
@@ -2771,6 +2831,10 @@ func CreateAnonymousPRCommentHandler(c *gin.Context) {
 }
 
 func CreateAnonymousDiscussionCommentHandler(c *gin.Context) {
+	if isPanicMode() {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "service temporarily suspended"})
+		return
+	}
 	var req anonymousCommentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})

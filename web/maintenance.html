@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex,nofollow" />
+<meta http-equiv="refresh" content="300" />
+<link rel="shortcut icon" href="/assets/logos/gitgost-logo.svg" type="image/svg+xml" />
+<link rel="icon" href="/assets/logos/gitgost-logo.svg" type="image/svg+xml" />
+<link rel="manifest" href="/assets/logos/manifest.json" />
+<meta name="theme-color" content="#f76f53" />
+<title>ERROR! :( gitGost: Anonymous Git Contributions</title>
+<link rel="stylesheet" href="/assets/winui-scrollbar.css" />
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    :root {
+        /* Paleta zen de openbin (tema claro) */
+        --zen-paper: #f2f0e3;
+        --zen-dark: #2e2e2e;
+        --bg: var(--zen-paper);
+        --fg: var(--zen-dark);
+        --fg-muted: color-mix(in srgb, var(--zen-dark) 60%, transparent);
+        --fg-secondary: color-mix(in srgb, var(--zen-dark) 40%, transparent);
+        --bg-secondary: color-mix(in srgb, var(--zen-dark) 6%, var(--zen-paper));
+        --bg-hover: color-mix(in srgb, var(--zen-dark) 12%, var(--zen-paper));
+        --accent: #f76f53;
+        --border: color-mix(in srgb, var(--zen-dark) 12%, var(--zen-paper));
+        --card: color-mix(in srgb, var(--zen-dark) 6%, var(--zen-paper));
+        --code-bg: color-mix(in srgb, var(--zen-dark) 6%, var(--zen-paper));
+        --radius-lg: 0px;
+        --radius-md: 0px;
+        --radius-sm: 0px;
+        --radius-pill: 0px;
+    }
+
+    :root[data-theme="dark"] {
+        /* Paleta zen de openbin (tema oscuro) */
+        --zen-paper: #1f1f1f;
+        --zen-dark: #d1cfc0;
+        --bg: var(--zen-paper);
+        --fg: var(--zen-dark);
+        --fg-muted: color-mix(in srgb, var(--zen-dark) 60%, transparent);
+        --fg-secondary: color-mix(in srgb, var(--zen-dark) 40%, transparent);
+        --bg-secondary: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+        --bg-hover: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+        --accent: #f76f53;
+        --border: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+        --card: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+        --code-bg: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+    }
+
+    html, body {
+        height: 100%;
+    }
+
+    body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        font-size: 13px;
+        line-height: 1.5;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    a {
+        color: var(--accent);
+        text-decoration: none;
+    }
+
+    .app-container {
+        display: flex;
+        flex: 1;
+        padding: 2rem 2rem 0rem 2rem;
+        gap: 2rem;
+        margin: 0 auto;
+        width: 100%;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .sidebar {
+        width: 150px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        padding-top: 0.25rem;
+        overflow-y: auto;
+        scrollbar-width: none;
+    }
+    .sidebar::-webkit-scrollbar { display: none; }
+
+    .logo {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 1.25rem;
+        text-decoration: none;
+        letter-spacing: -0.5px;
+    }
+
+    .logo-img {
+        display: none;
+    }
+
+    .main-content {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        padding-bottom: 3rem;
+    }
+
+    .section-title {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.72rem;
+        font-weight: 400;
+        color: var(--fg-muted);
+        margin: 0 0 0.4rem;
+    }
+
+    .section-content {
+        margin-bottom: 1.5rem;
+    }
+
+    .section-content .section-title {
+        margin-top: 1.25rem;
+    }
+
+    .section-content p {
+        margin: 0;
+        font-size: 0.82rem;
+        color: var(--fg);
+        line-height: 1.5;
+    }
+
+    .code-box {
+        position: relative;
+        margin-top: 0.5rem;
+        border: 1px solid var(--border);
+        background: var(--code-bg);
+        border-radius: 0;
+        padding: 0.75rem 3.25rem 0.75rem 1rem;
+    }
+
+    .code-box code {
+        display: block;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.78rem;
+        color: var(--fg);
+        white-space: pre;
+        overflow-x: auto;
+    }
+
+    .code-box .copy-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--fg-secondary);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.65rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0;
+        cursor: pointer;
+    }
+
+    .code-box .copy-btn:hover,
+    .code-box .copy-btn:focus-visible {
+        color: var(--fg);
+        background: var(--bg-hover);
+        outline: none;
+    }
+
+    .suspension-banner {
+        display: none;
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 0;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.78rem;
+        color: #856404;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 10px;
+    }
+
+    :root[data-theme="dark"] .suspension-banner {
+        background: #663d03;
+        border-color: #f76f53;
+        color: #ffe6a7;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root:not([data-theme]) .suspension-banner {
+            background: #663d03;
+            border-color: #f76f53;
+            color: #ffe6a7;
+        }
+    }
+
+    .suspension-banner.active {
+        display: flex;
+    }
+
+    .suspension-banner-icon {
+        flex-shrink: 0;
+        font-size: 1.2rem;
+    }
+
+    .suspension-banner-content {
+        flex: 1;
+    }
+
+    .suspension-banner-content strong {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .statusbar {
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border);
+        padding: 0.35rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.72rem;
+        color: var(--fg-secondary);
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 50;
+    }
+
+    .command-statusbar {
+        display: flex;
+        grid-template-columns: none;
+        justify-content: space-between;
+    }
+
+    .command-statusbar .statusbar-right {
+        margin-left: auto;
+    }
+
+    .statusbar-left {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .statusbar-right {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .statusbar a {
+        color: var(--accent);
+        text-decoration: none;
+    }
+
+    .statusbar a:hover {
+        text-decoration: underline;
+    }
+
+    .statusbar-command {
+        position: relative;
+    }
+
+    .statusbar-command-trigger {
+        border: 0;
+        padding: 0;
+        color: var(--fg-secondary);
+        background: transparent;
+        font: inherit;
+        cursor: pointer;
+    }
+
+    .statusbar-command-trigger:hover,
+    .statusbar-command-trigger:focus-visible {
+        color: var(--fg);
+        outline: none;
+    }
+
+    .statusbar-command-menu {
+        position: absolute;
+        bottom: calc(100% + 0.25rem);
+        left: 0;
+        width: 14rem;
+        padding: 0.25rem 0;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        box-shadow: none;
+    }
+
+    .statusbar-command-menu[hidden] {
+        display: none;
+    }
+
+    .statusbar-command-menu a,
+    .statusbar-command-menu button {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        border: 0;
+        padding: 0.4rem 0.75rem;
+        color: var(--fg);
+        background: transparent;
+        font: inherit;
+        font-size: 0.72rem;
+        text-align: left;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .statusbar-command-menu a:hover,
+    .statusbar-command-menu button:hover,
+    .statusbar-command-menu a:focus-visible,
+    .statusbar-command-menu button:focus-visible {
+        background: var(--bg-hover);
+        outline: none;
+    }
+
+    .statusbar-command-menu-divider {
+        height: 1px;
+        margin: 0.25rem 0;
+        background: var(--border);
+    }
+
+    @media (max-width: 900px) {
+        .app-container {
+            padding: 1rem;
+            gap: 1.5rem;
+        }
+        .sidebar {
+            width: 120px;
+        }
+    }
+
+    @media (max-width: 640px) {
+        html, body {
+            overflow: auto;
+            height: auto;
+            min-height: 100vh;
+            font-size: 15px;
+        }
+
+        .app-container {
+            flex-direction: column;
+            padding: 0.5rem;
+            gap: 0.25rem;
+            overflow: visible;
+            min-height: 0;
+        }
+
+        .sidebar {
+            width: 100%;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: 0.15rem;
+            padding: 0.25rem 0.35rem;
+            padding-top: max(0.35rem, env(safe-area-inset-top));
+            position: relative;
+            overflow-y: visible;
+            border-bottom: none;
+            border-radius: 0;
+            margin-bottom: 0.5rem;
+            backdrop-filter: saturate(1.4);
+            min-height: 52px;
+        }
+
+        .sidebar .logo {
+            width: auto;
+            margin-bottom: 0;
+            font-size: 1.55rem;
+            position: absolute;
+            left: 50%;
+            top: calc(50% + (env(safe-area-inset-top, 0px) / 2));
+            transform: translate(-50%, -50%);
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            padding: 0.35rem;
+            transition: transform 0.15s ease;
+            color: var(--accent);
+        }
+
+        .sidebar .logo-text {
+            display: none;
+        }
+
+        .sidebar .logo-img {
+            display: block;
+            width: 1.55rem;
+            height: 1.55rem;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
+        }
+
+        .main-content {
+            width: 100%;
+            min-height: 0;
+            padding-bottom: 3.5rem;
+        }
+    }
+</style>
+</head>
+<body>
+    <div id="suspension-banner" class="suspension-banner active">
+        <div class="suspension-banner-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+    <path d="M0 0h24v24H0z" fill="none" />
+    <g fill="none">
+        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.775 14.475a3.5 3.5 0 0 1 0-4.95l5.75-5.75a3.5 3.5 0 0 1 4.95 0l5.75 5.75a3.5 3.5 0 0 1 0 4.95l-5.75 5.75a3.5 3.5 0 0 1-4.95 0z" />
+        <path stroke="currentColor" stroke-linecap="round" stroke-width="1.5" d="M12 12.435v-5" />
+        <circle cx="1.25" cy="1.25" r="1.25" fill="currentColor" transform="matrix(1 0 0 -1 10.75 17.06)" />
+    </g>
+</svg>
+</div>
+        <div class="suspension-banner-content">
+            <strong>Service Temporarily Suspended</strong>
+            The website is offline to protect the service and its users from relentless AI scrapers and crawlers. Repositories remain available over git.
+        </div>
+    </div>
+
+    <div class="app-container">
+        <aside class="sidebar">
+            <a href="/" class="logo"><span class="logo-text">gitGost</span><img src="/assets/logos/gitgost-logo.svg" alt="gitGost" class="logo-img" /></a>
+        </aside>
+
+        <main class="main-content">
+            <div class="section-content">
+                <div class="section-title">repositories stay available over git</div>
+                <p>Clone, fetch and push keep working while the website is offline:</p>
+                <div class="code-box">
+                    <code id="clone-cmd">git clone https://gitgost.livrasand.com/&lt;owner&gt;/&lt;repo&gt;.git</code>
+                    <button type="button" class="copy-btn" onclick="copyClone()">copy</button>
+                </div>
+
+                <div class="section-title">next steps</div>
+                <p>The site polls its status every 5 seconds and will reload automatically once maintenance mode is disabled. Try again in a few minutes.</p>
+            </div>
+        </main>
+    </div>
+
+    <footer class="statusbar command-statusbar">
+        <div class="statusbar-left statusbar-command">
+            <button type="button" id="command-trigger" class="statusbar-command-trigger" aria-haspopup="true" aria-expanded="false">
+                <span id="statusbar-path">maintenance</span>
+                <span style="color:var(--accent);">_</span>
+            </button>
+            <div id="command-menu" class="statusbar-command-menu" hidden>
+                <a href="/">home</a>
+                <a href="/health">status</a>
+                <div class="statusbar-command-menu-divider"></div>
+                <button type="button" onclick="toggleTheme()">toggle theme</button>
+            </div>
+        </div>
+        <div class="statusbar-right">
+            <a href="/health">status</a>
+            <a href="/">retry</a>
+        </div>
+    </footer>
+
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem("theme");
+                if (saved === "dark" || saved === "light") {
+                    document.documentElement.setAttribute("data-theme", saved);
+                }
+            } catch (e) {}
+        })();
+
+        function toggleTheme() {
+            var root = document.documentElement;
+            var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+            root.setAttribute("data-theme", next);
+            try { localStorage.setItem("theme", next); } catch (e) {}
+            closeCommandMenu();
+        }
+
+        var trigger = document.getElementById("command-trigger");
+        var menu = document.getElementById("command-menu");
+
+        function closeCommandMenu() {
+            if (!menu) return;
+            menu.hidden = true;
+            if (trigger) trigger.setAttribute("aria-expanded", "false");
+        }
+
+        if (trigger && menu) {
+            trigger.addEventListener("click", function (e) {
+                e.stopPropagation();
+                var open = menu.hidden;
+                menu.hidden = !open;
+                trigger.setAttribute("aria-expanded", String(open));
+            });
+
+            document.addEventListener("click", function (e) {
+                if (menu.hidden) return;
+                if (!menu.contains(e.target) && e.target !== trigger) closeCommandMenu();
+            });
+
+            document.addEventListener("keydown", function (e) {
+                if (e.key === "Escape") closeCommandMenu();
+            });
+        }
+
+        function fallbackCopy(text) {
+            var ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand("copy"); } catch (e) {}
+            document.body.removeChild(ta);
+        }
+
+        function copyClone() {
+            var el = document.getElementById("clone-cmd");
+            if (!el) return;
+            var text = el.textContent;
+            var btn = document.querySelector(".copy-btn");
+            function done() {
+                if (!btn) return;
+                var prev = btn.textContent;
+                btn.textContent = "copied!";
+                setTimeout(function () { btn.textContent = prev; }, 1500);
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done, function () {
+                    fallbackCopy(text);
+                    done();
+                });
+            } else {
+                fallbackCopy(text);
+                done();
+            }
+        }
+
+        (function () {
+            var tries = 0;
+            var timer = setInterval(function () {
+                tries += 1;
+                if (tries > 120) {
+                    clearInterval(timer);
+                    return;
+                }
+                fetch("/api/status", { cache: "no-store" })
+                    .then(function (r) { return r.json(); })
+                    .then(function (s) {
+                        if (s && s.maintenance_mode === false) {
+                            clearInterval(timer);
+                            location.reload();
+                        }
+                    })
+                    .catch(function () {});
+            }, 5000);
+        })();
+    </script>
+</body>
+</html>

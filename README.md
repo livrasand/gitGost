@@ -878,6 +878,52 @@ alias gitgost-restore='curl -s -X POST https://gitgost.livrasand.com/admin/panic
 
 Then simply run `gitgost-restore` to bring the service back online.
 
+### Maintenance mode — full 503 page for scrapers
+
+While panic mode only suspends pushes and shows a banner, **maintenance mode** blocks the whole web surface with a `503` NotABug-style page (`web/maintenance.html`) and `Retry-After` / `X-Robots-Tag: noindex` headers — designed to shed relentless AI scrapers while the app keeps running (and logging their traffic).
+
+Still available in maintenance mode:
+
+- **git access**: `clone`/`fetch` work as usual; `push` is rejected with the suspension message
+- `/health`, `/api/status` (used by the page to auto-recover), `/admin/*` (to restore), `/assets/*` (logo/favicon)
+
+Blocked: everything else — API paths (`/api/`, `/v1/`, `/v2/`, `/node/`) return `{"error":"maintenance","retry_after":300}`, browsers get the maintenance page.
+
+**Activate at startup** (before traffic hits the app):
+
+```bash
+MAINTENANCE_MODE=true   # env var / fly secrets set MAINTENANCE_MODE=true
+```
+
+**Toggle at runtime** (no restart, uses the panic password or a ntfy action token):
+
+```bash
+curl -X POST https://gitgost.livrasand.com/admin/panic \
+  -H "Content-Type: application/json" \
+  -d '{"password":"<PANIC_PASSWORD>","maintenance":true}'
+# restore everything:
+curl -X POST https://gitgost.livrasand.com/admin/panic \
+  -H "Content-Type: application/json" \
+  -d '{"password":"<PANIC_PASSWORD>","maintenance":false}'
+```
+
+Notes:
+- Enabling maintenance also forces panic mode (pushes blocked); disabling maintenance with `"active":false` clears both.
+- `GET /api/status` reports `{"panic_mode":..., "maintenance_mode":...}`; the maintenance page polls it every 5s and reloads when maintenance ends.
+- The page also self-refreshes via `<meta http-equiv="refresh" content="300">`.
+
+Handy aliases:
+
+```bash
+alias gitgost-maint-on='curl -s -X POST https://gitgost.livrasand.com/admin/panic \
+  -H "Content-Type: application/json" \
+  -d "{\"password\":\"$PANIC_PASSWORD\",\"active\":true,\"maintenance\":true}"'
+
+alias gitgost-maint-off='curl -s -X POST https://gitgost.livrasand.com/admin/panic \
+  -H "Content-Type: application/json" \
+  -d "{\"password\":\"$PANIC_PASSWORD\",\"active\":false,\"maintenance\":false}"'
+```
+
 ### Close abusive PRs (rollback burst)
 
 After a burst attack, close all PRs created during the attack window:

@@ -22,6 +22,7 @@ type Config struct {
 	MentaAPIEndpoint string
 	MentaAPIKey      string
 	MentaEnforce     bool
+	MaintenanceMode  bool
 }
 
 func Load() *Config {
@@ -41,6 +42,7 @@ func Load() *Config {
 		MentaAPIEndpoint: getEnv("MENTA_API_ENDPOINT", ""),
 		MentaAPIKey:      getEnv("MENTA_API_KEY", ""),
 		MentaEnforce:     getEnv("MENTA_CAPTCHA_ENFORCED", "") == "true",
+		MaintenanceMode:  getEnv("MAINTENANCE_MODE", "") == "true",
 	}
 
 	return cfg

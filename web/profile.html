@@ -19,24 +19,27 @@
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.13/dist/purify.min.js" integrity="sha384-ZuC+DIACqSIZTsp+7YF57cR5Y+6qXa7YFbEKdA/EHA/R0T+41dtorqucYl71Zp+t" crossorigin="anonymous"></script>
     <style>
         :root {
-            --bg: #ffffff;
-            --fg: #1a1f2e;
-            --fg-muted: #6b7280;
-            --fg-secondary: #9ca3af;
-            --bg-secondary: #f5f5f5;
-            --bg-hover: #ebebeb;
-            --accent: #d16014;
+            /* Paleta zen de openbin (tema claro) */
+            --zen-paper: #f2f0e3;
+            --zen-dark: #2e2e2e;
+            --bg: var(--zen-paper);
+            --fg: var(--zen-dark);
+            --fg-muted: color-mix(in srgb, var(--zen-dark) 60%, transparent);
+            --fg-secondary: color-mix(in srgb, var(--zen-dark) 40%, transparent);
+            --bg-secondary: color-mix(in srgb, var(--zen-dark) 6%, var(--zen-paper));
+            --bg-hover: color-mix(in srgb, var(--zen-dark) 12%, var(--zen-paper));
+            --accent: #f76f53;
             --hm-1: #9be9a8;
             --hm-2: #40c463;
             --hm-3: #30a14e;
             --hm-4: #216e39;
-            --border: #e0e0e0;
-            --card: #f9f9f9;
-            --code-bg: #f4f4f4;
-            --radius-lg: 4px;
-            --radius-md: 4px;
-            --radius-sm: 3px;
-            --radius-pill: 999px;
+            --border: color-mix(in srgb, var(--zen-dark) 12%, var(--zen-paper));
+            --card: color-mix(in srgb, var(--zen-dark) 6%, var(--zen-paper));
+            --code-bg: color-mix(in srgb, var(--zen-dark) 6%, var(--zen-paper));
+            --radius-lg: 0px;
+            --radius-md: 0px;
+            --radius-sm: 0px;
+            --radius-pill: 0px;
             --alert-note: #0969da;
             --alert-tip: #1a7f37;
             --alert-important: #8250df;
@@ -44,20 +47,23 @@
             --alert-caution: #cf222e;
         }
         :root[data-theme="dark"] {
-            --bg: #000000;
-            --fg: #d4d4d4;
-            --fg-muted: #9ca3af;
-            --fg-secondary: #6b7280;
-            --bg-secondary: #0d0d0d;
-            --bg-hover: #1a1a1a;
-            --accent: #ffa657;
+            /* Paleta zen de openbin (tema oscuro) */
+            --zen-paper: #1f1f1f;
+            --zen-dark: #d1cfc0;
+            --bg: var(--zen-paper);
+            --fg: var(--zen-dark);
+            --fg-muted: color-mix(in srgb, var(--zen-dark) 60%, transparent);
+            --fg-secondary: color-mix(in srgb, var(--zen-dark) 40%, transparent);
+            --bg-secondary: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+            --bg-hover: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+            --accent: #f76f53;
             --hm-1: #0e4429;
             --hm-2: #006d32;
             --hm-3: #26a641;
             --hm-4: #39d353;
-            --border: #222222;
-            --card: #0d0d0d;
-            --code-bg: #111111;
+            --border: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+            --card: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+            --code-bg: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
             --alert-note: #4493f8;
             --alert-tip: #3fb950;
             --alert-important: #ab7df8;
@@ -66,11 +72,17 @@
         }
         @media (prefers-color-scheme: dark) {
             :root:not([data-theme]) {
-                --bg: #000000; --fg: #d4d4d4; --fg-muted: #9ca3af;
-                --fg-secondary: #6b7280; --bg-secondary: #0d0d0d;
-                --bg-hover: #1a1a1a; --accent: #ffa657;
+                --zen-paper: #1f1f1f; --zen-dark: #d1cfc0;
+                --bg: var(--zen-paper); --fg: var(--zen-dark);
+                --fg-muted: color-mix(in srgb, var(--zen-dark) 60%, transparent);
+                --fg-secondary: color-mix(in srgb, var(--zen-dark) 40%, transparent);
+                --bg-secondary: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+                --bg-hover: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+                --accent: #f76f53;
                 --hm-1: #0e4429; --hm-2: #006d32; --hm-3: #26a641; --hm-4: #39d353;
-                --border: #222222; --card: #0d0d0d; --code-bg: #111111;
+                --border: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+                --card: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+                --code-bg: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
                 --alert-note: #4493f8; --alert-tip: #3fb950; --alert-important: #ab7df8;
                 --alert-warning: #d29922; --alert-caution: #ff7b72;
             }
@@ -179,7 +191,7 @@
         .profile-header .avatar {
             width: 64px;
             height: 64px;
-            border-radius: 50%;
+            border-radius: 0;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             display: flex;
@@ -200,7 +212,7 @@
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.65rem;
             border: 1px solid;
-            border-radius: var(--radius-pill);
+            border-radius: 0;
             padding: 0.15em 0.6em;
             opacity: 0.85;
             background: var(--bg-secondary);
@@ -214,7 +226,7 @@
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.65rem;
             border: 1px solid var(--border);
-            border-radius: var(--radius-pill);
+            border-radius: 0;
             padding: 0.15em 0.6em;
             color: var(--fg-muted);
             background: var(--bg-secondary);
@@ -224,7 +236,7 @@
 
         .readme-box {
             border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
+            border-radius: 0;
             margin-bottom: 1.5rem;
         }
         .readme-header {
@@ -250,7 +262,7 @@
         .readme p { margin: 0.75em 0; line-height: 1.6; }
         .readme code {
             background: var(--code-bg);
-            border-radius: 3px;
+            border-radius: 0;
             padding: 0.15em 0.35em;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.82em;
@@ -258,7 +270,7 @@
         .readme pre {
             background: var(--code-bg);
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: 0;
             padding: 0.75rem 1rem;
             overflow-x: auto;
             margin: 1em 0;
@@ -277,7 +289,7 @@
         }
         .readme ul, .readme ol { margin: 0.75em 0; padding-left: 1.5em; }
         .readme li { margin: 0.25em 0; }
-        .readme img { max-width: 100%; vertical-align: middle; border-radius: 4px; }
+        .readme img { max-width: 100%; vertical-align: middle; border-radius: 0; }
         .readme table { border-collapse: collapse; margin: 1em 0; display: block; overflow-x: auto; }
         .readme th, .readme td { border: 1px solid var(--border); padding: 0.4em 0.8em; }
         .readme th { background: var(--bg-secondary); }
@@ -289,7 +301,7 @@
             margin: 1rem 0;
             border: 1px solid var(--border);
             border-left-width: 0.25em;
-            border-radius: 4px;
+            border-radius: 0;
         }
         .markdown-alert > :first-child { margin-top: 0; }
         .markdown-alert > :last-child { margin-bottom: 0; }
@@ -329,7 +341,7 @@
             font-size: 0.62rem;
             color: var(--fg-muted);
             border: 1px solid var(--border);
-            border-radius: var(--radius-pill);
+            border-radius: 0;
             padding: 0.1em 0.55em;
             background: var(--bg-secondary);
             flex-shrink: 0;
@@ -349,7 +361,7 @@
             flex-wrap: wrap;
         }
         .repo-meta .lang { display: inline-flex; align-items: center; gap: 0.3rem; }
-        .lang-dot { width: 0.6em; height: 0.6em; border-radius: 50%; display: inline-block; }
+        .lang-dot { width: 0.6em; height: 0.6em; border-radius: 0; display: inline-block; }
         .repo-empty {
             color: var(--fg-secondary);
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -378,7 +390,7 @@
             gap: 0.35rem;
             padding: 0.3rem 0.6rem;
             border: 1px solid var(--border);
-            border-radius: 3px;
+            border-radius: 0;
             background: transparent;
             color: var(--fg);
             font-size: 0.72rem;
@@ -404,7 +416,7 @@
         .person-avatar {
             width: 2.3rem;
             height: 2.3rem;
-            border-radius: 50%;
+            border-radius: 0;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             display: flex;
@@ -434,7 +446,7 @@
             margin-bottom: 1rem;
             padding: 0.75rem;
             border: 1px solid var(--border);
-            border-radius: var(--radius-md);
+            border-radius: 0;
             background: var(--bg-secondary);
         }
         .nodes-panel .node-field {
@@ -455,7 +467,7 @@
             font-size: 0.72rem;
             padding: 0.35rem 0.5rem;
             border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
+            border-radius: 0;
             background: var(--bg);
             color: var(--fg);
             outline: none;
@@ -466,7 +478,7 @@
             font-size: 0.72rem;
             padding: 0.35rem 0.8rem;
             border: 1px solid var(--accent);
-            border-radius: var(--radius-sm);
+            border-radius: 0;
             background: var(--accent);
             color: #fff;
             cursor: pointer;
@@ -497,7 +509,7 @@
         .nodes-panel .node-status {
             width: 0.55em;
             height: 0.55em;
-            border-radius: 50%;
+            border-radius: 0;
             flex-shrink: 0;
         }
         .nodes-panel .node-status.connected { background: var(--hm-2); }
@@ -528,7 +540,7 @@
             font-size: 0.65rem;
             padding: 0.2rem 0.5rem;
             border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
+            border-radius: 0;
             background: var(--bg);
             color: var(--fg-muted);
             cursor: pointer;
@@ -574,7 +586,7 @@
         .org-avatar {
             width: 2.1rem;
             height: 2.1rem;
-            border-radius: 50%;
+            border-radius: 0;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             display: flex;
@@ -598,7 +610,7 @@
         .sb-about .sb-avatar {
             width: 56px;
             height: 56px;
-            border-radius: 50%;
+            border-radius: 0;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             display: flex;
@@ -633,7 +645,7 @@
             text-align: center;
             padding: 0.4rem 0.5rem;
             border: 1px solid var(--border);
-            border-radius: 3px;
+            border-radius: 0;
             background: transparent;
             color: var(--fg);
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -715,7 +727,7 @@
         }
         .hm-cell {
             aspect-ratio: 1;
-            border-radius: 2px;
+            border-radius: 0;
             background: var(--bg-hover);
         }
         .hm-cell.hm-blank { background: transparent; }
@@ -738,7 +750,7 @@
             display: none;
             background: #fff3cd;
             border: 1px solid #ffc107;
-            border-radius: 4px;
+            border-radius: 0;
             padding: 0.75rem 1rem;
             margin-bottom: 1rem;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -749,13 +761,13 @@
         }
         :root[data-theme="dark"] .suspension-banner {
             background: #663d03;
-            border-color: #ffa657;
+            border-color: #f76f53;
             color: #ffe6a7;
         }
         @media (prefers-color-scheme: dark) {
             :root:not([data-theme]) .suspension-banner {
                 background: #663d03;
-                border-color: #ffa657;
+                border-color: #f76f53;
                 color: #ffe6a7;
             }
         }
@@ -815,7 +827,7 @@
             width: 2rem;
             height: 2rem;
             border: 1px solid var(--border);
-            border-radius: 3px;
+            border-radius: 0;
             background: var(--bg-secondary);
             color: var(--fg);
             font-size: 1.2rem;
@@ -899,14 +911,14 @@
         .new-repo-modal {
             background: var(--bg-secondary, #161b22);
             border: 1px solid var(--border, #30363d);
-            border-radius: 8px;
+            border-radius: 0;
             width: 500px;
             max-width: 92vw;
             max-height: 90vh;
             overflow-y: auto;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             color: var(--fg, #c9d1d9);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            box-shadow: none;
         }
         .new-repo-header {
             display: flex;
@@ -950,7 +962,7 @@
             padding: 0.45rem 0.65rem;
             background: var(--bg, #0d1117);
             border: 1px solid var(--border, #30363d);
-            border-radius: 4px;
+            border-radius: 0;
             color: var(--fg, #c9d1d9);
             font-family: inherit;
             font-size: 0.8rem;
@@ -986,7 +998,7 @@
             background: var(--accent, #58a6ff);
             color: #000;
             border: none;
-            border-radius: 4px;
+            border-radius: 0;
             font-family: inherit;
             font-size: 0.8rem;
             font-weight: 600;
@@ -1035,7 +1047,7 @@
         .new-repo-node-status {
             width: 0.55em;
             height: 0.55em;
-            border-radius: 50%;
+            border-radius: 0;
             flex-shrink: 0;
         }
         .new-repo-node-status.connected {
@@ -1065,7 +1077,7 @@
         }
         .skeleton-line {
             height: 0.7rem;
-            border-radius: 3px;
+            border-radius: 0;
             background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
             background-size: 400px 100%;
             animation: shimmer 1.2s ease-in-out infinite;
@@ -1081,7 +1093,7 @@
         .skeleton-avatar {
             width: 64px;
             height: 64px;
-            border-radius: 50%;
+            border-radius: 0;
             background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
             background-size: 400px 100%;
             animation: shimmer 1.2s ease-in-out infinite;
@@ -1089,7 +1101,7 @@
         }
         .skeleton-text {
             height: 0.8rem;
-            border-radius: 3px;
+            border-radius: 0;
             background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
             background-size: 400px 100%;
             animation: shimmer 1.2s ease-in-out infinite;
@@ -1102,7 +1114,7 @@
         }
         .skeleton-sidebar-line {
             height: 0.6rem;
-            border-radius: 3px;
+            border-radius: 0;
             background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
             background-size: 400px 100%;
             animation: shimmer 1.2s ease-in-out infinite;
@@ -1116,7 +1128,7 @@
         .skeleton-contrib-cell {
             width: 0.6rem;
             height: 0.6rem;
-            border-radius: 2px;
+            border-radius: 0;
             background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
             background-size: 400px 100%;
             animation: shimmer 1.2s ease-in-out infinite;
@@ -1547,7 +1559,7 @@
             <div class="section-title">about</div>
             <div id="sb-about-skeleton" style="display:none;">
                 <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:0.8rem;">
-                    <div class="skeleton-avatar" style="width:2.3rem;height:2.3rem;border-radius:50%;"></div>
+                    <div class="skeleton-avatar" style="width:2.3rem;height:2.3rem;border-radius: 0;"></div>
                     <div style="flex:1;display:flex;flex-direction:column;gap:0.4rem;">
                         <div class="skeleton-text" style="width:60%"></div>
                         <div class="skeleton-text" style="width:40%"></div>
@@ -3279,7 +3291,7 @@
                 if (src && !/^https?:\/\//i.test(src) && !/^data:/i.test(src)) {
                     src = baseUrl.replace(/\/$/, '') + '/' + src.replace(/^\.?\//, '');
                 }
-                return `<img src="${escAttr(src)}" alt="${escAttr(alt)}"${title ? ` title="${escAttr(title)}"` : ''} style="max-width:100%;border-radius:4px;" />`;
+                return `<img src="${escAttr(src)}" alt="${escAttr(alt)}"${title ? ` title="${escAttr(title)}"` : ''} style="max-width:100%;border-radius: 0;" />`;
             };
             const _alertMeta = {
                 note:      { label: 'Note',      icon: '<svg class="octicon octicon-info" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>' },

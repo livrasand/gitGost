@@ -31,17 +31,20 @@
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11.16.1/dist/mermaid.min.js" integrity="sha384-aBQXj4hK6Jm05i7aQAsUV3bLdSUrHX1BGYfMB0166TtWt/RRaw+h0Eelme9OCOvy" crossorigin="anonymous"></script>
     <style>
         :root {
-            --bg: #ffffff;
-            --fg: #1a1f2e;
-            --fg-muted: #6b7280;
-            --fg-secondary: #9ca3af;
-            --bg-secondary: #f5f5f5;
-            --bg-hover: #ebebeb;
-            --nav-active-bg: #e8e8e8;
-            --accent: #d16014;
-            --border: #e0e0e0;
-            --card: #f9f9f9;
-            --code-bg: #f4f4f4;
+            /* Paleta zen de openbin (tema claro) */
+            --zen-paper: #f2f0e3;
+            --zen-dark: #2e2e2e;
+            --bg: var(--zen-paper);
+            --fg: var(--zen-dark);
+            --fg-muted: color-mix(in srgb, var(--zen-dark) 60%, transparent);
+            --fg-secondary: color-mix(in srgb, var(--zen-dark) 40%, transparent);
+            --bg-secondary: color-mix(in srgb, var(--zen-dark) 6%, var(--zen-paper));
+            --bg-hover: color-mix(in srgb, var(--zen-dark) 12%, var(--zen-paper));
+            --nav-active-bg: color-mix(in srgb, var(--zen-dark) 12%, var(--zen-paper));
+            --accent: #f76f53;
+            --border: color-mix(in srgb, var(--zen-dark) 12%, var(--zen-paper));
+            --card: color-mix(in srgb, var(--zen-dark) 6%, var(--zen-paper));
+            --code-bg: color-mix(in srgb, var(--zen-dark) 6%, var(--zen-paper));
             --alert-note: #0969da;
             --alert-tip: #1a7f37;
             --alert-important: #8250df;
@@ -49,17 +52,20 @@
             --alert-caution: #cf222e;
         }
         :root[data-theme="dark"] {
-            --bg: #000000;
-            --fg: #d4d4d4;
-            --fg-muted: #9ca3af;
-            --fg-secondary: #6b7280;
-            --bg-secondary: #0d0d0d;
-            --bg-hover: #1a1a1a;
-            --nav-active-bg: #202020;
-            --accent: #ffa657;
-            --border: #222222;
-            --card: #0d0d0d;
-            --code-bg: #111111;
+            /* Paleta zen de openbin (tema oscuro) */
+            --zen-paper: #1f1f1f;
+            --zen-dark: #d1cfc0;
+            --bg: var(--zen-paper);
+            --fg: var(--zen-dark);
+            --fg-muted: color-mix(in srgb, var(--zen-dark) 60%, transparent);
+            --fg-secondary: color-mix(in srgb, var(--zen-dark) 40%, transparent);
+            --bg-secondary: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+            --bg-hover: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+            --nav-active-bg: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+            --accent: #f76f53;
+            --border: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+            --card: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+            --code-bg: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
             --alert-note: #4493f8;
             --alert-tip: #3fb950;
             --alert-important: #ab7df8;
@@ -68,10 +74,17 @@
         }
         @media (prefers-color-scheme: dark) {
             :root:not([data-theme]) {
-                --bg: #000000; --fg: #d4d4d4; --fg-muted: #9ca3af;
-                --fg-secondary: #6b7280; --bg-secondary: #0d0d0d;
-                --bg-hover: #1a1a1a; --nav-active-bg: #202020; --accent: #ffa657;
-                --border: #222222; --card: #0d0d0d; --code-bg: #111111;
+                --zen-paper: #1f1f1f; --zen-dark: #d1cfc0;
+                --bg: var(--zen-paper); --fg: var(--zen-dark);
+                --fg-muted: color-mix(in srgb, var(--zen-dark) 60%, transparent);
+                --fg-secondary: color-mix(in srgb, var(--zen-dark) 40%, transparent);
+                --bg-secondary: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+                --bg-hover: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+                --nav-active-bg: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+                --accent: #f76f53;
+                --border: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+                --card: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+                --code-bg: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
                 --alert-note: #4493f8; --alert-tip: #3fb950; --alert-important: #ab7df8;
                 --alert-warning: #d29922; --alert-caution: #ff7b72;
             }
@@ -120,7 +133,7 @@
         .rv-btn {
             padding: 0.28rem 0.7rem;
             border: 1px solid var(--border);
-            border-radius: 3px;
+            border-radius: 0;
             background: transparent;
             color: var(--fg);
             font-size: 0.75rem;
@@ -193,7 +206,7 @@
             transition: background 0.1s;
             line-height: 1.4;
             user-select: none;
-            border-radius: 4px;
+            border-radius: 0;
             margin: 0 0.25rem;
         }
         .tree-item:hover { background: var(--bg-hover); }
@@ -227,7 +240,7 @@
             color: var(--fg-secondary);
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 999px;
+            border-radius: 0;
             padding: 0 0.35em;
             margin-left: 0.4rem;
             flex-shrink: 0;
@@ -267,7 +280,7 @@
             flex: none;
             width: 1.35rem;
             height: 1.35rem;
-            border-radius: 50%;
+            border-radius: 0;
             object-fit: cover;
             display: flex;
             align-items: center;
@@ -344,7 +357,7 @@
         .file-toolbar .ft-btn {
             padding: 0.22rem 0.55rem;
             border: 1px solid var(--border);
-            border-radius: 3px;
+            border-radius: 0;
             background: transparent;
             color: var(--fg);
             font-size: 0.7rem;
@@ -378,7 +391,7 @@
         .blame-diff-toggle {
             flex-shrink: 0;
             border: 1px solid var(--border);
-            border-radius: 3px;
+            border-radius: 0;
             background: transparent;
             color: var(--fg-muted);
             font: 0.62rem ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -464,7 +477,7 @@
             align-items: center;
             gap: 0.25rem;
             border: 1px solid var(--border);
-            border-radius: 3px;
+            border-radius: 0;
             background: transparent;
             color: var(--fg);
             font-size: 0.7rem;
@@ -493,7 +506,7 @@
             display: block;
             max-width: 100%;
             height: auto;
-            border-radius: 4px;
+            border-radius: 0;
         }
         .readme pre {
             max-width: 100%;
@@ -526,7 +539,7 @@
         .readme code {
             background: var(--code-bg);
             padding: 0.2em 0.45em;
-            border-radius: 4px;
+            border-radius: 0;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.83em;
             border: 1px solid var(--border);
@@ -534,7 +547,7 @@
         .readme pre {
             background: var(--code-bg);
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: 0;
             padding: 1rem 1.25rem;
             overflow-x: auto;
             overflow-y: hidden;
@@ -548,7 +561,7 @@
             font-size: 0.82rem;
             background: var(--code-bg);
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: 0;
             padding: 1rem 1.25rem;
             overflow-x: auto;
             margin: 1rem 0;
@@ -563,7 +576,7 @@
             padding: 0.5rem 1rem;
             color: var(--fg-muted);
             background: var(--bg-secondary);
-            border-radius: 0 4px 4px 0;
+            border-radius: 0;
         }
         .readme blockquote p { margin: 0; }
         .readme ul, .readme ol { padding-left: 2rem; margin: 0.5rem 0; }
@@ -729,7 +742,7 @@
             gap: 0.4rem;
             padding: 0.3rem 0.6rem;
             border: 1px solid var(--border);
-            border-radius: 3px;
+            border-radius: 0;
             background: transparent;
             color: var(--fg);
             font-size: 0.74rem;
@@ -754,7 +767,7 @@
             color: var(--accent);
             text-decoration: none;
             border: 1px solid var(--accent);
-            border-radius: 3px;
+            border-radius: 0;
             padding: 0.1em 0.45em;
             opacity: 0.8;
         }
@@ -767,7 +780,7 @@
         .sb-contributor {
             width: 1.8rem;
             height: 1.8rem;
-            border-radius: 50%;
+            border-radius: 0;
             overflow: hidden;
             display: inline-flex;
             align-items: center;
@@ -791,7 +804,7 @@
             font-weight: 600;
             color: var(--accent);
             border: 1px solid var(--accent);
-            border-radius: 999px;
+            border-radius: 0;
             padding: 0.05rem 0.45rem;
             line-height: 1.3;
             vertical-align: middle;
@@ -853,14 +866,14 @@
         .lang-bar {
             display: flex;
             height: 6px;
-            border-radius: 4px;
+            border-radius: 0;
             overflow: hidden;
             gap: 2px;
             margin: 0.5rem 0 0.6rem;
         }
         .lang-bar-seg {
             height: 100%;
-            border-radius: 2px;
+            border-radius: 0;
         }
         .lang-legend {
             display: flex;
@@ -877,7 +890,7 @@
         .lang-dot {
             width: 7px;
             height: 7px;
-            border-radius: 50%;
+            border-radius: 0;
             flex-shrink: 0;
         }
         .lang-name { color: var(--fg); font-weight: 500; }
@@ -892,7 +905,7 @@
                 .release-item:hover { background: var(--hover-bg); }
                 .release-tag-badge {
                     display: inline-flex; align-items: center; gap: 0.3rem;
-                    padding: 0.15rem 0.5rem; border-radius: 9999px;
+                    padding: 0.15rem 0.5rem; border-radius: 0;
                     font-size: 0.7rem; font-weight: 600;
                     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                     background: var(--bg-secondary); color: var(--accent);
@@ -900,13 +913,13 @@
                 }
                 .release-latest-badge {
                     display: inline-block; padding: 0.1rem 0.4rem;
-                    border-radius: 9999px; font-size: 0.5rem; font-weight: 600;
+                    border-radius: 0; font-size: 0.5rem; font-weight: 600;
                     background: #2da44e22; color: #2da44e; border: 1px solid #2da44e;
                     text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;
                 }
                 .release-prerelease-badge {
                     display: inline-block; padding: 0.1rem 0.4rem;
-                    border-radius: 9999px; font-size: 0.5rem; font-weight: 600;
+                    border-radius: 0; font-size: 0.5rem; font-weight: 600;
                     background: #bf870022; color: #bf8700; border: 1px solid #bf8700;
                     text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;
                 }
@@ -926,7 +939,7 @@
                 }
                 .release-back-btn {
                     background: none; border: 1px solid var(--border); color: var(--fg);
-                    padding: 0.3rem 0.6rem; border-radius: 6px; cursor: pointer;
+                    padding: 0.3rem 0.6rem; border-radius: 0; cursor: pointer;
                     font-size: 0.75rem; font-family: inherit;
                     display: inline-flex; align-items: center; gap: 0.3rem;
                 }
@@ -942,11 +955,11 @@
                 .release-detail-body li { margin: 0.2rem 0; }
                 .release-detail-body code {
                     background: var(--bg-secondary); padding: 0.15rem 0.35rem;
-                    border-radius: 4px; font-size: 0.82rem;
+                    border-radius: 0; font-size: 0.82rem;
                 }
                 .release-detail-body pre {
                     background: var(--bg-secondary); padding: 0.75rem;
-                    border-radius: 6px; overflow-x: auto; margin: 0.5rem 0;
+                    border-radius: 0; overflow-x: auto; margin: 0.5rem 0;
                 }
                 .release-detail-body pre code { background: none; padding: 0; }
                 .release-detail-body a { color: var(--accent); text-decoration: none; }
@@ -955,7 +968,7 @@
                     border-left: 3px solid var(--accent); padding-left: 0.75rem;
                     margin: 0.5rem 0; color: var(--fg-muted);
                 }
-                .release-detail-body img { max-width: 100%; border-radius: 6px; }
+                .release-detail-body img { max-width: 100%; border-radius: 0; }
                 .release-detail-body table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; }
                 .release-detail-body th, .release-detail-body td {
                     border: 1px solid var(--border); padding: 0.4rem 0.6rem;
@@ -995,7 +1008,7 @@
             font-size: 0.65rem;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             padding: 0.1em 0.4em;
-            border-radius: 2px;
+            border-radius: 0;
             margin-left: 0.3rem;
             vertical-align: middle;
         }
@@ -1036,7 +1049,7 @@
             color: var(--accent);
             background: none;
             border: 1px solid var(--accent);
-            border-radius: 3px;
+            border-radius: 0;
             padding: 0.25rem 0.6rem;
             cursor: pointer;
             opacity: 0.85;
@@ -1055,7 +1068,7 @@
             font-size: 0.65rem;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             padding: 0.1em 0.4em;
-            border-radius: 2px;
+            border-radius: 0;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             color: var(--fg-muted);
@@ -1081,7 +1094,7 @@
         .bug-modal {
             background: var(--bg);
             border: 1px solid var(--border);
-            border-radius: 10px;
+            border-radius: 0;
             width: 760px;
             max-width: 95vw;
             max-height: 90vh;
@@ -1106,7 +1119,7 @@
             border: 1px solid var(--border);
             background: transparent;
             color: var(--fg-muted);
-            border-radius: 6px;
+            border-radius: 0;
             width: 2rem;
             height: 2rem;
             cursor: pointer;
@@ -1203,7 +1216,7 @@
         .bug-field-markdown {
             padding: 0.8rem 1rem;
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 0;
             background: var(--bg-secondary);
             color: var(--fg);
             font-size: 0.82rem;
@@ -1218,7 +1231,7 @@
             border: 1px solid var(--border);
             background: transparent;
             color: var(--fg-muted);
-            border-radius: 999px;
+            border-radius: 0;
             padding: 0.3rem 0.7rem;
             cursor: pointer;
             font: 0.75rem ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -1229,7 +1242,7 @@
             font-size: 0.75rem;
             background: none;
             border: 1px solid var(--border);
-            border-radius: 3px;
+            border-radius: 0;
             padding: 0.3rem 0.8rem;
             cursor: pointer;
             color: var(--fg-muted);
@@ -1239,7 +1252,7 @@
             font-size: 0.75rem;
             background: var(--accent);
             border: none;
-            border-radius: 3px;
+            border-radius: 0;
             padding: 0.3rem 0.8rem;
             cursor: pointer;
             color: #fff;
@@ -1294,7 +1307,7 @@
         .issue-detail-avatar {
             width: 22px;
             height: 22px;
-            border-radius: 50%;
+            border-radius: 0;
             background: var(--bg-secondary);
             flex-shrink: 0;
         }
@@ -1311,7 +1324,7 @@
         .issue-detail-body code {
             background: var(--code-bg);
             padding: 0.15em 0.4em;
-            border-radius: 3px;
+            border-radius: 0;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.83em;
             border: 1px solid var(--border);
@@ -1319,7 +1332,7 @@
         .issue-detail-body pre {
             background: var(--code-bg);
             border: 1px solid var(--border);
-            border-radius: 5px;
+            border-radius: 0;
             padding: 0.85rem 1rem;
             overflow: auto;
         }
@@ -1352,7 +1365,7 @@
         }
         .skeleton-line {
             height: 0.7rem;
-            border-radius: 3px;
+            border-radius: 0;
             background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
             background-size: 400px 100%;
             animation: shimmer 1.2s ease-in-out infinite;
@@ -1365,7 +1378,7 @@
         }
         .skeleton-tree-line {
             height: 0.65rem;
-            border-radius: 3px;
+            border-radius: 0;
             background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
             background-size: 400px 100%;
             animation: shimmer 1.2s ease-in-out infinite;
@@ -1378,7 +1391,7 @@
         }
         .skeleton-sidebar-line {
             height: 0.6rem;
-            border-radius: 3px;
+            border-radius: 0;
             background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
             background-size: 400px 100%;
             animation: shimmer 1.2s ease-in-out infinite;
@@ -1428,7 +1441,7 @@
         .reply-avatar {
             width: 26px;
             height: 26px;
-            border-radius: 50%;
+            border-radius: 0;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             flex-shrink: 0;
@@ -1440,7 +1453,7 @@
         .reply-box {
             flex: 1;
             border: 1px solid var(--border);
-            border-radius: 5px;
+            border-radius: 0;
             background: var(--bg);
             padding: 0.55rem 0.7rem;
             display: flex;
@@ -1481,7 +1494,7 @@
             font-size: 0.68rem;
             color: var(--fg-muted);
             padding: 0.1rem 0.45rem;
-            border-radius: 3px;
+            border-radius: 0;
         }
         .reply-tab:hover { color: var(--fg); background: var(--bg-hover); }
         .reply-tab.active {
@@ -1507,7 +1520,7 @@
             font-size: 0.68rem;
             background: none;
             border: 1px solid var(--border);
-            border-radius: 3px;
+            border-radius: 0;
             padding: 0.2rem 0.5rem;
             color: var(--fg-muted);
             width: 140px;
@@ -1516,7 +1529,7 @@
         .reply-send-btn {
             background: var(--accent);
             border: none;
-            border-radius: 4px;
+            border-radius: 0;
             padding: 0.3rem 0.55rem;
             cursor: pointer;
             display: flex;
@@ -1547,7 +1560,7 @@
         .comment-avatar {
             width: 26px;
             height: 26px;
-            border-radius: 50%;
+            border-radius: 0;
             flex-shrink: 0;
             border: 1px solid var(--border);
             background: var(--bg-secondary);
@@ -1557,7 +1570,7 @@
             min-width: 0;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 5px;
+            border-radius: 0;
             padding: 0.5rem 0.75rem;
             font-size: 0.8rem;
             line-height: 1.5;
@@ -1588,7 +1601,7 @@
             font-size: 0.72rem;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: 0;
             padding: 0.3rem 0.5rem;
             color: var(--fg);
             outline: none;
@@ -1600,7 +1613,7 @@
             font-size: 0.72rem;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: 0;
             padding: 0.3rem 0.5rem;
             color: var(--fg);
             outline: none;
@@ -1613,7 +1626,7 @@
             font-size: 0.68rem;
             background: none;
             border: 1px solid var(--border);
-            border-radius: 3px;
+            border-radius: 0;
             padding: 0.2rem 0.5rem;
             cursor: pointer;
             color: var(--fg-muted);
@@ -1635,7 +1648,7 @@
             font-size: 1rem;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 999px;
+            border-radius: 0;
             padding: 0.15rem 0.5rem;
             cursor: pointer;
             color: var(--fg-muted);
@@ -1659,7 +1672,7 @@
             font-size: 0.75rem;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 999px;
+            border-radius: 0;
             padding: 0.1rem 0.4rem;
             cursor: pointer;
             color: var(--fg-muted);
@@ -1673,7 +1686,7 @@
             font-size: 0.65rem;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             padding: 0.1em 0.4em;
-            border-radius: 2px;
+            border-radius: 0;
             margin-left: 0.3rem;
             vertical-align: middle;
             background: var(--bg-secondary);
@@ -1688,7 +1701,7 @@
             font-size: 0.8rem;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: 0;
             padding: 0.35rem 0.5rem;
             color: var(--fg);
             outline: none;
@@ -1713,12 +1726,12 @@
         .hash-modal {
             background: var(--bg);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 0;
             padding: 1.5rem;
             max-width: 340px;
             width: 90%;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            box-shadow: none;
         }
         .hash-modal-title {
             font-size: 0.85rem;
@@ -1735,7 +1748,7 @@
         .hash-modal-code {
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: 0;
             padding: 0.4rem 0.6rem;
             font-size: 0.75rem;
             color: var(--accent);
@@ -1751,7 +1764,7 @@
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.72rem;
             padding: 0.35rem 0.75rem;
-            border-radius: 4px;
+            border-radius: 0;
             border: 1px solid var(--border);
             cursor: pointer;
             background: none;
@@ -1776,12 +1789,12 @@
         .clone-modal {
             background: var(--bg);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 0;
             padding: 1.25rem 1.5rem;
             width: 420px;
             max-width: 95vw;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            box-shadow: none;
         }
         .clone-modal-title {
             font-size: 0.85rem;
@@ -1806,7 +1819,7 @@
             flex: 1;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: 0;
             padding: 0.35rem 0.6rem;
             font-size: 0.72rem;
             color: var(--fg);
@@ -1819,7 +1832,7 @@
             font-size: 0.68rem;
             padding: 0.3rem 0.55rem;
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: 0;
             background: none;
             color: var(--fg-muted);
             cursor: pointer;
@@ -1838,7 +1851,7 @@
             font-size: 0.75rem;
             padding: 0.35rem 0.75rem;
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: 0;
             background: none;
             color: var(--fg);
             cursor: pointer;
@@ -1864,7 +1877,7 @@
             width: 100%;
             padding: 0.3rem 0.55rem 0.3rem 1.7rem;
             border: 1px solid var(--border);
-            border-radius: 3px;
+            border-radius: 0;
             background: var(--bg-secondary);
             color: var(--fg);
             font: 0.7rem ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -1889,7 +1902,7 @@
             overflow-y: auto;
             background: var(--bg);
             border: 1px solid var(--border);
-            box-shadow: 0 5px 16px rgba(0, 0, 0, 0.18);
+            box-shadow: none;
         }
         .statusbar-file-results.open { display: block; }
         .statusbar-file-result,
@@ -1969,7 +1982,7 @@
             display: none;
             background: #fff3cd;
             border: 1px solid #ffc107;
-            border-radius: 4px;
+            border-radius: 0;
             padding: 0.75rem 1rem;
             margin-bottom: 1rem;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -1981,14 +1994,14 @@
 
         :root[data-theme="dark"] .suspension-banner {
             background: #663d03;
-            border-color: #ffa657;
+            border-color: #f76f53;
             color: #ffe6a7;
         }
 
         @media (prefers-color-scheme: dark) {
             :root:not([data-theme]) .suspension-banner {
                 background: #663d03;
-                border-color: #ffa657;
+                border-color: #f76f53;
                 color: #ffe6a7;
             }
         }
@@ -2122,7 +2135,7 @@
                 .mobile-sidebar-panel .msb-close {
                     background: transparent;
                     border: 1px solid var(--border);
-                    border-radius: 4px;
+                    border-radius: 0;
                     color: var(--fg-muted);
                     font-size: 1.15rem;
                     line-height: 1;
@@ -2169,7 +2182,7 @@
                     color: var(--accent);
                     text-decoration: none;
                     border: 1px solid var(--accent);
-                    border-radius: 3px;
+                    border-radius: 0;
                     padding: 0.15em 0.5em;
                     opacity: 0.85;
                 }
@@ -2198,7 +2211,7 @@
                     gap: 0.3rem;
                     padding: 0.45rem 0.7rem;
                     border: 1px solid var(--border);
-                    border-radius: 3px;
+                    border-radius: 0;
                     background: transparent;
                     color: var(--fg);
                     font-size: 0.76rem;
@@ -2255,7 +2268,7 @@
                     flex-shrink: 0;
                     width: 28px;
                     height: 28px;
-                    border-radius: 50%;
+                    border-radius: 0;
                     overflow: hidden;
                     background: var(--bg-secondary);
                 }
@@ -2330,7 +2343,7 @@
                     background: none;
                     border: 1px solid var(--border);
                     color: var(--fg-muted);
-                    border-radius: 4px;
+                    border-radius: 0;
                     cursor: pointer;
                     padding: 0.25rem 0.5rem;
                     font-size: 0.72rem;
@@ -2369,7 +2382,7 @@
                 .commit-detail-meta .cd-avatar {
                     width: 26px;
                     height: 26px;
-                    border-radius: 50%;
+                    border-radius: 0;
                     flex-shrink: 0;
                     border: 1px solid var(--border);
                 }
@@ -2401,7 +2414,7 @@
                     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                     background: var(--code-bg);
                     padding: 0.75rem 1rem;
-                    border-radius: 4px;
+                    border-radius: 0;
                     border: 1px solid var(--border);
                 }
                 .commit-diff-list {
@@ -2411,7 +2424,7 @@
                 }
                 .commit-diff-file {
                     border: 1px solid var(--border);
-                    border-radius: 4px;
+                    border-radius: 0;
                     overflow: hidden;
                 }
                 .commit-diff-file .cdf-header {
@@ -2436,7 +2449,7 @@
                     background: transparent;
                     color: var(--fg-muted);
                     cursor: pointer;
-                    border-radius: 3px;
+                    border-radius: 0;
                     flex-shrink: 0;
                 }
                 .commit-diff-file .cdf-toggle:hover {
@@ -2477,7 +2490,7 @@
                 .commit-diff-file .cdf-status {
                     font-size: 0.62rem;
                     padding: 0.05rem 0.35rem;
-                    border-radius: 999px;
+                    border-radius: 0;
                     border: 1px solid var(--border);
                     color: var(--fg-muted);
                     flex-shrink: 0;
@@ -2495,7 +2508,7 @@
                     display: inline-block;
                     width: 6px;
                     height: 6px;
-                    border-radius: 2px;
+                    border-radius: 0;
                 }
                 .commit-diff-file .cdf-statbars i.add { background: #2da44e; }
                 .commit-diff-file .cdf-statbars i.del { background: #cf222e; }
@@ -2516,7 +2529,7 @@
                     background: transparent;
                     color: var(--fg-muted);
                     cursor: pointer;
-                    border-radius: 3px;
+                    border-radius: 0;
                     flex-shrink: 0;
                 }
                 .commit-diff-file .cdf-copy:hover {
@@ -2567,7 +2580,7 @@
                     flex: 1;
                     padding: 0.35rem 0.5rem;
                     border: 1px solid var(--border);
-                    border-radius: 3px;
+                    border-radius: 0;
                     background: var(--bg);
                     color: var(--fg);
                     font-size: 0.8rem;
@@ -2590,7 +2603,7 @@
                 }
                 .compare-status {
                     padding: 0.15rem 0.4rem;
-                    border-radius: 3px;
+                    border-radius: 0;
                     font-size: 0.7rem;
                     font-weight: 600;
                     text-transform: capitalize;
@@ -3184,7 +3197,7 @@
                         cursor: pointer;
                         color: var(--fg);
                         border: 1px solid var(--border);
-                        border-radius: 3px;
+                        border-radius: 0;
                         background: var(--bg-secondary);
                         padding: 0.25rem 0.6rem;
                         line-height: 1;
@@ -3219,13 +3232,13 @@
                 }
                 .toast {
                     padding: 0.6rem 1rem;
-                    border-radius: 6px;
+                    border-radius: 0;
                     font-size: 0.78rem;
                     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                     color: var(--fg);
                     background: var(--bg-secondary);
                     border: 1px solid var(--border);
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    box-shadow: none;
                     opacity: 0;
                     transform: translateY(8px);
                     transition: opacity 0.2s, transform 0.2s;
@@ -3259,7 +3272,7 @@
             <a href="/" style="color:var(--accent);text-decoration:none;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-weight:700;font-size:0.78rem;">gitGost</a>
             <span style="color:var(--fg-muted);">›</span>
             <span id="statusbar-path" style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;display:flex;align-items:center;gap:0.2rem;"></span>
-            <select id="ref-select" style="display:none;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;color:var(--fg-muted);background:transparent;border:none;border-radius:3px;padding:0.15rem 0;cursor:pointer;" aria-label="Switch branch or tag">
+            <select id="ref-select" style="display:none;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;color:var(--fg-muted);background:transparent;border:none;border-radius: 0;padding:0.15rem 0;cursor:pointer;" aria-label="Switch branch or tag">
             </select>
         </div>
         <div class="statusbar-center" role="search">
@@ -4777,8 +4790,8 @@
                             <div class="ds-label">ntfy topic</div>
                             <div class="ds-val" id="issue-ntfy-${num}" style="font-size:0.7rem;">loading…</div>
                             <div style="display:flex;gap:0.4rem;margin-top:0.35rem;flex-wrap:wrap;">
-                                <a id="issue-ntfy-link-${num}" href="#" target="_blank" rel="noreferrer" style="padding:0.25rem 0.55rem;border-radius:3px;background:var(--accent);color:#fff;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;text-decoration:none;white-space:nowrap;">Open in ntfy ↗</a>
-                                <button id="issue-ntfy-copy-${num}" onclick="copyIssueNtfyTopic('${num}')" style="padding:0.25rem 0.5rem;background:transparent;border:1px solid var(--border);color:var(--fg);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;border-radius:3px;">Copy</button>
+                                <a id="issue-ntfy-link-${num}" href="#" target="_blank" rel="noreferrer" style="padding:0.25rem 0.55rem;border-radius: 0;background:var(--accent);color:#fff;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;text-decoration:none;white-space:nowrap;">Open in ntfy ↗</a>
+                                <button id="issue-ntfy-copy-${num}" onclick="copyIssueNtfyTopic('${num}')" style="padding:0.25rem 0.5rem;background:transparent;border:1px solid var(--border);color:var(--fg);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;border-radius: 0;">Copy</button>
                             </div>
                             <div id="issue-ntfy-err-${num}" style="display:none;margin-top:0.35rem;font-size:0.68rem;color:var(--accent);"></div>
                         </div>
@@ -5796,7 +5809,7 @@
                             ${navPages.map(p => {
                                 const active = p.slug === pageSlug && (p.anchor || '') === anchor;
                                 const target = p.slug + (p.anchor ? '#' + p.anchor : '');
-                                return `<a href="#" data-wiki="${escAttr(target)}" style="color:${active ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${active ? 'var(--accent)' : 'var(--border)'};border-radius:3px;">${escHtml(p.title)}</a>`;
+                                return `<a href="#" data-wiki="${escAttr(target)}" style="color:${active ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${active ? 'var(--accent)' : 'var(--border)'};border-radius: 0;">${escHtml(p.title)}</a>`;
                             }).join('')}
                             <a href="https://github.com/${safeOwner}/${safeRepo}/wiki" target="_blank" style="color:var(--accent);text-decoration:none;padding:0.15rem 0.4rem;">Open on GitHub ↗</a>
                         </div>`;
@@ -5855,7 +5868,7 @@
                         ${navPages.map(p => {
                             const active = p.slug === targetSubUrl && (p.anchor || '') === anchor;
                             const target = p.slug + (p.anchor ? '#' + p.anchor : '');
-                            return `<a href="#" data-wiki="${escAttr(target)}" style="color:${active ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${active ? 'var(--accent)' : 'var(--border)'};border-radius:3px;">${escHtml(p.title)}</a>`;
+                            return `<a href="#" data-wiki="${escAttr(target)}" style="color:${active ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${active ? 'var(--accent)' : 'var(--border)'};border-radius: 0;">${escHtml(p.title)}</a>`;
                         }).join('')}
                         <a href="https://codeberg.org/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/wiki" target="_blank" style="color:var(--accent);text-decoration:none;padding:0.15rem 0.4rem;">Open on Codeberg ↗</a>
                     </div>`;
@@ -5880,7 +5893,7 @@
                     const sidebar = `<div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;color:var(--fg-muted);display:flex;gap:0.5rem;flex-wrap:wrap;">
                         ${pages.map(p => {
                             const active = p.slug === targetSlug;
-                            return `<a href="#" data-wiki="${escAttr(p.slug)}" style="color:${active ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${active ? 'var(--accent)' : 'var(--border)'};border-radius:3px;">${escHtml(p.title)}</a>`;
+                            return `<a href="#" data-wiki="${escAttr(p.slug)}" style="color:${active ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${active ? 'var(--accent)' : 'var(--border)'};border-radius: 0;">${escHtml(p.title)}</a>`;
                         }).join('')}
                         <a href="https://gitlab.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/-/wikis" target="_blank" style="color:var(--accent);text-decoration:none;padding:0.15rem 0.4rem;">Open on GitLab ↗</a>
                     </div>`;
@@ -8421,8 +8434,8 @@
                 // GitLab no devuelve avatar: se usa gravatar a partir del email (patrón existente).
                 const avatar = c.avatar_url || (c.email ? `https://www.gravatar.com/avatar/${md5(String(c.email).trim().toLowerCase())}?s=56&d=identicon` : '');
                 const img = avatar
-                    ? `<img src="${escAttr(avatar)}" alt="${escAttr(username)}" loading="lazy" style="width:2rem;height:2rem;border-radius:50%;object-fit:cover;background:var(--accent);flex:none;">`
-                    : `<span style="width:2rem;height:2rem;border-radius:50%;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:0.7rem;color:#fff;flex:none;">${escHtml((username || '?')[0].toUpperCase())}</span>`;
+                    ? `<img src="${escAttr(avatar)}" alt="${escAttr(username)}" loading="lazy" style="width:2rem;height:2rem;border-radius: 0;object-fit:cover;background:var(--accent);flex:none;">`
+                    : `<span style="width:2rem;height:2rem;border-radius: 0;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:0.7rem;color:#fff;flex:none;">${escHtml((username || '?')[0].toUpperCase())}</span>`;
                 const avatarHtml = login
                     ? `<a href="/${encodeURIComponent(rv.provider)}/${encodeURIComponent(login)}" aria-label="${escAttr(username)} profile">${img}</a>`
                     : img;
@@ -9565,7 +9578,7 @@
                         imgUrl = `${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/raw?path=${encodeURIComponent(item.path || item.name)}`;
                     }
                     const safeImgUrl = sanitizeHttpUrl(imgUrl);
-                    _renderFilePanel(name, { path: item.path || item.name, lastCommitScope: opts.lastCommitScope || 'file', content, size: fileSize, imgUrl: safeImgUrl, isImage: true, previewHtml: `<div style="padding:1rem;text-align:center;"><img src="${escHtml(safeImgUrl)}" alt="${escHtml(name)}" style="max-width:100%;max-height:80vh;object-fit:contain;border-radius:4px;" /></div>` });
+                    _renderFilePanel(name, { path: item.path || item.name, lastCommitScope: opts.lastCommitScope || 'file', content, size: fileSize, imgUrl: safeImgUrl, isImage: true, previewHtml: `<div style="padding:1rem;text-align:center;"><img src="${escHtml(safeImgUrl)}" alt="${escHtml(name)}" style="max-width:100%;max-height:80vh;object-fit:contain;border-radius: 0;" /></div>` });
                 } else if (name.toLowerCase().endsWith('.md')) {
                     const dir = item.path ? item.path.substring(0, item.path.lastIndexOf('/') + 1) : '';
                     let mdBaseUrl = `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/${dir}`;
@@ -10824,7 +10837,7 @@
                                 : `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/`);
                     src = rawBase.replace(/\/$/, '') + '/' + src.replace(/^\.?\//, '');
                 }
-                return `<img src="${escAttr(src)}" alt="${escAttr(alt)}"${title ? ` title="${escAttr(title)}"` : ''} style="max-width:100%;border-radius:4px;" onerror="this.style.display='none'" />`;
+                return `<img src="${escAttr(src)}" alt="${escAttr(alt)}"${title ? ` title="${escAttr(title)}"` : ''} style="max-width:100%;border-radius: 0;" onerror="this.style.display='none'" />`;
             };
             // Alertas estilo GitHub: blockquote cuyo primer párrafo es [!NOTE]/[!TIP]/[!IMPORTANT]/[!WARNING]/[!CAUTION].
             // El renderer de blockquote recibe el HTML interno ya renderizado; se sustituye el marcador por el título.
@@ -10997,7 +11010,7 @@
         // init() se invoca al final del script para que todas las declaraciones
         // const/let (p.ej. _pierreViewers, languageColors) ya estén inicializadas.
         if (!rv.owner || !rv.repo) {
-            document.body.innerHTML = '<div style="padding:2rem;font-family:monospace;color:#d16014;">Error: missing owner/repo parameters in the URL.</div>';
+            document.body.innerHTML = '<div style="padding:2rem;font-family:monospace;color:#f76f53;">Error: missing owner/repo parameters in the URL.</div>';
         } else {
             init();
         }

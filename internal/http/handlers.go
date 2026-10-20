@@ -831,14 +831,17 @@ func SetBuildInfo(hash, built, repo string) {
 	sourceRepo = repo
 }
 
-var apiKey string
-
-func SetAPIKey(key string) {
-	apiKey = key
-}
-
+// ConfigHandler publica la configuración mínima que el frontend necesita para
+// resolver el CAPTCHA. Además del flag del gate, anuncia la base de la API
+// de Menta: así el navegador sabe contra qué host resolver el proof-of-work
+// sin que gitGost tenga que hardcodear la URL de Menta en el HTML, y el
+// cliente puede derivarla del propio SDK que sirve Menta.
 func ConfigHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"api_key": apiKey})
+	body := gin.H{"captcha_gate": captchaGateEnabled()}
+	if captchaGateEnabled() && mentaAPIEndpoint != "" {
+		body["menta_api"] = mentaAPIEndpoint
+	}
+	c.JSON(http.StatusOK, body)
 }
 
 var (
@@ -1141,6 +1144,113 @@ func verifyMentaCaptcha(token string) bool {
 		return false
 	}
 	return result.Valid
+}
+
+// ---------------------------------------------------------------------------
+// Menta Shield: clearance reutilizable (flujo universal, sin registro de
+// dominio en Menta).
+//
+// El proof-of-work del gate puede resolverse en el navegador contra el
+// endpoint universal /shield/* de Menta, sin pasar por el proxy /api/captcha
+// de gitGost (así el servidor de gitGost no consume nada del reto). Ese flujo
+// devuelve un clearance (JWT HS256, sub "shield-clearance") que Menta valida
+// server-to-server en /shield/verify. A diferencia de /verify, /shield/verify
+// NO consume el token: es reutilizable durante su TTL, así que el resultado se
+// cachea para no llamar a Menta en cada sesión nueva del mismo visitante.
+// ---------------------------------------------------------------------------
+
+const shieldClearanceCacheMax = 20000
+
+var shieldClearanceCache = newBoundedMap[int64](shieldClearanceCacheMax, 24*time.Hour)
+
+// parseShieldClearanceClaims extrae jti/exp del payload del clearance. NO
+// valida la firma (solo Menta puede hacerlo): estos datos se usan únicamente
+// como clave de caché y como TTL, siempre después de una verificación
+// aceptada por Menta.
+func parseShieldClearanceClaims(token string) (jti string, exp int64, ok bool) {
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		return "", 0, false
+	}
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return "", 0, false
+	}
+	var claims struct {
+		Sub string `json:"sub"`
+		JTI string `json:"jti"`
+		Exp int64  `json:"exp"`
+	}
+	if err := json.Unmarshal(payload, &claims); err != nil {
+		return "", 0, false
+	}
+	if claims.Sub != "shield-clearance" || claims.JTI == "" {
+		return "", 0, false
+	}
+	return claims.JTI, claims.Exp, true
+}
+
+// verifyMentaShieldClearance valida un clearance del shield contra
+// {MENTA}/shield/verify. El resultado se cachea por token (hash SHA-256) hasta
+// su expiración: un clearance verificado sigue siendo válido, así que no hace
+// falta volver a preguntar a Menta por cada sesión del gate.
+func verifyMentaShieldClearance(token string) bool {
+	if !captchaGateEnabled() {
+		// Gate deshabilitado: modo permisivo (igual que verifyMentaCaptcha).
+		return true
+	}
+	if mentaAPIEndpoint == "" {
+		return false
+	}
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return false
+	}
+	_, exp, ok := parseShieldClearanceClaims(token)
+	if !ok {
+		return false
+	}
+	now := time.Now().Unix()
+	if exp > 0 && now > exp {
+		return false
+	}
+	sum := sha256.Sum256([]byte(token))
+	key := hex.EncodeToString(sum[:])
+	if cached, hit := shieldClearanceCache.Peek(key); hit && (cached == 0 || cached > now) {
+		return true
+	}
+	body, err := json.Marshal(map[string]string{"token": token})
+	if err != nil {
+		return false
+	}
+	req, err := http.NewRequest(http.MethodPost, mentaAPIEndpoint+"/shield/verify", bytes.NewReader(body))
+	if err != nil {
+		return false
+	}
+	req.Header.Set("Content-Type", "application/json")
+	client := newSafeHTTPClient(5 * time.Second)
+	resp, err := client.Do(req)
+	if err != nil {
+		utils.Log("Menta shield verify request failed: %v", err)
+		return false
+	}
+	defer resp.Body.Close()
+	var result struct {
+		Success bool `json:"success"`
+		Valid   bool `json:"valid"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return false
+	}
+	if !result.Valid {
+		return false
+	}
+	ttl := exp
+	if ttl <= 0 {
+		ttl = now + int64(captchaGateCookieMaxAge)
+	}
+	shieldClearanceCache.Set(key, ttl)
+	return true
 }
 
 var mentaProxyClient = newSafeHTTPClient(15 * time.Second)

@@ -141,9 +141,9 @@ Done. The PR appears instantly from `@gitgost-anonymous` with your commit messag
 
 ## Use Your Own Service Account
 
-gitGost works without an account or personal access token. If you want, you can connect a dedicated **service account** and let gitGost use that identity for GitHub actions instead of the shared operator-managed one.
+gitGost works without an account or personal access token — `git push`, the GREN CLI and everything in your terminal never require any gitGost credential. If you want, you can optionally connect a dedicated **service account** (a token belonging to the forge itself — GitHub or GitLab, not gitGost) and let gitGost use that identity for forge-side actions instead of the shared operator-managed one.
 
-This is optional. It is useful when you want your own rate limit, your own account ownership, or a simpler trust model.
+This is optional. It is useful when you want your own forge-side rate limit, your own account ownership, or a simpler trust model.
 
 > **Important:** create a dedicated account for gitGost. Do not use your personal GitHub or GitLab account.
 
@@ -200,6 +200,8 @@ After creating the token, store it securely and configure it in your gitGost dep
 > **Security:** treat the token like a password. Never commit it to a repository, expose it in client-side code, or share it publicly.
 
 ### Why use a service account?
+
+Remember: this is entirely optional and forge-side only. A plain `git push gost ...` from your terminal works with no key, no token and no account.
 
 A dedicated service account lets gitGost:
 
@@ -369,6 +371,87 @@ For the full model, see [THREAT_MODEL.md](THREAT_MODEL.md). For more operational
 > **GitHub only:** Due to GitHub's platform limits, fork repositories created by gitGost are manually deleted to stay under the 40,000-repository cap. This is a GitHub-specific constraint and does not affect functionality.
 
 Everything is designed to prevent abuse while keeping you anonymous.
+
+## Menta CAPTCHA: How Human Verification Works in gitGost
+
+gitGost integrates [Menta CAPTCHA](https://github.com/livrasand/mentacaptcha), a privacy-first, proof-of-work CAPTCHA (no Google, no cookies, no tracking, no image puzzles — every challenge is solved by spending CPU cycles in your browser). gitGost uses it in two distinct ways:
+
+1. **Anti-scraping gate** — protects the *browsing* endpoints (`/explore`, `/trending`, search, repository reading) from AI/LLM crawlers and scrapers.
+2. **Anonymous submission protection** — protects every *write* made without an account: anonymous PRs, issue/discussion comments, bug reports, content reports, and ZKP identity registration.
+
+> [!NOTE]
+> **No API key is ever required for Git, CLI, or terminal usage.** Git clients and the GREN CLI work with zero configuration right after install — no account, no token, no API key, no CAPTCHA. The CAPTCHA gate applies only to the web browsing surface.
+
+### Which endpoints are protected?
+
+When the CAPTCHA gate is enabled, these `/api` endpoints return `403 {"captcha_required": true}` to any visitor without a valid gate cookie:
+
+| Category | Endpoints |
+|---|---|
+| Search & discovery | `/api/search`, `/api/users/search`, `/api/code/search` |
+| User browsing | `/api/users/profile`, `/users/repos`, `/users/readme`, `/users/starred`, `/users/orgs`, `/users/events`, `/users/contributions` |
+| Repo content proxies | `/api/gh-proxy/*`, `/gh-raw/*`, `/gh-avatar/*` (GitHub), `/api/cb-proxy/*` (Codeberg), `/api/gl-proxy/*` (GitLab) |
+| Repo metadata | `/api/blame/...`, `/file-history/...`, `/compare/...`, `/gl-notes/...`, `/gl-commit-count/...`, `/gl-avatar`, `/gl-commits/...`, `/gl-commit-detail/...` |
+| Downloads | `/api/release-asset/...`, `/api/package-file/...` |
+| Trending & extras | `/api/trending/:provider`, `/api/gh-discussions/...`, `/gh-discussion/...`, `/gh-wiki/...`, `/gl-wiki/...` |
+
+**Deliberately NOT protected:** the Git core (`/v1/...`, `/v2/...`) and `/admin`. Git clients and the CLI must work with zero configuration right after install — they cannot solve a CAPTCHA and they never need any API key or token. These endpoints are protected only by per-IP rate limits: push (5 pushes/hour), clone/fetch (60/minute), anonymous issues/comments/reactions (10/minute), and jobs (`/v2`, 30/minute).
+
+### When is the challenge shown?
+
+- Only when the gate is enabled (i.e. `MENTA_API_ENDPOINT` is configured or `MENTA_CAPTCHA_ENFORCED=true`). On localhost, CI, or self-deployments without Menta, the gate is a no-op: no widget is loaded, no challenge exists, everything passes freely.
+- On your **first visit**, and again automatically whenever the 24-hour gate session expires, document requests (`/`, `/<provider>/<owner>[/]<repo>`, the known pages) are answered by the backend with a **302 redirect to a lightweight challenge page** (`/challenge.html`) — modeled on Menta's own challenge page — instead of serving the full application. An unverified visitor therefore never downloads or executes `index.html`/`repo.html`/`profile.html`: the verification happens on a self-contained minimal page, and only after the Menta widget resolves the proof-of-work does the browser land on the requested page. Additionally, every gated page keeps an in-page full-screen overlay as fallback for sessions that expire mid-browsing (including documents already served by the service worker cache).
+
+### How the challenge flow works
+
+```
+Browser                          gitGost backend                    Menta CAPTCHA
+  │  GET /                          │
+  │──────────────────────────────▶  │
+  │  ◀── 302 /challenge.html?next=/ (no gost_gate cookie) ──┤ (lightweight
+  │                                                          │  self-contained
+  │  GET /challenge.html, GET /api/config (captcha_gate: true, menta_api)
+  │──────────────────────────────▶  │
+  │  GET /api/config → { captcha_gate, menta_api }
+  │  (la URL de Menta la decide el servidor; el navegador la usa directamente)
+  │
+  │  ── PoW resuelto por el navegador contra Menta (sin pasar por gitGost) ──
+  │  POST {MENTA}/shield/check  { path, force: true }
+  │──────────────────────────────────────────────────────────▶  (directo)
+  │  ◀──────── challenge (salt, target) + token ─────────────
+  │  solve SHA-256 in your browser (PoW, ~0.5 s)
+  │  POST {MENTA}/shield/redeem  { token, solutions, challenge_signature }
+  │──────────────────────────────────────────────────────────▶  (directo)
+  │  ◀──────── clearance (JWT reutilizable durante su TTL) ──
+  │
+  │  POST /api/captcha-gate { shield_clearance }
+  │──────────────────────────────▶  POST {MENTA}/shield/verify (server-to-server)
+  │                                 ◀──────── valid? ────────▶
+  │  ◀──── Set-Cookie: gost_gate=g1|exp|HMAC(exp) ── 24 h ─────────
+  │  location.replace(?next=…); the requested page is now served
+  │  with valid browsing endpoints accepting the cookie
+  │
+```
+
+Step by step:
+
+1. **Gate detection** — `/assets/captcha-loader.js` asks `/api/config` once. If `captcha_gate` is `false`, nothing is downloaded and everything passes freely. If it is `true`, the config also announces `menta_api` (la base de la API de Menta), so the browser knows against which host to solve the challenge without a hardcoded URL in the HTML.
+2. **Challenge solving — directo contra Menta.** El navegador resuelve el proof-of-work **contra Menta directamente** (flujo universal `/shield/*`): `POST {MENTA}/shield/check` con `force: true` devuelve el reto, el navegador calcula el SHA-256 localmente, y `POST {MENTA}/shield/redeem` canjea la solución por un *clearance* reutilizable durante su TTL. **gitGost no hace de relay del reto: ni `/api/captcha/*` ni el servidor participan en el PoW**, así que el consumo de CPU y red del desafío no carga al servidor de gitGost. Solo si el navegador no puede alcanzar a Menta (firewall corporativo, adblocker, DNS bloqueado) se cae al proxy local `/api/captcha/*` como último recurso.
+3. **Token verification** — `POST /api/captcha-gate` envía el *clearance* a gitGost, que lo valida contra `{MENTA}/shield/verify` **server-to-server**. Menta no consume el clearance (es reutilizable durante su TTL), así que gitGost cachea el resultado por token y no vuelve a preguntar a Menta por cada sesión nueva del mismo visitante. Un rate limit global (30 req/min/IP) protege este endpoint.
+4. **Session cookie** — el backend emite `gost_gate`: cookie sin estado de la forma `g1|expiry|HMAC-SHA256(expiry)`. Como la validación solo re-calcula el HMAC, no hay sesión en servidor y cualquier instancia que comparta `GITGOST_GATE_KEY` la acepta. Atributos: `SameSite=Lax`, `Secure` en HTTPS y — intencionalmente — `HttpOnly=false`, para que el frontend compruebe `document.cookie` *antes* del primer fetch de contenido y evite una petición condenada.
+5. **Re-challenge** — tras 24 h (o una cookie falsificada/expirada) el middleware vuelve a rechazar: las respuestas de la API devuelven `403 {captcha_required: true}` re-disparando el overlay en la página, y una navegación nueva a un documento se redirige otra vez a `/challenge.html`.
+
+### How the data is processed
+
+We designed this integration so the CAPTCHA adds a human check **without adding surveillance**:
+
+- **No CAPTCHA cookies of its own.** Menta is proof-of-work based: no third-party cookies, no fingerprinting, no behavioral tracking. The SDK script is loaded from the Menta host, but the challenge itself is a CPU computation in your browser.
+- **`/api/captcha/*` is a strict same-origin proxy.** It forwards your `User-Agent`, your first `X-Forwarded-For` IP, and the server's `X-API-Key` to the Menta instance. The IP is forwarded only so Menta can apply its own per-IP rate limits and IP-bound challenges; nothing is stored by gitGost, and Menta is built to keep no persistent profiling data (same self-hosted, privacy-first philosophy as the project README announces).
+- **Verification is server-to-server.** Only gitGost's backend talks to Menta's `/verify` using an API key — tokens are validated and immediately consumed; the browser never handles verification secrets.
+- **The `gost_gate` cookie contains nothing personal.** Just a version tag, a Unix expiry timestamp, and an HMAC of that timestamp. No IP, no user ID, no MAC address, nothing linkable — losing the cookie costs you exactly one new challenge.
+- **Gate on, surveillance off.** The gate exists to keep scrapers out of the browsing surface and keep anonymous submissions from being flooded; it never enriches the (already absent) per-user dataset. The privacy guarantees in [Privacy Guarantees](Privacy%20Guarantees.md) apply unchanged: no IP logs, no personal data retention, only aggregate counters for abuse metrics.
+
+Self-hosters can point the whole integration elsewhere with `MENTA_API_ENDPOINT`, `MENTA_API_KEY`, and `MENTA_CAPTCHA_ENFORCED` — see `fly.toml` for the reference configuration.
 
 ## gitGost for Resilient Networking
 

@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+    Lightweight challenge page for the anti-scraping gate (Menta-style flow):
+    the backend redirects here (302 /challenge.html?next=...) instead of
+    serving the full app when the visitor has no gost_gate session.
+    Only after solving the proof-of-work CAPTCHA are index/repo/profile
+    served, so an unverified visitor never loads nor runs the full app.
+-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Verifying you are human · Menta CAPTCHA</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/logos/gitgost-logo.svg">
+    <style>
+        * { box-sizing: border-box; }
+
+        :root {
+            /* Paleta zen de openbin (tema claro) */
+            --zen-paper: #f2f0e3;
+            --zen-dark: #2e2e2e;
+            --bg: var(--zen-paper);
+            --fg: var(--zen-dark);
+            --fg-muted: color-mix(in srgb, var(--zen-dark) 60%, transparent);
+            --fg-secondary: color-mix(in srgb, var(--zen-dark) 40%, transparent);
+            --bg-secondary: color-mix(in srgb, var(--zen-dark) 6%, var(--zen-paper));
+            --bg-hover: color-mix(in srgb, var(--zen-dark) 12%, var(--zen-paper));
+            --accent: #f76f53;
+            --border: color-mix(in srgb, var(--zen-dark) 12%, var(--zen-paper));
+            --card: color-mix(in srgb, var(--zen-dark) 6%, var(--zen-paper));
+            --code-bg: color-mix(in srgb, var(--zen-dark) 6%, var(--zen-paper));
+            --radius-lg: 0px;
+            --radius-md: 0px;
+            --radius-sm: 0px;
+            --radius-pill: 0px;
+        }
+
+        :root[data-theme="dark"] {
+            /* Paleta zen de openbin (tema oscuro) */
+            --zen-paper: #1f1f1f;
+            --zen-dark: #d1cfc0;
+            --bg: var(--zen-paper);
+            --fg: var(--zen-dark);
+            --fg-muted: color-mix(in srgb, var(--zen-dark) 60%, transparent);
+            --fg-secondary: color-mix(in srgb, var(--zen-dark) 40%, transparent);
+            --bg-secondary: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+            --bg-hover: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+            --accent: #f76f53;
+            --border: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+            --card: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+            --code-bg: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme]) {
+                --zen-paper: #1f1f1f;
+                --zen-dark: #d1cfc0;
+                --bg: var(--zen-paper);
+                --fg: var(--zen-dark);
+                --fg-muted: color-mix(in srgb, var(--zen-dark) 60%, transparent);
+                --fg-secondary: color-mix(in srgb, var(--zen-dark) 40%, transparent);
+                --bg-secondary: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+                --bg-hover: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+                --accent: #f76f53;
+                --border: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+                --card: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+                --code-bg: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+            }
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            font-size: 13px;
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .app-container {
+            display: flex;
+            flex: 1;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1.25rem 3rem;
+            margin: 0 auto;
+            width: 100%;
+            min-height: 0;
+        }
+
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+        }
+
+        .challenge-logo {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: -0.5px;
+            text-decoration: none;
+            margin-bottom: 1.25rem;
+        }
+
+        .challenge-logo:hover { text-decoration: underline; }
+
+        .challenge-box {
+            max-width: 420px;
+            width: 100%;
+            border: 1px solid var(--border);
+            background: var(--card);
+            border-radius: 0;
+            padding: 2rem 1.75rem;
+            text-align: center;
+        }
+
+        #challenge-spinner {
+            width: 32px;
+            height: 32px;
+            margin: 0 auto 1.25rem;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: challenge-spin 0.8s linear infinite;
+        }
+        @keyframes challenge-spin { to { transform: rotate(360deg); } }
+
+        #challenge-heading {
+            margin: 0 0 0.75rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1.3;
+        }
+
+        #challenge-status {
+            margin: 0 0 0.75rem;
+            font-size: 0.82rem;
+            color: var(--fg-muted);
+            line-height: 1.55;
+        }
+
+        #challenge-status.challenge-error { color: #a61b1b; }
+        #challenge-status.challenge-ok { color: #1a7f37; }
+        :root[data-theme="dark"] #challenge-status.challenge-error { color: #ff7b72; }
+        :root[data-theme="dark"] #challenge-status.challenge-ok { color: #3fb950; }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme]) #challenge-status.challenge-error { color: #ff7b72; }
+            :root:not([data-theme]) #challenge-status.challenge-ok { color: #3fb950; }
+        }
+
+        #challenge-meta {
+            margin: 0 auto 1.25rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.7rem;
+            color: var(--fg-muted);
+            min-height: 1.3em;
+            max-width: 320px;
+            line-height: 1.5;
+        }
+
+        #challenge-retry {
+            display: none;
+            margin: 0 auto;
+            border: 1px solid var(--accent);
+            background: transparent;
+            color: var(--accent);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.78rem;
+            padding: 0.4rem 1.1rem;
+            border-radius: 0;
+            cursor: pointer;
+        }
+
+        #challenge-retry:hover,
+        #challenge-retry:focus-visible {
+            color: var(--bg);
+            background: var(--accent);
+            outline: none;
+        }
+
+        #challenge-foot {
+            margin: 1.5rem 0 0;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.68rem;
+            color: var(--fg-secondary);
+            line-height: 1.5;
+        }
+        #challenge-foot a { color: var(--accent); text-decoration: none; }
+        #challenge-foot a:hover { text-decoration: underline; }
+
+        #gate-captcha { display: none !important; }
+
+        .statusbar {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            padding: 0.35rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.72rem;
+            color: var(--fg-secondary);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+        }
+
+        .statusbar-left {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .statusbar-right {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .statusbar a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .statusbar a:hover {
+            text-decoration: underline;
+        }
+
+        .statusbar-command {
+            position: relative;
+        }
+
+        .statusbar-command-trigger {
+            border: 0;
+            padding: 0;
+            color: var(--fg-secondary);
+            background: transparent;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .statusbar-command-trigger:hover,
+        .statusbar-command-trigger:focus-visible {
+            color: var(--fg);
+            outline: none;
+        }
+
+        .statusbar-command-menu {
+            position: absolute;
+            bottom: calc(100% + 0.25rem);
+            left: 0;
+            width: 14rem;
+            padding: 0.25rem 0;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            box-shadow: none;
+        }
+
+        .statusbar-command-menu[hidden] {
+            display: none;
+        }
+
+        .statusbar-command-menu a,
+        .statusbar-command-menu button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            border: 0;
+            padding: 0.4rem 0.75rem;
+            color: var(--fg);
+            background: transparent;
+            font: inherit;
+            font-size: 0.72rem;
+            text-align: left;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .statusbar-command-menu a:hover,
+        .statusbar-command-menu button:hover,
+        .statusbar-command-menu a:focus-visible,
+        .statusbar-command-menu button:focus-visible {
+            background: var(--bg-hover);
+            outline: none;
+        }
+
+        .statusbar-command-menu-divider {
+            height: 1px;
+            margin: 0.25rem 0;
+            background: var(--border);
+        }
+
+        @media (max-width: 900px) {
+            .app-container {
+                padding: 1.25rem 1rem 3rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            html, body {
+                overflow: auto;
+                height: auto;
+                min-height: 100vh;
+                font-size: 15px;
+            }
+
+            .app-container {
+                flex-direction: column;
+                padding: 1rem 0.75rem 3.5rem;
+                gap: 0.25rem;
+                overflow: visible;
+                min-height: 0;
+            }
+
+            .main-content {
+                width: 100%;
+                min-height: 0;
+                padding-bottom: 0;
+            }
+
+            .challenge-box {
+                padding: 1.5rem 1.1rem;
+            }
+
+            .statusbar {
+                padding: 0.35rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+
+        <main class="main-content">
+            <div class="challenge-box">
+                <div id="challenge-spinner" aria-hidden="true"></div>
+                <h1 id="challenge-heading">Verifying you are human</h1>
+                <p id="challenge-status" aria-live="polite">This is a proof-of-work check: no cookies, no tracking, no puzzles to solve.</p>
+                <p id="challenge-meta"></p>
+                <button id="challenge-retry" type="button">Try again</button>
+                <p id="challenge-foot">Performance test by <a href="https://github.com/livrasand/mentacaptcha" target="_blank" rel="noopener">Menta</a></p>
+            </div>
+        </main>
+    </div>
+
+        </main>
+    </div>
+
+    <footer class="statusbar">
+        <div class="statusbar-left statusbar-command">
+            <button type="button" id="command-trigger" class="statusbar-command-trigger" aria-haspopup="true" aria-expanded="false">
+                <span id="statusbar-path"><a href="/"><span>gitGost</span></a></span>
+                <span style="color:var(--accent);">_</span>
+            </button>
+            <div id="command-menu" class="statusbar-command-menu" hidden>
+                <a href="/">home</a>
+                <a href="/privacy">privacy</a>
+                <div class="statusbar-command-menu-divider"></div>
+                <button type="button" onclick="toggleTheme()">toggle theme</button>
+            </div>
+        </div>
+        <div class="statusbar-right">
+            <a href="/">home</a>
+        </div>
+    </footer>
+
+    <script src="/assets/captcha-loader.js"></script>
+    <script>
+        (function () {
+            "use strict";
+            function $(id) { return document.getElementById(id); }
+            function apiBase() {
+                try {
+                    if (typeof window.Capacitor !== "undefined" &&
+                        window.Capacitor.isNativePlatform &&
+                        window.Capacitor.isNativePlatform()) {
+                        return "https://gitgost.livrasand.com";
+                    }
+                } catch (e) { /* native detection fails → same origin */ }
+                return window.location.origin;
+            }
+            function gateCookiePresent() {
+                return document.cookie.split(";").some(function (part) {
+                    return part.trim().lastIndexOf("gost_gate=", 0) === 0;
+                });
+            }
+
+            var statusEl = $("challenge-status"), metaEl = $("challenge-meta");
+            var headingEl = $("challenge-heading"), spinnerEl = $("challenge-spinner");
+            var retryEl = $("challenge-retry");
+            var solveTimer = null, watchdog = null, t0 = 0, phase = "idle", runId = 0;
+
+            // Only relative same-origin paths (no //host, /\host, scheme:...,
+            // ?..., or /challenge.html so the flow does not restart).
+            var sameOriginNextPattern = /^\/(?![a-z][a-z0-9+\-.]*:|\/\/|\\)/i;
+            var params = new URLSearchParams(window.location.search);
+            var next = params.get("next") || "/";
+            if (!sameOriginNextPattern.test(next) || next.length > 2048 ||
+                next.slice(0, "/challenge.html".length) === "/challenge.html") {
+                next = "/";
+            }
+            function goNext() { window.location.replace(next); }
+
+            function setStatus(message, kind) {
+                statusEl.textContent = message;
+                statusEl.classList.toggle("challenge-error", kind === "error");
+                statusEl.classList.toggle("challenge-ok", kind === "ok");
+            }
+            function setHeading(text) { headingEl.textContent = text; }
+            function setMeta(text) { metaEl.textContent = text; }
+            function setSpinner(on) { spinnerEl.style.display = on ? "" : "none"; }
+            function setRetry(on) { retryEl.style.display = on ? "" : "none"; }
+            function clearTimers() {
+                if (solveTimer) { window.clearInterval(solveTimer); solveTimer = null; }
+                if (watchdog) { window.clearTimeout(watchdog); watchdog = null; }
+            }
+            function fail(message) {
+                runId++;
+                clearTimers();
+                setSpinner(false);
+                setRetry(true);
+                setHeading("Something went wrong");
+                setStatus(message || "We could not complete the verification. Please try again.", "error");
+                setMeta("");
+                phase = "idle";
+                var widget = $("gate-captcha");
+                if (widget && typeof widget.reset === "function") widget.reset();
+                try { widget.token = null; } catch (e) { /* widget not initialized yet */ }
+            }
+            function tick() {
+                setMeta("Solving a proof-of-work challenge in your browser… " +
+                    ((Date.now() - t0) / 1000).toFixed(1) + " s");
+            }
+            function submitGate(token, kind) {
+                setStatus("Confirming with the server…");
+                // El proof-of-work se resolvió contra Menta; aquí solo se le
+                // entrega la prueba a gitGost para que emita la cookie de
+                // sesión (una única llamada server-to-server a Menta).
+                var payload = kind === "shield"
+                    ? { shield_clearance: token }
+                    : { captcha_token: token };
+                fetch(apiBase() + "/api/captcha-gate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "same-origin",
+                    body: JSON.stringify(payload)
+                }).then(function (response) {
+                    if (response.ok) {
+                        clearTimers();
+                        setSpinner(false);
+                        setRetry(false);
+                        setHeading("Verification complete");
+                        setStatus("Success! Redirecting…", "ok");
+                        setMeta("Completed in " + ((Date.now() - t0) / 1000).toFixed(2) + " s");
+                        phase = "done";
+                        window.setTimeout(goNext, 1200);
+                        return;
+                    }
+                    if (response.status === 429) fail("Too many requests. Please wait a moment and try again.");
+                    else fail("Verification failed. Please try again.");
+                }).catch(function () {
+                    fail("Network error. Please try again.");
+                });
+            }
+            function runAttempt() {
+                if (phase === "busy" || phase === "done") return;
+                phase = "busy";
+                var myRunId = ++runId;
+                setSpinner(true);
+                setRetry(false);
+                setHeading("Verifying you are human");
+                setStatus("This is a proof-of-work check: no cookies, no tracking, no puzzles to solve.");
+                setMeta("");
+                t0 = Date.now();
+                watchdog = window.setTimeout(function () {
+                    if (myRunId === runId && phase === "busy") fail("The verification took too long. Please try again.");
+                }, 90000);
+                solveTimer = window.setInterval(function () {
+                    if (myRunId === runId) tick();
+                }, 500);
+                // El reto se resuelve en el navegador contra Menta:
+                //   1) widget de Menta contra su propia API (PoW adaptativo),
+                //   2) flujo universal /shield de Menta (sin registrar el
+                //      dominio en Menta),
+                //   3) proxy local de gitGost, solo si el navegador no puede
+                //      alcanzar a Menta.
+                window.gitgostCaptcha.solve({
+                    path: window.location.pathname + window.location.search,
+                    allowShield: true
+                }).then(function (result) {
+                    if (myRunId !== runId) return;
+                    clearTimers();
+                    phase = "idle";
+                    if (result && result.token) submitGate(result.token, result.kind);
+                    else fail("Verification failed. Please try again.");
+                }).catch(function () {
+                    if (myRunId !== runId) return;
+                    clearTimers();
+                    fail("Verification failed. Please try again.");
+                });
+            }
+
+            retryEl.addEventListener("click", function () {
+                if (phase !== "idle") return;
+                // Si la inicialización falló (no se pudo cargar el SDK ni
+                // contactar con Menta), se reintenta antes de resolver.
+                if (window.gitgostCaptcha && window.gitgostCaptcha.error) {
+                    window.gitgostCaptcha.init().then(function () { runAttempt(); });
+                    return;
+                }
+                runAttempt();
+            });
+
+            // Cookie already valid (browser back after solving): go straight to the
+            // destination without another verification.
+            if (gateCookiePresent()) { goNext(); return; }
+
+            window.gitgostCaptchaReady.then(function (enabled) {
+                if (!enabled) {
+                    if (window.gitgostCaptcha && window.gitgostCaptcha.error) {
+                        // No se pudo contactar con el servicio de verificación:
+                        // esta página solo se sirve con el gate activo, así que
+                        // reintentar es mejor que continuar en bucle.
+                        fail("Could not reach the verification service. Check your connection and try again.");
+                        return;
+                    }
+                    // This page is only served with the gate active; if the gate was
+                    // disabled while the client had the page open, just continue
+                    // to the destination.
+                    goNext();
+                    return;
+                }
+                runAttempt();
+            }).catch(function () {
+                fail("Could not initialize the verification. Check your connection and try again.");
+            });
+        })();
+    </script>
+
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem("theme");
+                if (saved === "dark" || saved === "light") {
+                    document.documentElement.setAttribute("data-theme", saved);
+                }
+            } catch (e) {}
+        })();
+
+        function toggleTheme() {
+            var root = document.documentElement;
+            var mode = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+            root.setAttribute("data-theme", mode);
+            try { localStorage.setItem("theme", mode); } catch (e) {}
+            closeCommandMenu();
+        }
+
+        var trigger = document.getElementById("command-trigger");
+        var menu = document.getElementById("command-menu");
+
+        function closeCommandMenu() {
+            if (!menu) return;
+            menu.hidden = true;
+            if (trigger) trigger.setAttribute("aria-expanded", "false");
+        }
+
+        if (trigger && menu) {
+            trigger.addEventListener("click", function (e) {
+                e.stopPropagation();
+                var open = menu.hidden;
+                menu.hidden = !open;
+                trigger.setAttribute("aria-expanded", String(open));
+            });
+
+            document.addEventListener("click", function (e) {
+                if (menu.hidden) return;
+                if (!menu.contains(e.target) && e.target !== trigger) closeCommandMenu();
+            });
+
+            document.addEventListener("keydown", function (e) {
+                if (e.key === "Escape") closeCommandMenu();
+            });
+        }
+    </script>
+</body>
+</html>

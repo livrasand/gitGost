@@ -88,8 +88,9 @@ func (m *mockReadCloser) Close() error {
 func TestAnonymousAuthMiddleware(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
+	// Sin API key: todas las rutas pasan sin credenciales.
 	r := gin.New()
-	r.Use(anonymousAuthMiddleware(""))
+	r.Use(anonymousAuthMiddleware())
 	r.GET("/test", func(c *gin.Context) {
 		c.String(200, "ok")
 	})
@@ -98,40 +99,12 @@ func TestAnonymousAuthMiddleware(t *testing.T) {
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 	if w.Code != 200 {
-		t.Errorf("Request without API key should succeed when none is set, got status %d", w.Code)
+		t.Errorf("Request sin credenciales debe pasar, got status %d", w.Code)
 	}
 
+	// Las rutas del protocolo smart HTTP de Git también pasan siempre.
 	r = gin.New()
-	r.Use(anonymousAuthMiddleware("test-key"))
-	r.GET("/test", func(c *gin.Context) {
-		c.String(200, "ok")
-	})
-
-	req, _ = http.NewRequest("GET", "/test", nil)
-	w = httptest.NewRecorder()
-	r.ServeHTTP(w, req)
-	if w.Code != 401 {
-		t.Errorf("Request without API key should fail when key is required, got status %d", w.Code)
-	}
-
-	req, _ = http.NewRequest("GET", "/test", nil)
-	req.Header.Set("X-Gitgost-Key", "wrong-key")
-	w = httptest.NewRecorder()
-	r.ServeHTTP(w, req)
-	if w.Code != 401 {
-		t.Errorf("Request with wrong API key should fail, got status %d", w.Code)
-	}
-
-	req, _ = http.NewRequest("GET", "/test", nil)
-	req.Header.Set("X-Gitgost-Key", "test-key")
-	w = httptest.NewRecorder()
-	r.ServeHTTP(w, req)
-	if w.Code != 200 {
-		t.Errorf("Request with correct API key should succeed, got status %d", w.Code)
-	}
-
-	r = gin.New()
-	r.Use(anonymousAuthMiddleware("test-key"))
+	r.Use(anonymousAuthMiddleware())
 	r.GET("/v1/gh/:owner/:repo/info/refs", func(c *gin.Context) {
 		c.String(200, "ok")
 	})

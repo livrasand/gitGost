@@ -1800,7 +1800,7 @@
                             color: var(--fg-muted);
                         "
                     >
-                        This is a service for humans. Autonomous agents are not users. If useful, consider <a href="https://github.com/sponsors/livrasand" style="color:var(--accent);text-decoration:none;">donating</a> or you can also <a href="https://github.com/livrasand/gitGost" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">forking</a>. AI/LLM scraping prohibited. You may not use gitGost or any part of its infrastructure to scrape, crawl, extract, aggregate, index, monitor, reproduce, or otherwise collect content or metadata using artificial intelligence, large language models, bots, autonomous agents, crawlers, spiders, scrapers, automated browsers, scripts, or any other automated system. This prohibition applies to systems used for training, fine-tuning, evaluation, benchmarking, inference, retrieval, indexing, dataset creation, model development, or any other automated processing. gitGost does not host any content. All content on gitGost is from GitHub, GitLab, Codeberg and users' ESP32 nodes. Git is a trademark of the <a href="http://sfconservancy.org/" style="color:var(--accent);text-decoration:none;">Software Freedom Conservancy</a>.
+                        This is a service for humans. Autonomous agents are not users. If useful, consider <a href="https://github.com/sponsors/livrasand" style="color:var(--accent);text-decoration:none;">donating</a> or you can also <a href="https://github.com/livrasand/gitGost" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">forking</a>. AI/LLM scraping prohibited. You may not use gitGost or any part of its infrastructure to scrape, crawl, extract, aggregate, index, monitor, reproduce, or otherwise collect content or metadata using artificial intelligence, large language models, bots, autonomous agents, crawlers, spiders, scrapers, automated browsers, scripts, or any other automated system. This prohibition applies to systems used for training, fine-tuning, evaluation, benchmarking, inference, retrieval, indexing, dataset creation, model development, or any other automated processing. gitGost does not host any content. All content on gitGost is from GitHub, GitLab, Codeberg and users' gitGost Forge. Git is a trademark of the <a href="http://sfconservancy.org/" style="color:var(--accent);text-decoration:none;">Software Freedom Conservancy</a>.
                     </p>
                 </div>
             </aside>
@@ -5023,7 +5023,7 @@
                         // Fetch templates if not already loaded (GitHub only)
                         if (issueTemplates.length === 0 && provider === 'gh') {
                             try {
-                                const tmplRes = await fetch(`/v1/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/templates`, { headers: { 'X-Gitgost-Key': 'gitgost-anonymous' } });
+                                const tmplRes = await fetch(`/v1/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/templates`);
                                 if (tmplRes.ok) {
                                     const tmplData = await tmplRes.json();
                                     issueTemplates = tmplData.templates || [];
@@ -5068,7 +5068,7 @@
                         if (githubToken) payload.github_token = githubToken;
                         try {
                             const res = await fetch(`/v1/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/anonymous`, {
-                                method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Gitgost-Key': 'gitgost-anonymous' },
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify(payload),
                             });
                             if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -5106,7 +5106,7 @@
                         if (githubToken) payload.github_token = githubToken;
                         try {
                             const res = await fetch(`/v1/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/${encodeURIComponent(number)}/comments/anonymous`, {
-                                method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Gitgost-Key': 'gitgost-anonymous' },
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify(payload),
                             });
                             if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -5143,7 +5143,7 @@
                         if (githubToken) payload.github_token = githubToken;
                         try {
                             const res = await fetch(`/v1/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls/${encodeURIComponent(number)}/comments/anonymous`, {
-                                method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Gitgost-Key': 'gitgost-anonymous' },
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify(payload),
                             });
                             if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -5392,7 +5392,7 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
                 try {
                     const res = await fetch(`/v1/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/anonymous`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-Gitgost-Key': 'gitgost-anonymous' },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ title, body, labels }),
                     });
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -5435,7 +5435,7 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
                 try {
                     const res = await fetch(`/v1/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/${encodeURIComponent(number)}/comments/anonymous`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-Gitgost-Key': 'gitgost-anonymous' },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload),
                     });
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -5477,7 +5477,7 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
                 try {
                     const res = await fetch(`/v1/${provider}/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls/${encodeURIComponent(number)}/comments/anonymous`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-Gitgost-Key': 'gitgost-anonymous' },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload),
                     });
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -5953,7 +5953,245 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
         -->
 
     <script src="/bip39-words.js"></script>
-    <script src="https://mentacaptchaeu.eu.pythonanywhere.com/menta-captcha.js"></script>
+    <script src="/assets/captcha-loader.js"></script>
     <script src="/zkp-client.js?v=4"></script>
+    <!-- CAPTCHA gate anti-scraping: el backend exige cookie "gost_gate"
+         (emitida aquí tras resolver Menta) para los endpoints de browsing.
+         Sin cookie válida no hay contenido: primer dibujo o expiración a las 24h re-desafía.
+         El modal replica el diseño del challenge page de Menta: resolución automática
+         del PoW (widget invisible) con spinner, estado, progreso transcurrido y reintento. -->
+    <style>
+        #gate-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2147483647;
+            background: rgba(6, 10, 15, 0.92);
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .gate-card {
+            background: #0d1117;
+            border: 1px solid rgba(247, 111, 83, 0.35);
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 16px 38px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            box-sizing: border-box;
+        }
+        .gate-spinner {
+            width: 34px;
+            height: 34px;
+            margin: 0 auto 18px;
+            border: 3px solid rgba(159, 179, 255, 0.25);
+            border-top-color: #f76f53;
+            border-radius: 50%;
+            animation: gate-spin 0.8s linear infinite;
+        }
+        @keyframes gate-spin { to { transform: rotate(360deg); } }
+        #gate-heading {
+            margin: 0 0 10px;
+            font-size: 22px;
+            font-weight: 700;
+            color: #f76f53;
+            line-height: 1.3;
+        }
+        #gate-status {
+            margin: 0 0 10px;
+            font-size: 13px;
+            color: #9fb3ff;
+            line-height: 1.5;
+        }
+        #gate-status.gate-error { color: #ff6b6b; }
+        #gate-status.gate-ok { color: #3fb950; }
+        #gate-meta {
+            margin: 0 auto 18px;
+            font-size: 12px;
+            color: #7d92d8;
+            min-height: 1.3em;
+            max-width: 300px;
+            line-height: 1.4;
+        }
+        #gate-retry {
+            display: none;
+            margin: 0 auto;
+            padding: 10px 28px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg, #ffa657, #ff6b6b);
+            color: #0d1117;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        #gate-foot {
+            margin: 18px 0 0;
+            font-size: 11px;
+            color: #7d92d8;
+            line-height: 1.5;
+        }
+        #gate-foot a { color: #f76f53; text-decoration: none; }
+        #gate-captcha { display: none !important; }
+    </style>
+    <div id="gate-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="gate-heading">
+        <div class="gate-card">
+            <div id="gate-spinner" class="gate-spinner" aria-hidden="true"></div>
+            <h2 id="gate-heading">Verificando que eres humano</h2>
+            <p id="gate-status" aria-live="polite">Esta es una comprobación de proof-of-work: sin cookies, sin rastreo, sin puzzles que resolver.</p>
+            <p id="gate-meta"></p>
+            <button id="gate-retry" type="button">Reintentar</button>
+            <menta-widget id="gate-captcha" data-cap-api-endpoint="/api/captcha"></menta-widget>
+            <p id="gate-foot">Prueba de rendimiento por <a href="https://github.com/livrasand/mentacaptcha" target="_blank" rel="noopener">Menta</a> &middot; CAPTCHA centrado en la privacidad &middot; <a href="/privacy">política de privacidad</a></p>
+        </div>
+    </div>
+    <script>
+        (function () {
+            "use strict";
+            function $(id) { return document.getElementById(id); }
+            function gateCookiePresent() {
+                return document.cookie.split(";").some(function (part) {
+                    return part.trim().lastIndexOf("gost_gate=", 0) === 0;
+                });
+            }
+            var headingEl = null, statusEl = null, metaEl = null, spinnerEl = null, retryEl = null;
+            var solveTimer = null, watchdog = null, t0 = 0, phase = "idle", runId = 0;
+
+            function setStatus(message, kind) {
+                if (!statusEl) return;
+                statusEl.textContent = message;
+                statusEl.classList.toggle("gate-error", kind === "error");
+                statusEl.classList.toggle("gate-ok", kind === "ok");
+            }
+            function setHeading(text) { if (headingEl) headingEl.textContent = text; }
+            function setMeta(text) { if (metaEl) metaEl.textContent = text; }
+            function setSpinner(on) { if (spinnerEl) spinnerEl.style.display = on ? "" : "none"; }
+            function setRetry(on) { if (retryEl) retryEl.style.display = on ? "" : "none"; }
+            function clearTimers() {
+                if (solveTimer) { window.clearInterval(solveTimer); solveTimer = null; }
+                if (watchdog) { window.clearTimeout(watchdog); watchdog = null; }
+            }
+            function fail(message) {
+                runId++;
+                clearTimers();
+                setSpinner(false);
+                setRetry(true);
+                setHeading("Algo salió mal");
+                setStatus(message || "No pudimos completar la verificación. Por favor, inténtalo de nuevo.", "error");
+                setMeta("");
+                phase = "idle";
+                var widget = $("gate-captcha");
+                if (widget && typeof widget.reset === "function") widget.reset();
+                try { widget.token = null; } catch (e) { /* widget no mejorado aún */ }
+            }
+            function tick() {
+                setMeta("Resolviendo una prueba de trabajo en tu navegador… " + ((Date.now() - t0) / 1000).toFixed(1) + " s");
+            }
+            function submitGate(token) {
+                setStatus("Confirmando con el servidor…");
+                fetch(getApiBase() + "/api/captcha-gate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "same-origin",
+                    body: JSON.stringify({ captcha_token: token })
+                }).then(function (response) {
+                    if (response.ok) {
+                        clearTimers();
+                        setSpinner(false);
+                        setRetry(false);
+                        setHeading("Verificación completa");
+                        setStatus("¡Éxito! Recargando…", "ok");
+                        setMeta("Completado en " + ((Date.now() - t0) / 1000).toFixed(2) + " s");
+                        phase = "done";
+                        window.setTimeout(function () { window.location.reload(); }, 1200);
+                        return;
+                    }
+                    if (response.status === 429) fail("Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.");
+                    else fail("Verificación fallida. Por favor, inténtalo de nuevo.");
+                }).catch(function () {
+                    fail("Error de red. Por favor, inténtalo de nuevo.");
+                });
+            }
+            function runAttempt() {
+                if (phase === "busy" || phase === "done") return;
+                phase = "busy";
+                var myRunId = ++runId;
+                setSpinner(true);
+                setRetry(false);
+                setHeading("Verificando que eres humano");
+                setStatus("Esta es una comprobación de proof-of-work: sin cookies, sin rastreo, sin puzzles que resolver.");
+                setMeta("");
+                var widget = $("gate-captcha");
+                var deferral;
+                if (window.customElements) {
+                    deferral = Promise.race([
+                        window.customElements.whenDefined("menta-widget"),
+                        new Promise(function (resolve, reject) {
+                            window.setTimeout(function () { reject(new Error("sdk-timeout")); }, 15000);
+                        })
+                    ]);
+                } else {
+                    deferral = Promise.reject(new Error("no-custom-elements"));
+                }
+                deferral.then(function () {
+                    if (myRunId !== runId) return;
+                    widget = $("gate-captcha");
+                    if (!widget || typeof widget.solve !== "function") throw new Error("no-widget");
+                    if (widget.token) { phase = "idle"; submitGate(widget.token); return; }
+                    widget.addEventListener("solve", function (event) {
+                        if (myRunId !== runId) return;
+                        clearTimers();
+                        phase = "idle";
+                        var token = (event.detail && event.detail.token) || (widget && widget.token);
+                        if (token) submitGate(token);
+                        else fail("Verificación fallida. Por favor, inténtalo de nuevo.");
+                    }, { once: true });
+                    t0 = Date.now();
+                    watchdog = window.setTimeout(function () {
+                        if (myRunId === runId && phase === "busy") fail("La verificación tardó demasiado. Por favor, inténtalo de nuevo.");
+                    }, 90000);
+                    solveTimer = window.setInterval(function () {
+                        if (myRunId === runId) tick();
+                    }, 500);
+                    var pending = widget.solve();
+                    // solve() resuelve su promesa al terminar TODO el flujo: si
+                    // acabó sin token es que init/challenge/redeem falló — fallar
+                    // rápido en vez de esperar al watchdog de 90 s.
+                    if (pending && typeof pending.then === "function") {
+                        pending.then(function () {
+                            if (myRunId !== runId || phase !== "busy") return;
+                            window.setTimeout(function () {
+                                if (myRunId !== runId || phase !== "busy") return;
+                                if (!widget.token) fail("Verificación fallida. Por favor, inténtalo de nuevo.");
+                            }, 400);
+                        });
+                        if (typeof pending.catch === "function") pending.catch(function () { /* gestionado arriba */ });
+                    }
+                }, function () {
+                    fail("No se pudo inicializar la verificación. Revisa tu conexión e inténtalo de nuevo.");
+                }).catch(function () {
+                    fail("No se pudo inicializar la verificación. Revisa tu conexión e inténtalo de nuevo.");
+                });
+            }
+            // El loader compartido (/assets/captcha-loader.js) pregunta una sola
+            // vez por /api/config: predice si el gate está habilitado y solo inyecta
+            // el SDK de Menta entonces. Con CAPTCHA off no hay widget ni /init.
+            // Aquí, si hace falta, el PoW se resuelve solo: el usuario solo
+            // ve el spinner, el progreso y, si algo fallara, el botón Reintentar.
+            window.gitgostCaptchaReady.then(function (enabled) {
+                var overlay = $("gate-overlay");
+                if (!enabled || !overlay || gateCookiePresent()) return;
+                headingEl = $("gate-heading");
+                statusEl = $("gate-status");
+                metaEl = $("gate-meta");
+                spinnerEl = $("gate-spinner");
+                retryEl = $("gate-retry");
+                if (retryEl) retryEl.addEventListener("click", runAttempt);
+                overlay.style.display = "flex";
+                runAttempt();
+            });
+        })();
+    </script>
 </body>
 </html>

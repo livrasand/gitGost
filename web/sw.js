@@ -46,7 +46,9 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response.ok) {
+          // !response.redirected: si el backend 302 a /challenge.html (gate),
+          // no cacheamos el challenge page como si fuese la app.
+          if (response.ok && !response.redirected) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           }

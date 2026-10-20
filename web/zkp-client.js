@@ -634,6 +634,12 @@
     createModal();
     const overlay = document.getElementById('zkp-overlay');
     overlay.style.display = '';
+    if (window.gitgostCaptchaReady) {
+      window.gitgostCaptchaReady.then(function (enabled) {
+        const cap = document.querySelector('#zkp-overlay .zkp-captcha');
+        if (cap) cap.style.display = enabled ? '' : 'none';
+      });
+    }
     if (pendingReg) showRegPhrase(pendingReg.mnemonic, pendingReg.identity);
     refreshSessionUI();
     refreshIdsList();
@@ -751,8 +757,12 @@
     if (!pendingReg) return;
     const confirmEl = document.getElementById('zkp-reg-confirm');
     if (!confirmEl || !confirmEl.checked) return;
-    const captchaToken = getRegCaptchaToken();
-    if (!captchaToken) {
+    // Con CAPTCHA deshabilitado el servidor ya acepta sin token (ver allá);
+    // solo pedimos token si el gate está habilitado y el widget no resolvió.
+    const captchaToken = window.gitgostCaptchaToken
+      ? await window.gitgostCaptchaToken('zkp-reg-captcha')
+      : getRegCaptchaToken();
+    if (captchaToken === null) {
       setStatus('reg', 'err', 'please complete the captcha before finishing registration');
       if (confirmEl) confirmEl.checked = false;
       const continueBtn = document.getElementById('zkp-reg-continue');

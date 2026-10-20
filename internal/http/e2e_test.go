@@ -327,7 +327,7 @@ func TestE2E_GitFetch(t *testing.T) {
 
 func TestE2E_InfoRefs_UnsupportedService(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	cfg := &config.Config{APIKey: ""}
+	cfg := &config.Config{}
 	r := SetupRouter(cfg)
 	srv := httptest.NewServer(r)
 	defer srv.Close()
@@ -347,7 +347,7 @@ func TestE2E_UploadPackRoute_Exists(t *testing.T) {
 	t.Setenv("GITHUB_TOKEN", "")
 
 	gin.SetMode(gin.TestMode)
-	cfg := &config.Config{APIKey: ""}
+	cfg := &config.Config{}
 	r := SetupRouter(cfg)
 	srv := httptest.NewServer(r)
 	defer srv.Close()
@@ -373,7 +373,7 @@ func TestE2E_ReactionsNoLongerReturn501(t *testing.T) {
 	t.Setenv("CODEBERG_TOKEN", "")
 
 	gin.SetMode(gin.TestMode)
-	cfg := &config.Config{APIKey: ""}
+	cfg := &config.Config{}
 	r := SetupRouter(cfg)
 	srv := httptest.NewServer(r)
 	defer srv.Close()

@@ -218,8 +218,7 @@ func num(v interface{}) float64 {
 
 // PairHandler completes pairing from the web UI: POST /api/nodes/pair {"code"}.
 // The authenticated identity is taken from the request context (set by
-// zkpAuthMiddleware) or from the X-Gitgost-Key header for gitGost Account mode.
-// This identity becomes the owner of the newly paired node.
+// zkpAuthMiddleware). This identity becomes the owner of the newly paired node.
 func PairHandler(c *gin.Context) {
 	var body struct {
 		Code string `json:"code"`
@@ -229,23 +228,14 @@ func PairHandler(c *gin.Context) {
 		return
 	}
 
-	// Try to get owner from ZKP identity first
+	// Get owner from ZKP identity
 	identity, exists := c.Get(IdentityKey)
 	var owner string
 	authSource := "identity"
 	if exists {
 		owner, _ = identity.(string)
 	}
-	
-	// If no ZKP identity, try to get from API key (gitGost Account mode)
-	if owner == "" {
-		apiKey := c.GetHeader("X-Gitgost-Key")
-		if apiKey != "" {
-			owner = apiKey
-			authSource = "api_key"
-		}
-	}
-	
+
 	if owner == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "authenticated identity required"})
 		return
@@ -261,11 +251,9 @@ func PairHandler(c *gin.Context) {
 }
 
 // ListHandler returns the nodes owned by the authenticated identity.
-// It accepts both ZKP authentication (IdentityKey set by zkpAuthMiddlewareOptional)
-// and API key authentication (X-Gitgost-Key header). For gitGost Account mode, the API key
-// is used as the account identifier.
+// It uses ZKP authentication (IdentityKey set by zkpAuthMiddlewareOptional).
 func ListHandler(c *gin.Context) {
-	// Try to get identity from IdentityKey first (set by zkpAuthMiddlewareOptional if present)
+	// Get identity from IdentityKey (set by zkpAuthMiddlewareOptional if present)
 	identity, exists := c.Get(IdentityKey)
 	if exists {
 		owner, _ := identity.(string)
@@ -274,19 +262,7 @@ func ListHandler(c *gin.Context) {
 			return
 		}
 	}
-	
-	// If no ZKP identity, try to get the API key owner from the X-Gitgost-Key header
-	// The anonymousAuthMiddleware has already validated the key
-	apiKey := c.GetHeader("X-Gitgost-Key")
-	if apiKey != "" {
-		// For gitGost Account mode: the API key is used as the account identifier
-		// In the node registry, nodes are stored by account (owner)
-		// We look up nodes where the owner matches this API key
-		owner := apiKey
-		c.JSON(http.StatusOK, gin.H{"nodes": ListByAccount(owner)})
-		return
-	}
-	
+
 	// Fallback: return empty list if no valid authentication
 	c.JSON(http.StatusOK, gin.H{"nodes": []interface{}{}})
 }

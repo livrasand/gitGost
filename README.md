@@ -1,3 +1,8 @@
+> [!WARNING]
+> **gitGost will be temporarily suspended for a couple of days** while I implement new anti-bot and anti-AI-scraper security configurations and improvements.
+> During this period, the site will display a maintenance notice and `git push` operations will be disabled.
+> See [issue #223](https://github.com/livrasand/gitGost/issues/223) for full details and updates.
+
 <div align="center" markdown="1">
 <img src="./web/assets/logos/gitgost-logo.svg" width="80" alt="gitGost Logo" height="80"/>
 

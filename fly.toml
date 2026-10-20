@@ -14,6 +14,10 @@ primary_region = 'arn'
   PORT = '8080'
   MENTA_API_ENDPOINT = 'https://mentacaptchaeu.eu.pythonanywhere.com'
   MENTA_CAPTCHA_ENFORCED = 'true'
+  # Maintenance mode: serves a 503 page for browsers/APIs while keeping git
+  # access, /health, /api/status and /admin available. Prefer runtime toggle
+  # (POST /admin/panic {"maintenance":true}) or: fly secrets set MAINTENANCE_MODE=true
+  MAINTENANCE_MODE = 'false'
 
 [http_service]
   internal_port = 8080
@@ -22,6 +26,15 @@ primary_region = 'arn'
   auto_start_machines = true
   min_machines_running = 0
   processes = ['app']
+
+  # /health stays reachable in maintenance mode, so the machine is kept
+  # healthy (and restarted if it dies) even while the site is suspended.
+  [[http_service.checks]]
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '10s'
+    method = 'GET'
+    path = '/health'
 
 [[vm]]
   memory = '1gb'

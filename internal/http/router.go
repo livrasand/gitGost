@@ -246,11 +246,15 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		utils.Log("WARNING: GITGOST_API_KEY is unset: /v1 push/issue/comment endpoints are UNAUTHENTICATED")
 	}
 	SetAPIKey(cfg.APIKey)
+	if cfg.MaintenanceMode {
+		InitMaintenance(true, "MAINTENANCE_MODE env")
+	}
 	r := gin.New()
 	r.SetTrustedProxies([]string{})
 	r.Use(gin.Recovery())
 	r.Use(securityHeaders())
 	r.Use(localhostCORS())
+	r.Use(maintenanceMiddleware())
 	r.GET("/health", HealthHandler)
 	r.GET("/metrics", MetricsHandler)
 	r.GET("/api/config", ConfigHandler)
@@ -258,10 +262,10 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	// GitGost Node Protocol: los nodos de almacenamiento inician la conexión
 	// (saliente, sin puertos abiertos) y mantienen el socket vivo.
 	r.GET("/node/ws", nodepkg.WSHandler)
-	
+
 	// API endpoint for listing nodes (API key + optional ZKP authentication)
 	r.GET("/api/nodes", anonymousAuthMiddleware(cfg.APIKey), zkpAuthMiddlewareOptional(), nodepkg.ListHandler)
-	
+
 	// API endpoints for node operations (require both API key and ZKP authentication)
 	nodesAPI := r.Group("/api/nodes", anonymousAuthMiddleware(cfg.APIKey), zkpAuthMiddleware())
 	{

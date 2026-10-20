@@ -81,12 +81,12 @@
             href="/assets/logos/favicon-16x16.png"
         />
         <link rel="manifest" href="/assets/logos/manifest.json" />
-        <meta name="msapplication-TileColor" content="#d16014" />
+        <meta name="msapplication-TileColor" content="#f76f53" />
         <meta
             name="msapplication-TileImage"
             content="/assets/logos/ms-icon-144x144.png"
         />
-        <meta name="theme-color" content="#d16014" />
+        <meta name="theme-color" content="#f76f53" />
         <script>
             if ("serviceWorker" in navigator) {
                 window.addEventListener("load", function () {
@@ -160,47 +160,55 @@
         </script>
         <style>
             :root {
-                --bg: #ffffff;
-                --fg: #1a1f2e;
-                --fg-muted: #6b7280;
-                --fg-secondary: #9ca3af;
-                --bg-secondary: #f5f5f5;
-                --bg-hover: #ebebeb;
-                --accent: #d16014;
-                --border: #e0e0e0;
-                --card: #f9f9f9;
-                --code-bg: #f4f4f4;
-                --radius-lg: 4px;
-                --radius-md: 4px;
-                --radius-sm: 3px;
-                --radius-pill: 999px;
+                /* Paleta zen de openbin (tema claro) */
+                --zen-paper: #f2f0e3;
+                --zen-dark: #2e2e2e;
+                --bg: var(--zen-paper);
+                --fg: var(--zen-dark);
+                --fg-muted: color-mix(in srgb, var(--zen-dark) 60%, transparent);
+                --fg-secondary: color-mix(in srgb, var(--zen-dark) 40%, transparent);
+                --bg-secondary: color-mix(in srgb, var(--zen-dark) 6%, var(--zen-paper));
+                --bg-hover: color-mix(in srgb, var(--zen-dark) 12%, var(--zen-paper));
+                --accent: #f76f53;
+                --border: color-mix(in srgb, var(--zen-dark) 12%, var(--zen-paper));
+                --card: color-mix(in srgb, var(--zen-dark) 6%, var(--zen-paper));
+                --code-bg: color-mix(in srgb, var(--zen-dark) 6%, var(--zen-paper));
+                --radius-lg: 0px;
+                --radius-md: 0px;
+                --radius-sm: 0px;
+                --radius-pill: 0px;
             }
 
             :root[data-theme="dark"] {
-                --bg: #000000;
-                --fg: #d4d4d4;
-                --fg-muted: #9ca3af;
-                --fg-secondary: #6b7280;
-                --bg-secondary: #0d0d0d;
-                --bg-hover: #1a1a1a;
-                --accent: #ffa657;
-                --border: #222222;
-                --card: #0d0d0d;
-                --code-bg: #111111;
+                /* Paleta zen de openbin (tema oscuro) */
+                --zen-paper: #1f1f1f;
+                --zen-dark: #d1cfc0;
+                --bg: var(--zen-paper);
+                --fg: var(--zen-dark);
+                --fg-muted: color-mix(in srgb, var(--zen-dark) 60%, transparent);
+                --fg-secondary: color-mix(in srgb, var(--zen-dark) 40%, transparent);
+                --bg-secondary: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+                --bg-hover: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+                --accent: #f76f53;
+                --border: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+                --card: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+                --code-bg: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
             }
 
             @media (prefers-color-scheme: dark) {
                 :root:not([data-theme]) {
-                    --bg: #000000;
-                    --fg: #d4d4d4;
-                    --fg-muted: #9ca3af;
-                    --fg-secondary: #6b7280;
-                    --bg-secondary: #0d0d0d;
-                    --bg-hover: #1a1a1a;
-                    --accent: #ffa657;
-                    --border: #222222;
-                    --card: #0d0d0d;
-                    --code-bg: #111111;
+                    --zen-paper: #1f1f1f;
+                    --zen-dark: #d1cfc0;
+                    --bg: var(--zen-paper);
+                    --fg: var(--zen-dark);
+                    --fg-muted: color-mix(in srgb, var(--zen-dark) 60%, transparent);
+                    --fg-secondary: color-mix(in srgb, var(--zen-dark) 40%, transparent);
+                    --bg-secondary: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+                    --bg-hover: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+                    --accent: #f76f53;
+                    --border: color-mix(in srgb, var(--zen-dark) 14%, var(--zen-paper));
+                    --card: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
+                    --code-bg: color-mix(in srgb, var(--zen-dark) 8%, var(--zen-paper));
                 }
             }
 
@@ -341,15 +349,15 @@
                 margin: 0 auto 1.5rem;
                 padding: 0.45rem 0.45rem 0.65rem;
                 border: 1px solid var(--border);
-                border-radius: 4px;
+                border-radius: 0;
                 background: var(--card);
-                box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+                box-shadow: none;
                 font-family: Arial, sans-serif;
             }
 
             .mt-5.loaded.raised .ea-content {
                 overflow: hidden;
-                border-radius: 2px;
+                border-radius: 0;
                 background: var(--bg-secondary);
             }
 
@@ -471,7 +479,7 @@
             #search-input {
                 width: 100%;
                 border: 1px solid var(--border);
-                border-radius: 4px;
+                border-radius: 0;
                 background: var(--bg-secondary);
                 padding: 0.3rem 0.5rem;
                 margin-bottom: 0.75rem;
@@ -499,7 +507,7 @@
             }
             .skeleton-line {
                 height: 0.7rem;
-                border-radius: 3px;
+                border-radius: 0;
                 background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
                 background-size: 400px 100%;
                 animation: shimmer 1.2s ease-in-out infinite;
@@ -596,7 +604,7 @@
             .repo-lang-dot {
                 width: 0.65em;
                 height: 0.65em;
-                border-radius: 50%;
+                border-radius: 0;
                 display: inline-block;
             }
 
@@ -620,7 +628,7 @@
                 gap: 0.35rem;
                 padding: 0.2rem 0.5rem;
                 border: 1px solid var(--border);
-                border-radius: 0 0 3px 3px;
+                border-radius: 0;
                 background: transparent;
                 color: var(--fg);
                 font-size: 0.7rem;
@@ -653,7 +661,7 @@
                 gap: 0.35rem;
                 padding: 0.2rem 0.5rem;
                 border: 1px solid var(--border);
-                border-radius: 3px;
+                border-radius: 0;
                 background: transparent;
                 color: var(--fg);
                 font-size: 0.7rem;
@@ -691,7 +699,7 @@
             .user-avatar {
                 width: 2.2rem;
                 height: 2.2rem;
-                border-radius: 50%;
+                border-radius: 0;
                 flex-shrink: 0;
                 display: flex;
                 align-items: center;
@@ -726,7 +734,7 @@
             .user-profile-avatar {
                 width: 3.5rem;
                 height: 3.5rem;
-                border-radius: 50%;
+                border-radius: 0;
                 border: 1px solid var(--border);
             }
             .user-profile-name {
@@ -762,7 +770,7 @@
                 flex-direction: column;
                 background: var(--bg-secondary);
                 border: 1px solid var(--border);
-                border-radius: 3px;
+                border-radius: 0;
                 padding: 0.4rem 0.7rem;
             }
             .user-stat-value {
@@ -849,7 +857,7 @@
                 padding: 0.25rem 0;
                 border: 1px solid var(--border);
                 background: var(--bg);
-                box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
+                box-shadow: none;
             }
 
             .statusbar-command-menu[hidden] {
@@ -915,13 +923,13 @@
             .modal {
                 background: #f5f5f5;
                 border: 1px solid #c0c0c0;
-                border-radius: 2px;
+                border-radius: 0;
                 max-width: 680px;
                 width: 100%;
                 max-height: 85vh;
                 overflow-y: auto;
                 position: relative;
-                box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+                box-shadow: none;
                 animation: modalFadeIn 0.15s ease;
             }
 
@@ -990,7 +998,7 @@
             .terminal {
                 background: #1a1b26;
                 border: 1px solid #2d2f3f;
-                border-radius: var(--radius-md);
+                border-radius: 0;
                 font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 0.9rem;
                 overflow-x: auto;
@@ -1001,7 +1009,7 @@
                 height: 40px;
                 background: #252636;
                 border-bottom: 1px solid #2d2f3f;
-                border-radius: var(--radius-md) var(--radius-md) 0 0;
+                border-radius: 0;
                 display: flex;
                 align-items: center;
                 padding: 0 16px;
@@ -1011,7 +1019,7 @@
             .terminal-btn {
                 width: 12px;
                 height: 12px;
-                border-radius: 50%;
+                border-radius: 0;
             }
 
             .terminal-btn.close {
@@ -1043,7 +1051,7 @@
                 color: #9ece6a;
             }
             .terminal .hl {
-                color: #ffa657;
+                color: #f76f53;
                 font-weight: 600;
             }
 
@@ -1057,7 +1065,7 @@
             .terminal-tab {
                 padding: 0.3rem 0.75rem;
                 border: 1px solid var(--border);
-                border-radius: 3px;
+                border-radius: 0;
                 background: transparent;
                 color: var(--fg-secondary);
                 font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -1127,7 +1135,7 @@
             .form-group label { display: block; margin-bottom: 0.4rem; font-weight: 500; color: var(--fg); font-size: 0.82rem; }
             .form-group input, .form-group textarea {
                 width: 100%; padding: 0.55rem 0.75rem;
-                border: 1px solid var(--border); border-radius: 3px;
+                border: 1px solid var(--border); border-radius: 0;
                 background: var(--bg); color: var(--fg);
                 font-family: inherit; font-size: 0.82rem;
                 transition: border-color 0.15s; box-sizing: border-box;
@@ -1137,10 +1145,10 @@
             .form-actions { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem; }
             .form-status { font-size: 0.78rem; color: var(--fg-secondary); }
             .form-result { font-size: 0.78rem; color: var(--accent); font-weight: 500; word-break: break-all; margin-top: 0.5rem; }
-            .form-note { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 3px; padding: 0.75rem; margin-bottom: 0.75rem; }
+            .form-note { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 0; padding: 0.75rem; margin-bottom: 0.75rem; }
             .form-note p { margin: 0 0 0.4rem; font-size: 0.78rem; color: var(--fg-secondary); }
             .form-note p:last-child { margin: 0; }
-            .btn { padding: 0.4rem 1rem; border: 1px solid var(--border); border-radius: 3px; background: transparent; color: var(--fg); font-size: 0.82rem; cursor: pointer; transition: all 0.15s; }
+            .btn { padding: 0.4rem 1rem; border: 1px solid var(--border); border-radius: 0; background: transparent; color: var(--fg); font-size: 0.82rem; cursor: pointer; transition: all 0.15s; }
             .btn:hover { border-color: var(--fg-secondary); }
             .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
             .btn.primary:hover { opacity: 0.88; }
@@ -1203,7 +1211,7 @@
                     position: relative;
                     overflow-y: visible;
                     border-bottom: none;
-                    border-radius: 0 0 14px 14px;
+                    border-radius: 0;
                     margin-bottom: 0.5rem;
                     backdrop-filter: saturate(1.4);
                     min-height: 52px;
@@ -1263,7 +1271,7 @@
                     width: auto;
                     padding: 0.25rem 0.5rem;
                     font-size: 0.75rem;
-                    border-radius: 4px;
+                    border-radius: 0;
                 }
 
                 .nav-links .nav-link svg {
@@ -1351,7 +1359,7 @@
                 .repo-star-btn {
                     padding: 0.75rem 0.9rem;
                     font-size: 1rem;
-                    border-radius: 0 0 6px 6px;
+                    border-radius: 0;
                     min-height: 48px;
                     border-width: 1px;
                 }
@@ -1608,7 +1616,7 @@
             display: none;
             background: #fff3cd;
             border: 1px solid #ffc107;
-            border-radius: 4px;
+            border-radius: 0;
             padding: 0.75rem 1rem;
             margin-bottom: 1rem;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -1621,14 +1629,14 @@
 
         :root[data-theme="dark"] .suspension-banner {
             background: #663d03;
-            border-color: #ffa657;
+            border-color: #f76f53;
             color: #ffe6a7;
         }
 
         @media (prefers-color-scheme: dark) {
             :root:not([data-theme]) .suspension-banner {
                 background: #663d03;
-                border-color: #ffa657;
+                border-color: #f76f53;
                 color: #ffe6a7;
             }
         }
@@ -1672,17 +1680,17 @@
             .repo-card {
                 display: block;
                 border: 1px solid var(--border);
-                border-radius: var(--radius-lg);
+                border-radius: 0;
                 background: var(--card);
                 overflow: hidden;
-                box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+                box-shadow: none;
             }
 
             .repo-card-svg {
                 display: block;
                 width: 100%;
                 height: auto;
-                border-radius: 0 0 3px 3px;
+                border-radius: 0;
             }
 
             .repo-star-row {
@@ -2013,7 +2021,7 @@
                                 color: var(--accent);
                                 background: var(--code-bg);
                                 padding: 0.1em 0.4em;
-                                border-radius: 4px;
+                                border-radius: 0;
                             "
                             >/v1/gh/</code
                         >
@@ -2023,7 +2031,7 @@
                                 color: #fc6d26;
                                 background: var(--code-bg);
                                 padding: 0.1em 0.4em;
-                                border-radius: 4px;
+                                border-radius: 0;
                             "
                             >/v1/gl/</code
                         >
@@ -2033,7 +2041,7 @@
                                 color: #20883d;
                                 background: var(--code-bg);
                                 padding: 0.1em 0.4em;
-                                border-radius: 4px;
+                                border-radius: 0;
                             "
                             >/v1/cb/</code
                         >
@@ -2435,7 +2443,7 @@
                         style="
                             background: var(--bg-secondary);
                             border: 1px solid var(--border);
-                            border-radius: var(--radius-md);
+                            border-radius: 0;
                             padding: 1.25rem 1.4rem;
                             margin-bottom: 1rem;
                         "
@@ -2512,7 +2520,7 @@
                         style="
                             background: var(--bg-secondary);
                             border: 1px solid var(--border);
-                            border-radius: var(--radius-md);
+                            border-radius: 0;
                             padding: 1.25rem 1.4rem;
                             margin-bottom: 1rem;
                         "
@@ -2539,7 +2547,7 @@
                             style="
                                 background: var(--bg-secondary);
                                 border: 1px solid var(--border);
-                                border-radius: var(--radius-md);
+                                border-radius: 0;
                                 padding: 1.25rem 1.4rem;
                             "
                         >
@@ -2577,7 +2585,7 @@
                             style="
                                 background: var(--bg-secondary);
                                 border: 1px solid var(--border);
-                                border-radius: var(--radius-md);
+                                border-radius: 0;
                                 padding: 1.25rem 1.4rem;
                             "
                         >
@@ -2632,7 +2640,7 @@
                 </div>
                 <div class="modal-body hide-scrollbar">
                     <div style="margin-bottom:0.75rem;font-size:0.78rem;color:var(--fg-secondary);">Platform:
-                        <select id="issue-provider" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
+                        <select id="issue-provider" style="background:var(--bg);border:1px solid var(--border);border-radius: 0;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
                             <option value="gh">GitHub</option>
                             <option value="gl">GitLab</option>
                             <option value="cb">Codeberg</option>
@@ -2676,7 +2684,7 @@
                 </div>
                 <div class="modal-body hide-scrollbar">
                     <div style="margin-bottom:0.75rem;font-size:0.78rem;color:var(--fg-secondary);">Platform:
-                        <select id="comment-provider" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
+                        <select id="comment-provider" style="background:var(--bg);border:1px solid var(--border);border-radius: 0;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
                             <option value="gh">GitHub</option>
                             <option value="gl">GitLab</option>
                             <option value="cb">Codeberg</option>
@@ -2720,7 +2728,7 @@
                 </div>
                 <div class="modal-body hide-scrollbar">
                     <div style="margin-bottom:0.75rem;font-size:0.78rem;color:var(--fg-secondary);">Platform:
-                        <select id="pr-provider" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
+                        <select id="pr-provider" style="background:var(--bg);border:1px solid var(--border);border-radius: 0;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
                             <option value="gh">GitHub</option>
                             <option value="gl">GitLab</option>
                             <option value="cb">Codeberg</option>
@@ -2782,7 +2790,7 @@
                         style="
                             background: var(--bg-secondary);
                             border: 1px solid var(--border);
-                            border-radius: var(--radius-md);
+                            border-radius: 0;
                             padding: 1.25rem 1.4rem;
                             margin-bottom: 1rem;
                         "
@@ -2799,7 +2807,7 @@
                         style="
                             background: var(--bg-secondary);
                             border: 1px solid var(--border);
-                            border-radius: var(--radius-md);
+                            border-radius: 0;
                             padding: 1.25rem 1.4rem;
                             margin-bottom: 1rem;
                         "
@@ -2826,7 +2834,7 @@
                         style="
                             background: var(--bg-secondary);
                             border: 1px solid var(--border);
-                            border-radius: var(--radius-md);
+                            border-radius: 0;
                             padding: 1.25rem 1.4rem;
                             margin-bottom: 1rem;
                         "
@@ -2844,7 +2852,7 @@
                         style="
                             background: var(--bg-secondary);
                             border: 1px solid var(--border);
-                            border-radius: var(--radius-md);
+                            border-radius: 0;
                             padding: 1.25rem 1.4rem;
                         "
                     >
@@ -3578,7 +3586,7 @@
                                 ${ago ? `<span class="repo-ago">${ago}</span>` : ""}
                                 ${count ? `<span class="repo-count">${count}</span>` : ""}
                                 ${langBadge}
-                                <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.65rem;color:${providerColor};border:1px solid ${providerColor};border-radius:3px;padding:0.1em 0.4em;opacity:0.8;flex-shrink:0;display:inline-flex;align-items:center;">${providerLabel}</span>
+                                <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.65rem;color:${providerColor};border:1px solid ${providerColor};border-radius: 0;padding:0.1em 0.4em;opacity:0.8;flex-shrink:0;display:inline-flex;align-items:center;">${providerLabel}</span>
                             </div>
                         </div>
                         <div class="repo-card">${repoCardSvgHtml(repo, owner, name, provider)}</div>
@@ -3700,7 +3708,7 @@
                                 <div class="user-username">${safeUsername}</div>
                             </div>
                         </div>
-                        <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.65rem;color:${badgeColor};border:1px solid ${badgeColor};border-radius:3px;padding:0.1em 0.4em;opacity:0.8;flex-shrink:0;display:inline-flex;align-items:center;">${providerLabel}</span>
+                        <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.65rem;color:${badgeColor};border:1px solid ${badgeColor};border-radius: 0;padding:0.1em 0.4em;opacity:0.8;flex-shrink:0;display:inline-flex;align-items:center;">${providerLabel}</span>
                     `;
                     container.appendChild(item);
                 });
@@ -3759,13 +3767,13 @@
                             <div class="user-profile-id">
                                 <div class="user-profile-name">${safeName || safeUsername}</div>
                                 <div class="user-profile-username">${safeUsername}</div>
-                                <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.65rem;color:${badgeColor};border:1px solid ${badgeColor};border-radius:3px;padding:0.1em 0.4em;opacity:0.8;display:inline-flex;align-items:center;">${providerLabel}</span>
+                                <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.65rem;color:${badgeColor};border:1px solid ${badgeColor};border-radius: 0;padding:0.1em 0.4em;opacity:0.8;display:inline-flex;align-items:center;">${providerLabel}</span>
                             </div>
                         </div>
                         ${safeBio ? `<p class="user-profile-bio">${safeBio}</p>` : ''}
                         ${safeLocation ? `<p class="user-profile-location">location: ${safeLocation}</p>` : ''}
                         ${stats.length ? `<div class="user-profile-stats">${stats.join('')}</div>` : ''}
-                        ${members.length ? `<div style="margin-top:0.85rem;padding-top:0.85rem;border-top:1px solid var(--border);"><div style="font-size:0.7rem;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">${members.length} member${members.length === 1 ? '' : 's'}</div><div style="display:flex;flex-wrap:wrap;gap:0.4rem;">${members.map(m => `<span style="display:inline-flex;align-items:center;gap:0.3rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;color:var(--fg);border:1px solid var(--border);border-radius:999px;padding:0.15em 0.6em;">${m.avatar_url ? `<img src="${escapeHtml(m.avatar_url)}" style="width:1rem;height:1rem;border-radius:50%;" alt=""/>` : ''}${escapeHtml(m.login)}</span>`).join('')}</div></div>` : ''}
+                        ${members.length ? `<div style="margin-top:0.85rem;padding-top:0.85rem;border-top:1px solid var(--border);"><div style="font-size:0.7rem;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">${members.length} member${members.length === 1 ? '' : 's'}</div><div style="display:flex;flex-wrap:wrap;gap:0.4rem;">${members.map(m => `<span style="display:inline-flex;align-items:center;gap:0.3rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;color:var(--fg);border:1px solid var(--border);border-radius: 0;padding:0.15em 0.6em;">${m.avatar_url ? `<img src="${escapeHtml(m.avatar_url)}" style="width:1rem;height:1rem;border-radius: 0;" alt=""/>` : ''}${escapeHtml(m.login)}</span>`).join('')}</div></div>` : ''}
                         ${safeUsername ? `<a class="user-profile-link" href="/${p.provider === 'gitlab' ? 'gl' : p.provider === 'codeberg' ? 'cb' : 'gh'}/${encodeURIComponent(p.username || '')}">open profile in gitGost</a>` : ''}
                     </div>
                 `;
@@ -3858,7 +3866,7 @@
                             <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
                                 ${starCountLabel ? `<span class="repo-count">${starCountLabel}</span>` : ''}
                                 ${langBadge}
-                                <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:${starBadgeColor};border:1px solid ${starBadgeBorder};border-radius:3px;padding:0.1em 0.35em;display:inline-flex;align-items:center;">${starBadgeLabel}</span>
+                                <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:${starBadgeColor};border:1px solid ${starBadgeBorder};border-radius: 0;padding:0.1em 0.35em;display:inline-flex;align-items:center;">${starBadgeLabel}</span>
                             </div>
                         </div>
                         <div class="repo-card">${repoCardSvgHtml(cardRepo, repo.owner, repo.repo, provider)}</div>
@@ -4141,13 +4149,13 @@
 
                             <div>
                                 <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Base URL</div>
-                                <code style="display:block;background:var(--code-bg);border:1px solid var(--border);border-radius:4px;padding:0.5rem 0.75rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.82rem;color:var(--fg);">https://gitgost.livrasand.com/v1/{provider}/{owner}/{repo}</code>
-                                <p style="font-size:0.78rem;color:var(--fg-secondary);margin:0.5rem 0 0;"><code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">provider</code> is <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">gh</code> for GitHub, <code style="color:#fc6d26;background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">gl</code> for GitLab or <code style="color:#20883d;background:var(--code-bg);padding:0.1em 0.35em;border-radius:3px;">cb</code> for Codeberg.</p>
+                                <code style="display:block;background:var(--code-bg);border:1px solid var(--border);border-radius: 0;padding:0.5rem 0.75rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.82rem;color:var(--fg);">https://gitgost.livrasand.com/v1/{provider}/{owner}/{repo}</code>
+                                <p style="font-size:0.78rem;color:var(--fg-secondary);margin:0.5rem 0 0;"><code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.35em;border-radius: 0;">provider</code> is <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.35em;border-radius: 0;">gh</code> for GitHub, <code style="color:#fc6d26;background:var(--code-bg);padding:0.1em 0.35em;border-radius: 0;">gl</code> for GitLab or <code style="color:#20883d;background:var(--code-bg);padding:0.1em 0.35em;border-radius: 0;">cb</code> for Codeberg.</p>
                             </div>
 
                             <div>
                                 <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;">
-                                    <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;background:var(--accent);color:#fff;border-radius:3px;padding:0.15em 0.5em;">POST</code>
+                                    <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;background:var(--accent);color:#fff;border-radius: 0;padding:0.15em 0.5em;">POST</code>
                                     <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">push</span>
                                     <span style="font-size:0.75rem;color:var(--fg-secondary);">— create an anonymous PR/MR</span>
                                 </div>
@@ -4189,13 +4197,13 @@
                                 </div>
                                 <div style="margin-top:0.6rem;">
                                     <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--fg-secondary);margin-bottom:0.35rem;">Returns</div>
-                                    <code style="display:block;background:var(--code-bg);border:1px solid var(--border);border-radius:4px;padding:0.5rem 0.75rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.78rem;color:var(--fg);">{ pr_url, hash, karma, user_token }</code>
+                                    <code style="display:block;background:var(--code-bg);border:1px solid var(--border);border-radius: 0;padding:0.5rem 0.75rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.78rem;color:var(--fg);">{ pr_url, hash, karma, user_token }</code>
                                 </div>
                             </div>
 
                             <div>
                                 <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;">
-                                    <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;background:var(--accent);color:#fff;border-radius:3px;padding:0.15em 0.5em;">POST</code>
+                                    <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;background:var(--accent);color:#fff;border-radius: 0;padding:0.15em 0.5em;">POST</code>
                                     <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">update PR</span>
                                     <span style="font-size:0.75rem;color:var(--fg-secondary);">— push a follow-up commit to an existing PR</span>
                                 </div>
@@ -4215,7 +4223,7 @@
 
                             <div>
                                 <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;">
-                                    <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;background:#22c55e;color:#fff;border-radius:3px;padding:0.15em 0.5em;">GET</code>
+                                    <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;background:#22c55e;color:#fff;border-radius: 0;padding:0.15em 0.5em;">GET</code>
                                     <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">clone / fetch</span>
                                     <span style="font-size:0.75rem;color:var(--fg-secondary);">— read repos with zero identity exposure</span>
                                 </div>
@@ -4256,7 +4264,7 @@
 
                             <div>
                                 <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;">
-                                    <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;background:#6e40c9;color:#fff;border-radius:3px;padding:0.15em 0.5em;">OPT</code>
+                                    <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;background:#6e40c9;color:#fff;border-radius: 0;padding:0.15em 0.5em;">OPT</code>
                                     <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">push via Tor</span>
                                     <span style="font-size:0.75rem;color:var(--fg-secondary);">— maximum privacy, route through Tor first</span>
                                 </div>
@@ -4277,7 +4285,7 @@
 
                             <div>
                                 <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;">
-                                    <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;background:#6b7280;color:#fff;border-radius:3px;padding:0.15em 0.5em;">OPT</code>
+                                    <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;background:#6b7280;color:#fff;border-radius: 0;padding:0.15em 0.5em;">OPT</code>
                                     <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">strip metadata</span>
                                     <span style="font-size:0.75rem;color:var(--fg-secondary);">— remove EXIF/GPS from binaries before commit</span>
                                 </div>
@@ -4299,24 +4307,24 @@
 
                             <div>
                                 <div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;">
-                                    <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;background:var(--accent);color:#fff;border-radius:3px;padding:0.15em 0.5em;">GET</code>
+                                    <code style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;background:var(--accent);color:#fff;border-radius: 0;padding:0.15em 0.5em;">GET</code>
                                     <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.88rem;color:var(--fg);font-weight:600;">PR notifications</span>
                                     <span style="font-size:0.75rem;color:var(--fg-secondary);">— anonymous push alerts via ntfy.sh</span>
                                 </div>
                                 <p style="font-size:0.78rem;color:var(--fg-secondary);margin:0 0 0.75rem;">Subscribe to your PR topic on <a href="https://ntfy.sh" target="_blank" rel="noreferrer" style="color:var(--accent);">ntfy.sh</a> — no account, no email required.</p>
-                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;padding:1rem;">
+                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1rem;">
                                     <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.72rem;color:var(--fg-secondary);margin-bottom:0.5rem;">Look up your notification topic</div>
                                     <div class="ntfy-lookup-row" style="display:flex;gap:0.6rem;align-items:flex-end;flex-wrap:wrap;">
                                         <div style="flex:1;min-width:160px;">
-                                            <input id="ntfy-hash-input" type="text" placeholder="PR hash (e.g. a3f8c1d2)" autocomplete="off" style="width:100%;padding:0.45rem 0.6rem;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--fg);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.8rem;" />
+                                            <input id="ntfy-hash-input" type="text" placeholder="PR hash (e.g. a3f8c1d2)" autocomplete="off" style="width:100%;padding:0.45rem 0.6rem;border:1px solid var(--border);border-radius: 0;background:var(--bg);color:var(--fg);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.8rem;" />
                                         </div>
                                         <button onclick="lookupNtfyTopic()" style="margin-top:0;width:auto;padding:0.45rem 0.9rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.8rem;">Get Topic</button>
                                     </div>
                                     <div id="ntfy-result" style="margin-top:0.75rem;display:none;">
                                         <div style="font-size:0.78rem;color:var(--fg-secondary);margin-bottom:0.35rem;">Your ntfy topic:</div>
                                         <div class="ntfy-result-row" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-                                            <code id="ntfy-topic-display" style="background:var(--code-bg);border:1px solid var(--border);border-radius:3px;padding:0.35rem 0.6rem;font-size:0.78rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></code>
-                                            <a id="ntfy-subscribe-link" href="#" target="_blank" rel="noreferrer" style="padding:0.35rem 0.7rem;border-radius:3px;background:var(--accent);color:#fff;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.75rem;text-decoration:none;white-space:nowrap;">Open in ntfy ↗</a>
+                                            <code id="ntfy-topic-display" style="background:var(--code-bg);border:1px solid var(--border);border-radius: 0;padding:0.35rem 0.6rem;font-size:0.78rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></code>
+                                            <a id="ntfy-subscribe-link" href="#" target="_blank" rel="noreferrer" style="padding:0.35rem 0.7rem;border-radius: 0;background:var(--accent);color:#fff;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.75rem;text-decoration:none;white-space:nowrap;">Open in ntfy ↗</a>
                                             <button id="ntfy-copy-btn" onclick="copyNtfyTopic()" style="margin-top:0;width:auto;padding:0.35rem 0.6rem;background:transparent;border:1px solid var(--border);color:var(--fg);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.75rem;">Copy</button>
                                         </div>
                                     </div>
@@ -4331,10 +4339,10 @@
                     html: () => `
                         <div style="display:flex;flex-direction:column;gap:2.5rem;">
 
-                            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.5rem 1.6rem;">
+                            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.5rem 1.6rem;">
                                 <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;">gitGost / git extension</div>
                                 <h3 style="margin:0 0 0.5rem;color:var(--fg);font-size:1.15rem;">An open source Git extension for resilient networking.</h3>
-                                <p style="font-size:0.85rem;color:var(--fg-muted);margin:0 0 1rem;max-width:660px;">Git manages the repository. gitGost manages the network. The <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">git-gost</code> client pauses, resumes, queues and retries Git operations in the background — without replacing Git itself.</p>
+                                <p style="font-size:0.85rem;color:var(--fg-muted);margin:0 0 1rem;max-width:660px;">Git manages the repository. gitGost manages the network. The <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius: 0;">git-gost</code> client pauses, resumes, queues and retries Git operations in the background — without replacing Git itself.</p>
                                 <div class="terminal hide-scrollbar">
                                     <div class="terminal-titlebar">
                                         <span class="terminal-btn close"></span>
@@ -4353,31 +4361,31 @@
                                 <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Download git-gost</div>
                                 <p style="font-size:0.78rem;color:var(--fg-secondary);margin:0 0 1rem;max-width:660px;">Each release publishes a binary per platform with its SHA-256 and a Sigstore attestation. Download yours, verify the hash, and run the auto-installer.</p>
                                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1rem;">
-                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.1rem 1.2rem;">
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.1rem 1.2rem;">
                                         <div style="font-size:0.85rem;color:var(--fg);font-weight:600;margin-bottom:0.2rem;">macOS</div>
                                         <div style="font-size:0.72rem;color:var(--fg-secondary);margin-bottom:0.7rem;">Apple Silicon</div>
                                         <a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-darwin-arm64" class="btn primary" style="text-decoration:none;display:inline-block;font-size:0.78rem;">Download</a>
                                         <div style="margin-top:0.5rem;font-size:0.68rem;"><a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-darwin-arm64.sha256" style="color:var(--accent);text-decoration:none;">SHA-256</a></div>
                                     </div>
-                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.1rem 1.2rem;">
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.1rem 1.2rem;">
                                         <div style="font-size:0.85rem;color:var(--fg);font-weight:600;margin-bottom:0.2rem;">macOS</div>
                                         <div style="font-size:0.72rem;color:var(--fg-secondary);margin-bottom:0.7rem;">Intel</div>
                                         <a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-darwin-amd64" class="btn" style="text-decoration:none;display:inline-block;font-size:0.78rem;">Download</a>
                                         <div style="margin-top:0.5rem;font-size:0.68rem;"><a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-darwin-amd64.sha256" style="color:var(--accent);text-decoration:none;">SHA-256</a></div>
                                     </div>
-                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.1rem 1.2rem;">
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.1rem 1.2rem;">
                                         <div style="font-size:0.85rem;color:var(--fg);font-weight:600;margin-bottom:0.2rem;">Linux</div>
                                         <div style="font-size:0.72rem;color:var(--fg-secondary);margin-bottom:0.7rem;">x86-64</div>
                                         <a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-linux-amd64" class="btn" style="text-decoration:none;display:inline-block;font-size:0.78rem;">Download</a>
                                         <div style="margin-top:0.5rem;font-size:0.68rem;"><a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-linux-amd64.sha256" style="color:var(--accent);text-decoration:none;">SHA-256</a></div>
                                     </div>
-                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.1rem 1.2rem;">
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.1rem 1.2rem;">
                                         <div style="font-size:0.85rem;color:var(--fg);font-weight:600;margin-bottom:0.2rem;">Linux</div>
                                         <div style="font-size:0.72rem;color:var(--fg-secondary);margin-bottom:0.7rem;">ARM64</div>
                                         <a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-linux-arm64" class="btn" style="text-decoration:none;display:inline-block;font-size:0.78rem;">Download</a>
                                         <div style="margin-top:0.5rem;font-size:0.68rem;"><a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-linux-arm64.sha256" style="color:var(--accent);text-decoration:none;">SHA-256</a></div>
                                     </div>
-                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.1rem 1.2rem;">
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.1rem 1.2rem;">
                                         <div style="font-size:0.85rem;color:var(--fg);font-weight:600;margin-bottom:0.2rem;">Windows</div>
                                         <div style="font-size:0.72rem;color:var(--fg-secondary);margin-bottom:0.7rem;">x86-64</div>
                                         <a href="https://github.com/livrasand/gitGost/releases/latest/download/git-gost-windows-amd64.exe" class="btn" style="text-decoration:none;display:inline-block;font-size:0.78rem;">Download</a>
@@ -4410,32 +4418,32 @@
                             <div>
                                 <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Features</div>
                                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;">
-                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem;">
                                         <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Pause &amp; resume</div>
                                         <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Checkpoints per layer</h3>
                                         <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Clones download in commit blocks; each completed block is a checkpoint. A dropped connection resumes from the last block, not from zero.</p>
                                     </div>
-                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem;">
                                         <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Background queue</div>
                                         <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Keep working while it downloads</h3>
-                                        <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Each clone, fetch or push is a job in a local SQLite queue. Run them in the background and follow progress with <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">git gost watch</code>.</p>
+                                        <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Each clone, fetch or push is a job in a local SQLite queue. Run them in the background and follow progress with <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius: 0;">git gost watch</code>.</p>
                                     </div>
-                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem;">
                                         <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Automatic retries</div>
                                         <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Retrying state with backoff</h3>
                                         <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Network failures are detected and retried with exponential backoff. Pause, resume and cancel any job at any time.</p>
                                     </div>
-                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem;">
                                         <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Same Git workflow</div>
                                         <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">No new commands to learn</h3>
-                                        <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);"><code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">git gost clone</code>, <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">fetch</code>, <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">pull</code> and <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">push</code> work like Git; <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">status</code>, <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">log</code> and <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">branch</code> pass through to Git.</p>
+                                        <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);"><code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius: 0;">git gost clone</code>, <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius: 0;">fetch</code>, <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius: 0;">pull</code> and <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius: 0;">push</code> work like Git; <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius: 0;">status</code>, <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius: 0;">log</code> and <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius: 0;">branch</code> pass through to Git.</p>
                                     </div>
-                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem;">
                                         <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Any repository</div>
                                         <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Works with any Git remote</h3>
-                                        <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">No fork of Git required: the resulting repository is a normal Git repo whose <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">origin</code> points to the original URL.</p>
+                                        <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">No fork of Git required: the resulting repository is a normal Git repo whose <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius: 0;">origin</code> points to the original URL.</p>
                                     </div>
-                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                    <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem;">
                                         <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Open source</div>
                                         <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Auditable and copyleft</h3>
                                         <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">AGPL-3.0 licensed. The job queue is local to your machine and every binary ships with SHA-256 and Sigstore attestation.</p>
@@ -4449,7 +4457,7 @@
                     title: 'Account Settings',
                     html: () => `
                         <div style="display:flex;flex-direction:column;gap:1rem;max-width:640px;">
-                            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem 1.1rem;">
+                            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1rem 1.1rem;">
                                 <p style="margin:0;font-size:0.82rem;color:var(--fg-muted);line-height:1.6;">Saving your token here lets gitGost use your own anonymous GitHub account for issues, comments, and pushes. The token stays in this browser and is sent to the backend only when you choose to use it.</p>
                             </div>
                             <div class="form-group" style="margin-bottom:0;">
@@ -4468,7 +4476,7 @@
                     title: 'Comment Approach',
                     html: () => `
                         <p style="color:var(--fg-secondary);margin-bottom:1rem;">How we keep anonymous conversations useful.</p>
-                        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;margin-bottom:1rem;">
+                        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem 1.4rem;margin-bottom:1rem;">
                             <p>gitGost allows anonymous contributions, but we work to keep conversations useful. This is a deliberate effort to prevent anonymity from degrading quality.</p>
                             <p><strong>Prohibited content:</strong> no links, issues or comments involving religion, violence, occultism, sexual immorality, alcohol, drugs, weapons, pornography or profanity. Detected content will be removed.</p>
                             <ul style="margin:0.4rem 0 1rem 1.2rem;padding:0;">
@@ -4485,7 +4493,7 @@
                     title: 'Create Anonymous Issue',
                     html: () => `
                         <div style="margin-bottom:0.75rem;font-size:0.78rem;color:var(--fg-secondary);">Platform:
-                            <select id="issue-provider" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
+                            <select id="issue-provider" style="background:var(--bg);border:1px solid var(--border);border-radius: 0;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
                                 <option value="gh">GitHub</option>
                                 <option value="gl">GitLab</option>
                                 <option value="cb">Codeberg</option>
@@ -4528,7 +4536,7 @@
                     title: 'Comment on Issue Anonymously',
                     html: () => `
                         <div style="margin-bottom:0.75rem;font-size:0.78rem;color:var(--fg-secondary);">Platform:
-                            <select id="comment-provider" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
+                            <select id="comment-provider" style="background:var(--bg);border:1px solid var(--border);border-radius: 0;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
                                 <option value="gh">GitHub</option>
                                 <option value="gl">GitLab</option>
                                 <option value="cb">Codeberg</option>
@@ -4565,7 +4573,7 @@
                     title: 'Comment on PR Anonymously',
                     html: () => `
                         <div style="margin-bottom:0.75rem;font-size:0.78rem;color:var(--fg-secondary);">Platform:
-                            <select id="pr-provider" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
+                            <select id="pr-provider" style="background:var(--bg);border:1px solid var(--border);border-radius: 0;padding:0.2rem 0.5rem;font-size:0.78rem;color:var(--fg);margin-left:0.4rem;">
                                 <option value="gh">GitHub</option>
                                 <option value="gl">GitLab</option>
                                 <option value="cb">Codeberg</option>
@@ -4605,7 +4613,7 @@
                     title: 'Comment Approach',
                     html: () => `
                         <p style="color:var(--fg-secondary);margin-bottom:1rem;">How we keep anonymous conversations useful.</p>
-                        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;margin-bottom:1rem;">
+                        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem 1.4rem;margin-bottom:1rem;">
                             <p>gitGost allows anonymous contributions, but we work to keep conversations useful. This is a deliberate effort to prevent anonymity from degrading quality.</p>
                             <p><strong>Prohibited content:</strong> no links, issues or comments involving religion, violence, occultism, sexual immorality, alcohol, drugs, weapons, pornography or profanity. Detected content will be removed.</p>
                             <ul style="margin:0.4rem 0 1rem 1.2rem;padding:0;">
@@ -4622,11 +4630,11 @@
                     title: 'Guidelines',
                     html: () => `
                         <p style="color:var(--fg-secondary);margin-bottom:1rem;">What to submit and how to keep conversations useful while staying anonymous.</p>
-                        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;margin-bottom:1rem;">
+                        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem 1.4rem;margin-bottom:1rem;">
                             <p><strong>Prohibited content:</strong> no links, issues or comments involving religion, violence, occultism, sexual immorality, alcohol, drugs, weapons, pornography or profanity. Detected content will be removed.</p>
                         </div>
                         <div style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));">
-                            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;">
+                            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem 1.4rem;">
                                 <h3 style="margin-top:0;color:var(--accent);">What to submit</h3>
                                 <ul style="margin:0.4rem 0 1rem 1.2rem;padding:0;">
                                     <li>Links or issues that spark technical curiosity. Not just "hacking": anything that makes people learn.</li>
@@ -4636,7 +4644,7 @@
                                     <li>Don't use gitGost just for self-promotion. The main use is curiosity.</li>
                                 </ul>
                             </div>
-                            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;">
+                            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem 1.4rem;">
                                 <h3 style="margin-top:0;color:var(--accent);">On comments</h3>
                                 <ul style="margin:0.4rem 0 1rem 1.2rem;padding:0;">
                                     <li>Kindness first. Be curious, not interrogative. Respond to ideas, not people.</li>
@@ -4653,10 +4661,10 @@
                     title: 'Karma',
                     html: () => `
                         <p style="color:var(--fg-secondary);margin-bottom:1rem;">How anonymous reputation linked to your hash works.</p>
-                        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;margin-bottom:1rem;">
+                        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem 1.4rem;margin-bottom:1rem;">
                             <p><strong>What is karma?</strong> It's the anonymous reputation linked to your hash. It increases when your contributions are useful and decreases when abuse is reported. It doesn't expose your identity; it only signals trustworthiness.</p>
                         </div>
-                        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;margin-bottom:1rem;">
+                        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem 1.4rem;margin-bottom:1rem;">
                             <h3 style="margin-top:0;color:var(--accent);">How it works</h3>
                             <ul style="margin:0.4rem 0 1rem 1.2rem;padding:0;">
                                 <li>Every anonymous hash starts at karma 0.</li>
@@ -4665,11 +4673,11 @@
                                 <li>Karma follows you as long as you use the same hash (or optional user token).</li>
                             </ul>
                         </div>
-                        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;margin-bottom:1rem;">
+                        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem 1.4rem;margin-bottom:1rem;">
                             <h3 style="margin-top:0;color:var(--accent);">Why it matters</h3>
                             <p>Good karma makes your anonymous contributions trustworthy to maintainers without revealing who you are. Low karma may hold posts for review.</p>
                         </div>
-                        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;">
+                        <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem 1.4rem;">
                             <h3 style="margin-top:0;color:var(--accent);">Privacy first</h3>
                             <p>We don't store personal data: only the anonymous hash, its karma and the relation to sent messages. We don't track IPs or link identities.</p>
                         </div>`
@@ -4688,12 +4696,12 @@
                     title: 'About',
                     html: () => `
                         <div style="display:flex;flex-direction:column;gap:2.5rem;">
-                            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;">
+                            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem 1.4rem;">
                                 <p style="font-size:0.85rem;line-height:1.6;color:var(--fg-muted);margin:0 0 0.75rem;">
                                     <strong style="color:var(--fg);">gitGost</strong> is a community-led free &amp; open source Git collaboration platform built for privacy, transparency, and developer freedom.
                                 </p>
                                 <p style="font-size:0.85rem;line-height:1.6;color:var(--fg-muted);margin:0;">
-                                    Your commit appears with one of <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius:3px;">our services accounts</code> — no your data.
+                                    Your commit appears with one of <code style="color:var(--accent);background:var(--code-bg);padding:0.1em 0.3em;border-radius: 0;">our services accounts</code> — no your data.
                                 </p>
                             </div>
 
@@ -4711,39 +4719,39 @@
                             </div>
 
                             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;">
-                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem;">
                                     <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Strip Metadata</div>
                                     <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">No name, email, or timestamps</h3>
                                     <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Author, committer, and timestamp fields are removed before anything reaches the target platform.</p>
                                 </div>
-                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem;">
                                     <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">No Accounts</div>
                                     <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Zero signup required</h3>
                                     <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">No tokens or logins by default. If you choose to connect your own account, it stays in this browser until you clear it.</p>
                                 </div>
-                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem;">
                                     <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Open Source</div>
                                     <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Auditable and copyleft</h3>
                                     <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">AGPL-3.0 licensed with reproducible builds and signed attestations. Don't trust, verify.</p>
                                 </div>
-                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem;">
                                     <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Push via Tor</div>
                                     <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Network-layer privacy</h3>
                                     <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Route your git push through Tor or a VPN so the server never sees your real IP.</p>
                                 </div>
-                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem;">
                                     <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Rate Limits</div>
                                     <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Abuse-resistant by design</h3>
                                     <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Caps on PRs, repo size, and commit size keep the service sustainable and fair.</p>
                                 </div>
-                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;">
+                                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem;">
                                     <div style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.68rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">Issues / Discussions / Reviews</div>
                                     <h3 style="margin:0 0 0.5rem;font-size:0.95rem;color:var(--fg);">Participate beyond PRs</h3>
                                     <p style="margin:0;font-size:0.78rem;color:var(--fg-muted);">Open anonymous issues and comment on issues, pull requests, and GitHub Discussions.</p>
                                 </div>
                             </div>
 
-                            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;">
+                            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem 1.4rem;">
                                 <h3 style="margin-top:0;color:var(--accent);">About Us</h3>
                                 <p style="font-size:0.85rem;color:var(--fg-muted);margin:0 0 1rem;">We believe every developer should be able to fix the internet without fear. gitGost is an open-source project dedicated to making anonymous contribution practical, secure, and accountable through maintainer review.</p>
                                 <p style="font-size:0.85rem;color:var(--fg-muted);margin:0 0 1rem;">We advance privacy in software development by providing free tools that remove identity barriers while preserving the collaborative quality of open source.</p>
@@ -4756,7 +4764,7 @@
                                 <p style="font-size:0.85rem;color:var(--fg-muted);margin:0;">We envision a future where privacy and anonymity are the norm in collaborative coding, and where "being a ghost" is a powerful choice, not a limitation.</p>
                             </div>
 
-                            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.4rem;">
+                            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem 1.4rem;">
                                 <h3 style="margin-top:0;color:var(--accent);">What we don't keep</h3>
                                 <ul style="margin:0.4rem 0 0 1.2rem;padding:0;font-size:0.82rem;color:var(--fg-muted);">
                                     <li>No commits, blobs, or refs after forwarding.</li>
@@ -4773,7 +4781,7 @@
                                 <p style="font-size:0.85rem;color:var(--fg-muted);margin:0;">Read the <a href="https://github.com/livrasand/gitGost/blob/main/ARCHITECTURE.md" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">architecture</a>, <a href="https://github.com/livrasand/gitGost/blob/main/THREAT_MODEL.md" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">threat model</a>, and <a href="https://github.com/livrasand/gitGost/blob/main/SECURITY.md" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">security policy</a>.</p>
                             </div>
 
-                            <div style="text-align:center;padding:1.5rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);">
+                            <div style="text-align:center;padding:1.5rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;">
                                 <h3 style="margin:0 0 0.75rem;color:var(--fg);">Be a gost. Fix the internet.</h3>
                                 <a href="https://github.com/sponsors/livrasand" target="_blank" rel="noopener" class="btn primary" style="text-decoration:none;display:inline-block;margin-right:0.5rem;">Donate</a>
                                 <a href="https://github.com/livrasand/gitGost" target="_blank" rel="noopener" class="btn" style="text-decoration:none;display:inline-block;">Fork on GitHub</a>
@@ -4829,30 +4837,30 @@
                         </div>
                         <style>
                             .em-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;margin-bottom:1.5rem}
-                            .em-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem 1.25rem;transition:border-color .2s,box-shadow .2s}
+                            .em-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1rem 1.25rem;transition:border-color .2s,box-shadow .2s}
                             .em-card:hover{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
                             .em-card-label{display:block;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--fg-secondary);margin-bottom:0.25rem}
                             .em-card-value{font-size:1.5rem;font-weight:600;color:var(--fg);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace}
-                            .em-chart-section{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:1.5rem}
+                            .em-chart-section{background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1.25rem;margin-bottom:1.5rem}
                             .em-section-title{margin:0 0 1rem;font-size:0.85rem;font-weight:600;color:var(--fg);text-transform:uppercase;letter-spacing:0.06em}
                             .em-chart-wrapper{position:relative;height:180px;width:100%}
                             .em-chart{width:100%;height:100%;display:block}
                             .em-chart-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--fg-muted);font-size:0.75rem}
                             .em-chart-legend{display:flex;justify-content:space-between;align-items:center;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);font-size:0.7rem;color:var(--fg-secondary)}
                             .em-legend-item{display:flex;align-items:center;gap:0.35rem}
-                            .em-legend-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);opacity:.7}
+                            .em-legend-dot{width:8px;height:8px;border-radius: 0;background:var(--accent);opacity:.7}
                             .em-breakdown{margin-bottom:1.5rem}
                             .em-breakdown-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
-                            .em-breakdown-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem}
+                            .em-breakdown-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:1rem}
                             .em-breakdown-title{margin:0 0 0.75rem;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--fg-secondary);font-weight:600}
                             .em-breakdown-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0.5rem}
-                            .em-breakdown-item{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0.625rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);transition:background .2s,border-color .2s}
+                            .em-breakdown-item{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0.625rem;background:var(--bg);border:1px solid var(--border);border-radius: 0;transition:background .2s,border-color .2s}
                             .em-breakdown-item:hover{background:var(--bg-hover);border-color:var(--accent)}
                             .em-breakdown-name{font-size:0.75rem;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%}
                             .em-breakdown-count{font-size:0.75rem;font-weight:600;color:var(--accent);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;white-space:nowrap}
-                            .em-breakdown-bar{height:4px;background:var(--accent);border-radius:2px;opacity:.6;margin-top:0.25rem}
+                            .em-breakdown-bar{height:4px;background:var(--accent);border-radius: 0;opacity:.6;margin-top:0.25rem}
                             .em-loading{color:var(--fg-muted);font-size:0.75rem;text-align:center;padding:1rem}
-                            .em-privacy-note{display:flex;align-items:flex-start;gap:0.5rem;padding:0.875rem 1rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);font-size:0.7rem;color:var(--fg-secondary);line-height:1.5}
+                            .em-privacy-note{display:flex;align-items:flex-start;gap:0.5rem;padding:0.875rem 1rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;font-size:0.7rem;color:var(--fg-secondary);line-height:1.5}
                             .em-privacy-icon{flex-shrink:0;width:16px;height:16px;color:var(--accent);margin-top:0.125rem}
                             .em-privacy-note a{color:var(--accent);text-decoration:none}
                             .em-privacy-note a:hover{text-decoration:underline}
@@ -5186,7 +5194,7 @@
                 container.innerHTML = `
                     <div style="margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border);">
                         <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.5rem;">
-                            <span id="tag-icon-wrap" style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.75rem;color:var(--fg-muted);background:var(--bg-secondary);border:1px solid var(--border);border-radius:3px;padding:0.15em 0.4em;display:inline-flex;align-items:center;justify-content:center;width:1.6rem;height:1.6rem;">
+                            <span id="tag-icon-wrap" style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.75rem;color:var(--fg-muted);background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:0.15em 0.4em;display:inline-flex;align-items:center;justify-content:center;width:1.6rem;height:1.6rem;">
                                 <img id="tag-icon-img" src="${iconUrl}" alt="" width="14" height="14" style="display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='';" />
                                 <span id="tag-icon-fallback" style="display:none;">#</span>
                             </span>
@@ -5306,7 +5314,7 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
                             <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
                                 ${stars ? `<span class="repo-count">${stars}</span>` : ''}
                                 ${langBadge}
-                                <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.65rem;color:${providerColor};border:1px solid ${providerColor};border-radius:3px;padding:0.1em 0.4em;opacity:0.8;flex-shrink:0;">${providerLabel}</span>
+                                <span style="font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:0.65rem;color:${providerColor};border:1px solid ${providerColor};border-radius: 0;padding:0.1em 0.4em;opacity:0.8;flex-shrink:0;">${providerLabel}</span>
                             </div>
                         </div>
                         <div class="repo-card">${repoCardSvgHtml(repo, owner, name, provider)}</div>
@@ -5793,7 +5801,7 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
 
                 areaPathData += ' L ' + (padding.left + (n - 1) * stepX) + ' ' + (padding.top + chartHeight) + ' Z';
 
-                const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#d16014';
+                const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#f76f53';
 
                 svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
                 svg.innerHTML = '\n                    <defs>\n                        <linearGradient id="em-gradient" x1="0" y1="0" x2="0" y2="1">\n                            <stop offset="0%" stop-color="' + accentColor + '" stop-opacity="0.35"/>\n                            <stop offset="100%" stop-color="' + accentColor + '" stop-opacity="0.02"/>\n                        </linearGradient>\n                    </defs>\n                    <path class="em-area" d="' + areaPathData + '" fill="url(#em-gradient)" stroke="none"/>\n                    <path class="em-line" d="' + pathData + '" fill="none" stroke="' + accentColor + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>\n                    <g class="em-dots">\n                        ' + values.map((value, i) => {
@@ -5895,7 +5903,7 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
                 if (!tooltipEl) {
                     tooltipEl = document.createElement('div');
                     tooltipEl.className = 'em-tooltip';
-                    tooltipEl.style.cssText = 'position:fixed;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.375rem 0.625rem;font-size:0.65rem;color:var(--fg);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;pointer-events:none;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15)';
+                    tooltipEl.style.cssText = 'position:fixed;background:var(--bg-secondary);border:1px solid var(--border);border-radius: 0;padding:0.375rem 0.625rem;font-size:0.65rem;color:var(--fg);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;pointer-events:none;z-index:9999;box-shadow: none;';
                     document.body.appendChild(tooltipEl);
                 }
                 tooltipEl.textContent = text;
@@ -5928,7 +5936,7 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
                     values.forEach((value, index) => {
                         const bar = document.createElement('span');
                         bar.title = `${buckets[index][0]}: ${value} pageviews`;
-                        bar.style.cssText = `flex:1;min-width:2px;height:${Math.max(8, Math.round((value / max) * 100))}%;background:var(--accent);opacity:${0.45 + (index / values.length) * 0.55};border-radius:2px 2px 0 0;`;
+                        bar.style.cssText = `flex:1;min-width:2px;height:${Math.max(8, Math.round((value / max) * 100))}%;background:var(--accent);opacity:${0.45 + (index / values.length) * 0.55};border-radius: 0;`;
                         chart.appendChild(bar);
                     });
                 } catch (_) {

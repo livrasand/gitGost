@@ -45,24 +45,13 @@ else
 fi
 echo ""
 
-# Test 4: API authentication (if API key is set)
-echo "4️⃣  Testing API authentication..."
-if [ -n "$GITGOST_API_KEY" ]; then
-    # Test without API key (should fail)
-    AUTH_FAIL=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8080/v1/gh/test/repo/git-receive-pack)
-    if [ "$AUTH_FAIL" = "401" ]; then
-        echo -e "${GREEN}✓ Authentication required (HTTP $AUTH_FAIL)${NC}"
-    else
-        echo -e "${YELLOW}⚠ Expected 401, got HTTP $AUTH_FAIL${NC}"
-    fi
-    
-    # Test with API key (should pass validation, may fail for other reasons)
-    AUTH_PASS=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
-        -H "X-Gitgost-Key: $GITGOST_API_KEY" \
-        http://localhost:8080/v1/gh/test/repo/git-receive-pack)
-    echo "   With API key: HTTP $AUTH_PASS"
+# Test 4: anonymous Git access (no API key required)
+echo "4️⃣  Testing anonymous Git access..."
+ANON=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8080/v1/gh/test/repo/git-receive-pack)
+if [ "$ANON" = "200" ] || [ "$ANON" = "404" ] || [ "$ANON" = "400" ]; then
+    echo -e "${GREEN}✓ Anonymous Git access works without credentials (HTTP $ANON)${NC}"
 else
-    echo -e "${YELLOW}⚠ GITGOST_API_KEY not set, skipping auth test${NC}"
+    echo -e "${YELLOW}⚠ Unexpected status for anonymous request: HTTP $ANON${NC}"
 fi
 echo ""
 
@@ -89,5 +78,4 @@ echo ""
 echo "🔧 Configuration:"
 echo "   • Port: ${PORT:-8080}"
 echo "   • GitHub Token: ${GITHUB_TOKEN:+configured}"
-echo "   • API Key: ${GITGOST_API_KEY:+configured}"
 echo ""

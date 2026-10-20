@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>gitGost - profile</title>
     <link rel="stylesheet" href="/assets/winui-scrollbar.css" />
+    <script src="/assets/captcha-loader.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js" integrity="sha384-GdEWAbCjn+ghjX0gLx7/N1hyTVmPAjdC2OvoAA0RyNcAOhqwtT8qnbCxWle2+uJX" crossorigin="anonymous"></script>
     <script>if (typeof hljs !== 'undefined') hljs.configure({ ignoreUnescapedHTML: true });</script>
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js" integrity="sha384-QsSpx6a0USazT7nK7w8qXDgpSAPhFsb2XtpoLFQ5+X2yFN6hvCKnwEzN8M5FWaJb" crossorigin="anonymous"></script>
@@ -1320,7 +1321,6 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Gitgost-Key': window.GG_API_KEY || '',
                         'X-ZKP-Token': zkpSessionToken()
                     },
                     body: JSON.stringify({
@@ -1666,14 +1666,9 @@
         const _viewPart = (_pathParts.length >= 3) ? _pathParts[2] : '';
         const _initialView = PROFILE_VIEWS[_viewPart] || 'overview';
 
-        window.GG_API_KEY = '';
         let _configReady = (async () => {
             try {
-                const res = await fetch(API_BASE + '/api/config');
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && data.api_key) window.GG_API_KEY = data.api_key;
-                }
+                await fetch(API_BASE + '/api/config');
             } catch (_) {}
         })();
 
@@ -1871,7 +1866,6 @@
             try {
                 await _configReady;
                 const headers = authHeaders();
-                if (window.GG_API_KEY) headers['X-Gitgost-Key'] = window.GG_API_KEY;
                 const zkpt = zkpSessionToken();
                 if (zkpt) headers['X-ZKP-Token'] = zkpt;
                 const res = await fetch(`${API_BASE}${path}`, { headers });
@@ -2645,7 +2639,6 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Gitgost-Key': window.GG_API_KEY || '',
                         'X-ZKP-Token': zkpSessionToken()
                     },
                     body: JSON.stringify({ code, node_id: nodeId })
@@ -3374,5 +3367,67 @@
     </footer>
     <script src="/bip39-words.js"></script>
     <script src="/zkp-client.js?v=3"></script>
+    <!-- CAPTCHA gate anti-scraping: el backend exige cookie "gost_gate"
+         (emitida aquí tras resolver Menta) para los endpoints de browsing.
+         Sin cookie válida no hay contenido: primer dibujo o expiración a las 24h re-desafía. -->
+    <div id="gate-overlay" style="display:none;position:fixed;inset:0;z-index:2147483647;background:rgba(6,10,15,0.92);align-items:center;justify-content:center;padding:24px;">
+        <div style="background:#0d1117;border:1px solid rgba(247,111,83,0.35);border-radius:16px;padding:28px;max-width:420px;width:100%;box-shadow:0 16px 38px rgba(0,0,0,.5);text-align:center;">
+            <h2 style="margin:0 0 6px;font-size:20px;color:#f76f53;">Verificación de acceso</h2>
+            <p style="margin:6px 0 16px;font-size:13px;color:#9fb3ff;line-height:1.5;">
+                gitGost es para humanos. Completa el captcha una vez por
+                sesión (24&nbsp;h) para poder navegar repositorios, explorar y
+                buscar. Sin cuentas, sin cookies de rastreo.
+            </p>
+            <div style="display:flex;justify-content:center;margin:0 0 12px;">
+                <menta-widget id="gate-captcha" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+            </div>
+            <p id="gate-status" style="margin:0 0 10px;font-size:12px;color:#ffb4c4;min-height:16px;"></p>
+            <button id="gate-submit" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;font-size:14px;cursor:pointer;">Continuar</button>
+            <p style="margin:12px 0 0;font-size:11px;color:#9fb3ff;">No comparte tu IP con forges externos. Referencias: nuestra <a href="/privacy" style="color:#f76f53;text-decoration:none;">política de privacidad</a>.</p>
+        </div>
+    </div>
+    <script>
+        (function () {
+            "use strict";
+            function gateCookiePresent() {
+                return document.cookie.split(";").some(function (part) {
+                    return part.trim().lastIndexOf("gost_gate=", 0) === 0;
+                });
+            }
+            function gateSubmit() {
+                const widget = document.getElementById("gate-captcha");
+                const status = document.getElementById("gate-status");
+                const button = document.getElementById("gate-submit");
+                const token = widget && widget.token;
+                if (!token) { if (status) status.textContent = "Complete the challenge first."; return; }
+                if (button) { button.disabled = true; }
+                if (status) status.textContent = "Verifying…";
+                fetch(getApiBase() + "/api/captcha-gate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "same-origin",
+                    body: JSON.stringify({ captcha_token: token })
+                }).then(function (response) {
+                    if (response.ok) { window.location.reload(); return; }
+                    if (status) status.textContent = "Verification failed. Please try again.";
+                    if (widget && typeof widget.reset === "function") widget.reset();
+                }).catch(function () {
+                    if (status) status.textContent = "Network error. Please try again.";
+                }).finally(function () {
+                    if (button) { button.disabled = false; }
+                });
+            }
+            // El loader compartido (/assets/captcha-loader.js) pregunta una sola
+            // vez por /api/config: predice si el gate está habilitado y solo inyecta
+            // el SDK de Menta entonces. Con CAPTCHA off no hay widget ni /init.
+            window.gitgostCaptchaReady.then(function (enabled) {
+                const overlay = document.getElementById("gate-overlay");
+                const button = document.getElementById("gate-submit");
+                if (!enabled || !overlay || gateCookiePresent()) return;
+                overlay.style.display = "flex";
+                if (button) button.addEventListener("click", gateSubmit);
+            });
+        })();
+    </script>
 </body>
 </html>

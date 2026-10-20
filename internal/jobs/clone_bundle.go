@@ -155,7 +155,6 @@ func originalRepoURL(rewritten string) (string, error) {
 }
 
 // createRemoteJob crea un job de descarga en el servidor y devuelve su ID.
-// Envía la API key (X-Gitgost-Key) si GITGOST_API_KEY está configurada.
 func createRemoteJob(repoURL string) (string, error) {
 	body, _ := json.Marshal(map[string]string{"url": repoURL})
 	req, err := http.NewRequest(http.MethodPost, serverBase()+"/v2/jobs", bytes.NewReader(body))
@@ -163,9 +162,6 @@ func createRemoteJob(repoURL string) (string, error) {
 		return "", err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	if key := os.Getenv("GITGOST_API_KEY"); key != "" {
-		req.Header.Set("X-Gitgost-Key", key)
-	}
 
 	resp, err := jobHTTPClient.Do(req)
 	if err != nil {
@@ -244,15 +240,11 @@ func waitRemoteJob(s *Store, job *Job, id string) (*remoteJobBundleInfo, error) 
 	}
 }
 
-// getRemoteJob consulta el estado de un job remoto (con la API key si está
-// configurada y un timeout finito).
+// getRemoteJob consulta el estado de un job remoto (con timeout finito).
 func getRemoteJob(id string) (*remoteJobState, error) {
 	req, err := http.NewRequest(http.MethodGet, serverBase()+"/v2/jobs/"+id, nil)
 	if err != nil {
 		return nil, err
-	}
-	if key := os.Getenv("GITGOST_API_KEY"); key != "" {
-		req.Header.Set("X-Gitgost-Key", key)
 	}
 
 	resp, err := jobHTTPClient.Do(req)

@@ -32,22 +32,14 @@ func safePath(p string) bool {
 
 func getLiveNode(c *gin.Context) *Conn {
 	id := strings.ToUpper(c.Param("id"))
-	
-	// Try to get owner from ZKP identity first
+
+	// Get owner from ZKP identity
 	account, exists := c.Get(IdentityKey)
 	var owner string
 	if exists {
 		owner, _ = account.(string)
 	}
-	
-	// If no ZKP identity, try to get from API key (gitGost Account mode)
-	if owner == "" {
-		apiKey := c.GetHeader("X-Gitgost-Key")
-		if apiKey != "" {
-			owner = apiKey
-		}
-	}
-	
+
 	if owner == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "authenticated identity required"})
 		return nil

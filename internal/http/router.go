@@ -1,7 +1,6 @@
 package http
 
 import (
-	"crypto/subtle"
 	"net/http"
 	"net/url"
 	"os"
@@ -10,7 +9,6 @@ import (
 
 	"github.com/livrasand/gitGost/internal/config"
 	nodepkg "github.com/livrasand/gitGost/internal/node"
-	"github.com/livrasand/gitGost/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -49,18 +47,37 @@ func securityHeaders() gin.HandlerFunc {
 		c.Header("X-Frame-Options", "DENY")
 		c.Header("X-Content-Type-Options", "nosniff")
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		// El origen de Menta se deriva de la configuración (MENTA_API_ENDPOINT)
+		// para que el navegador pueda resolver el proof-of-work directamente
+		// contra Menta sin que la URL esté hardcodeada en el HTML.
+		menta := mentaBrowserOrigin()
 		c.Header("Content-Security-Policy",
 			"default-src 'self'; "+
-				"script-src 'self' https://esm.sh https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://mentacaptchaeu.eu.pythonanywhere.com 'unsafe-inline'; "+
+				"script-src 'self' https://esm.sh https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://mentacaptchaeu.eu.pythonanywhere.com "+menta+" 'unsafe-inline'; "+
 				"style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline'; "+
 				"font-src 'self' https://fonts.gstatic.com; "+
 				"img-src 'self' data: blob: https://* http://*; "+
 				"object-src 'none'; "+
 				"frame-ancestors 'none'; "+
-				"connect-src 'self' capacitor://localhost http://localhost:* https://localhost https://gitgost.livrasand.com https://en.wikipedia.org https://www.wikidata.org https://mentacaptchaeu.eu.pythonanywhere.com",
+				"connect-src 'self' capacitor://localhost http://localhost:* https://localhost https://gitgost.livrasand.com https://en.wikipedia.org https://www.wikidata.org https://mentacaptchaeu.eu.pythonanywhere.com "+menta,
 		)
 		c.Next()
 	}
+}
+
+// mentaBrowserOrigin devuelve el origen (esquema://host) del endpoint de Menta
+// configurado, listo para insertarse en la CSP. Vacío si no hay endpoint o si
+// no se puede parsear.
+func mentaBrowserOrigin() string {
+	endpoint := strings.TrimSpace(mentaAPIEndpoint)
+	if endpoint == "" {
+		return ""
+	}
+	u, err := url.Parse(endpoint)
+	if err != nil || u.Scheme == "" || u.Host == "" {
+		return ""
+	}
+	return u.Scheme + "://" + u.Host
 }
 
 const (
@@ -139,6 +156,55 @@ func v2Limiter() gin.HandlerFunc {
 	}
 }
 
+// v1WriteLimiter acota por IP las escrituras anónimas del protocolo Git
+// (issues, comentarios y reacciones): los clientes Git no llevan CAPTCHA ni
+// llave API — su única defensa anti-spam es la tarifa de peticiones.
+const (
+	v1WriteLimiterMax = 10
+	v1WriteLimiterWin = time.Minute
+)
+
+var v1WriteLimiterStore = newBoundedMap[[]time.Time](prCheckLimiterStoreMax, v1WriteLimiterWin)
+
+func v1WriteLimiter() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ip := c.ClientIP()
+		count := windowAdd(v1WriteLimiterStore, ip, time.Now(), v1WriteLimiterWin, v1WriteLimiterMax)
+		if count > v1WriteLimiterMax {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "anonymous write rate limit exceeded"})
+			return
+		}
+		c.Next()
+	}
+}
+
+// gitFetchLimiter acota por IP la lectura Git (clone/fetch vía info/refs y
+// upload-pack): mantiene el uso del CLI fluido y frena el scraping masivo del
+// protocolo smart HTTP. El push (git-receive-pack) se descarta del contador:
+// ya tiene su propio límite de 5 PRs/hora dentro del handler.
+const (
+	gitFetchLimiterMax = 60
+	gitFetchLimiterWin = time.Minute
+)
+
+var gitFetchLimiterStore = newBoundedMap[[]time.Time](prCheckLimiterStoreMax, gitFetchLimiterWin)
+
+func gitFetchLimiter() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.Query("service") == "git-receive-pack" {
+			c.Next()
+			return
+		}
+		ip := c.ClientIP()
+		count := windowAdd(gitFetchLimiterStore, ip, time.Now(), gitFetchLimiterWin, gitFetchLimiterMax)
+		if count > gitFetchLimiterMax {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "git fetch rate limit exceeded"})
+			return
+		}
+		c.Next()
+	}
+}
+
 var (
 	captchaLimiterStore = newBoundedMap[[]time.Time](prCheckLimiterStoreMax, captchaLimiterWin)
 	captchaLimiterMax   = 30
@@ -200,9 +266,9 @@ func isValidRepoName(name string) bool {
 }
 
 // gitSmartHTTPSuffixes son los sufijos exactos del protocolo smart HTTP de
-// Git. Solo estos caminos quedan exentos del API key; usar strings.Contains
-// permitía que cualquier ruta futura con wildcard que contuviese estas
-// cadenas saltase la autenticación silenciosamente.
+// Git. Solo estos caminos quedan exentos de cualquier comprobación; usar
+// strings.Contains permitía que cualquier ruta futura con wildcard que
+// contuviese estas cadenas se saltase la lógica silenciosamente.
 var gitSmartHTTPSuffixes = []string{
 	"/info/refs",
 	"/git-upload-pack",
@@ -218,34 +284,18 @@ func isGitSmartHTTPPath(path string) bool {
 	return false
 }
 
-func anonymousAuthMiddleware(apiKey string) gin.HandlerFunc {
+func anonymousAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if isGitSmartHTTPPath(c.Request.URL.Path) {
 			c.Next()
 			return
 		}
-
-		if apiKey == "" {
-			c.Next()
-			return
-		}
-
-		providedKey := c.GetHeader("X-Gitgost-Key")
-		if providedKey == "" || subtle.ConstantTimeCompare([]byte(providedKey), []byte(apiKey)) != 1 {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid API key"})
-			return
-		}
-
 		c.Next()
 	}
 }
 
 func SetupRouter(cfg *config.Config) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
-	if cfg.APIKey == "" {
-		utils.Log("WARNING: GITGOST_API_KEY is unset: /v1 push/issue/comment endpoints are UNAUTHENTICATED")
-	}
-	SetAPIKey(cfg.APIKey)
 	if cfg.MaintenanceMode {
 		InitMaintenance(true, "MAINTENANCE_MODE env")
 	}
@@ -263,11 +313,11 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	// (saliente, sin puertos abiertos) y mantienen el socket vivo.
 	r.GET("/node/ws", nodepkg.WSHandler)
 
-	// API endpoint for listing nodes (API key + optional ZKP authentication)
-	r.GET("/api/nodes", anonymousAuthMiddleware(cfg.APIKey), zkpAuthMiddlewareOptional(), nodepkg.ListHandler)
+	// API endpoint for listing nodes (optional ZKP authentication)
+	r.GET("/api/nodes", anonymousAuthMiddleware(), zkpAuthMiddlewareOptional(), nodepkg.ListHandler)
 
-	// API endpoints for node operations (require both API key and ZKP authentication)
-	nodesAPI := r.Group("/api/nodes", anonymousAuthMiddleware(cfg.APIKey), zkpAuthMiddleware())
+	// API endpoints for node operations (require ZKP authentication)
+	nodesAPI := r.Group("/api/nodes", anonymousAuthMiddleware(), zkpAuthMiddleware())
 	{
 		nodesAPI.POST("/pair", nodepkg.PairHandler)
 		nodesAPI.GET("/:id/repos", nodepkg.NodeReposHandler)
@@ -300,10 +350,16 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.GET("/badges/:badge", BadgeHandler)
 	r.GET("/badge/:owner/:repo", BadgePRCountHandler)
 	r.GET("/install", InstallScriptHandler)
-	r.StaticFile("/repo.html", "./web/repo.html")
-	r.StaticFile("/profile.html", "./web/profile.html")
+	// Challenge page ligero (flujo tipo Menta): el gate redirige aquí a los
+	// documentos HTML sin sesión de gate en vez de servir la app completa.
+	r.StaticFile("/challenge.html", "./web/challenge.html")
+	r.StaticFile("/robots.txt", "./web/robots.txt")
+	r.StaticFile("/llms.txt", "./web/llms.txt")
+	r.GET("/repo.html", func(c *gin.Context) { serveDocumentWithGate(c, "./web/repo.html") })
+	r.GET("/profile.html", func(c *gin.Context) { serveDocumentWithGate(c, "./web/profile.html") })
 	r.StaticFile("/sw.js", "./web/sw.js")
 	r.StaticFile("/colors.json", "./web/colors.json")
+	r.StaticFile("/robots.json", "./web/robots.json")
 	r.StaticFile("/.well-known/security.txt", "./web/.well-known/security.txt")
 	r.Static("/assets", "./web/assets")
 	r.StaticFile("/ethicalmetrics.js", "./web/ethicalmetrics.js")
@@ -313,7 +369,6 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	v1 := r.Group("/v1")
 	v1.Use(sizeLimitMiddleware())
 	v1.Use(validationMiddleware())
-	v1.Use(anonymousAuthMiddleware(cfg.APIKey))
 	{
 		refsHandler := func(c *gin.Context) {
 			service := c.Query("service")
@@ -328,40 +383,40 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 
 		gh := v1.Group("/gh")
 		{
-			gh.GET("/:owner/:repo/info/refs", refsHandler)
+			gh.GET("/:owner/:repo/info/refs", gitFetchLimiter(), refsHandler)
 			gh.POST("/:owner/:repo/git-receive-pack", ReceivePackHandler)
-			gh.POST("/:owner/:repo/git-upload-pack", UploadPackHandler)
+			gh.POST("/:owner/:repo/git-upload-pack", gitFetchLimiter(), UploadPackHandler)
 			gh.GET("/:owner/:repo/issues/templates", GetIssueTemplatesHandler)
-			gh.POST("/:owner/:repo/issues/anonymous", CreateAnonymousIssueHandler)
-			gh.POST("/:owner/:repo/issues/:number/reactions", CreateReactionHandler)
-			gh.POST("/:owner/:repo/issues/:number/comments/anonymous", CreateAnonymousCommentHandler)
-			gh.POST("/:owner/:repo/issues/:number/comments/:comment_id/reactions", CreateReactionHandler)
-			gh.POST("/:owner/:repo/pulls/:number/comments/anonymous", CreateAnonymousPRCommentHandler)
-			gh.POST("/:owner/:repo/discussions/:number/comments/anonymous", CreateAnonymousDiscussionCommentHandler)
+			gh.POST("/:owner/:repo/issues/anonymous", v1WriteLimiter(), CreateAnonymousIssueHandler)
+			gh.POST("/:owner/:repo/issues/:number/reactions", v1WriteLimiter(), CreateReactionHandler)
+			gh.POST("/:owner/:repo/issues/:number/comments/anonymous", v1WriteLimiter(), CreateAnonymousCommentHandler)
+			gh.POST("/:owner/:repo/issues/:number/comments/:comment_id/reactions", v1WriteLimiter(), CreateReactionHandler)
+			gh.POST("/:owner/:repo/pulls/:number/comments/anonymous", v1WriteLimiter(), CreateAnonymousPRCommentHandler)
+			gh.POST("/:owner/:repo/discussions/:number/comments/anonymous", v1WriteLimiter(), CreateAnonymousDiscussionCommentHandler)
 		}
 
 		gl := v1.Group("/gl")
 		{
-			gl.GET("/:owner/:repo/info/refs", refsHandler)
+			gl.GET("/:owner/:repo/info/refs", gitFetchLimiter(), refsHandler)
 			gl.POST("/:owner/:repo/git-receive-pack", ReceivePackHandler)
-			gl.POST("/:owner/:repo/git-upload-pack", UploadPackHandler)
-			gl.POST("/:owner/:repo/issues/anonymous", CreateAnonymousIssueHandler)
-			gl.POST("/:owner/:repo/issues/:number/comments/anonymous", CreateAnonymousCommentHandler)
-			gl.POST("/:owner/:repo/issues/:number/reactions", CreateReactionHandler)
-			gl.POST("/:owner/:repo/issues/:number/comments/:comment_id/reactions", CreateReactionHandler)
-			gl.POST("/:owner/:repo/pulls/:number/comments/anonymous", CreateAnonymousPRCommentHandler)
+			gl.POST("/:owner/:repo/git-upload-pack", gitFetchLimiter(), UploadPackHandler)
+			gl.POST("/:owner/:repo/issues/anonymous", v1WriteLimiter(), CreateAnonymousIssueHandler)
+			gl.POST("/:owner/:repo/issues/:number/comments/anonymous", v1WriteLimiter(), CreateAnonymousCommentHandler)
+			gl.POST("/:owner/:repo/issues/:number/reactions", v1WriteLimiter(), CreateReactionHandler)
+			gl.POST("/:owner/:repo/issues/:number/comments/:comment_id/reactions", v1WriteLimiter(), CreateReactionHandler)
+			gl.POST("/:owner/:repo/pulls/:number/comments/anonymous", v1WriteLimiter(), CreateAnonymousPRCommentHandler)
 		}
 
 		cb := v1.Group("/cb")
 		{
-			cb.GET("/:owner/:repo/info/refs", refsHandler)
+			cb.GET("/:owner/:repo/info/refs", gitFetchLimiter(), refsHandler)
 			cb.POST("/:owner/:repo/git-receive-pack", ReceivePackHandler)
-			cb.POST("/:owner/:repo/git-upload-pack", UploadPackHandler)
-			cb.POST("/:owner/:repo/issues/anonymous", CreateAnonymousIssueHandler)
-			cb.POST("/:owner/:repo/issues/:number/comments/anonymous", CreateAnonymousCommentHandler)
-			cb.POST("/:owner/:repo/issues/:number/reactions", CreateReactionHandler)
-			cb.POST("/:owner/:repo/issues/:number/comments/:comment_id/reactions", CreateReactionHandler)
-			cb.POST("/:owner/:repo/pulls/:number/comments/anonymous", CreateAnonymousPRCommentHandler)
+			cb.POST("/:owner/:repo/git-upload-pack", gitFetchLimiter(), UploadPackHandler)
+			cb.POST("/:owner/:repo/issues/anonymous", v1WriteLimiter(), CreateAnonymousIssueHandler)
+			cb.POST("/:owner/:repo/issues/:number/comments/anonymous", v1WriteLimiter(), CreateAnonymousCommentHandler)
+			cb.POST("/:owner/:repo/issues/:number/reactions", v1WriteLimiter(), CreateReactionHandler)
+			cb.POST("/:owner/:repo/issues/:number/comments/:comment_id/reactions", v1WriteLimiter(), CreateReactionHandler)
+			cb.POST("/:owner/:repo/pulls/:number/comments/anonymous", v1WriteLimiter(), CreateAnonymousPRCommentHandler)
 		}
 	}
 
@@ -369,7 +424,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.POST("/v1/moderation/report", ReportHashHandler)
 
 	v2 := r.Group("/v2")
-	v2.Use(sizeLimitMiddleware(), v2Limiter(), anonymousAuthMiddleware(cfg.APIKey))
+	v2.Use(sizeLimitMiddleware(), v2Limiter())
 	{
 		v2.POST("/jobs", CreateRemoteJobHandler)
 		v2.GET("/jobs/:id", GetRemoteJobHandler)
@@ -383,39 +438,45 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/pr-status/:hash", PRStatusHandler)
 		api.GET("/issue-status/:owner/:repo/:number", IssueStatusHandler)
 		api.GET("/pr/:hash/status", prCheckLimiter(), PRCheckHandler)
-		api.GET("/search", SearchHandler)
-		api.GET("/users/search", prCheckLimiter(), UsersSearchHandler)
-		api.GET("/code/search", prCheckLimiter(), CodeSearchHandler)
+		// Extracción de browse/download muy scrapeada: requiere sesión de
+		// CAPTCHA (cookie "gost_gate" emitida tras resolver Menta). La CLI no
+		// pasa por aquí; consigue contenido por /v1 (upload-pack) sin CAPTCHA.
+		api.GET("/search", captchaGate(), SearchHandler)
+		api.GET("/users/search", captchaGate(), prCheckLimiter(), UsersSearchHandler)
+		api.GET("/code/search", captchaGate(), prCheckLimiter(), CodeSearchHandler)
 		api.GET("/github/packages/:owner", prCheckLimiter(), GitHubPackagesHandler)
-		api.GET("/users/profile", prCheckLimiter(), UserProfileHandler)
-		api.GET("/users/repos", prCheckLimiter(), UserReposHandler)
-		api.GET("/users/readme", prCheckLimiter(), UserReadmeHandler)
-		api.GET("/users/starred", prCheckLimiter(), UserStarredHandler)
-		api.GET("/users/orgs", prCheckLimiter(), UserOrgsHandler)
-		api.GET("/users/events", prCheckLimiter(), UserEventsHandler)
-		api.GET("/users/contributions", prCheckLimiter(), UserContributionsHandler)
-		api.GET("/gh-proxy/*path", proxyLimiter(), GitHubAPIProxyHandler)
-		api.GET("/gh-raw/*path", proxyLimiter(), GitHubRawProxyHandler)
-		api.GET("/gh-avatar/*path", proxyLimiter(), GitHubAvatarProxyHandler)
-		api.GET("/blame/:provider/:owner/:repo", proxyLimiter(), BlameHandler)
-		api.GET("/file-history/:provider/:owner/:repo", proxyLimiter(), FileHistoryHandler)
-		api.GET("/release-asset/:provider/:owner/:repo", proxyLimiter(), ReleaseAssetDownloadHandler)
-		api.GET("/package-file/:provider/:owner/:repo", proxyLimiter(), PackageFileDownloadHandler)
-		api.GET("/trending/:provider", proxyLimiter(), TrendingHandler)
-		api.GET("/cb-proxy/*path", proxyLimiter(), CodebergProxyHandler)
-		api.GET("/gl-proxy/*path", proxyLimiter(), GitLabProxyHandler)
-		api.GET("/gl-notes/:owner/:repo/:number", proxyLimiter(), GitLabIssueNotesProxyHandler)
-		api.GET("/gl-commit-count/:owner/:repo", proxyLimiter(), GitLabCommitCountHandler)
-		api.GET("/gl-avatar", proxyLimiter(), GitLabAvatarHandler)
-		api.GET("/gl-commits/:owner/:repo", proxyLimiter(), GitLabCommitsHandler)
-		api.GET("/gl-commit-detail/:owner/:repo/:sha", proxyLimiter(), GitLabCommitDetailHandler)
-		api.GET("/compare/:provider/:owner/:repo", proxyLimiter(), CompareHandler)
-		api.GET("/gh-discussions/:owner/:repo", proxyLimiter(), GitHubDiscussionsProxyHandler)
-		api.GET("/gh-discussion/:owner/:repo/:number", proxyLimiter(), GitHubDiscussionDetailProxyHandler)
-		api.GET("/gh-wiki/:owner/:repo/:page", proxyLimiter(), GitHubWikiProxyHandler)
-		api.GET("/gl-wiki/:owner/:repo", proxyLimiter(), GitLabWikiProxyHandler)
+		api.GET("/users/profile", captchaGate(), prCheckLimiter(), UserProfileHandler)
+		api.GET("/users/repos", captchaGate(), prCheckLimiter(), UserReposHandler)
+		api.GET("/users/readme", captchaGate(), prCheckLimiter(), UserReadmeHandler)
+		api.GET("/users/starred", captchaGate(), prCheckLimiter(), UserStarredHandler)
+		api.GET("/users/orgs", captchaGate(), prCheckLimiter(), UserOrgsHandler)
+		api.GET("/users/events", captchaGate(), prCheckLimiter(), UserEventsHandler)
+		api.GET("/users/contributions", captchaGate(), prCheckLimiter(), UserContributionsHandler)
+		api.GET("/gh-proxy/*path", captchaGate(), proxyLimiter(), GitHubAPIProxyHandler)
+		api.GET("/gh-raw/*path", captchaGate(), proxyLimiter(), GitHubRawProxyHandler)
+		api.GET("/gh-avatar/*path", captchaGate(), proxyLimiter(), GitHubAvatarProxyHandler)
+		api.GET("/blame/:provider/:owner/:repo", captchaGate(), proxyLimiter(), BlameHandler)
+		api.GET("/file-history/:provider/:owner/:repo", captchaGate(), proxyLimiter(), FileHistoryHandler)
+		api.GET("/release-asset/:provider/:owner/:repo", captchaGate(), proxyLimiter(), ReleaseAssetDownloadHandler)
+		api.GET("/package-file/:provider/:owner/:repo", captchaGate(), proxyLimiter(), PackageFileDownloadHandler)
+		api.GET("/trending/:provider", captchaGate(), proxyLimiter(), TrendingHandler)
+		api.GET("/cb-proxy/*path", captchaGate(), proxyLimiter(), CodebergProxyHandler)
+		api.GET("/gl-proxy/*path", captchaGate(), proxyLimiter(), GitLabProxyHandler)
+		api.GET("/gl-notes/:owner/:repo/:number", captchaGate(), proxyLimiter(), GitLabIssueNotesProxyHandler)
+		api.GET("/gl-commit-count/:owner/:repo", captchaGate(), proxyLimiter(), GitLabCommitCountHandler)
+		api.GET("/gl-avatar", captchaGate(), proxyLimiter(), GitLabAvatarHandler)
+		api.GET("/gl-commits/:owner/:repo", captchaGate(), proxyLimiter(), GitLabCommitsHandler)
+		api.GET("/gl-commit-detail/:owner/:repo/:sha", captchaGate(), proxyLimiter(), GitLabCommitDetailHandler)
+		api.GET("/compare/:provider/:owner/:repo", captchaGate(), proxyLimiter(), CompareHandler)
+		api.GET("/gh-discussions/:owner/:repo", captchaGate(), proxyLimiter(), GitHubDiscussionsProxyHandler)
+		api.GET("/gh-discussion/:owner/:repo/:number", captchaGate(), proxyLimiter(), GitHubDiscussionDetailProxyHandler)
+		api.GET("/gh-wiki/:owner/:repo/:page", captchaGate(), proxyLimiter(), GitHubWikiProxyHandler)
+		api.GET("/gl-wiki/:owner/:repo", captchaGate(), proxyLimiter(), GitLabWikiProxyHandler)
 		api.GET("/captcha/*path", captchaLimiter(), MentaCaptchaProxyHandler)
 		api.POST("/captcha/*path", captchaLimiter(), MentaCaptchaProxyHandler)
+		// Ruta aparte del proxy /captcha/*path para no chocar el catch-all:
+		// el frontend POSTs aquí el token del widget y hereda la cookie.
+		api.POST("/captcha-gate", captchaLimiter(), CaptchaGateTokenHandler)
 	}
 
 	r.GET("/appeal", AppealStartHandler)
@@ -452,14 +513,14 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		}
 		if c.Request.Method == http.MethodGet {
 			if c.Request.URL.Path == "/" {
-				c.File("./web/index.html")
+				serveDocumentWithGate(c, "./web/index.html")
 				return
 			}
 			parts := strings.Split(strings.Trim(c.Request.URL.Path, "/"), "/")
 			isProvider := len(parts) > 0 && (parts[0] == "gh" || parts[0] == "gl" || parts[0] == "cb" || parts[0] == "gg")
 			if isProvider && len(parts) >= 2 {
 				if len(parts) == 2 {
-					c.File("./web/profile.html")
+					serveDocumentWithGate(c, "./web/profile.html")
 					return
 				}
 				profileViews := map[string]bool{
@@ -467,10 +528,10 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 					"members": true, "projects": true, "packages": true,
 				}
 				if len(parts) == 3 && profileViews[parts[2]] {
-					c.File("./web/profile.html")
+					serveDocumentWithGate(c, "./web/profile.html")
 					return
 				}
-				c.File("./web/repo.html")
+				serveDocumentWithGate(c, "./web/repo.html")
 				return
 			}
 			knownPages := map[string]bool{
@@ -480,13 +541,20 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 				"stats": true,
 			}
 			if len(parts) == 1 && knownPages[parts[0]] {
-				c.File("./web/index.html")
+				serveDocumentWithGate(c, "./web/index.html")
 				return
 			}
 		}
 		// Ruta desconocida: responder 404 real (soft-404 con 200 hacía que
 		// rutas como /.env parecieran existir y confundía a escáneres y
 		// clientes HTTP), pero sirviendo el índice para navegación humana.
+		if !captchaGateClearance(c) &&
+			(c.Request.Method == http.MethodGet || c.Request.Method == http.MethodHead) {
+			// Sin sesión de gate, el 404 hecha del índice también es
+			// documento: redirigir al challenge (no cargar la app).
+			gateDocumentChallengeRedirect(c)
+			return
+		}
 		body, err := os.ReadFile("./web/index.html")
 		if err != nil {
 			c.String(http.StatusInternalServerError, "index unavailable")

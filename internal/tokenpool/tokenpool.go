@@ -3,6 +3,7 @@ package tokenpool
 import (
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -20,13 +21,22 @@ func GitHubTokens() []string {
 		if i > 1 {
 			name = fmt.Sprintf("GITHUB%d_TOKEN", i)
 		}
-		t := os.Getenv(name)
+		t := strings.TrimSpace(os.Getenv(name))
 		if t == "" {
 			break
+		}
+		// Ignora placeholders copiados del .env.example: mandarlos como Authorization
+		// provoca 401 en GitHub cuando en realidad funcionaría el modo anónimo.
+		if isPlaceholder(t) {
+			continue
 		}
 		tokens = append(tokens, t)
 	}
 	return tokens
+}
+
+func isPlaceholder(token string) bool {
+	return strings.HasPrefix(token, "your_") || strings.HasPrefix(token, "your-")
 }
 
 // NextGitHubToken returns the next available GitHub token in round-robin order.

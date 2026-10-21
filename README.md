@@ -990,7 +990,7 @@ curl -X POST https://gitgost.livrasand.com/admin/panic \
 
 Notes:
 - Enabling maintenance also forces panic mode (pushes blocked); disabling maintenance with `"active":false` clears both.
-- `GET /api/status` reports `{"panic_mode":..., "maintenance_mode":...}`; the maintenance page polls it every 5s and reloads when maintenance ends.
+- `GET /api/status` reports `{"panic_mode":..., "maintenance_mode":...}`; the maintenance page polls it every hour and reloads when maintenance ends.
 - The page also self-refreshes via `<meta http-equiv="refresh" content="300">`.
 
 Handy aliases:

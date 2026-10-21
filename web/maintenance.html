@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex,nofollow" />
-<meta http-equiv="refresh" content="300" />
+<meta http-equiv="refresh" content="3600" />
 <link rel="shortcut icon" href="/assets/logos/gitgost-logo.svg" type="image/svg+xml" />
 <link rel="icon" href="/assets/logos/gitgost-logo.svg" type="image/svg+xml" />
 <link rel="manifest" href="/assets/logos/manifest.json" />
@@ -451,7 +451,7 @@
                 </div>
 
                 <div class="section-title">next steps</div>
-                <p>The site polls its status every 5 seconds and will reload automatically once maintenance mode is disabled. Try again in a few minutes.</p>
+                <p>The site polls its status every hour and will reload automatically once maintenance mode is disabled. Try again in a few minutes.</p>
             </div>
         </main>
     </div>
@@ -570,7 +570,7 @@
                         }
                     })
                     .catch(function () {});
-            }, 5000);
+            }, 3600000);
         })();
     </script>
 </body>

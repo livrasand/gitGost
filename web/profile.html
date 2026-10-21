@@ -3391,7 +3391,14 @@
             "use strict";
             function gateCookiePresent() {
                 return document.cookie.split(";").some(function (part) {
-                    return part.trim().lastIndexOf("gost_gate=", 0) === 0;
+                    var trimmed = part.trim();
+                    if (trimmed.lastIndexOf("gost_gate=", 0) !== 0) return false;
+                    var value = trimmed.slice("gost_gate=".length);
+                    var pieces = value.split("|");
+                    if (pieces.length !== 3 || pieces[0] !== "g1") return false;
+                    var exp = parseInt(pieces[1], 10);
+                    if (!isFinite(exp) || exp <= Math.floor(Date.now() / 1000)) return false;
+                    return true;
                 });
             }
             function gateSubmit() {

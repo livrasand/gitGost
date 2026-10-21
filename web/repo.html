@@ -11059,31 +11059,51 @@
     </footer>
     <script src="/bip39-words.js"></script>
     <script src="/zkp-client.js?v=3"></script>
+    <!-- Menta SDK loader: it decides whether the gate is active and only then
+         injects the SDK (which defines the <menta-widget> custom element). -->
+    <script src="/assets/captcha-loader.js"></script>
     <script>
         window.gitgostCaptchaToken = async function (id) {
             const w = document.getElementById(id);
             if (!w) return '';
             if (w.token) return w.token;
+            // Without a previous token: the proof-of-work is solved in the
+            // browser (direct widget, /shield or local proxy) instead of
+            // returning null.
+            if (window.gitgostCaptcha && typeof window.gitgostCaptcha.solve === "function") {
+                try {
+                    const result = await window.gitgostCaptcha.solve({
+                        widget: w,
+                        path: window.location.pathname + window.location.search,
+                        allowShield: true
+                    });
+                    if (result && result.token) return result.token;
+                } catch (e) { /* sin token: el backend responderá 403 */ }
+            }
             return null;
         };
     </script>
     <script src="/ethicalmetrics.js" data-site-key="gitgost-repo"></script>
-    <!-- CAPTCHA gate anti-scraping: el backend exige cookie "gost_gate"
-         (emitida aquí tras resolver Menta) para los endpoints de browsing.
-         Sin cookie válida no hay contenido: primer dibujo o expiración a las 24h re-desafía. -->
+    <!-- CAPTCHA gate anti-scraping: the backend requires the "gost_gate" cookie
+         (issued here after solving Menta) for the browsing endpoints.
+         Without a valid cookie there is no content: the first draw or the
+         24h expiry challenges again. -->
     <div id="gate-overlay" style="display:none;position:fixed;inset:0;z-index:2147483647;background:rgba(6,10,15,0.92);align-items:center;justify-content:center;padding:24px;">
         <div style="background:#0d1117;border:1px solid rgba(247,111,83,0.35);border-radius:16px;padding:28px;max-width:420px;width:100%;box-shadow:0 16px 38px rgba(0,0,0,.5);text-align:center;">
-            <h2 style="margin:0 0 6px;font-size:20px;color:#f76f53;">Verificación de acceso</h2>
+            <h2 style="margin:0 0 6px;font-size:20px;color:#f76f53;">Access verification</h2>
             <p style="margin:6px 0 16px;font-size:13px;color:#9fb3ff;line-height:1.5;">
-                gitGost es para humanos. Completa el captcha una vez por
-                sesión (24&nbsp;h) para poder navegar repositorios, explorar y
-                buscar. Sin cuentas, sin cookies de rastreo.
+                gitGost is for humans. Complete the captcha once per
+                session (24&nbsp;h) to browse repositories, explore and
+                search. No accounts, no tracking cookies.
             </p>
             <div style="display:flex;justify-content:center;margin:0 0 12px;">
-                            </div>
+                <!-- The Menta widget is created on demand (see ensureWidget):
+                     in an already verified session nothing is requested from
+                     Menta. -->
+            </div>
             <p id="gate-status" style="margin:0 0 10px;font-size:12px;color:#ffb4c4;min-height:16px;"></p>
-            <button id="gate-submit" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;font-size:14px;cursor:pointer;">Continuar</button>
-            <p style="margin:12px 0 0;font-size:11px;color:#9fb3ff;">No comparte tu IP con forges externos. Referencias: nuestra <a href="/privacy" style="color:#f76f53;text-decoration:none;">política de privacidad</a>.</p>
+            <button id="gate-submit" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;font-size:14px;cursor:pointer;">Continue</button>
+            <p style="margin:12px 0 0;font-size:11px;color:#9fb3ff;">Your IP is not shared with external forges. Read our <a href="/privacy" style="color:#f76f53;text-decoration:none;">privacy policy</a>.</p>
         </div>
     </div>
     <script>
@@ -11095,25 +11115,47 @@
                     if (trimmed.lastIndexOf("gost_gate=", 0) !== 0) return false;
                     var value = trimmed.slice("gost_gate=".length);
                     var pieces = value.split("|");
-                    if (pieces.length !== 3 || pieces[0] !== "g1") return false;
+                    if (pieces.length !== 3 || pieces[0] !== "g2") return false;
                     var exp = parseInt(pieces[1], 10);
                     if (!isFinite(exp) || exp <= Math.floor(Date.now() / 1000)) return false;
                     return true;
                 });
             }
-            function gateSubmit() {
+            // The Menta widget is created only when a verification is actually
+            // needed: an already verified session requests nothing from Menta
+            // on page load (nor while browsing).
+            function ensureWidget() {
+                let w = document.getElementById("gate-captcha");
+                if (w) return w;
+                w = document.createElement("menta-widget");
+                w.id = "gate-captcha";
+                w.setAttribute("data-cap-direct", "");
+                w.style.display = "none";
+                if (window.gitgostCaptcha && window.gitgostCaptcha.api) {
+                    w.setAttribute("data-cap-api-endpoint", window.gitgostCaptcha.api);
+                }
+                (document.body || document.documentElement).appendChild(w);
+                return w;
+            }
+            function gateSubmit(token, kind) {
                 const widget = document.getElementById("gate-captcha");
                 const status = document.getElementById("gate-status");
                 const button = document.getElementById("gate-submit");
-                const token = widget && widget.token;
-                if (!token) { if (status) status.textContent = "Complete the challenge first."; return; }
+                const value = token || (widget && widget.token);
+                if (!value) { gateSolve(); return; }
+                // The proof-of-work was solved against Menta; here the proof
+                // is only handed to gitGost so it can issue the session cookie
+                // (a single server-to-server call to Menta).
+                const payload = kind === "shield"
+                    ? { shield_clearance: value }
+                    : { captcha_token: value };
                 if (button) { button.disabled = true; }
                 if (status) status.textContent = "Verifying…";
                 fetch(getApiBase() + "/api/captcha-gate", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     credentials: "same-origin",
-                    body: JSON.stringify({ captcha_token: token })
+                    body: JSON.stringify(payload)
                 }).then(function (response) {
                     if (response.ok) { window.location.reload(); return; }
                     if (status) status.textContent = "Verification failed. Please try again.";
@@ -11124,15 +11166,38 @@
                     if (button) { button.disabled = false; }
                 });
             }
-            // El loader compartido (/assets/captcha-loader.js) pregunta una sola
-            // vez por /api/config: predice si el gate está habilitado y solo inyecta
-            // el SDK de Menta entonces. Con CAPTCHA off no hay widget ni /init.
+            // The proof-of-work is solved in the browser against Menta (direct
+            // widget, /shield flow or gitGost local proxy), just like in
+            // /challenge.html; afterwards the proof is handed to the server.
+            function gateSolve() {
+                const status = document.getElementById("gate-status");
+                if (status) status.textContent = "Solving a proof-of-work challenge…";
+                if (!window.gitgostCaptcha || typeof window.gitgostCaptcha.solve !== "function") {
+                    if (status) status.textContent = "Could not initialize the verification. Check your connection and try again.";
+                    return;
+                }
+                window.gitgostCaptcha.solve({
+                    widget: ensureWidget(),
+                    path: window.location.pathname + window.location.search,
+                    allowShield: true
+                }).then(function (result) {
+                    if (result && result.token) gateSubmit(result.token, result.kind);
+                    else if (status) status.textContent = "Verification failed. Please try again.";
+                }).catch(function () {
+                    if (status) status.textContent = "Could not initialize the verification. Check your connection and try again.";
+                });
+            }
+            // The shared loader (/assets/captcha-loader.js) asks /api/config
+            // once: it predicts whether the gate is enabled and only then
+            // injects the Menta SDK. With CAPTCHA off there is no widget and
+            // no /init.
             if (window.gitgostCaptchaReady) window.gitgostCaptchaReady.then(function (enabled) {
                 const overlay = document.getElementById("gate-overlay");
                 const button = document.getElementById("gate-submit");
                 if (!enabled || !overlay || gateCookiePresent()) return;
                 overlay.style.display = "flex";
-                if (button) button.addEventListener("click", gateSubmit);
+                if (button) button.addEventListener("click", gateSolve);
+                gateSolve();
             });
         })();
     </script>

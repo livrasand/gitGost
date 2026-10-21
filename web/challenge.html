@@ -464,9 +464,9 @@
             }
             function submitGate(token, kind) {
                 setStatus("Confirming with the server…");
-                // El proof-of-work se resolvió contra Menta; aquí solo se le
-                // entrega la prueba a gitGost para que emita la cookie de
-                // sesión (una única llamada server-to-server a Menta).
+                // The proof-of-work was solved against Menta; here the proof
+                // is only handed to gitGost so it can issue the session cookie
+                // (a single server-to-server call to Menta).
                 var payload = kind === "shield"
                     ? { shield_clearance: token }
                     : { captcha_token: token };
@@ -509,12 +509,12 @@
                 solveTimer = window.setInterval(function () {
                     if (myRunId === runId) tick();
                 }, 500);
-                // El reto se resuelve en el navegador contra Menta:
-                //   1) widget de Menta contra su propia API (PoW adaptativo),
-                //   2) flujo universal /shield de Menta (sin registrar el
-                //      dominio en Menta),
-                //   3) proxy local de gitGost, solo si el navegador no puede
-                //      alcanzar a Menta.
+                // The challenge is solved in the browser against Menta:
+                //   1) Menta widget against its own API (adaptive PoW),
+                //   2) Menta universal /shield flow (without registering the
+                //      domain in Menta),
+                //   3) gitGost local proxy, only if the browser cannot reach
+                //      Menta.
                 window.gitgostCaptcha.solve({
                     path: window.location.pathname + window.location.search,
                     allowShield: true
@@ -549,9 +549,9 @@
             window.gitgostCaptchaReady.then(function (enabled) {
                 if (!enabled) {
                     if (window.gitgostCaptcha && window.gitgostCaptcha.error) {
-                        // No se pudo contactar con el servicio de verificación:
-                        // esta página solo se sirve con el gate activo, así que
-                        // reintentar es mejor que continuar en bucle.
+                        // The verification service could not be reached: this
+                        // page is only served with the gate active, so
+                        // retrying is better than looping.
                         fail("Could not reach the verification service. Check your connection and try again.");
                         return;
                     }

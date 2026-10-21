@@ -837,7 +837,11 @@ func SetBuildInfo(hash, built, repo string) {
 // sin que gitGost tenga que hardcodear la URL de Menta en el HTML, y el
 // cliente puede derivarla del propio SDK que sirve Menta.
 func ConfigHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
+	body := gin.H{"captcha_gate": captchaGateEnabled()}
+	if captchaGateEnabled() && mentaAPIEndpoint != "" {
+		body["menta_api"] = mentaAPIEndpoint
+	}
+	c.JSON(http.StatusOK, body)
 }
 
 var (

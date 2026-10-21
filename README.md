@@ -413,14 +413,16 @@ Browser                          gitGost backend                    Menta CAPTCH
   │  GET /api/config → { captcha_gate, menta_api }
   │  (la URL de Menta la decide el servidor; el navegador la usa directamente)
   │
-  │  ── PoW resuelto por el navegador contra Menta (sin pasar por gitGost) ──
-  │  POST {MENTA}/shield/check  { path, force: true }
-  │──────────────────────────────────────────────────────────▶  (directo)
-  │  ◀──────── challenge (salt, target) + token ─────────────
-  │  solve SHA-256 in your browser (PoW, ~0.5 s)
-  │  POST {MENTA}/shield/redeem  { token, solutions, challenge_signature }
-  │──────────────────────────────────────────────────────────▶  (directo)
-  │  ◀──────── clearance (JWT reutilizable durante su TTL) ──
+  │  ── PoW resuelto por el navegador (el SHA-256 es local) ──
+  │  POST /api/captcha/shield/check  { path, force: true }
+  │──────────────────────────────▶  │  proxy server-to-server:
+  │                                  │  POST {MENTA}/shield/check
+  │  ◀──────── challenge (salt, target) + token ─────────────◀┤ (sin Origin,
+  │  solve SHA-256 in your browser (PoW, ~0.5 s)               │  sin cookies)
+  │  POST /api/captcha/shield/redeem  { token, solutions, … }
+  │──────────────────────────────▶  │  proxy server-to-server:
+  │                                  │  POST {MENTA}/shield/redeem
+  │  ◀──────── clearance (JWT reutilizable durante su TTL) ──◀┤
   │
   │  POST /api/captcha-gate { shield_clearance }
   │──────────────────────────────▶  POST {MENTA}/shield/verify (server-to-server)
@@ -434,17 +436,19 @@ Browser                          gitGost backend                    Menta CAPTCH
 Step by step:
 
 1. **Gate detection** — `/assets/captcha-loader.js` asks `/api/config` once. If `captcha_gate` is `false`, nothing is downloaded and everything passes freely. If it is `true`, the config also announces `menta_api` (la base de la API de Menta), so the browser knows against which host to solve the challenge without a hardcoded URL in the HTML.
-2. **Challenge solving — directo contra Menta.** El navegador resuelve el proof-of-work **contra Menta directamente** (flujo universal `/shield/*`): `POST {MENTA}/shield/check` con `force: true` devuelve el reto, el navegador calcula el SHA-256 localmente, y `POST {MENTA}/shield/redeem` canjea la solución por un *clearance* reutilizable durante su TTL. **gitGost no hace de relay del reto: ni `/api/captcha/*` ni el servidor participan en el PoW**, así que el consumo de CPU y red del desafío no carga al servidor de gitGost. Solo si el navegador no puede alcanzar a Menta (firewall corporativo, adblocker, DNS bloqueado) se cae al proxy local `/api/captcha/*` como último recurso.
+2. **Challenge solving — a través del proxy de mismo origen.** El navegador resuelve el proof-of-work **en local** (SHA-256 en el navegador, el reto nunca sale de la máquina salvo como POST al proxy): pide el reto a `/api/captcha/shield/check`, calcula el nonce y canjea la solución en `/api/captcha/shield/redeem` por un *clearance* reutilizable durante su TTL. Las dos llamadas van al **proxy local `/api/captcha/*`**, nunca a Menta directamente: Menta solo admite peticiones de navegador desde orígenes que tiene registrados y responde `403` (sin cabeceras CORS) a los demás, así que hablar con Menta desde `gitgost.livrasand.com` era imposible. El proxy reenvía la llamada a Menta **servidor a servidor** (sin `Origin`, sin cookies y con la IP real del visitante en `X-Forwarded-For`), de modo que Menta la trata como una llamada de API normal. Si el reto que devuelve Menta es demasiado caro para el navegador (Menta sube la dificultad a las IP con fallos recientes), el cargador cambia al flujo de sesión (`/init` → `/challenge` → `/redeem`) y, si tampoco, al retry manual.
 3. **Token verification** — `POST /api/captcha-gate` envía el *clearance* a gitGost, que lo valida contra `{MENTA}/shield/verify` **server-to-server**. Menta no consume el clearance (es reutilizable durante su TTL), así que gitGost cachea el resultado por token y no vuelve a preguntar a Menta por cada sesión nueva del mismo visitante. Un rate limit global (30 req/min/IP) protege este endpoint.
 4. **Session cookie** — el backend emite `gost_gate`: cookie sin estado de la forma `g2|expiry|HMAC-SHA256(expiry)`. Como la validación solo re-calcula el HMAC, no hay sesión en servidor y cualquier instancia que comparta `GITGOST_GATE_KEY` la acepta. Atributos: `SameSite=Lax`, `Secure` en HTTPS y — intencionalmente — `HttpOnly=false`, para que el frontend compruebe `document.cookie` *antes* del primer fetch de contenido y evite una petición condenada.
 5. **Re-challenge** — tras 24 h (o una cookie falsificada/expirada) el middleware vuelve a rechazar: las respuestas de la API devuelven `403 {captcha_required: true}` re-disparando el overlay en la página, y una navegación nueva a un documento se redirige otra vez a `/challenge.html`.
+6. **Cookie caducada = sin bucle** — el navegador no puede validar el HMAC de `gost_gate`, así que cuando la cookie existe pero el servidor ya no la acepta (clave de firma rotada, cookie caducada) **el servidor la borra** (`Set-Cookie: gost_gate=; Max-Age=0`) y `/challenge.html` consulta `GET /api/captcha-gate/status` antes de continuar. Sin ese borrado el frontend daba la cookie por buena, saltaba el challenge y volvía al destino, que la rechazaba otra vez: recargas infinitas. Con él, una sesión caducada cuesta exactamente un challenge nuevo.
+7. **Clave estable** — `GITGOST_GATE_KEY` firma la cookie. Si no está definida, el servidor genera una clave y la persiste en `$GITGOST_HOME/gate.key` (por defecto `~/.gitgost/gate.key`), de modo que las sesiones sobreviven a los reinicios. Cambiarla invalida las sesiones existentes: los visitantes afectados resuelven un challenge nuevo, nunca un bucle.
 
 ### How the data is processed
 
 We designed this integration so the CAPTCHA adds a human check **without adding surveillance**:
 
 - **No CAPTCHA cookies of its own.** Menta is proof-of-work based: no third-party cookies, no fingerprinting, no behavioral tracking. The SDK script is loaded from the Menta host, but the challenge itself is a CPU computation in your browser.
-- **`/api/captcha/*` is a strict same-origin proxy.** It forwards your `User-Agent`, your first `X-Forwarded-For` IP, and the server's `X-API-Key` to the Menta instance. The IP is forwarded only so Menta can apply its own per-IP rate limits and IP-bound challenges; nothing is stored by gitGost, and Menta is built to keep no persistent profiling data (same self-hosted, privacy-first philosophy as the project README announces).
+- **`/api/captcha/*` is a strict same-origin proxy.** It forwards your `User-Agent`, your IP (in `X-Forwarded-For`, always the one the server sees — never the one the client claims), and the server's `X-API-Key` to the Menta instance. The IP is forwarded only so Menta can apply its own per-IP rate limits and IP-bound challenges; nothing is stored by gitGost, and Menta is built to keep no persistent profiling data (same self-hosted, privacy-first philosophy as the project README announces). Your `Origin`, `Referer` and cookies are **stripped** before the relay: they would make Menta reject the call (unregistered origin) and your session cookies must never travel to a third party.
 - **Verification is server-to-server.** Only gitGost's backend talks to Menta's `/verify` using an API key — tokens are validated and immediately consumed; the browser never handles verification secrets.
 - **The `gost_gate` cookie contains nothing personal.** Just a version tag, a Unix expiry timestamp, and an HMAC of that timestamp. No IP, no user ID, no MAC address, nothing linkable — losing the cookie costs you exactly one new challenge.
 - **Gate on, surveillance off.** The gate exists to keep scrapers out of the browsing surface and keep anonymous submissions from being flooded; it never enriches the (already absent) per-user dataset. The privacy guarantees in [Privacy Guarantees](Privacy%20Guarantees.md) apply unchanged: no IP logs, no personal data retention, only aggregate counters for abuse metrics.
@@ -990,7 +994,7 @@ curl -X POST https://gitgost.livrasand.com/admin/panic \
 
 Notes:
 - Enabling maintenance also forces panic mode (pushes blocked); disabling maintenance with `"active":false` clears both.
-- `GET /api/status` reports `{"panic_mode":..., "maintenance_mode":...}`; the maintenance page polls it every hour and reloads when maintenance ends.
+- `GET /api/status` reports `{"panic_mode":..., "maintenance_mode":..., "sponsor_banner":...}`; the maintenance page polls it every hour and reloads when maintenance ends.
 - The page also self-refreshes via `<meta http-equiv="refresh" content="300">`.
 
 Handy aliases:
@@ -1003,6 +1007,45 @@ alias gitgost-maint-on='curl -s -X POST https://gitgost.livrasand.com/admin/pani
 alias gitgost-maint-off='curl -s -X POST https://gitgost.livrasand.com/admin/panic \
   -H "Content-Type: application/json" \
   -d "{\"password\":\"$PANIC_PASSWORD\",\"active\":false,\"maintenance\":false}"'
+```
+
+### Donation banner — show or hide the sponsor banner
+
+The site can display a "sustained by you" banner at the top, pointing to [GitHub Sponsors](https://github.com/sponsors/livrasand). It is purely informational: it never blocks pushes and can be toggled without restarting the service. Visitors can dismiss it with the ✕ button; the banner then stays hidden in their browser for 30 days (`localStorage`).
+
+**Show the banner:**
+
+```bash
+curl -X POST https://gitgost.livrasand.com/admin/sponsor \
+  -H "Content-Type: application/json" \
+  -d '{"password":"<PANIC_PASSWORD>","active":true}'
+# → {"sponsor_banner":true,"state":"activated"}
+```
+
+**Hide the banner:**
+
+```bash
+curl -X POST https://gitgost.livrasand.com/admin/sponsor \
+  -H "Content-Type: application/json" \
+  -d '{"password":"<PANIC_PASSWORD>","active":false}'
+```
+
+**Persist across restarts** (env var / fly secret):
+
+```bash
+SPONSOR_BANNER=true
+```
+
+Handy aliases:
+
+```bash
+alias gitgost-sponsor-on='curl -s -X POST https://gitgost.livrasand.com/admin/sponsor \
+  -H "Content-Type: application/json" \
+  -d "{\"password\":\"$PANIC_PASSWORD\",\"active\":true}"'
+
+alias gitgost-sponsor-off='curl -s -X POST https://gitgost.livrasand.com/admin/sponsor \
+  -H "Content-Type: application/json" \
+  -d "{\"password\":\"$PANIC_PASSWORD\",\"active\":false}"'
 ```
 
 ### Close abusive PRs (rollback burst)

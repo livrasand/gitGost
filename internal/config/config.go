@@ -22,9 +22,11 @@ type Config struct {
 	PanicPassword    string
 	NtfyAdminTopic  string
 	MaintenanceMode     bool
+	SponsorBanner       bool
 	MentaAPIEndpoint    string
 	MentaAPIKey         string
 	MentaEnforceCaptcha bool
+	GateKey             string
 }
 
 func Load() *Config {
@@ -41,9 +43,11 @@ func Load() *Config {
 		PanicPassword:    getEnv("PANIC_PASSWORD", ""),
 		NtfyAdminTopic:  getEnv("NTFY_ADMIN_TOPIC", ""),
 		MaintenanceMode:     getEnv("MAINTENANCE_MODE", "") == "true",
+		SponsorBanner:       getEnv("SPONSOR_BANNER", "") == "true",
 		MentaAPIEndpoint:    getEnv("MENTA_API_ENDPOINT", ""),
 		MentaAPIKey:         getEnv("MENTA_API_KEY", ""),
 		MentaEnforceCaptcha: getEnv("MENTA_CAPTCHA_ENFORCE", "") == "true",
+		GateKey:             getEnv("GITGOST_GATE_KEY", ""),
 	}
 
 	return cfg

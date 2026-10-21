@@ -209,7 +209,6 @@
         #challenge-foot a { color: var(--accent); text-decoration: none; }
         #challenge-foot a:hover { text-decoration: underline; }
 
-        #gate-captcha { display: none !important; }
 
         .statusbar {
             background: var(--bg-secondary);
@@ -387,7 +386,10 @@
         </div>
     </footer>
 
-    <menta-widget id="gate-captcha" data-cap-direct style="display:none"></menta-widget>
+    <!-- El captcha se resuelve solo (proof-of-work) a traves del proxy de
+         mismo origen: /assets/captcha-loader.js no necesita un widget en el
+         DOM, asi que aqui no se inserta ninguno (Menta rechaza los origenes
+         que no tiene registrados y el widget abriria una sesion inutil). -->
     <script src="/assets/captcha-loader.js"></script>
     <script>
         (function () {
@@ -454,9 +456,6 @@
                 setStatus(message || "We could not complete the verification. Please try again.", "error");
                 setMeta("");
                 phase = "idle";
-                var widget = $("gate-captcha");
-                if (widget && typeof widget.reset === "function") widget.reset();
-                try { widget.token = null; } catch (e) { /* widget not initialized yet */ }
             }
             function tick() {
                 setMeta("Solving a proof-of-work challenge in your browser… " +
@@ -542,29 +541,57 @@
                 runAttempt();
             });
 
-            // Cookie already valid (browser back after solving): go straight to the
-            // destination without another verification.
-            if (gateCookiePresent()) { goNext(); return; }
+            // La cookie lleva un HMAC que el navegador no puede validar, así que
+            // se pregunta al servidor si sigue siendo válida. Si el servidor la
+            // ha borrado (clave rotada, caducada) se resuelve el challenge otra
+            // vez; si sigue siendo válida se va al destino. Sin esta
+            // comprobación una cookie caducada en el navegador provocaba un
+            // bucle infinito entre el destino y /challenge.html.
+            function checkSession() {
+                fetch(apiBase() + "/api/captcha-gate/status", {
+                    method: "GET",
+                    credentials: "same-origin",
+                    headers: { "Accept": "application/json" }
+                }).then(function (response) {
+                    if (!response.ok) throw new Error("status " + response.status);
+                    return response.json();
+                }).then(function (data) {
+                    if (data && data.cleared) { goNext(); return; }
+                    startVerification();
+                }).catch(function () {
+                    // Sin estado no se puede decidir: se resuelve el challenge
+                    // (el servidor borra la cookie que no valida).
+                    startVerification();
+                });
+            }
 
-            window.gitgostCaptchaReady.then(function (enabled) {
-                if (!enabled) {
-                    if (window.gitgostCaptcha && window.gitgostCaptcha.error) {
-                        // The verification service could not be reached: this
-                        // page is only served with the gate active, so
-                        // retrying is better than looping.
-                        fail("Could not reach the verification service. Check your connection and try again.");
+            function startVerification() {
+                window.gitgostCaptchaReady.then(function (enabled) {
+                    if (!enabled) {
+                        if (window.gitgostCaptcha && window.gitgostCaptcha.error) {
+                            // The verification service could not be reached: this
+                            // page is only served with the gate active, so
+                            // retrying is better than looping.
+                            fail("Could not reach the verification service. Check your connection and try again.");
+                            return;
+                        }
+                        // This page is only served with the gate active; if the gate was
+                        // disabled while the client had the page open, just continue
+                        // to the destination.
+                        goNext();
                         return;
                     }
-                    // This page is only served with the gate active; if the gate was
-                    // disabled while the client had the page open, just continue
-                    // to the destination.
-                    goNext();
-                    return;
-                }
-                runAttempt();
-            }).catch(function () {
-                fail("Could not initialize the verification. Check your connection and try again.");
-            });
+                    runAttempt();
+                }).catch(function () {
+                    fail("Could not initialize the verification. Check your connection and try again.");
+                });
+            }
+
+            // Cookie present: the browser only knows its shape, not its
+            // validity, so the server has the last word.
+            if (gateCookiePresent()) { checkSession(); return; }
+
+            startVerification();
         })();
     </script>
 

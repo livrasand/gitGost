@@ -16,6 +16,10 @@ primary_region = 'arn'
   # access, /health, /api/status and /admin available. Prefer runtime toggle
   # (POST /admin/panic {"maintenance":true}) or: fly secrets set MAINTENANCE_MODE=true
   MAINTENANCE_MODE = 'false'
+  # The CAPTCHA session cookie ("gost_gate") is signed with GITGOST_GATE_KEY.
+  # The machine filesystem is ephemeral, so without a secret the key changes on
+  # every deploy and every visitor session expires. Set it with:
+  # fly secrets set GITGOST_GATE_KEY=$(openssl rand -hex 32)
 
 [http_service]
   internal_port = 8080

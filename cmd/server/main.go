@@ -1,11 +1,14 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -97,6 +100,13 @@ func main() {
 	// Initialize Menta CAPTCHA
 	handler.InitMentaConfig(cfg.MentaAPIEndpoint, cfg.MentaAPIKey, cfg.MentaEnforceCaptcha)
 
+	// Initialize the CAPTCHA gate signing key. A stable key keeps the
+	// "gost_gate" sessions valid across restarts: with a random key every
+	// restart invalidates every visitor session.
+	if secret := gateSecret(cfg.GateKey); secret != nil {
+		handler.InitCaptchaGate(secret)
+	}
+
 	// Initialize panic button
 	handler.InitPanicConfig(cfg.PanicPassword, cfg.NtfyAdminTopic)
 	if cfg.NtfyAdminTopic != "" {
@@ -141,4 +151,42 @@ func nodeDBPath() string {
 		return v + "/nodes.db"
 	}
 	return os.ExpandEnv("$HOME/.gitgost/nodes.db")
+}
+
+func gateKeyPath() string {
+	if v := os.Getenv("GITGOST_HOME"); v != "" {
+		return v + "/gate.key"
+	}
+	return os.ExpandEnv("$HOME/.gitgost/gate.key")
+}
+
+// gateSecret resolves the secret used to sign the CAPTCHA session cookie:
+// GITGOST_GATE_KEY first, then the persisted key file, and finally a new
+// random key that is written to that file so it survives restarts.
+func gateSecret(configured string) []byte {
+	if key := strings.TrimSpace(configured); key != "" {
+		return []byte(key)
+	}
+	path := gateKeyPath()
+	if data, err := os.ReadFile(path); err == nil {
+		if key := strings.TrimSpace(string(data)); key != "" {
+			return []byte(key)
+		}
+	}
+	key := make([]byte, 32)
+	if _, err := rand.Read(key); err != nil {
+		utils.Log("WARNING: could not generate the CAPTCHA gate key: %v", err)
+		return nil
+	}
+	encoded := hex.EncodeToString(key)
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		utils.Log("WARNING: could not create the CAPTCHA gate key directory: %v", err)
+		return []byte(encoded)
+	}
+	if err := os.WriteFile(path, []byte(encoded+"\n"), 0o600); err != nil {
+		utils.Log("WARNING: could not persist the CAPTCHA gate key: %v", err)
+		return []byte(encoded)
+	}
+	utils.Log("CAPTCHA gate key generated and stored in %s", path)
+	return []byte(encoded)
 }

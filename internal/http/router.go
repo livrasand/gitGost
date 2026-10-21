@@ -218,6 +218,27 @@ func captchaLimiter() gin.HandlerFunc {
 	}
 }
 
+// gateStatusLimiter acota la consulta de estado del gate. Es una respuesta
+// ligera, pero se limita aparte para no gastar la cuota del challenge.
+const (
+	gateStatusLimiterMax = 120
+	gateStatusLimiterWin = time.Minute
+)
+
+var gateStatusLimiterStore = newBoundedMap[[]time.Time](prCheckLimiterStoreMax, gateStatusLimiterWin)
+
+func gateStatusLimiter() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ip := c.ClientIP()
+		count := windowAdd(gateStatusLimiterStore, ip, time.Now(), gateStatusLimiterWin, gateStatusLimiterMax)
+		if count > gateStatusLimiterMax {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "gate status rate limit exceeded"})
+			return
+		}
+		c.Next()
+	}
+}
+
 const maxPushSize = 100 * 1024 * 1024
 
 func sizeLimitMiddleware() gin.HandlerFunc {
@@ -293,6 +314,9 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	if cfg.MaintenanceMode {
 		InitMaintenance(true, "MAINTENANCE_MODE env")
+	}
+	if cfg.SponsorBanner {
+		InitSponsorBanner(true, "SPONSOR_BANNER env")
 	}
 	r := gin.New()
 	r.SetTrustedProxies([]string{})
@@ -470,6 +494,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	// Ruta aparte del proxy /captcha/*path para no chocar el catch-all:
 	// el frontend POSTs aquí el token del widget y hereda la cookie.
 		api.POST("/captcha-gate", captchaLimiter(), CaptchaGateTokenHandler)
+		api.GET("/captcha-gate/status", gateStatusLimiter(), CaptchaGateStatusHandler)
 		api.Any("/captcha/*path", captchaLimiter(), MentaCaptchaProxyHandler)
 	}
 
@@ -483,6 +508,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	{
 		admin.POST("/panic", PanicHandler)
 		admin.POST("/rollback", RollbackBurstHandler)
+		admin.POST("/sponsor", SponsorBannerHandler)
 		admin.GET("/appeals", AdminAppealsHandler)
 		admin.POST("/appeals", AdminAppealsHandler)
 		admin.POST("/appeals/:ticket/resolve", AdminAppealResolveHandler)

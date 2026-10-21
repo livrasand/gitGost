@@ -857,6 +857,7 @@ var (
 	panicMode           bool
 	panicMu             sync.Mutex
 	maintenanceMode     bool
+	sponsorBanner       bool
 	panicPassword       string
 	ntfyAdminTopic      string
 	rateLimitStore      = newBoundedMap[[]time.Time](rateLimitStoreMax, rateLimitWindow)
@@ -1125,6 +1126,25 @@ func InitMaintenance(active bool, source string) {
 	utils.Log("maintenance mode %s (source: %s)", state, source)
 }
 
+// isSponsorBanner reporta si el banner de donaciones está activo.
+func isSponsorBanner() bool {
+	panicMu.Lock()
+	defer panicMu.Unlock()
+	return sponsorBanner
+}
+
+// InitSponsorBanner activa o desactiva el banner de donaciones al arranque.
+func InitSponsorBanner(active bool, source string) {
+	panicMu.Lock()
+	defer panicMu.Unlock()
+	sponsorBanner = active
+	state := "off"
+	if active {
+		state = "on"
+	}
+	utils.Log("sponsor banner %s (source: %s)", state, source)
+}
+
 func isGlobalBurstAlertActive() bool {
 	globalBurstMu.Lock()
 	defer globalBurstMu.Unlock()
@@ -1271,10 +1291,46 @@ func PanicHandler(c *gin.Context) {
 	})
 }
 
+// SponsorBannerHandler activa o desactiva el banner de donaciones.
+// No afecta a panicMode ni a maintenanceMode: es un banner informativo
+// que puede convivir con el servicio en marcha.
+func SponsorBannerHandler(c *gin.Context) {
+	var req struct {
+		Password string `json:"password"`
+		Token    string `json:"token"`
+		Active   bool   `json:"active"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
+		return
+	}
+	authorized := verifyAdminPassword(req.Password) ||
+		(req.Token != "" && consumeActionToken(req.Token))
+	if !authorized {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+		return
+	}
+
+	panicMu.Lock()
+	sponsorBanner = req.Active
+	panicMu.Unlock()
+
+	state := "deactivated"
+	if req.Active {
+		state = "activated"
+	}
+	utils.Log("sponsor banner %s", state)
+	c.JSON(http.StatusOK, gin.H{
+		"sponsor_banner": req.Active,
+		"state":          state,
+	})
+}
+
 func ServiceStatusHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"panic_mode":       isPanicMode(),
 		"maintenance_mode": isMaintenanceMode(),
+		"sponsor_banner":   isSponsorBanner(),
 	})
 }
 

@@ -1505,6 +1505,26 @@
                     display: inline;
                 }
 
+                .sponsor-banner {
+                    flex-direction: column;
+                    text-align: center;
+                    gap: 0.5rem;
+                    padding: 0.5rem 0.75rem;
+                    margin: 6px;
+                    position: relative;
+                    padding-right: 2rem;
+                }
+
+                .sponsor-banner-content strong {
+                    display: inline;
+                }
+
+                .sponsor-banner-close {
+                    position: absolute;
+                    top: 0.3rem;
+                    right: 0.3rem;
+                }
+
                 .form-actions {
                     flex-direction: column;
                     gap: 0.5rem;
@@ -1659,6 +1679,92 @@
             display: block;
             margin-bottom: 0.25rem;
         }
+
+        .sponsor-banner {
+            display: none;
+            background: #ecfdc9;
+            border: 1px solid color-mix(in srgb, #2e2e2e 14%, #ecfdc9);
+            border-left: 3px solid var(--accent);
+            padding: 0.75rem 1rem;
+            margin: 10px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.78rem;
+            color: color-mix(in srgb, #2e2e2e 78%, transparent);
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .sponsor-banner.active {
+            display: flex;
+        }
+
+        .sponsor-banner-icon {
+            flex-shrink: 0;
+            font-size: 1.2rem;
+            color: var(--accent);
+        }
+
+        .sponsor-banner-content {
+            flex: 1;
+        }
+
+        .sponsor-banner-content strong {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.25rem;
+            color: #2e2e2e;
+        }
+
+        .sponsor-banner-btn {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.35rem 0.85rem;
+            border: 1px solid var(--accent);
+            background: var(--accent);
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .sponsor-banner-btn:hover,
+        .sponsor-banner-btn:focus-visible {
+            opacity: 0.85;
+        }
+
+        .sponsor-banner-btn svg {
+            width: 0.85em;
+            height: 0.85em;
+        }
+
+        .sponsor-banner-close {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.35rem;
+            height: 1.35rem;
+            padding: 0;
+            background: none;
+            border: 1px solid transparent;
+            color: inherit;
+            font-family: inherit;
+            font-size: 0.95rem;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0.55;
+        }
+
+        .sponsor-banner-close:hover,
+        .sponsor-banner-close:focus-visible {
+            opacity: 1;
+            border-color: color-mix(in srgb, #2e2e2e 25%, transparent);
+        }
+
         .repo-item-normal {
             display: contents;
         }
@@ -1714,6 +1820,22 @@
                 <strong>Service Temporarily Suspended</strong>
                 The service is temporarily suspended due to detected bot activity. Push operations are currently disabled.
             </div>
+        </div>
+
+        <div id="sponsor-banner" class="sponsor-banner">
+            <div class="sponsor-banner-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 20.5S3.5 15 3.5 9.25A4.75 4.75 0 0 1 12 6.4a4.75 4.75 0 0 1 8.5 2.85C20.5 15 12 20.5 12 20.5z" />
+            </svg></div>
+            <div class="sponsor-banner-content">
+                <strong>gitGost: sustained by you</strong>
+                Unlike the big tech companies, gitGost does not make money by selling your data or showing ads: it is kept alive by donations from its community. If you find it useful, support the project.
+            </div>
+            <a class="sponsor-banner-btn" href="https://github.com/sponsors/livrasand" target="_blank" rel="noopener noreferrer">Donate now</a>
+            <button type="button" class="sponsor-banner-close" id="sponsor-banner-close" aria-label="Close donation notice" title="Hide for 30 days">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" d="M6 6l12 12M18 6L6 18" />
+                </svg>
+            </button>
         </div>
 
         <div class="app-container">
@@ -3013,6 +3135,9 @@
                         if (data.panic_mode) {
                             showSuspensionBanner();
                         }
+                        if (data.sponsor_banner) {
+                            showSponsorBanner();
+                        }
                     }
                 } catch (error) {
                     console.error('Failed to check service status:', error);
@@ -3025,6 +3150,51 @@
                     banner.classList.add('active');
                 }
             }
+
+            function showSponsorBanner() {
+                if (isSponsorBannerDismissed()) {
+                    return;
+                }
+                const banner = document.getElementById('sponsor-banner');
+                if (banner) {
+                    banner.classList.add('active');
+                }
+            }
+
+            // El aviso de donación se puede cerrar: la marca de tiempo se guarda
+            // en localStorage y el banner no vuelve a mostrarse durante 30 días.
+            const SPONSOR_BANNER_DISMISS_KEY = 'gitgost_sponsor_banner_dismissed';
+            const SPONSOR_BANNER_DISMISS_MS = 30 * 24 * 60 * 60 * 1000;
+
+            function isSponsorBannerDismissed() {
+                try {
+                    const stored = parseInt(localStorage.getItem(SPONSOR_BANNER_DISMISS_KEY) || '0', 10);
+                    if (!stored) {
+                        return false;
+                    }
+                    if (Date.now() - stored >= SPONSOR_BANNER_DISMISS_MS) {
+                        localStorage.removeItem(SPONSOR_BANNER_DISMISS_KEY);
+                        return false;
+                    }
+                    return true;
+                } catch (error) {
+                    return false;
+                }
+            }
+
+            function dismissSponsorBanner() {
+                try {
+                    localStorage.setItem(SPONSOR_BANNER_DISMISS_KEY, String(Date.now()));
+                } catch (error) {
+                    console.warn('Could not store sponsor banner dismissal:', error);
+                }
+                const banner = document.getElementById('sponsor-banner');
+                if (banner) {
+                    banner.classList.remove('active');
+                }
+            }
+
+            document.getElementById('sponsor-banner-close')?.addEventListener('click', dismissSponsorBanner);
 
             checkServiceStatus();
 
@@ -6013,7 +6183,6 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
             line-height: 1.5;
         }
         #gate-foot a { color: #f76f53; text-decoration: none; }
-        #gate-captcha { display: none !important; }
     </style>
     <div id="gate-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="gate-heading">
         <div class="gate-card">
@@ -6024,8 +6193,8 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
             <button id="gate-retry" type="button">Retry</button>
                         <p id="gate-foot">Performance test by <a href="https://github.com/livrasand/mentacaptcha" target="_blank" rel="noopener">Menta</a> &middot; Privacy-focused CAPTCHA &middot; <a href="/privacy">privacy policy</a></p>
         </div>
-        <!-- The Menta widget is created on demand (see ensureWidget): in an
-             already verified session nothing is requested from Menta on load. -->
+        <!-- The proof-of-work is solved by /assets/captcha-loader.js through
+             the local proxy: no Menta widget is created here. -->
     </div>
     <script>
         (function () {
@@ -6060,22 +6229,9 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
                 if (solveTimer) { window.clearInterval(solveTimer); solveTimer = null; }
                 if (watchdog) { window.clearTimeout(watchdog); watchdog = null; }
             }
-            // The Menta widget is created only when a verification is actually
-            // needed: an already verified session requests nothing from Menta
-            // on page load (nor while browsing).
-            function ensureWidget() {
-                var w = $("gate-captcha");
-                if (w) return w;
-                w = document.createElement("menta-widget");
-                w.id = "gate-captcha";
-                w.setAttribute("data-cap-direct", "");
-                w.style.display = "none";
-                if (window.gitgostCaptcha && window.gitgostCaptcha.api) {
-                    w.setAttribute("data-cap-api-endpoint", window.gitgostCaptcha.api);
-                }
-                (document.body || document.documentElement).appendChild(w);
-                return w;
-            }
+            // The proof-of-work is solved by the shared loader
+            // (/assets/captcha-loader.js) against the local proxy, so no
+            // Menta widget (and no Menta session) is created here.
             function fail(message) {
                 runId++;
                 clearTimers();
@@ -6085,9 +6241,6 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
                 setStatus(message || "We could not complete the verification. Please try again.", "error");
                 setMeta("");
                 phase = "idle";
-                var widget = $("gate-captcha");
-                if (widget && typeof widget.reset === "function") widget.reset();
-                try { widget.token = null; } catch (e) { /* widget not upgraded yet */ }
             }
             function tick() {
                 setMeta("Solving a proof-of-work challenge in your browser… " + ((Date.now() - t0) / 1000).toFixed(1) + " s");
@@ -6139,18 +6292,17 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
                 solveTimer = window.setInterval(function () {
                     if (myRunId === runId) tick();
                 }, 500);
-                // The challenge is solved in the browser against Menta:
-                //   1) Menta widget against its own API (adaptive PoW),
-                //   2) Menta universal /shield flow (without registering the
+                // The challenge is solved in the browser against Menta, always
+                // through the gitGost local proxy (same origin, so no CORS):
+                //   1) Menta universal /shield flow (without registering the
                 //      domain in Menta),
-                //   3) gitGost local proxy, only if the browser cannot reach
-                //      Menta.
+                //   2) Menta session flow (/init -> /challenge -> PoW ->
+                //      /redeem).
                 if (!window.gitgostCaptcha || typeof window.gitgostCaptcha.solve !== "function") {
                     fail("Could not initialize the verification. Check your connection and try again.");
                     return;
                 }
                 window.gitgostCaptcha.solve({
-                    widget: ensureWidget(),
                     path: window.location.pathname + window.location.search,
                     allowShield: true
                 }).then(function (result) {

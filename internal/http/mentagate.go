@@ -49,10 +49,16 @@ func InitMentaConfig(apiEndpoint, apiKey string, enforce bool) {
 	}
 }
 
+// InitCaptchaGate fija el secreto con el que se firma la cookie de sesión
+// "gost_gate". El secreto se deriva igual que el que se obtiene del entorno
+// (HMAC con sha256("gost-gate:" + secreto)), de modo que las cookies ya
+// emitidas siguen siendo válidas.
 func InitCaptchaGate(secret []byte) {
-	if len(secret) > 0 {
-		captchaGateSecret.Store(secret)
+	if len(secret) == 0 {
+		return
 	}
+	sum := sha256.Sum256([]byte("gost-gate:" + string(secret)))
+	captchaGateSecret.Store(sum[:])
 }
 
 func captchaGateKey() []byte {
@@ -111,7 +117,15 @@ func captchaGateClearance(c *gin.Context) bool {
 	if err != nil || cookie == "" {
 		return false
 	}
-	return validGateCookie(cookie)
+	if validGateCookie(cookie) {
+		return true
+	}
+	// La cookie existe pero ya no valida: la clave de firma cambió, caducó o
+	// fue manipulada. Se borra para que el navegador la elimine; si se deja,
+	// el frontend la da por buena, salta el challenge y vuelve al destino,
+	// que la rechaza otra vez, en un bucle infinito de recargas.
+	clearCaptchaGateCookie(c)
+	return false
 }
 
 func captchaGate() gin.HandlerFunc {
@@ -150,6 +164,23 @@ func setCaptchaGateCookie(c *gin.Context, value string, maxAgeSeconds int) {
 		Value:    value,
 		Path:     "/",
 		MaxAge:   maxAgeSeconds,
+		HttpOnly: false,
+		SameSite: http.SameSiteLaxMode,
+		Secure:   secure,
+	})
+}
+
+// clearCaptchaGateCookie borra la cookie de sesión del gate. Usa el mismo
+// Path y los mismos atributos que la cookie original (incluido Secure) para
+// que el navegador la elimine de verdad.
+func clearCaptchaGateCookie(c *gin.Context) {
+	secure := c.Request.TLS != nil || strings.EqualFold(c.Request.Header.Get("X-Forwarded-Proto"), "https")
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     captchaGateCookieName,
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		Expires:  time.Unix(0, 0),
 		HttpOnly: false,
 		SameSite: http.SameSiteLaxMode,
 		Secure:   secure,
@@ -309,7 +340,26 @@ func CaptchaGateTokenHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
+// CaptchaGateStatusHandler informa al frontend del estado de la sesión del
+// gate. El navegador no puede validar el HMAC de la cookie, así que en lugar
+// de suponerla válida pregunta al servidor: si ya no valida (clave rotada,
+// caducada o manipulada) el servidor la borra y el frontend vuelve a
+// resolver el challenge en lugar de recargar en bucle.
+func CaptchaGateStatusHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"enabled": captchaGateEnabled(),
+		"cleared": captchaGateClearance(c),
+	})
+}
+
 // MentaCaptchaProxyHandler relays to Menta for browsers without direct access.
+//
+// The relay is server-to-server: Menta only authorises browser requests whose
+// origin is registered in its instance (gitGost is not), answering 403 without
+// CORS headers. The browser-only headers (Origin, Referer, cookies and fetch
+// metadata) are therefore dropped before forwarding, so Menta sees a plain
+// API client. They are also a privacy leak: the user's cookies must never
+// reach a third-party service.
 func MentaCaptchaProxyHandler(c *gin.Context) {
 	if mentaAPIEndpoint == "" {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "menta not configured"})
@@ -331,13 +381,34 @@ func MentaCaptchaProxyHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid target"})
 		return
 	}
-	req, err := http.NewRequest(c.Request.Method, target, c.Request.Body)
+	// El cuerpo se relee en memoria: reenviar el stream tal cual deja el
+	// Content-Length sin fijar y la peticion sale con Transfer-Encoding:
+	// chunked, que el servidor de Menta no deshace (llega vacio y responde
+	// 403 "Session and signature required").
+	var body []byte
+	if c.Request.Body != nil {
+		body, err = io.ReadAll(io.LimitReader(c.Request.Body, 1<<20))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "cannot read request body"})
+			return
+		}
+	}
+	req, err := http.NewRequest(c.Request.Method, target, bytes.NewReader(body))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "request build failed"})
 		return
 	}
 	for k, v := range c.Request.Header {
+		if isBrowserOnlyHeader(k) {
+			continue
+		}
 		req.Header[k] = v
+	}
+	// La IP se reenvia a Menta (para que aplique sus limites por IP y sus
+	// retos ligados a la IP), pero la que pone el cliente se descarta: se
+	// sustituye por la que ve el servidor, que es la unica fiable.
+	if ip := c.ClientIP(); ip != "" {
+		req.Header.Set("X-Forwarded-For", ip)
 	}
 	if mentaAPIKey != "" {
 		req.Header.Set("X-API-Key", mentaAPIKey)
@@ -351,10 +422,31 @@ func MentaCaptchaProxyHandler(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 	for k, v := range resp.Header {
+		if isBrowserOnlyHeader(k) {
+			continue
+		}
 		c.Writer.Header()[k] = v
 	}
 	c.Status(resp.StatusCode)
 	_, _ = c.Writer.Write(readAll(resp.Body))
+}
+
+// isBrowserOnlyHeader reports the headers that must not travel between the
+// browser and Menta: they either identify the user's origin (which Menta
+// rejects when it is not registered) or carry the user's session.
+func isBrowserOnlyHeader(name string) bool {
+	switch http.CanonicalHeaderKey(name) {
+	case "Origin", "Referer", "Cookie", "Authorization", "Host", "Connection",
+		"Accept-Encoding", "Content-Length", "Set-Cookie",
+		"Access-Control-Allow-Origin", "Access-Control-Allow-Credentials",
+		"Access-Control-Allow-Headers", "Access-Control-Allow-Methods",
+		"Access-Control-Max-Age", "Access-Control-Expose-Headers",
+		"Sec-Fetch-Site", "Sec-Fetch-Mode", "Sec-Fetch-Dest", "Sec-Fetch-User",
+		"Sec-Ch-Ua", "Sec-Ch-Ua-Mobile", "Sec-Ch-Ua-Platform",
+		"X-Forwarded-For", "X-Forwarded-Proto", "X-Real-Ip":
+		return true
+	}
+	return false
 }
 
 

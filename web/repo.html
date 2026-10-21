@@ -13,7 +13,10 @@
     <link rel="stylesheet" href="/assets/winui-scrollbar.css" />
     <link id="hljs-theme-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github.min.css" />
     <link id="hljs-theme-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github-dark.min.css" disabled />
-        <script src="https://mentacaptchaeu.eu.pythonanywhere.com/menta-captcha.js"></script>
+    <!-- El SDK de Menta lo carga /assets/captcha-loader.js: cargarlo aqui
+         ademas duplicaba la definicion de sus clases ("Can't create duplicate
+         variable: 'CapWidget'") y fijaba el widget contra Menta, que rechaza
+         los origenes no registrados. -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js" integrity="sha384-GdEWAbCjn+ghjX0gLx7/N1hyTVmPAjdC2OvoAA0RyNcAOhqwtT8qnbCxWle2+uJX" crossorigin="anonymous"></script>
     <script>if (typeof hljs !== 'undefined') hljs.configure({ ignoreUnescapedHTML: true });</script>
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js" integrity="sha384-QsSpx6a0USazT7nK7w8qXDgpSAPhFsb2XtpoLFQ5+X2yFN6hvCKnwEzN8M5FWaJb" crossorigin="anonymous"></script>
@@ -3554,6 +3557,13 @@
         }
         const API_BASE = getApiBase();
 
+        // El widget de Menta nunca habla con Menta directamente: Menta rechaza
+        // los origenes que no tiene registrados (403 sin cabeceras CORS).
+        // Todo el trafico del captcha pasa por el proxy de mismo origen.
+        function captchaEndpoint() {
+            return (window.gitgostCaptcha && window.gitgostCaptcha.proxy) || (API_BASE + '/api/captcha');
+        }
+
         function ggApiHeaders() {
             const headers = {};
             try {
@@ -4451,11 +4461,16 @@
                     ]);
                     if (lRes.ok) _bugsLabels = await lRes.json();
                     if (mRes.ok) _bugsMilestones = await mRes.json();
-                    try {
-                        const cRes = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/collaborators?per_page=100`);
-                        if (cRes.ok) _bugsCollaborators = await cRes.json();
-                    } catch(e) {
-                        _bugsCollaborators = [];
+                    // Listar colaboradores exige permisos de push en GitHub: sin
+                    // token la respuesta siempre es 403 (ruido en la consola
+                    // del navegador), asi que solo se pide con token.
+                    if (sessionStorage.getItem('gh_token')) {
+                        try {
+                            const cRes = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/collaborators?per_page=100`);
+                            if (cRes.ok) _bugsCollaborators = await cRes.json();
+                        } catch(e) {
+                            _bugsCollaborators = [];
+                        }
                     }
                 } else if (rv.provider === 'cb') {
                     const [rOpen, rClosed] = await Promise.all([
@@ -4750,7 +4765,7 @@
                                     </div>
                                     <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
                                     <div class="reply-preview readme" id="preview-${replyId}" hidden></div>
-                                    <menta-widget id="${captchaId}" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                                    <menta-widget id="${captchaId}" data-cap-api-endpoint="${captchaEndpoint()}" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                     <div class="reply-footer">
                                         <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                         <span class="reply-status" id="${statusId}"></span>
@@ -5046,7 +5061,7 @@
                             </select>
                         </div>
                     </div>
-                    <menta-widget id="menta-bug" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                    <menta-widget id="menta-bug" data-cap-api-endpoint="${captchaEndpoint()}" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                     </div>`;
         }
 
@@ -5096,7 +5111,7 @@
                                 <option value="">No milestone</option>
                             </select>
                         </div>
-                    <menta-widget id="menta-bug" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                    <menta-widget id="menta-bug" data-cap-api-endpoint="${captchaEndpoint()}" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                             </div>`;
             } else {
                 const fields = Array.isArray(template.body) ? template.body.map((field, index) => bugRenderField(_bugSelectedIndex || 0, index, field)).join('') : '';
@@ -5125,7 +5140,7 @@
                                 <option value="">No milestone</option>
                             </select>
                         </div>
-                    <menta-widget id="menta-bug" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                    <menta-widget id="menta-bug" data-cap-api-endpoint="${captchaEndpoint()}" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                             </div>`;
             }
 
@@ -5624,7 +5639,7 @@
                                     <div class="reply-avatar"><img src="/assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                                     <div class="reply-box">
                                         <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
-                                        <menta-widget id="${captchaId}" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                                        <menta-widget id="${captchaId}" data-cap-api-endpoint="${captchaEndpoint()}" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                         <div class="reply-footer">
                                             <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                             <span class="reply-status" id="${statusId}"></span>
@@ -7113,11 +7128,28 @@
             return files;
         }
 
+        // Un commit se identifica por su SHA. Si el ref no puede ser uno (por
+        // ejemplo, una URL manipulada a mano) no se llama a la API: GitHub
+        // responde 422 "No commit found for SHA" y el navegador lo vuelca en
+        // la consola como error de red.
+        function plausibleCommitRef(ref) {
+            const s = String(ref || '').trim();
+            if (!s || s.length > 120) return false;
+            if (/^[0-9a-f]{7,40}$/i.test(s)) return true;
+            if (s.indexOf('/') !== -1) return true;
+            if (rv && rv.branch && String(rv.branch) === s) return true;
+            return false;
+        }
+
         async function showCommitDetail(sha) {
             const panel = document.getElementById('code-panel');
             _disposePierreDiffs();
             panel.innerHTML = '<div class="code-loading">loading commit...</div>';
             document.title = `${String(sha).substring(0, 7)} · ${rv.owner}/${rv.repo} · gitGost`;
+            if (!plausibleCommitRef(sha)) {
+                panel.innerHTML = '<div class="code-loading" style="color:var(--accent)">error: commit not found</div>';
+                return;
+            }
             try {
                 let commit, files;
                 if (rv.provider === 'gh') {
@@ -7726,7 +7758,7 @@
                                     </div>
                                     <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
                                     <div class="reply-preview readme" id="preview-${replyId}" hidden></div>
-                                    <menta-widget id="${captchaId}" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                                    <menta-widget id="${captchaId}" data-cap-api-endpoint="${captchaEndpoint()}" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                     <div class="reply-footer">
                                         <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                         <span class="reply-status" id="${statusId}"></span>
@@ -11097,9 +11129,8 @@
                 search. No accounts, no tracking cookies.
             </p>
             <div style="display:flex;justify-content:center;margin:0 0 12px;">
-                <!-- The Menta widget is created on demand (see ensureWidget):
-                     in an already verified session nothing is requested from
-                     Menta. -->
+                <!-- The proof-of-work is solved by /assets/captcha-loader.js
+                     through the local proxy: no Menta widget is created here. -->
             </div>
             <p id="gate-status" style="margin:0 0 10px;font-size:12px;color:#ffb4c4;min-height:16px;"></p>
             <button id="gate-submit" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;font-size:14px;cursor:pointer;">Continue</button>
@@ -11121,27 +11152,13 @@
                     return true;
                 });
             }
-            // The Menta widget is created only when a verification is actually
-            // needed: an already verified session requests nothing from Menta
-            // on page load (nor while browsing).
-            function ensureWidget() {
-                let w = document.getElementById("gate-captcha");
-                if (w) return w;
-                w = document.createElement("menta-widget");
-                w.id = "gate-captcha";
-                w.setAttribute("data-cap-direct", "");
-                w.style.display = "none";
-                if (window.gitgostCaptcha && window.gitgostCaptcha.api) {
-                    w.setAttribute("data-cap-api-endpoint", window.gitgostCaptcha.api);
-                }
-                (document.body || document.documentElement).appendChild(w);
-                return w;
-            }
+            // The proof-of-work is solved by the shared loader
+            // (/assets/captcha-loader.js) against the local proxy, so no
+            // Menta widget (and no Menta session) is created here.
             function gateSubmit(token, kind) {
-                const widget = document.getElementById("gate-captcha");
                 const status = document.getElementById("gate-status");
                 const button = document.getElementById("gate-submit");
-                const value = token || (widget && widget.token);
+                const value = token;
                 if (!value) { gateSolve(); return; }
                 // The proof-of-work was solved against Menta; here the proof
                 // is only handed to gitGost so it can issue the session cookie
@@ -11159,15 +11176,14 @@
                 }).then(function (response) {
                     if (response.ok) { window.location.reload(); return; }
                     if (status) status.textContent = "Verification failed. Please try again.";
-                    if (widget && typeof widget.reset === "function") widget.reset();
                 }).catch(function () {
                     if (status) status.textContent = "Network error. Please try again.";
                 }).finally(function () {
                     if (button) { button.disabled = false; }
                 });
             }
-            // The proof-of-work is solved in the browser against Menta (direct
-            // widget, /shield flow or gitGost local proxy), just like in
+            // The proof-of-work is solved in the browser against Menta through
+            // the gitGost local proxy (same origin, so no CORS), just like in
             // /challenge.html; afterwards the proof is handed to the server.
             function gateSolve() {
                 const status = document.getElementById("gate-status");
@@ -11177,7 +11193,6 @@
                     return;
                 }
                 window.gitgostCaptcha.solve({
-                    widget: ensureWidget(),
                     path: window.location.pathname + window.location.search,
                     allowShield: true
                 }).then(function (result) {

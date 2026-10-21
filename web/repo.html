@@ -13,7 +13,8 @@
     <link rel="stylesheet" href="/assets/winui-scrollbar.css" />
     <link id="hljs-theme-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github.min.css" />
     <link id="hljs-theme-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github-dark.min.css" disabled />
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js" integrity="sha384-GdEWAbCjn+ghjX0gLx7/N1hyTVmPAjdC2OvoAA0RyNcAOhqwtT8qnbCxWle2+uJX" crossorigin="anonymous"></script>
+        <script src="https://mentacaptchaeu.eu.pythonanywhere.com/menta-captcha.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js" integrity="sha384-GdEWAbCjn+ghjX0gLx7/N1hyTVmPAjdC2OvoAA0RyNcAOhqwtT8qnbCxWle2+uJX" crossorigin="anonymous"></script>
     <script>if (typeof hljs !== 'undefined') hljs.configure({ ignoreUnescapedHTML: true });</script>
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js" integrity="sha384-QsSpx6a0USazT7nK7w8qXDgpSAPhFsb2XtpoLFQ5+X2yFN6hvCKnwEzN8M5FWaJb" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/environment-badge@1.3.1/dist/bundle.js" integrity="sha384-2H0I1nyweBXE/B5DkvHgwGP0fghz2xTxgnK5BliEczCX5AEWyzPRo2oeA5L5U1Ni" crossorigin="anonymous"></script>
@@ -4749,7 +4750,8 @@
                                     </div>
                                     <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
                                     <div class="reply-preview readme" id="preview-${replyId}" hidden></div>
-                                                                        <div class="reply-footer">
+                                    <menta-widget id="${captchaId}" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                                    <div class="reply-footer">
                                         <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                         <span class="reply-status" id="${statusId}"></span>
                                         <button class="reply-send-btn" onclick="submitIssueComment('${escJsStr(rv.provider)}','${escJsStr(rv.owner)}','${escJsStr(rv.repo)}',${escJsStr(num)},'${escJsStr(replyId)}','${escJsStr(tokenId)}','${escJsStr(statusId)}','${escJsStr(listId)}','${escJsStr(captchaId)}')" title="Send">
@@ -5044,6 +5046,7 @@
                             </select>
                         </div>
                     </div>
+                    <menta-widget id="menta-bug" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                     </div>`;
         }
 
@@ -5093,6 +5096,7 @@
                                 <option value="">No milestone</option>
                             </select>
                         </div>
+                    <menta-widget id="menta-bug" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                             </div>`;
             } else {
                 const fields = Array.isArray(template.body) ? template.body.map((field, index) => bugRenderField(_bugSelectedIndex || 0, index, field)).join('') : '';
@@ -5121,6 +5125,7 @@
                                 <option value="">No milestone</option>
                             </select>
                         </div>
+                    <menta-widget id="menta-bug" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                             </div>`;
             }
 
@@ -5264,6 +5269,9 @@
             const assignee = assigneeEl?.value || '';
             const milestone = milestoneEl?.value || '';
 
+            const captchaToken = await window.gitgostCaptchaToken('menta-bug');
+            if (captchaToken === null) { if (statusEl) statusEl.textContent = 'Please complete the captcha'; return; }
+
             const title = titleEl?.value.trim();
             if (!title) { if (titleEl) titleEl.focus(); return; }
 
@@ -5283,7 +5291,7 @@
             if (btn) btn.disabled = true;
             if (statusEl) statusEl.textContent = 'Sending...';
             try {
-                const payload = { title, body, labels };
+                const payload = { title, body, labels, captcha_token: captchaToken };
                 if (assignee) payload.assignee = assignee;
                 if (milestone) payload.milestone = milestone;
                 const res = await fetch(`/v1/${rv.provider}/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/issues/anonymous`, {
@@ -5616,7 +5624,8 @@
                                     <div class="reply-avatar"><img src="/assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                                     <div class="reply-box">
                                         <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
-                                                                                <div class="reply-footer">
+                                        <menta-widget id="${captchaId}" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                                        <div class="reply-footer">
                                             <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                             <span class="reply-status" id="${statusId}"></span>
                                             <button class="reply-send-btn" onclick="submitDiscussionComment('${escJsStr(rv.owner)}','${escJsStr(rv.repo)}',${num},'${replyId}','${tokenId}','${statusId}','${captchaId}')" title="Send">
@@ -5663,11 +5672,13 @@
             const statusEl = document.getElementById(statusId);
             const body = textarea?.value.trim();
             if (!body) { if (statusEl) statusEl.textContent = 'write something first'; return; }
+            const captchaToken = captchaId ? await window.gitgostCaptchaToken(captchaId) : null;
+            if (captchaToken === null) { if (statusEl) statusEl.textContent = 'please complete the captcha'; return; }
             const btn = textarea?.closest('.reply-box')?.querySelector('.reply-send-btn');
             if (btn) btn.disabled = true;
             if (statusEl) statusEl.textContent = 'sending...';
             const savedToken = sessionStorage.getItem('comment_token') || '';
-            const payload = { body };
+            const payload = { body, captcha_token: captchaToken };
             const manualToken = tokenEl?.value.trim();
             const useToken = manualToken || savedToken;
             if (useToken) payload.user_token = useToken;
@@ -7571,11 +7582,13 @@
             const statusEl = document.getElementById(statusId);
             const body = textarea?.value.trim();
             if (!body) { if (statusEl) statusEl.textContent = 'write something first'; return; }
+            const captchaToken = captchaId ? await window.gitgostCaptchaToken(captchaId) : null;
+            if (captchaToken === null) { if (statusEl) statusEl.textContent = 'please complete the captcha'; return; }
             const btn = textarea?.closest('.reply-box')?.querySelector('.reply-send-btn');
             if (btn) btn.disabled = true;
             if (statusEl) statusEl.textContent = 'sending...';
             const savedToken = sessionStorage.getItem('comment_token') || '';
-            const payload = { body };
+            const payload = { body, captcha_token: captchaToken };
             const manualToken = tokenEl?.value.trim();
             const useToken = manualToken || savedToken;
             if (useToken) payload.user_token = useToken;
@@ -7713,7 +7726,8 @@
                                     </div>
                                     <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
                                     <div class="reply-preview readme" id="preview-${replyId}" hidden></div>
-                                                                        <div class="reply-footer">
+                                    <menta-widget id="${captchaId}" data-cap-api-endpoint="https://mentacaptchaeu.eu.pythonanywhere.com" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+                                    <div class="reply-footer">
                                         <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                         <span class="reply-status" id="${statusId}"></span>
                                         <button class="reply-send-btn" onclick="submitIssueComment('${escJsStr(rv.provider)}','${escJsStr(rv.owner)}','${escJsStr(rv.repo)}',${escJsStr(num)},'${escJsStr(replyId)}','${escJsStr(tokenId)}','${escJsStr(statusId)}',null,'${escJsStr(captchaId)}')" title="Send">
@@ -11033,11 +11047,8 @@
                 <a href="#" data-cmd="cli">cli</a>
                 <a href="#" data-cmd="git-extension">git extension</a>
                 <a href="#" data-cmd="settings">settings</a>
-                <div class="statusbar-command-menu-divider"></div>
-                <a href="#" data-cmd="issue">issue</a>
-                <a href="#" data-cmd="comment">comment</a>
-                <a href="#" data-cmd="pr-comment">pr comment</a>
-                <a href="#" data-cmd="legal">legal</a>
+                    <div class="statusbar-command-menu-divider"></div>
+                    <a href="#" data-cmd="legal">legal</a>
                 <a href="#" data-cmd="about">about</a>
                 <a href="#" data-cmd="stats">stats</a>
                     <div class="statusbar-command-menu-divider"></div>
@@ -11048,6 +11059,14 @@
     </footer>
     <script src="/bip39-words.js"></script>
     <script src="/zkp-client.js?v=3"></script>
+    <script>
+        window.gitgostCaptchaToken = async function (id) {
+            const w = document.getElementById(id);
+            if (!w) return '';
+            if (w.token) return w.token;
+            return null;
+        };
+    </script>
     <script src="/ethicalmetrics.js" data-site-key="gitgost-repo"></script>
     <!-- CAPTCHA gate anti-scraping: el backend exige cookie "gost_gate"
          (emitida aquí tras resolver Menta) para los endpoints de browsing.

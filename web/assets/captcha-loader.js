@@ -113,7 +113,9 @@
     }
     async function solveWithWidget(widget, base) {
         if (!widget || typeof widget.solve !== "function") throw new Error("no-widget");
-        widget.setAttribute("data-cap-api-endpoint", base);
+        // Never overwrite the widget endpoint with an empty value
+        // (e.g. if the SDK failed to load).
+        if (base) widget.setAttribute("data-cap-api-endpoint", base);
         widget.token = null;
         widget.sessionId = null;
         widget.sessionSignature = null;
@@ -135,7 +137,11 @@
             return null;
         }
         var result = null;
-        var direct = !!(widget && widget.hasAttribute && widget.hasAttribute("data-cap-direct"));
+        // A widget with its own endpoint (data-cap-direct or
+        // data-cap-api-endpoint) can talk to Menta directly; otherwise the
+        // local proxy is used.
+        var direct = !!(widget && widget.hasAttribute &&
+            (widget.hasAttribute("data-cap-direct") || widget.hasAttribute("data-cap-api-endpoint")));
         if (direct && state.api) result = await tryWidget(state.api, "menta");
         if (!result && state.api && options.allowShield) {
             try {

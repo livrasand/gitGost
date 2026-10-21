@@ -5933,11 +5933,13 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
     <script src="/bip39-words.js"></script>
         <script src="/zkp-client.js?v=4"></script>
         <script src="/assets/captcha-loader.js"></script>
-    <!-- CAPTCHA gate anti-scraping: el backend exige cookie "gost_gate"
-         (emitida aquí tras resolver Menta) para los endpoints de browsing.
-         Sin cookie válida no hay contenido: primer dibujo o expiración a las 24h re-desafía.
-         El modal replica el diseño del challenge page de Menta: resolución automática
-         del PoW (widget invisible) con spinner, estado, progreso transcurrido y reintento. -->
+    <!-- CAPTCHA gate anti-scraping: the backend requires the "gost_gate" cookie
+         (issued here after solving Menta) for the browsing endpoints.
+         Without a valid cookie there is no content: the first draw or the
+         24h expiry challenges again.
+         The modal mirrors the Menta challenge page design: automatic PoW
+         resolution (invisible widget) with spinner, status, elapsed time and
+         retry. -->
     <style>
         #gate-overlay {
             position: fixed;
@@ -6016,12 +6018,14 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
     <div id="gate-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="gate-heading">
         <div class="gate-card">
             <div id="gate-spinner" class="gate-spinner" aria-hidden="true"></div>
-            <h2 id="gate-heading">Verificando que eres humano</h2>
-            <p id="gate-status" aria-live="polite">Esta es una comprobación de proof-of-work: sin cookies, sin rastreo, sin puzzles que resolver.</p>
+            <h2 id="gate-heading">Verifying you are human</h2>
+            <p id="gate-status" aria-live="polite">This is a proof-of-work check: no cookies, no tracking, no puzzles to solve.</p>
             <p id="gate-meta"></p>
-            <button id="gate-retry" type="button">Reintentar</button>
-                        <p id="gate-foot">Prueba de rendimiento por <a href="https://github.com/livrasand/mentacaptcha" target="_blank" rel="noopener">Menta</a> &middot; CAPTCHA centrado en la privacidad &middot; <a href="/privacy">política de privacidad</a></p>
+            <button id="gate-retry" type="button">Retry</button>
+                        <p id="gate-foot">Performance test by <a href="https://github.com/livrasand/mentacaptcha" target="_blank" rel="noopener">Menta</a> &middot; Privacy-focused CAPTCHA &middot; <a href="/privacy">privacy policy</a></p>
         </div>
+        <!-- The Menta widget is created on demand (see ensureWidget): in an
+             already verified session nothing is requested from Menta on load. -->
     </div>
     <script>
         (function () {
@@ -6033,7 +6037,7 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
                     if (trimmed.lastIndexOf("gost_gate=", 0) !== 0) return false;
                     var value = trimmed.slice("gost_gate=".length);
                     var pieces = value.split("|");
-                    if (pieces.length !== 3 || pieces[0] !== "g1") return false;
+                    if (pieces.length !== 3 || pieces[0] !== "g2") return false;
                     var exp = parseInt(pieces[1], 10);
                     if (!isFinite(exp) || exp <= Math.floor(Date.now() / 1000)) return false;
                     return true;
@@ -6056,45 +6060,67 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
                 if (solveTimer) { window.clearInterval(solveTimer); solveTimer = null; }
                 if (watchdog) { window.clearTimeout(watchdog); watchdog = null; }
             }
+            // The Menta widget is created only when a verification is actually
+            // needed: an already verified session requests nothing from Menta
+            // on page load (nor while browsing).
+            function ensureWidget() {
+                var w = $("gate-captcha");
+                if (w) return w;
+                w = document.createElement("menta-widget");
+                w.id = "gate-captcha";
+                w.setAttribute("data-cap-direct", "");
+                w.style.display = "none";
+                if (window.gitgostCaptcha && window.gitgostCaptcha.api) {
+                    w.setAttribute("data-cap-api-endpoint", window.gitgostCaptcha.api);
+                }
+                (document.body || document.documentElement).appendChild(w);
+                return w;
+            }
             function fail(message) {
                 runId++;
                 clearTimers();
                 setSpinner(false);
                 setRetry(true);
-                setHeading("Algo salió mal");
-                setStatus(message || "No pudimos completar la verificación. Por favor, inténtalo de nuevo.", "error");
+                setHeading("Something went wrong");
+                setStatus(message || "We could not complete the verification. Please try again.", "error");
                 setMeta("");
                 phase = "idle";
                 var widget = $("gate-captcha");
                 if (widget && typeof widget.reset === "function") widget.reset();
-                try { widget.token = null; } catch (e) { /* widget no mejorado aún */ }
+                try { widget.token = null; } catch (e) { /* widget not upgraded yet */ }
             }
             function tick() {
-                setMeta("Resolviendo una prueba de trabajo en tu navegador… " + ((Date.now() - t0) / 1000).toFixed(1) + " s");
+                setMeta("Solving a proof-of-work challenge in your browser… " + ((Date.now() - t0) / 1000).toFixed(1) + " s");
             }
-            function submitGate(token) {
-                setStatus("Confirmando con el servidor…");
+            function submitGate(token, kind) {
+                setStatus("Confirming with the server…");
+                // The proof-of-work was solved against Menta; here the proof
+                // is only handed to gitGost so it can issue the session cookie
+                // (a single server-to-server call to Menta).
+                var payload = kind === "shield"
+                    ? { shield_clearance: token }
+                    : { captcha_token: token };
                 fetch(getApiBase() + "/api/captcha-gate", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     credentials: "same-origin",
-                    body: JSON.stringify({ captcha_token: token })
+                    body: JSON.stringify(payload)
                 }).then(function (response) {
                     if (response.ok) {
                         clearTimers();
                         setSpinner(false);
                         setRetry(false);
-                        setHeading("Verificación completa");
-                        setStatus("¡Éxito! Recargando…", "ok");
-                        setMeta("Completado en " + ((Date.now() - t0) / 1000).toFixed(2) + " s");
+                        setHeading("Verification complete");
+                        setStatus("Success! Reloading…", "ok");
+                        setMeta("Completed in " + ((Date.now() - t0) / 1000).toFixed(2) + " s");
                         phase = "done";
                         window.setTimeout(function () { window.location.reload(); }, 1200);
                         return;
                     }
-                    if (response.status === 429) fail("Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.");
-                    else fail("Verificación fallida. Por favor, inténtalo de nuevo.");
+                    if (response.status === 429) fail("Too many requests. Please wait a moment and try again.");
+                    else fail("Verification failed. Please try again.");
                 }).catch(function () {
-                    fail("Error de red. Por favor, inténtalo de nuevo.");
+                    fail("Network error. Please try again.");
                 });
             }
             function runAttempt() {
@@ -6103,75 +6129,83 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
                 var myRunId = ++runId;
                 setSpinner(true);
                 setRetry(false);
-                setHeading("Verificando que eres humano");
-                setStatus("Esta es una comprobación de proof-of-work: sin cookies, sin rastreo, sin puzzles que resolver.");
+                setHeading("Verifying you are human");
+                setStatus("This is a proof-of-work check: no cookies, no tracking, no puzzles to solve.");
                 setMeta("");
-                var widget = $("gate-captcha");
-                var deferral;
-                if (window.customElements) {
-                    deferral = Promise.race([
-                        window.customElements.whenDefined("menta-widget"),
-                        new Promise(function (resolve, reject) {
-                            window.setTimeout(function () { reject(new Error("sdk-timeout")); }, 15000);
-                        })
-                    ]);
-                } else {
-                    deferral = Promise.reject(new Error("no-custom-elements"));
+                t0 = Date.now();
+                watchdog = window.setTimeout(function () {
+                    if (myRunId === runId && phase === "busy") fail("The verification took too long. Please try again.");
+                }, 90000);
+                solveTimer = window.setInterval(function () {
+                    if (myRunId === runId) tick();
+                }, 500);
+                // The challenge is solved in the browser against Menta:
+                //   1) Menta widget against its own API (adaptive PoW),
+                //   2) Menta universal /shield flow (without registering the
+                //      domain in Menta),
+                //   3) gitGost local proxy, only if the browser cannot reach
+                //      Menta.
+                if (!window.gitgostCaptcha || typeof window.gitgostCaptcha.solve !== "function") {
+                    fail("Could not initialize the verification. Check your connection and try again.");
+                    return;
                 }
-                deferral.then(function () {
+                window.gitgostCaptcha.solve({
+                    widget: ensureWidget(),
+                    path: window.location.pathname + window.location.search,
+                    allowShield: true
+                }).then(function (result) {
                     if (myRunId !== runId) return;
-                    widget = $("gate-captcha");
-                    if (!widget || typeof widget.solve !== "function") throw new Error("no-widget");
-                    if (widget.token) { phase = "idle"; submitGate(widget.token); return; }
-                    widget.addEventListener("solve", function (event) {
-                        if (myRunId !== runId) return;
-                        clearTimers();
-                        phase = "idle";
-                        var token = (event.detail && event.detail.token) || (widget && widget.token);
-                        if (token) submitGate(token);
-                        else fail("Verificación fallida. Por favor, inténtalo de nuevo.");
-                    }, { once: true });
-                    t0 = Date.now();
-                    watchdog = window.setTimeout(function () {
-                        if (myRunId === runId && phase === "busy") fail("La verificación tardó demasiado. Por favor, inténtalo de nuevo.");
-                    }, 90000);
-                    solveTimer = window.setInterval(function () {
-                        if (myRunId === runId) tick();
-                    }, 500);
-                    var pending = widget.solve();
-                    // solve() resuelve su promesa al terminar TODO el flujo: si
-                    // acabó sin token es que init/challenge/redeem falló — fallar
-                    // rápido en vez de esperar al watchdog de 90 s.
-                    if (pending && typeof pending.then === "function") {
-                        pending.then(function () {
-                            if (myRunId !== runId || phase !== "busy") return;
-                            window.setTimeout(function () {
-                                if (myRunId !== runId || phase !== "busy") return;
-                                if (!widget.token) fail("Verificación fallida. Por favor, inténtalo de nuevo.");
-                            }, 400);
-                        });
-                        if (typeof pending.catch === "function") pending.catch(function () { /* gestionado arriba */ });
-                    }
-                }, function () {
-                    fail("No se pudo inicializar la verificación. Revisa tu conexión e inténtalo de nuevo.");
+                    clearTimers();
+                    phase = "idle";
+                    if (result && result.token) submitGate(result.token, result.kind);
+                    else fail("Verification failed. Please try again.");
                 }).catch(function () {
-                    fail("No se pudo inicializar la verificación. Revisa tu conexión e inténtalo de nuevo.");
+                    if (myRunId !== runId) return;
+                    clearTimers();
+                    // If the Menta SDK did not even load, the problem is not
+                    // the challenge but the initialization.
+                    if (window.gitgostCaptcha && window.gitgostCaptcha.error) {
+                        fail("Could not initialize the verification. Check your connection and try again.");
+                        return;
+                    }
+                    fail("Verification failed. Please try again.");
                 });
             }
-            // El loader compartido (/assets/captcha-loader.js) pregunta una sola
-            // vez por /api/config: predice si el gate está habilitado y solo inyecta
-            // el SDK de Menta entonces. Con CAPTCHA off no hay widget ni /init.
-            // Aquí, si hace falta, el PoW se resuelve solo: el usuario solo
-            // ve el spinner, el progreso y, si algo fallara, el botón Reintentar.
+            // The shared loader (/assets/captcha-loader.js) asks /api/config
+            // once: it predicts whether the gate is enabled and only then
+            // injects the Menta SDK. With CAPTCHA off there is no widget and
+            // no /init.
+            // Here, if needed, the PoW is solved automatically: the user only
+            // sees the spinner, the progress and, if something fails, the
+            // Retry button.
             if (window.gitgostCaptchaReady) window.gitgostCaptchaReady.then(function (enabled) {
                 var overlay = $("gate-overlay");
-                if (!enabled || !overlay || gateCookiePresent()) return;
+                if (!overlay || gateCookiePresent()) return;
                 headingEl = $("gate-heading");
                 statusEl = $("gate-status");
                 metaEl = $("gate-meta");
                 spinnerEl = $("gate-spinner");
                 retryEl = $("gate-retry");
-                if (retryEl) retryEl.addEventListener("click", runAttempt);
+                if (retryEl) retryEl.addEventListener("click", function () {
+                    // If the initialization failed (the SDK could not be loaded
+                    // nor Menta reached), retry it before solving.
+                    if (window.gitgostCaptcha && window.gitgostCaptcha.error &&
+                        typeof window.gitgostCaptcha.init === "function") {
+                        window.gitgostCaptcha.init().then(function () { runAttempt(); });
+                        return;
+                    }
+                    runAttempt();
+                });
+                if (!enabled) {
+                    // The gate is active but the SDK could not be loaded: we
+                    // report it and allow a retry instead of leaving the page
+                    // blocked with no explanation.
+                    if (window.gitgostCaptcha && window.gitgostCaptcha.error) {
+                        overlay.style.display = "flex";
+                        fail("Could not initialize the verification. Check your connection and try again.");
+                    }
+                    return;
+                }
                 overlay.style.display = "flex";
                 runAttempt();
             });

@@ -339,8 +339,8 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.StaticFile("/challenge.html", "./web/challenge.html")
 	r.StaticFile("/robots.txt", "./web/robots.txt")
 	r.StaticFile("/llms.txt", "./web/llms.txt")
-	r.GET("/repo.html", func(c *gin.Context) { c.File("./web/repo.html") })
-	r.GET("/profile.html", func(c *gin.Context) { c.File("./web/profile.html") })
+	r.GET("/repo.html", func(c *gin.Context) { serveDocumentWithGate(c, "./web/repo.html") })
+	r.GET("/profile.html", func(c *gin.Context) { serveDocumentWithGate(c, "./web/profile.html") })
 	r.StaticFile("/sw.js", "./web/sw.js")
 	r.StaticFile("/colors.json", "./web/colors.json")
 	r.StaticFile("/robots.json", "./web/robots.json")
@@ -456,8 +456,10 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/gh-discussion/:owner/:repo/:number", proxyLimiter(), GitHubDiscussionDetailProxyHandler)
 		api.GET("/gh-wiki/:owner/:repo/:page", proxyLimiter(), GitHubWikiProxyHandler)
 		api.GET("/gl-wiki/:owner/:repo", proxyLimiter(), GitLabWikiProxyHandler)
-		// Ruta aparte del proxy /captcha/*path para no chocar el catch-all:
-		// el frontend POSTs aquí el token del widget y hereda la cookie.
+	// Ruta aparte del proxy /captcha/*path para no chocar el catch-all:
+	// el frontend POSTs aquí el token del widget y hereda la cookie.
+		api.POST("/captcha-gate", captchaLimiter(), CaptchaGateTokenHandler)
+		api.Any("/captcha/*path", captchaLimiter(), MentaCaptchaProxyHandler)
 	}
 
 	r.GET("/appeal", AppealStartHandler)
@@ -494,14 +496,14 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		}
 		if c.Request.Method == http.MethodGet {
 			if c.Request.URL.Path == "/" {
-				c.File("./web/index.html")
+				serveDocumentWithGate(c, "./web/index.html")
 				return
 			}
 			parts := strings.Split(strings.Trim(c.Request.URL.Path, "/"), "/")
 			isProvider := len(parts) > 0 && (parts[0] == "gh" || parts[0] == "gl" || parts[0] == "cb" || parts[0] == "gg")
 			if isProvider && len(parts) >= 2 {
 				if len(parts) == 2 {
-					c.File("./web/profile.html")
+					serveDocumentWithGate(c, "./web/profile.html")
 					return
 				}
 				profileViews := map[string]bool{
@@ -512,7 +514,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 					c.File("./web/profile.html")
 					return
 				}
-				c.File("./web/repo.html")
+				serveDocumentWithGate(c, "./web/repo.html")
 				return
 			}
 			knownPages := map[string]bool{

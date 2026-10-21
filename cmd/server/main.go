@@ -94,6 +94,9 @@ func main() {
 		utils.Log("Warning: Supabase not configured, stats will not be persisted")
 	}
 
+	// Initialize Menta CAPTCHA
+	handler.InitMentaConfig(cfg.MentaAPIEndpoint, cfg.MentaAPIKey, cfg.MentaEnforceCaptcha)
+
 	// Initialize panic button
 	handler.InitPanicConfig(cfg.PanicPassword, cfg.NtfyAdminTopic)
 	if cfg.NtfyAdminTopic != "" {

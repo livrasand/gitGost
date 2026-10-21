@@ -13,8 +13,7 @@
     <link rel="stylesheet" href="/assets/winui-scrollbar.css" />
     <link id="hljs-theme-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github.min.css" />
     <link id="hljs-theme-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github-dark.min.css" disabled />
-    <script src="/assets/captcha-loader.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js" integrity="sha384-GdEWAbCjn+ghjX0gLx7/N1hyTVmPAjdC2OvoAA0RyNcAOhqwtT8qnbCxWle2+uJX" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js" integrity="sha384-GdEWAbCjn+ghjX0gLx7/N1hyTVmPAjdC2OvoAA0RyNcAOhqwtT8qnbCxWle2+uJX" crossorigin="anonymous"></script>
     <script>if (typeof hljs !== 'undefined') hljs.configure({ ignoreUnescapedHTML: true });</script>
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js" integrity="sha384-QsSpx6a0USazT7nK7w8qXDgpSAPhFsb2XtpoLFQ5+X2yFN6hvCKnwEzN8M5FWaJb" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/environment-badge@1.3.1/dist/bundle.js" integrity="sha384-2H0I1nyweBXE/B5DkvHgwGP0fghz2xTxgnK5BliEczCX5AEWyzPRo2oeA5L5U1Ni" crossorigin="anonymous"></script>
@@ -4750,8 +4749,7 @@
                                     </div>
                                     <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
                                     <div class="reply-preview readme" id="preview-${replyId}" hidden></div>
-                                    <menta-widget id="${captchaId}" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
-                                    <div class="reply-footer">
+                                                                        <div class="reply-footer">
                                         <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                         <span class="reply-status" id="${statusId}"></span>
                                         <button class="reply-send-btn" onclick="submitIssueComment('${escJsStr(rv.provider)}','${escJsStr(rv.owner)}','${escJsStr(rv.repo)}',${escJsStr(num)},'${escJsStr(replyId)}','${escJsStr(tokenId)}','${escJsStr(statusId)}','${escJsStr(listId)}','${escJsStr(captchaId)}')" title="Send">
@@ -5046,8 +5044,7 @@
                             </select>
                         </div>
                     </div>
-                    <menta-widget id="menta-bug" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
-                </div>`;
+                                    </div>`;
         }
 
         function bugRenderTemplateForm() {
@@ -5096,8 +5093,7 @@
                                 <option value="">No milestone</option>
                             </select>
                         </div>
-                        <menta-widget id="menta-bug" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
-                    </div>`;
+                                            </div>`;
             } else {
                 const fields = Array.isArray(template.body) ? template.body.map((field, index) => bugRenderField(_bugSelectedIndex || 0, index, field)).join('') : '';
                 body.innerHTML = `
@@ -5125,8 +5121,7 @@
                                 <option value="">No milestone</option>
                             </select>
                         </div>
-                        <menta-widget id="menta-bug" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
-                    </div>`;
+                                            </div>`;
             }
 
             body.querySelector('[data-bug-back]')?.addEventListener('click', bugRenderList);
@@ -5268,7 +5263,6 @@
             const labels = labelsRaw ? labelsRaw.split(',').map(l => l.trim()).filter(Boolean) : [];
             const assignee = assigneeEl?.value || '';
             const milestone = milestoneEl?.value || '';
-            const captchaToken = await window.gitgostCaptchaToken('menta-bug');
 
             const title = titleEl?.value.trim();
             if (!title) { if (titleEl) titleEl.focus(); return; }
@@ -5286,11 +5280,10 @@
                 return;
             }
 
-            if (captchaToken === null) { if (statusEl) statusEl.textContent = 'Please complete the captcha'; return; }
             if (btn) btn.disabled = true;
             if (statusEl) statusEl.textContent = 'Sending...';
             try {
-                const payload = { title, body, labels, captcha_token: captchaToken };
+                const payload = { title, body, labels };
                 if (assignee) payload.assignee = assignee;
                 if (milestone) payload.milestone = milestone;
                 const res = await fetch(`/v1/${rv.provider}/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/issues/anonymous`, {
@@ -5312,7 +5305,6 @@
             } catch(e) {
                 if (statusEl) statusEl.textContent = `Error: ${e.message}`;
                 if (btn) btn.disabled = false;
-                resetCaptchaWidget('menta-bug');
             }
         }
         let _prsCache = null;
@@ -5624,8 +5616,7 @@
                                     <div class="reply-avatar"><img src="/assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                                     <div class="reply-box">
                                         <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
-                                        <menta-widget id="${captchaId}" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
-                                        <div class="reply-footer">
+                                                                                <div class="reply-footer">
                                             <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                             <span class="reply-status" id="${statusId}"></span>
                                             <button class="reply-send-btn" onclick="submitDiscussionComment('${escJsStr(rv.owner)}','${escJsStr(rv.repo)}',${num},'${replyId}','${tokenId}','${statusId}','${captchaId}')" title="Send">
@@ -5672,13 +5663,11 @@
             const statusEl = document.getElementById(statusId);
             const body = textarea?.value.trim();
             if (!body) { if (statusEl) statusEl.textContent = 'write something first'; return; }
-            const captchaToken = await window.gitgostCaptchaToken(captchaId);
-            if (captchaToken === null) { if (statusEl) statusEl.textContent = 'please complete the captcha'; return; }
             const btn = textarea?.closest('.reply-box')?.querySelector('.reply-send-btn');
             if (btn) btn.disabled = true;
             if (statusEl) statusEl.textContent = 'sending...';
             const savedToken = sessionStorage.getItem('comment_token') || '';
-            const payload = { body, captcha_token: captchaToken };
+            const payload = { body };
             const manualToken = tokenEl?.value.trim();
             const useToken = manualToken || savedToken;
             if (useToken) payload.user_token = useToken;
@@ -5719,7 +5708,6 @@
                 if (statusEl) statusEl.textContent = 'error: ' + e.message;
             } finally {
                 if (btn) btn.disabled = false;
-                if (captchaId) resetCaptchaWidget(captchaId);
             }
         }
 
@@ -7583,13 +7571,11 @@
             const statusEl = document.getElementById(statusId);
             const body = textarea?.value.trim();
             if (!body) { if (statusEl) statusEl.textContent = 'write something first'; return; }
-            const captchaToken = await window.gitgostCaptchaToken(captchaId);
-            if (captchaToken === null) { if (statusEl) statusEl.textContent = 'please complete the captcha'; return; }
             const btn = textarea?.closest('.reply-box')?.querySelector('.reply-send-btn');
             if (btn) btn.disabled = true;
             if (statusEl) statusEl.textContent = 'sending...';
             const savedToken = sessionStorage.getItem('comment_token') || '';
-            const payload = { body, captcha_token: captchaToken };
+            const payload = { body };
             const manualToken = tokenEl?.value.trim();
             const useToken = manualToken || savedToken;
             if (useToken) payload.user_token = useToken;
@@ -7627,7 +7613,6 @@
                 if (statusEl) statusEl.textContent = 'error: ' + e.message;
             } finally {
                 if (btn) btn.disabled = false;
-                if (captchaId) resetCaptchaWidget(captchaId);
             }
         }
 
@@ -7728,8 +7713,7 @@
                                     </div>
                                     <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
                                     <div class="reply-preview readme" id="preview-${replyId}" hidden></div>
-                                    <menta-widget id="${captchaId}" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
-                                    <div class="reply-footer">
+                                                                        <div class="reply-footer">
                                         <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                         <span class="reply-status" id="${statusId}"></span>
                                         <button class="reply-send-btn" onclick="submitIssueComment('${escJsStr(rv.provider)}','${escJsStr(rv.owner)}','${escJsStr(rv.repo)}',${escJsStr(num)},'${escJsStr(replyId)}','${escJsStr(tokenId)}','${escJsStr(statusId)}',null,'${escJsStr(captchaId)}')" title="Send">
@@ -11077,8 +11061,7 @@
                 buscar. Sin cuentas, sin cookies de rastreo.
             </p>
             <div style="display:flex;justify-content:center;margin:0 0 12px;">
-                <menta-widget id="gate-captcha" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
-            </div>
+                            </div>
             <p id="gate-status" style="margin:0 0 10px;font-size:12px;color:#ffb4c4;min-height:16px;"></p>
             <button id="gate-submit" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;font-size:14px;cursor:pointer;">Continuar</button>
             <p style="margin:12px 0 0;font-size:11px;color:#9fb3ff;">No comparte tu IP con forges externos. Referencias: nuestra <a href="/privacy" style="color:#f76f53;text-decoration:none;">política de privacidad</a>.</p>
@@ -11125,7 +11108,7 @@
             // El loader compartido (/assets/captcha-loader.js) pregunta una sola
             // vez por /api/config: predice si el gate está habilitado y solo inyecta
             // el SDK de Menta entonces. Con CAPTCHA off no hay widget ni /init.
-            window.gitgostCaptchaReady.then(function (enabled) {
+            if (window.gitgostCaptchaReady) window.gitgostCaptchaReady.then(function (enabled) {
                 const overlay = document.getElementById("gate-overlay");
                 const button = document.getElementById("gate-submit");
                 if (!enabled || !overlay || gateCookiePresent()) return;

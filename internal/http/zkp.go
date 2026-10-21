@@ -168,10 +168,6 @@ func ZKPRegisterHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid public_key"})
 		return
 	}
-	if !verifyMentaCaptcha(req.CaptchaToken) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "captcha verification failed"})
-		return
-	}
 	// Honeypot: silently accept bots/crawlers that filled the hidden field
 	// without ever storing a registration. The 201 reply is identical to a
 	// real success so the trap is never revealed.

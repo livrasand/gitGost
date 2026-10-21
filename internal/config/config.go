@@ -20,11 +20,8 @@ type Config struct {
 	SupabaseURL      string
 	SupabaseKey      string
 	PanicPassword    string
-	NtfyAdminTopic   string
-	MentaAPIEndpoint string
-	MentaAPIKey      string
-	MentaEnforce     bool
-	MaintenanceMode  bool
+	NtfyAdminTopic  string
+	MaintenanceMode bool
 }
 
 func Load() *Config {
@@ -39,11 +36,8 @@ func Load() *Config {
 		SupabaseURL:      getEnv("SUPABASE_URL", ""),
 		SupabaseKey:      getEnv("SUPABASE_KEY", ""),
 		PanicPassword:    getEnv("PANIC_PASSWORD", ""),
-		NtfyAdminTopic:   getEnv("NTFY_ADMIN_TOPIC", ""),
-		MentaAPIEndpoint: getEnv("MENTA_API_ENDPOINT", ""),
-		MentaAPIKey:      getEnv("MENTA_API_KEY", ""),
-		MentaEnforce:     getEnv("MENTA_CAPTCHA_ENFORCED", "") == "true",
-		MaintenanceMode:  getEnv("MAINTENANCE_MODE", "") == "true",
+		NtfyAdminTopic:  getEnv("NTFY_ADMIN_TOPIC", ""),
+		MaintenanceMode: getEnv("MAINTENANCE_MODE", "") == "true",
 	}
 
 	return cfg

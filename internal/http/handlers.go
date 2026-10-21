@@ -837,11 +837,7 @@ func SetBuildInfo(hash, built, repo string) {
 // sin que gitGost tenga que hardcodear la URL de Menta en el HTML, y el
 // cliente puede derivarla del propio SDK que sirve Menta.
 func ConfigHandler(c *gin.Context) {
-	body := gin.H{"captcha_gate": captchaGateEnabled()}
-	if captchaGateEnabled() && mentaAPIEndpoint != "" {
-		body["menta_api"] = mentaAPIEndpoint
-	}
-	c.JSON(http.StatusOK, body)
+	c.JSON(http.StatusOK, gin.H{})
 }
 
 var (
@@ -859,8 +855,6 @@ var (
 	maintenanceMode     bool
 	panicPassword       string
 	ntfyAdminTopic      string
-	mentaAPIEndpoint    string
-	mentaAPIKey         string
 	rateLimitStore      = newBoundedMap[[]time.Time](rateLimitStoreMax, rateLimitWindow)
 	rateLimitWindow     = time.Hour
 	rateLimitMaxPRs     = 5
@@ -891,7 +885,7 @@ var (
 	reportTokens   = newBoundedMap[time.Time](reportTokenMax, reportTokenTTL)
 	reportTokenTTL = 10 * time.Minute
 
-	reportFormTmpl   = template.Must(template.New("reportForm").Parse(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><script src="https://mentacaptchaeu.eu.pythonanywhere.com/menta-captcha.js"></script><title>Report content · gitGost</title><style>body{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#0d1117;color:#c9d1d9;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:32px;} .shell{background:linear-gradient(145deg, rgba(255,166,87,0.16), rgba(255,107,107,0.14));border:1px solid rgba(255,166,87,0.45);border-radius:16px;padding:1.5px;box-shadow:0 16px 38px rgba(0,0,0,.42);max-width:620px;width:100%;} .card{background:#0d1117;border-radius:14px;padding:26px;border:1px solid rgba(255,255,255,0.05);} h1{margin:0 0 6px;font-size:24px;color:#ffa657;} .eyebrow{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .75rem;background:rgba(255,166,87,0.12);color:#ffa657;border:1px solid rgba(255,166,87,0.4);border-radius:999px;font-family:'IBM Plex Mono', monospace;font-size:.85rem;margin-bottom:5px;} .sub{margin:6px 0 14px;color:#9fb3ff;font-size:14px;} .policy{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:12px;padding:14px;margin:14px 0;font-size:13px;line-height:1.55;} .policy strong{color:#ffa657;} label{display:block;font-weight:700;margin:12px 0 6px;letter-spacing:.01em;} .readonly{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;color:#c9d1d9;font-family:'IBM Plex Mono', monospace;} button{margin-top:14px;width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,0.25);} .note{margin-top:10px;font-size:12px;color:#9fb3ff;} .error{color:#ffb4c4;font-size:13px;margin-top:10px;} .count{display:flex;gap:8px;align-items:center;margin:10px 0;font-family:'IBM Plex Mono', monospace;} .pill{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);} .pill strong{color:#ffa657;} .state{margin-left:auto;font-size:12px;color:#9fb3ff;} .legend{font-size:12px;color:#9fb3ff;margin-top:10px;} input[type=text]{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#c9d1d9;} form{margin-top:12px;} a{color:#9fb3ff;} .locked{opacity:.55;pointer-events:none;} </style></head><body><div class="shell"><div class="card"><div class="eyebrow">Anonymous moderation</div><h1>Report content</h1><div class="sub">Flag abuse from anonymous contributions.</div><div class="policy"><ul style="margin:0 0 6px 18px; padding:0 0 0 4px; line-height:1.6;">` + string(reportPolicyHTML) + `</ul><div class="note">Reports reset after 30 days.</div></div><form method="POST" action="/v1/moderation/report" onsubmit="const t=document.getElementById('menta-report')?.token; document.getElementById('report-captcha-token').value=t||''"><label for="hash">Hash</label><input type="text" id="hash" name="hash" value="{{.Hash}}" placeholder="goster-xxxxx" {{if eq .State "blocked"}}class="locked" readonly{{end}} /><div class="count"><div class="pill">Reports: <strong>{{.Reports}}</strong></div><div class="state">State: {{.State}}</div></div><input type="hidden" name="report_token" value="{{.ReportToken}}" /><input type="hidden" name="captcha_token" id="report-captcha-token" /><div class="note">Please complete the CAPTCHA below.</div><menta-widget id="menta-report" data-cap-api-endpoint="/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget><button type="submit" {{if eq .State "blocked"}}disabled class="locked"{{end}}>Submit report</button></form><div class="legend">Hash identifies the anonymous submitter. No personal data is collected.</div>{{if .Error}}<div class="error">{{.Error}}</div>{{end}}</div></div></body></html>`))
+	reportFormTmpl   = template.Must(template.New("reportForm").Parse(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><title>Report content · gitGost</title><style>body{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#0d1117;color:#c9d1d9;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:32px;} .shell{background:linear-gradient(145deg, rgba(255,166,87,0.16), rgba(255,107,107,0.14));border:1px solid rgba(255,166,87,0.45);border-radius:16px;padding:1.5px;box-shadow:0 16px 38px rgba(0,0,0,.42);max-width:620px;width:100%;} .card{background:#0d1117;border-radius:14px;padding:26px;border:1px solid rgba(255,255,255,0.05);} h1{margin:0 0 6px;font-size:24px;color:#ffa657;} .eyebrow{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .75rem;background:rgba(255,166,87,0.12);color:#ffa657;border:1px solid rgba(255,166,87,0.4);border-radius:999px;font-family:'IBM Plex Mono', monospace;font-size:.85rem;margin-bottom:5px;} .sub{margin:6px 0 14px;color:#9fb3ff;font-size:14px;} .policy{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:12px;padding:14px;margin:14px 0;font-size:13px;line-height:1.55;} .policy strong{color:#ffa657;} label{display:block;font-weight:700;margin:12px 0 6px;letter-spacing:.01em;} .readonly{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;color:#c9d1d9;font-family:'IBM Plex Mono', monospace;} button{margin-top:14px;width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,0.25);} .note{margin-top:10px;font-size:12px;color:#9fb3ff;} .error{color:#ffb4c4;font-size:13px;margin-top:10px;} .count{display:flex;gap:8px;align-items:center;margin:10px 0;font-family:'IBM Plex Mono', monospace;} .pill{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);} .pill strong{color:#ffa657;} .state{margin-left:auto;font-size:12px;color:#9fb3ff;} .legend{font-size:12px;color:#9fb3ff;margin-top:10px;} input[type=text]{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#c9d1d9;} form{margin-top:12px;} a{color:#9fb3ff;} .locked{opacity:.55;pointer-events:none;} </style></head><body><div class="shell"><div class="card"><div class="eyebrow">Anonymous moderation</div><h1>Report content</h1><div class="sub">Flag abuse from anonymous contributions.</div><div class="policy"><ul style="margin:0 0 6px 18px; padding:0 0 0 4px; line-height:1.6;">` + string(reportPolicyHTML) + `</ul><div class="note">Reports reset after 30 days.</div></div><form method="POST" action="/v1/moderation/report" onsubmit="const t=document.getElementById('menta-report')?.token; document.getElementById('report-captcha-token').value=t||''"><label for="hash">Hash</label><input type="text" id="hash" name="hash" value="{{.Hash}}" placeholder="goster-xxxxx" {{if eq .State "blocked"}}class="locked" readonly{{end}} /><div class="count"><div class="pill">Reports: <strong>{{.Reports}}</strong></div><div class="state">State: {{.State}}</div></div><input type="hidden" name="report_token" value="{{.ReportToken}}" /><input type="hidden" name="captcha_token" id="report-captcha-token" /><div class="note">Please complete the CAPTCHA below.</div><button type="submit" {{if eq .State "blocked"}}disabled class="locked"{{end}}>Submit report</button></form><div class="legend">Hash identifies the anonymous submitter. No personal data is collected.</div>{{if .Error}}<div class="error">{{.Error}}</div>{{end}}</div></div></body></html>`))
 	reportThanksTmpl = template.Must(template.New("reportThanks").Parse(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><title>Report received · gitGost</title><style>body{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#0d1117;color:#c9d1d9;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:32px;} .shell{background:linear-gradient(145deg, rgba(255,166,87,0.16), rgba(255,107,107,0.14));border:1px solid rgba(255,166,87,0.45);border-radius:16px;padding:1.5px;box-shadow:0 16px 38px rgba(0,0,0,.42);max-width:620px;width:100%;} .card{background:#0d1117;border-radius:14px;padding:26px;border:1px solid rgba(255,255,255,0.05);} h1{margin:0 0 10px;font-size:24px;color:#ffa657;} p{margin:6px 0 0;color:#9fb3ff;} .pill{display:inline-block;margin-top:12px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,0.04);color:#ffa657;font-weight:700;border:1px solid rgba(255,255,255,0.08);} .cta{margin-top:16px;display:inline-block;padding:12px 16px;border-radius:10px;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;text-decoration:none;box-shadow:0 10px 30px rgba(0,0,0,0.25);} .small{margin-top:12px;font-size:12px;color:#9fb3ff;} .state{margin-top:10px;font-size:14px;} </style></head><body><div class="shell"><div class="card"><h1>Report received</h1><p>Hash: <strong>{{.Hash}}</strong></p><span class="pill">Total reports: {{.Reports}}</span><div class="state">State: {{.State}}</div><p class="small">Thanks for helping moderate. Your identity stays anonymous.</p><a class="cta" href="https://gitgost.livrasand.com/" target="_blank" rel="noreferrer">Explore gitGost</a></div></div></body></html>`))
 )
 
@@ -1093,257 +1087,6 @@ func isValidUserToken(token string) bool {
 }
 
 var mentaEnforceCaptcha bool
-
-func InitMentaConfig(apiEndpoint, apiKey string, enforce bool) {
-	mentaAPIEndpoint = strings.TrimRight(apiEndpoint, "/")
-	mentaAPIKey = apiKey
-	mentaEnforceCaptcha = enforce
-	if mentaAPIEndpoint == "" {
-		if enforce {
-			utils.Log("WARNING: MENTA_CAPTCHA_ENFORCED=true but MENTA_API_ENDPOINT is unset: CAPTCHA will reject all anonymous submissions")
-		} else {
-			utils.Log("WARNING: Menta CAPTCHA verification is DISABLED (MENTA_API_ENDPOINT unset). Anti-abuse control is off.")
-		}
-	}
-}
-
-func verifyMentaCaptcha(token string) bool {
-	if mentaAPIEndpoint == "" && !mentaEnforceCaptcha {
-		return true
-	}
-	if strings.TrimSpace(token) == "" {
-		return false
-	}
-	if mentaAPIEndpoint == "" {
-		return false
-	}
-	body, err := json.Marshal(map[string]string{"token": token})
-	if err != nil {
-		return false
-	}
-	req, err := http.NewRequest(http.MethodPost, mentaAPIEndpoint+"/verify", bytes.NewReader(body))
-	if err != nil {
-		return false
-	}
-	req.Header.Set("Content-Type", "application/json")
-	if mentaAPIKey != "" {
-		req.Header.Set("X-API-Key", mentaAPIKey)
-	}
-	client := newSafeHTTPClient(5 * time.Second)
-	resp, err := client.Do(req)
-	if err != nil {
-		utils.Log("Menta verify request failed: %v", err)
-		return false
-	}
-	defer resp.Body.Close()
-
-	var result struct {
-		Valid bool `json:"valid"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return false
-	}
-	return result.Valid
-}
-
-// ---------------------------------------------------------------------------
-// Menta Shield: clearance reutilizable (flujo universal, sin registro de
-// dominio en Menta).
-//
-// El proof-of-work del gate puede resolverse en el navegador contra el
-// endpoint universal /shield/* de Menta, sin pasar por el proxy /api/captcha
-// de gitGost (así el servidor de gitGost no consume nada del reto). Ese flujo
-// devuelve un clearance (JWT HS256, sub "shield-clearance") que Menta valida
-// server-to-server en /shield/verify. A diferencia de /verify, /shield/verify
-// NO consume el token: es reutilizable durante su TTL, así que el resultado se
-// cachea para no llamar a Menta en cada sesión nueva del mismo visitante.
-// ---------------------------------------------------------------------------
-
-const shieldClearanceCacheMax = 20000
-
-var shieldClearanceCache = newBoundedMap[int64](shieldClearanceCacheMax, 24*time.Hour)
-
-// parseShieldClearanceClaims extrae jti/exp del payload del clearance. NO
-// valida la firma (solo Menta puede hacerlo): estos datos se usan únicamente
-// como clave de caché y como TTL, siempre después de una verificación
-// aceptada por Menta.
-func parseShieldClearanceClaims(token string) (jti string, exp int64, ok bool) {
-	parts := strings.Split(token, ".")
-	if len(parts) != 3 {
-		return "", 0, false
-	}
-	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
-	if err != nil {
-		return "", 0, false
-	}
-	var claims struct {
-		Sub string `json:"sub"`
-		JTI string `json:"jti"`
-		Exp int64  `json:"exp"`
-	}
-	if err := json.Unmarshal(payload, &claims); err != nil {
-		return "", 0, false
-	}
-	if claims.Sub != "shield-clearance" || claims.JTI == "" {
-		return "", 0, false
-	}
-	return claims.JTI, claims.Exp, true
-}
-
-// verifyMentaShieldClearance valida un clearance del shield contra
-// {MENTA}/shield/verify. El resultado se cachea por token (hash SHA-256) hasta
-// su expiración: un clearance verificado sigue siendo válido, así que no hace
-// falta volver a preguntar a Menta por cada sesión del gate.
-func verifyMentaShieldClearance(token string) bool {
-	if !captchaGateEnabled() {
-		// Gate deshabilitado: modo permisivo (igual que verifyMentaCaptcha).
-		return true
-	}
-	if mentaAPIEndpoint == "" {
-		return false
-	}
-	token = strings.TrimSpace(token)
-	if token == "" {
-		return false
-	}
-	_, exp, ok := parseShieldClearanceClaims(token)
-	if !ok {
-		return false
-	}
-	now := time.Now().Unix()
-	if exp > 0 && now > exp {
-		return false
-	}
-	sum := sha256.Sum256([]byte(token))
-	key := hex.EncodeToString(sum[:])
-	if cached, hit := shieldClearanceCache.Peek(key); hit && (cached == 0 || cached > now) {
-		return true
-	}
-	body, err := json.Marshal(map[string]string{"token": token})
-	if err != nil {
-		return false
-	}
-	req, err := http.NewRequest(http.MethodPost, mentaAPIEndpoint+"/shield/verify", bytes.NewReader(body))
-	if err != nil {
-		return false
-	}
-	req.Header.Set("Content-Type", "application/json")
-	client := newSafeHTTPClient(5 * time.Second)
-	resp, err := client.Do(req)
-	if err != nil {
-		utils.Log("Menta shield verify request failed: %v", err)
-		return false
-	}
-	defer resp.Body.Close()
-	var result struct {
-		Success bool `json:"success"`
-		Valid   bool `json:"valid"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return false
-	}
-	if !result.Valid {
-		return false
-	}
-	ttl := exp
-	if ttl <= 0 {
-		ttl = now + int64(captchaGateCookieMaxAge)
-	}
-	shieldClearanceCache.Set(key, ttl)
-	return true
-}
-
-var mentaProxyClient = newSafeHTTPClient(15 * time.Second)
-
-// mentaSafeTarget construye la URL de destino a partir de un path controlado
-// por el cliente, garantizando que la petición solo pueda alcanzar el endpoint
-// de Menta configurado (mismo esquema y host). Devolver false impide cualquier
-// intento de request forgery / open-proxy hacia otros orígenes.
-//
-// El target se construye concatenando el endpoint fijo del servidor con un
-// separador literal "/" y el path del cliente: la cadena que fluye hacia el
-// request es, por tanto, un prefijo constante del servidor seguido del path,
-// de modo que el valor del cliente nunca puede alterar scheme ni host (lo que
-// CodeQL reconoce como hostname sanitizing y no señala SSRF).
-func mentaSafeTarget(path string) (*url.URL, bool) {
-	base, err := url.Parse(mentaAPIEndpoint)
-	if err != nil || base.Scheme == "" || base.Host == "" {
-		return nil, false
-	}
-	target, err := url.Parse(mentaAPIEndpoint + "/" + strings.TrimPrefix(path, "/"))
-	if err != nil {
-		return nil, false
-	}
-	if target.Scheme != base.Scheme || target.Host != base.Host || target.User != nil {
-		return nil, false
-	}
-	if p := target.EscapedPath(); p != "" {
-		dec, err := url.PathUnescape(p)
-		if err != nil || strings.ContainsAny(dec, "\\@") || strings.Contains(dec, "//") || strings.Contains(dec, "..") {
-			return nil, false
-		}
-	}
-	return target, true
-}
-
-func MentaCaptchaProxyHandler(c *gin.Context) {
-	if mentaAPIEndpoint == "" {
-		c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"error": "Captcha unavailable"})
-		return
-	}
-	if c.Request.Method != http.MethodGet && c.Request.Method != http.MethodPost {
-		c.AbortWithStatusJSON(http.StatusMethodNotAllowed, gin.H{"error": "Captcha proxy error"})
-		return
-	}
-	target, ok := mentaSafeTarget(c.Param("path"))
-	if !ok {
-		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Captcha proxy error"})
-		return
-	}
-	var body io.Reader
-	if c.Request.Method == http.MethodPost {
-		body = c.Request.Body
-	}
-	req, err := http.NewRequestWithContext(c.Request.Context(), c.Request.Method, target.String(), body)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "Captcha proxy error"})
-		return
-	}
-	if ct := c.GetHeader("Content-Type"); ct != "" {
-		req.Header.Set("Content-Type", ct)
-	}
-	if ua := c.GetHeader("User-Agent"); ua != "" {
-		req.Header.Set("User-Agent", ua)
-	}
-	if mentaAPIKey != "" {
-		req.Header.Set("X-API-Key", mentaAPIKey)
-	}
-	ip := c.GetHeader("X-Forwarded-For")
-	if ip != "" {
-		if first, _, ok := strings.Cut(ip, ","); ok {
-			ip = strings.TrimSpace(first)
-		}
-	}
-	if ip == "" {
-		ip = c.ClientIP()
-	}
-	if ip != "" {
-		req.Header.Set("X-Forwarded-For", ip)
-		req.Header.Set("X-Real-IP", ip)
-	}
-	resp, err := mentaProxyClient.Do(req)
-	if err != nil {
-		utils.Log("Menta captcha proxy request failed: %v", err)
-		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "Captcha proxy error"})
-		return
-	}
-	defer resp.Body.Close()
-	if ct := resp.Header.Get("Content-Type"); ct != "" {
-		c.Header("Content-Type", ct)
-	}
-	c.Status(resp.StatusCode)
-	io.Copy(c.Writer, resp.Body)
-}
 
 func isPanicMode() bool {
 	panicMu.Lock()
@@ -1719,10 +1462,6 @@ func CreateAnonymousIssueHandler(c *gin.Context) {
 		return
 	}
 
-	if !verifyMentaCaptcha(req.CaptchaToken) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "captcha verification failed"})
-		return
-	}
 
 	prov := providerFromPath(c.Request.URL.Path)
 	if req.GitHubToken != "" {
@@ -2703,10 +2442,6 @@ func CreateAnonymousCommentHandler(c *gin.Context) {
 		return
 	}
 
-	if !verifyMentaCaptcha(req.CaptchaToken) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "captcha verification failed"})
-		return
-	}
 
 	userToken := req.UserToken
 	if strings.TrimSpace(userToken) != "" && !isValidUserToken(userToken) {
@@ -2847,10 +2582,6 @@ func CreateAnonymousPRCommentHandler(c *gin.Context) {
 		return
 	}
 
-	if !verifyMentaCaptcha(req.CaptchaToken) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "captcha verification failed"})
-		return
-	}
 
 	userToken := req.UserToken
 	if strings.TrimSpace(userToken) != "" && !isValidUserToken(userToken) {
@@ -2970,10 +2701,6 @@ func CreateAnonymousDiscussionCommentHandler(c *gin.Context) {
 		return
 	}
 
-	if !verifyMentaCaptcha(req.CaptchaToken) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "captcha verification failed"})
-		return
-	}
 
 	userToken := req.UserToken
 	if strings.TrimSpace(userToken) != "" && !isValidUserToken(userToken) {
@@ -3140,12 +2867,6 @@ func ReportHashHandler(c *gin.Context) {
 	ip := strings.TrimSpace(c.ClientIP())
 	if checkReportRateLimit(ip) {
 		renderReportForm(c, hash, currentReports, currentState, fmt.Sprintf("Rate limit exceeded: max %d reports per hour per IP.", reportRateLimitMax), newReportToken())
-		return
-	}
-
-	captchaToken := strings.TrimSpace(c.PostForm("captcha_token"))
-	if !verifyMentaCaptcha(captchaToken) {
-		renderReportForm(c, hash, currentReports, currentState, "CAPTCHA verification failed.", newReportToken())
 		return
 	}
 

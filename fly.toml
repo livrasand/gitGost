@@ -12,8 +12,6 @@ primary_region = 'arn'
 
 [env]
   PORT = '8080'
-  MENTA_API_ENDPOINT = 'https://mentacaptchaeu.eu.pythonanywhere.com'
-  MENTA_CAPTCHA_ENFORCED = 'true'
   # Maintenance mode: serves a 503 page for browsers/APIs while keeping git
   # access, /health, /api/status and /admin available. Prefer runtime toggle
   # (POST /admin/panic {"maintenance":true}) or: fly secrets set MAINTENANCE_MODE=true

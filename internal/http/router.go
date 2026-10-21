@@ -50,15 +50,26 @@ func securityHeaders() gin.HandlerFunc {
 		// El origen de Menta se deriva de la configuración (MENTA_API_ENDPOINT)
 		// para que el navegador pueda resolver el proof-of-work directamente
 		// contra Menta sin que la URL esté hardcodeada en el HTML.
+		mentaOrigin := ""
+		if mentaAPIEndpoint != "" {
+			if u, err := url.Parse(mentaAPIEndpoint); err == nil {
+				mentaOrigin = u.Scheme + "://" + u.Host
+			}
+		}
+		if mentaOrigin == "" {
+			mentaOrigin = "https://mentacaptchaeu.eu.pythonanywhere.com"
+		}
+		scriptSrc := "script-src 'self' https://esm.sh https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com " + mentaOrigin + " 'unsafe-inline'"
+		connectSrc := "connect-src 'self' capacitor://localhost http://localhost:* https://localhost https://gitgost.livrasand.com https://en.wikipedia.org https://www.wikidata.org https://cloudflareinsights.com https://static.cloudflareinsights.com " + mentaOrigin
 		c.Header("Content-Security-Policy",
 			"default-src 'self'; "+
-				"script-src 'self' https://esm.sh https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com https://mentacaptchaeu.eu.pythonanywhere.com 'unsafe-inline'; "+
+				scriptSrc+"; "+
 				"style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline'; "+
 				"font-src 'self' https://fonts.gstatic.com; "+
 				"img-src 'self' data: blob: https://* http://*; "+
 				"object-src 'none'; "+
 				"frame-ancestors 'none'; "+
-				"connect-src 'self' capacitor://localhost http://localhost:* https://localhost https://gitgost.livrasand.com https://en.wikipedia.org https://www.wikidata.org https://cloudflareinsights.com https://static.cloudflareinsights.com https://mentacaptchaeu.eu.pythonanywhere.com",
+				connectSrc,
 		)
 		c.Next()
 	}

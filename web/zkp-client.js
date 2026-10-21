@@ -558,8 +558,7 @@
         <button class="zkp-btn-ghost" id="zkp-reg-download" type="button">save as .txt</button>
       </div>
       <div class="zkp-captcha">
-        <menta-widget id="zkp-reg-captcha" data-cap-api-endpoint="${API_BASE || ''}/api/captcha" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
-      </div>
+              </div>
       <input type="text" id="zkp-reg-website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
       <label class="zkp-check"><input type="checkbox" id="zkp-reg-confirm"> I have stored my recovery phrase somewhere safe</label>
       <p class="zkp-reg-notice">gitgost forge users only. registrations without a node are removed from the server after 7 days.</p>

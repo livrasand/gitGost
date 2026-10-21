@@ -5953,8 +5953,7 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
         -->
 
     <script src="/bip39-words.js"></script>
-    <script src="/assets/captcha-loader.js"></script>
-    <script src="/zkp-client.js?v=4"></script>
+        <script src="/zkp-client.js?v=4"></script>
     <!-- CAPTCHA gate anti-scraping: el backend exige cookie "gost_gate"
          (emitida aquí tras resolver Menta) para los endpoints de browsing.
          Sin cookie válida no hay contenido: primer dibujo o expiración a las 24h re-desafía.
@@ -6042,8 +6041,7 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
             <p id="gate-status" aria-live="polite">Esta es una comprobación de proof-of-work: sin cookies, sin rastreo, sin puzzles que resolver.</p>
             <p id="gate-meta"></p>
             <button id="gate-retry" type="button">Reintentar</button>
-            <menta-widget id="gate-captcha" data-cap-api-endpoint="/api/captcha"></menta-widget>
-            <p id="gate-foot">Prueba de rendimiento por <a href="https://github.com/livrasand/mentacaptcha" target="_blank" rel="noopener">Menta</a> &middot; CAPTCHA centrado en la privacidad &middot; <a href="/privacy">política de privacidad</a></p>
+                        <p id="gate-foot">Prueba de rendimiento por <a href="https://github.com/livrasand/mentacaptcha" target="_blank" rel="noopener">Menta</a> &middot; CAPTCHA centrado en la privacidad &middot; <a href="/privacy">política de privacidad</a></p>
         </div>
     </div>
     <script>
@@ -6186,7 +6184,7 @@ results.sort((a, b) => (b.stars || 0) - (a.stars || 0));
             // el SDK de Menta entonces. Con CAPTCHA off no hay widget ni /init.
             // Aquí, si hace falta, el PoW se resuelve solo: el usuario solo
             // ve el spinner, el progreso y, si algo fallara, el botón Reintentar.
-            window.gitgostCaptchaReady.then(function (enabled) {
+            if (window.gitgostCaptchaReady) window.gitgostCaptchaReady.then(function (enabled) {
                 var overlay = $("gate-overlay");
                 if (!enabled || !overlay || gateCookiePresent()) return;
                 headingEl = $("gate-heading");

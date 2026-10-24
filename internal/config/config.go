@@ -10,17 +10,19 @@ import (
 )
 
 type Config struct {
-	Port             string
-	ReadTimeout      time.Duration
-	WriteTimeout     time.Duration
-	GitHubToken      string
-	GitLabToken      string
-	CodebergToken    string
-	LogFormat        string
-	SupabaseURL      string
-	SupabaseKey      string
-	PanicPassword    string
-	NtfyAdminTopic  string
+	Port                string
+	ReadTimeout         time.Duration
+	WriteTimeout        time.Duration
+	GitHubToken         string
+	GitLabToken         string
+	CodebergToken       string
+	LogFormat           string
+	SupabaseURL         string
+	SupabaseKey         string
+	PanicPassword       string
+	NtfyAdminTopic      string
+	NtfyAnnounceTopic   string
+	NtfyAnnounceToken   string
 	MaintenanceMode     bool
 	SponsorBanner       bool
 	MentaAPIEndpoint    string
@@ -31,17 +33,19 @@ type Config struct {
 
 func Load() *Config {
 	cfg := &Config{
-		Port:             getEnv("PORT", "8080"),
-		ReadTimeout:      getDurationEnv("READ_TIMEOUT", 30*time.Second),
-		WriteTimeout:     getDurationEnv("WRITE_TIMEOUT", 30*time.Second),
-		GitHubToken:      getEnv("GITHUB_TOKEN", ""),
-		GitLabToken:      getEnv("GITLAB_TOKEN", ""),
-		CodebergToken:    getEnv("CODEBERG_TOKEN", ""),
-		LogFormat:        getEnv("LOG_FORMAT", "text"),
-		SupabaseURL:      getEnv("SUPABASE_URL", ""),
-		SupabaseKey:      getEnv("SUPABASE_KEY", ""),
-		PanicPassword:    getEnv("PANIC_PASSWORD", ""),
-		NtfyAdminTopic:  getEnv("NTFY_ADMIN_TOPIC", ""),
+		Port:                getEnv("PORT", "8080"),
+		ReadTimeout:         getDurationEnv("READ_TIMEOUT", 30*time.Second),
+		WriteTimeout:        getDurationEnv("WRITE_TIMEOUT", 30*time.Second),
+		GitHubToken:         getEnv("GITHUB_TOKEN", ""),
+		GitLabToken:         getEnv("GITLAB_TOKEN", ""),
+		CodebergToken:       getEnv("CODEBERG_TOKEN", ""),
+		LogFormat:           getEnv("LOG_FORMAT", "text"),
+		SupabaseURL:         getEnv("SUPABASE_URL", ""),
+		SupabaseKey:         getEnv("SUPABASE_KEY", ""),
+		PanicPassword:       getEnv("PANIC_PASSWORD", ""),
+		NtfyAdminTopic:      getEnv("NTFY_ADMIN_TOPIC", ""),
+		NtfyAnnounceTopic:   getEnv("NTFY_ANNOUNCE_TOPIC", ""),
+		NtfyAnnounceToken:   getEnv("NTFY_ANNOUNCE_TOKEN", ""),
 		MaintenanceMode:     getEnv("MAINTENANCE_MODE", "") == "true",
 		SponsorBanner:       getEnv("SPONSOR_BANNER", "") == "true",
 		MentaAPIEndpoint:    getEnv("MENTA_API_ENDPOINT", ""),

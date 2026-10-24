@@ -851,6 +851,60 @@ alias gitgost-sponsor-off='curl -s -X POST https://gitgost.livrasand.com/admin/s
   -d "{\"password\":\"$PANIC_PASSWORD\",\"active\":false}"'
 ```
 
+### Announcement banners (ntfy / UnifiedPush)
+
+The web UI can show one global announcement banner at the top of every page (including the maintenance page). Announcements are delivered over a **private ntfy topic** — the server only subscribes; you publish from the ntfy app, CLI, or web UI. The state lives purely in server memory (no database): after a restart, the subscriber waits for the next message.
+
+**Server configuration** (see `.env.example`):
+
+```bash
+NTFY_ANNOUNCE_TOPIC=my-long-random-topic-value    # empty = feature disabled
+NTFY_ANNOUNCE_TOKEN=tk_yourntfytoken              # optional, if your ntfy requires auth
+NTFY_BASE_URL=https://ntfy.sh                     # defaults to ntfy.sh
+```
+
+**Publishing an announcement:**
+
+```bash
+curl -d '{
+  "action":"post",
+  "type":"warning",
+  "title":"GitHub issues unavailable",
+  "message":"Issue pages may not load correctly while GitHub recovers.",
+  "link":"https://github.com/livrasand/gitGost/issues/219",
+  "expires_at":"2026-09-16T23:00:00Z"
+}' -H "Title: announcement" ntfy.sh/my-long-random-topic-value
+```
+
+Fields:
+
+- `action`: `post` to show a banner, `clear` to remove the active one.
+- `type`: `note` (blue, default), `tip` (green), `important` (purple), `warning` (amber), `caution` (red).
+- `title` / `message`: required, sanitized HTML-escaped on the browser side; 120/400 char limits.
+- `link`: optional; only `https://github.com/livrasand/gitGost/issues|pull/<number>` links are accepted.
+- `expires_at`: optional RFC3339 timestamp; defaults to 24h, capped at 7 days.
+
+**How it stays private:** `GET /api/announcement` returns `204` (silent) or a `200` JSON with only the sanitized payload (`id`, `type`, `title`, `message`, `link`, `expires_at`) with `Cache-Control: no-store`. The topic name, token, and ntfy infrastructure are never exposed to the browser. Dismissal is stored per-announcement in the visitor's `localStorage` (no cookies); stale dismiss keys are pruned on each fetch. Endpoints are rate limited at 30 requests/minute/IP, and the API works during maintenance mode so the banner stays visible on the maintenance page.
+
+> **Note:** use a long random topic (32+ chars). Without `NTFY_ANNOUNCE_TOKEN`, anyone who learns the topic could publish banners on your instance.
+
+**Operational cheat sheet:**
+
+```bash
+# Show a banner (must run while the server is streaming the topic)
+curl -d '{"action":"post","type":"warning","title":"GitHub issues unavailable","message":"Issue and pull request pages may not load correctly.","link":"https://github.com/livrasand/gitGost/issues/XXX"}' \
+  -H "Title: announcement" ntfy.sh/<NTFY_ANNOUNCE_TOPIC>
+
+# Remove the active banner
+curl -d '{"action":"clear"}' ntfy.sh/<NTFY_ANNOUNCE_TOPIC>
+```
+
+Gotchas worth knowing:
+
+- The subscriber only receives messages published **after** it connects. Announcements sent while the server was restarting (or during downtime) are not replayed by design — just publish the message again.
+- `GET /api/announcement` returns `204` while no announcement is active. After a `post`, it returns `200` with the JSON and the server logs `announcement: active …`.
+- The browser fetches once per page load. Visitors hide a banner with the ✕ and it stays hidden for that announcement only; publishing a `clear` → new `post` (different ID) makes it reappear for everyone.
+
 ### Close abusive PRs (rollback burst)
 
 After a burst attack, close all PRs created during the attack window:

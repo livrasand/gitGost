@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	announcementpkg "github.com/livrasand/gitGost/internal/announcement"
+
 	"github.com/livrasand/gitGost/internal/config"
 	nodepkg "github.com/livrasand/gitGost/internal/node"
 
@@ -384,6 +386,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.StaticFile("/ethicalmetrics.js", "./web/ethicalmetrics.js")
 	r.StaticFile("/zkp-client.js", "./web/zkp-client.js")
 	r.StaticFile("/bip39-words.js", "./web/bip39-words.js")
+	r.StaticFile("/announcement.js", "./web/announcement.js")
 
 	v1 := r.Group("/v1")
 	v1.Use(sizeLimitMiddleware())
@@ -491,8 +494,8 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/gh-discussion/:owner/:repo/:number", proxyLimiter(), GitHubDiscussionDetailProxyHandler)
 		api.GET("/gh-wiki/:owner/:repo/:page", proxyLimiter(), GitHubWikiProxyHandler)
 		api.GET("/gl-wiki/:owner/:repo", proxyLimiter(), GitLabWikiProxyHandler)
-	// Ruta aparte del proxy /captcha/*path para no chocar el catch-all:
-	// el frontend POSTs aquí el token del widget y hereda la cookie.
+		// Ruta aparte del proxy /captcha/*path para no chocar el catch-all:
+		// el frontend POSTs aquí el token del widget y hereda la cookie.
 		api.POST("/captcha-gate", captchaLimiter(), CaptchaGateTokenHandler)
 		api.GET("/captcha-gate/status", gateStatusLimiter(), CaptchaGateStatusHandler)
 		api.Any("/captcha/*path", captchaLimiter(), MentaCaptchaProxyHandler)
@@ -515,6 +518,10 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	}
 
 	r.GET("/api/status", ServiceStatusHandler)
+	// Banner de anuncios: el estado vive en el paquete announcement (solo
+	// memoria), alimentado por el subscriber ntfy/UnifiedPush. Durante el
+	// modo mantenimiento esta ruta sigue viva (maintenanceAllowedPath).
+	r.GET("/api/announcement", announcementpkg.RateLimit(), announcementpkg.Handler)
 	zkp := r.Group("/api/zkp")
 	zkp.Use(zkpSecurity(), prCheckWindowLimiter("ZKP rate limit exceeded", 30, time.Minute))
 	{

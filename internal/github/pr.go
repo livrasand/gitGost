@@ -28,6 +28,14 @@ func resolveGitHubToken(token string) string {
 	return tokenpool.NextGitHubToken()
 }
 
+// nonNilStrings avoids serializing nil slices as null (GitHub rejects labels:null)
+func nonNilStrings(v []string) []string {
+	if v == nil {
+		return []string{}
+	}
+	return v
+}
+
 // githubDo executes a request with the given token and marks the token as
 // rate-limited when GitHub returns 403/429 (rate limit exceeded).
 func githubDo(req *http.Request, token string) (*http.Response, error) {
@@ -303,12 +311,12 @@ func CreateAnonymousIssueWithToken(owner, repo, title, body string, labels []str
 
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues", owner, repo)
 
-	issueBody := fmt.Sprintf("%s\n\n---\n\n*This is an anonymous contribution made via [gitGost](https://gitgost.livrasand.com).\n\n*The original author's identity has been anonymized to protect their privacy. This is a service account that allows real humans to contribute anonymously.*", body)
+	issueBody := body + AnonNotice()
 
 	payload := map[string]interface{}{
 		"title":  title,
 		"body":   issueBody,
-		"labels": labels,
+		"labels": nonNilStrings(labels),
 	}
 
 	jsonData, err := json.Marshal(payload)
@@ -683,7 +691,7 @@ func CreatePRWithToken(owner, repo, branch, forkOwner, commitMessage, token stri
 
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls", owner, repo)
 
-	prBody := fmt.Sprintf("%s\n\n---\n\n*This is an anonymous contribution made via [gitGost](https://gitgost.livrasand.com).\n\n*The original author's identity has been anonymized to protect their privacy. This is a service account that allows real humans to contribute anonymously.*", commitMessage)
+	prBody := commitMessage + AnonNotice()
 
 	data := map[string]interface{}{
 		"title": "Anonymous contribution via gitGost",

@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/livrasand/gitGost/internal/github"
 	"github.com/livrasand/gitGost/internal/provider"
 )
 
@@ -201,7 +202,7 @@ func (p *CodebergProvider) CreateMR(owner, repo, branch, forkOwner, commitMessag
 		body = ""
 	}
 
-	body += "\n\n---\n\n*This is an anonymous contribution made via [gitGost](https://gitgost.livrasand.com).*\n\n*The original author's identity has been anonymized to protect their privacy. This is a service account that allows real humans to contribute anonymously.*"
+	body += github.AnonNotice()
 
 	payload := map[string]interface{}{
 		"title": title,

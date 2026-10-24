@@ -495,56 +495,84 @@
             color: var(--fg-secondary);
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
+        /* ===== Markdown rendering (estilo GitHub/GitLab/Codeberg) ===== */
         .readme {
-            padding: 1.5rem 2rem;
-            font-size: 0.9rem;
-            line-height: 1.75;
+            padding: 1.75rem 2rem;
+            font-size: 1rem;
+            line-height: 1.65;
             color: var(--fg);
             overflow-wrap: anywhere;
             min-width: 0;
+            word-wrap: break-word;
         }
-        .readme img {
-            display: block;
-            max-width: 100%;
-            height: auto;
-            border-radius: 0;
-        }
-        .readme pre {
-            max-width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        .readme pre code {
-            max-width: 100%;
-        }
-        .readme > table {
-            display: block;
-            overflow-x: auto;
-            max-width: 100%;
-            -webkit-overflow-scrolling: touch;
-        }
-        .readme > table th, .readme > table td {
-            white-space: nowrap;
-        }
+        /* Margen inicial/final compacto, como los visores de Git */
+        .readme > :first-child { margin-top: 0 !important; }
+        .readme > :last-child { margin-bottom: 0 !important; }
+
+        /* Encabezados: jerarquía y separadores tipo GitHub */
         .readme h1, .readme h2, .readme h3, .readme h4, .readme h5, .readme h6 {
-            margin: 1.5rem 0 0.75rem;
+            margin: 1.75rem 0 0.75rem;
             color: var(--fg);
             font-weight: 600;
             line-height: 1.25;
         }
-        .readme h1 { font-size: 1.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
-        .readme h2 { font-size: 1.3rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--border); }
-        .readme h3 { font-size: 1.1rem; }
-        .readme h4 { font-size: 0.95rem; }
-        .readme p { margin: 0.75rem 0; }
-        .readme code {
-            background: var(--code-bg);
-            padding: 0.2em 0.45em;
+        .readme h1 { font-size: 1.75rem; padding-bottom: 0.35em; border-bottom: 1px solid var(--border); }
+        .readme h2 { font-size: 1.4rem;  padding-bottom: 0.3em;  border-bottom: 1px solid var(--border); }
+        .readme h3 { font-size: 1.15rem; }
+        .readme h4 { font-size: 1rem; }
+        .readme h5 { font-size: 0.9rem; }
+        .readme h6 { font-size: 0.85rem; color: var(--fg-muted); }
+        .readme h1 + h2, .readme h2 + h3, .readme h3 + h4,
+        .readme h4 + h5, .readme h5 + h6 { margin-top: 1rem; }
+        .readme h3 code, .readme h4 code { font-size: 0.85em; }
+
+        .readme p, .readme ul, .readme ol, .readme dl, .readme pre,
+        .readme table, .readme blockquote {
+            margin: 0.9rem 0;
+        }
+        .readme p { line-height: 1.65; }
+
+        /* Listas y listas de tareas (task lists) */
+        .readme ul { list-style: disc; }
+        .readme ol { list-style: decimal; }
+        .readme li > p { margin: 0.35rem 0; }
+        .readme li + li { margin-top: 0.25rem; }
+        .readme ul ul, .readme ol ol, .readme ul ol, .readme ol ul { margin: 0.25rem 0; }
+        .readme ul ul { list-style: circle; }
+        .readme ul ul ul { list-style: square; }
+        .readme dl { display: grid; grid-template-columns: max-content 1fr; }
+        .readme dt { font-weight: 600; padding: 0.25rem 1rem 0.25rem 0; }
+        .readme dd { margin: 0.25rem 0; }
+        .readme input[type="checkbox"] { margin-right: 0.4em; vertical-align: middle; }
+        .readme li:has(> input[type="checkbox"]) { list-style: none; margin-left: -1.4em; }
+
+        .readme img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            margin: 1rem 0;
+            border-radius: 0;
+        }
+        .readme img[width], .readme img[height] { display: inline-block; }
+        .readme figure img { margin: 0; }
+
+        /* Código en línea: estilo GitHub (fondo suave, sin borde) */
+        .readme code,
+        .readme kbd, .readme samp, .readme tt {
+            background: color-mix(in srgb, var(--zen-dark) 10%, transparent);
             border-radius: 0;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 0.83em;
-            border: 1px solid var(--border);
+            font-size: 85%;
+            padding: 0.2em 0.4em;
+            white-space: pre-wrap;
         }
+        .readme kbd {
+            font-weight: 700;
+            font-size: 75%;
+            background: var(--bg-secondary);
+            box-shadow: inset 0 -1px 0 var(--border);
+        }
+
         .readme pre {
             background: var(--code-bg);
             border: 1px solid var(--border);
@@ -554,8 +582,81 @@
             overflow-y: hidden;
             margin: 1rem 0;
             white-space: pre;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            -webkit-overflow-scrolling: touch;
         }
-        .readme pre code { background: none; padding: 0; border: none; font-size: 0.82rem; }
+        .readme pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            font-size: 1em;
+            white-space: pre;
+            max-width: 100%;
+            display: block;
+        }
+        .readme div.highlight pre { margin: 1rem 0; }
+
+        /* Tablas: bordes y estilo GitHub/GitLab */
+        .readme table {
+            border-collapse: collapse;
+            font-size: 0.92em;
+            max-width: 100%;
+        }
+        .readme th, .readme td {
+            border: 1px solid var(--border);
+            padding: 0.5rem 0.85rem;
+            text-align: left;
+            line-height: 1.45;
+        }
+        .readme th { font-weight: 600; background: var(--bg-secondary); }
+        .readme tr:nth-child(2n) td { background: color-mix(in srgb, var(--zen-dark) 3%, transparent); }
+        .readme table code { white-space: nowrap; }
+        .readme > table, .readme table:only-child {
+            display: block;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .readme a { color: var(--accent); text-decoration: none; }
+        .readme a:hover { text-decoration: underline; }
+
+        /* Citas */
+        .readme blockquote {
+            border-left: 3px solid var(--border);
+            margin: 0.9rem 0;
+            padding: 0 1rem;
+            color: var(--fg-muted);
+            background: transparent;
+            border-radius: 0;
+        }
+        .readme blockquote blockquote { margin: 0.5rem 0; }
+        .readme blockquote > :first-child { margin-top: 0; }
+        .readme blockquote > :last-child { margin-bottom: 0; }
+
+        .readme hr {
+            border: none;
+            border-top: 3px double var(--border);
+            margin: 1.5rem 0;
+            height: 0;
+        }
+
+        /* Misceláneo: sub/sup, spoiler, detalles, abbr */
+        .readme sup, .readme sub { line-height: 0; font-size: 75%; }
+        .readme sub { vertical-align: baseline; position: relative; top: 0.25em; }
+        .readme sup { vertical-align: baseline; position: relative; top: -0.5em; }
+        .readme abbr[title] { text-decoration: underline dotted; }
+        .readme details {
+            border: 1px solid var(--border);
+            padding: 0.5rem 1rem;
+            margin: 1rem 0;
+            background: var(--bg-secondary);
+        }
+        .readme details summary { cursor: pointer; font-weight: 600; }
+        .readme details > :first-child { margin-top: 0.5rem; }
+        .readme .markdown-footnotes { border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--fg-muted); }
+        .readme .markdown-footnotes li { margin: 0.2rem 0; }
+        .readme .gloss em, .readme .gloss-note { color: var(--fg-muted); font-size: 0.85rem; }
         .mermaid {
             white-space: pre;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -569,23 +670,9 @@
             max-width: 100%;
         }
         .mermaid-graph { margin: 1rem 0; overflow-x: auto; max-width: 100%; }
-        .readme a { color: var(--accent); text-decoration: none; }
-        .readme a:hover { text-decoration: underline; }
-        .readme blockquote {
-            border-left: 4px solid var(--border);
-            margin: 0.75rem 0;
-            padding: 0.5rem 1rem;
-            color: var(--fg-muted);
-            background: var(--bg-secondary);
-            border-radius: 0;
-        }
-        .readme blockquote p { margin: 0; }
-        .readme ul, .readme ol { padding-left: 2rem; margin: 0.5rem 0; }
-        .readme li { margin: 0.3rem 0; }
-        .readme hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
-        .readme input[type="checkbox"] { margin-right: 0.4rem; }
 
         /* Alertas estilo GitHub: > [!NOTE] [!TIP] [!IMPORTANT] [!WARNING] [!CAUTION] */
+        .markdown-alert {
             padding: 0.5rem 1rem;
             margin: 1rem 0;
             color: inherit;
@@ -600,11 +687,22 @@
             margin: 0 0 0.25rem;
         }
         .markdown-alert-title .octicon { margin-right: 0.5rem; flex-shrink: 0; fill: currentColor; }
-        .markdown-alert-note      { border-left-color: var(--alert-note); }
-        .markdown-alert-important { border-left-color: var(--alert-important); }
-        .markdown-alert-warning   { border-left-color: var(--alert-warning); }
-        .markdown-alert-tip       { border-left-color: var(--alert-tip); }
-        .markdown-alert-caution   { border-left-color: var(--alert-caution); }
+        .markdown-alert-note      { border-left-color: var(--alert-note); background: color-mix(in srgb, var(--alert-note) 8%, transparent); }
+        .markdown-alert-important { border-left-color: var(--alert-important); background: color-mix(in srgb, var(--alert-important) 8%, transparent); }
+        .markdown-alert-warning   { border-left-color: var(--alert-warning); background: color-mix(in srgb, var(--alert-warning) 8%, transparent); }
+        .markdown-alert-tip       { border-left-color: var(--alert-tip); background: color-mix(in srgb, var(--alert-tip) 8%, transparent); }
+        .markdown-alert-caution   { border-left-color: var(--alert-caution); background: color-mix(in srgb, var(--alert-caution) 8%, transparent); }
+        .markdown-alert-note .markdown-alert-title::before,
+        .markdown-alert-note .markdown-alert-title svg { color: var(--alert-note); }
+        .markdown-alert-tip .markdown-alert-title::before,
+        .markdown-alert-tip .markdown-alert-title svg { color: var(--alert-tip); }
+        .markdown-alert-important .markdown-alert-title::before,
+        .markdown-alert-important .markdown-alert-title svg { color: var(--alert-important); }
+        .markdown-alert-warning .markdown-alert-title::before,
+        .markdown-alert-warning .markdown-alert-title svg { color: var(--alert-warning); }
+        .markdown-alert-caution .markdown-alert-title::before,
+        .markdown-alert-caution .markdown-alert-title svg { color: var(--alert-caution); }
+        .markdown-alert-title { color: inherit; }
 
         .repo-info {
             padding: 0.5rem 1.25rem;

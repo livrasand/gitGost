@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/livrasand/gitGost/internal/announcement"
 	"github.com/livrasand/gitGost/internal/config"
 	handler "github.com/livrasand/gitGost/internal/http"
 	"github.com/livrasand/gitGost/internal/node"
@@ -20,6 +22,15 @@ import (
 
 	"github.com/joho/godotenv"
 )
+
+// getenvDefault es getEnv de config pero solo desde el entorno nativo (el
+// .env ya fue cargado por godotenv antes de llegar aquí).
+func getenvDefault(key, def string) string {
+	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
+		return v
+	}
+	return def
+}
 
 var (
 	commitHash = "main"
@@ -116,6 +127,27 @@ func main() {
 		if len(cfg.NtfyAdminTopic) < 24 {
 			utils.Log("WARNING: NTFY_ADMIN_TOPIC looks guessable: use a long random value (e.g. 32+ chars) to prevent topic enumeration")
 		}
+	}
+
+	// Announcement banners via ntfy/UnifiedPush: el subscriber consume el
+	// topic privado (NTFY_ANNOUNCE_TOPIC) y mantiene solo un anuncio activo
+	// en memoria. Sin topic configurado, el feature queda apagado.
+	if cfg.NtfyAnnounceTopic != "" {
+		subCtx, subCancel := context.WithCancel(context.Background())
+		defer subCancel()
+		go announcement.Run(subCtx, announcement.Options{
+			BaseURL: getenvDefault("NTFY_BASE_URL", "https://ntfy.sh"),
+			Topic:   cfg.NtfyAnnounceTopic,
+			Token:   cfg.NtfyAnnounceToken,
+		})
+		if cfg.NtfyAnnounceToken == "" {
+			utils.Log("WARNING: NTFY_ANNOUNCE_TOKEN is unset: the announce topic is publicly readable/writable. Anyone who learns NTFY_ANNOUNCE_TOPIC can publish banners")
+		}
+		if len(cfg.NtfyAnnounceTopic) < 24 {
+			utils.Log("WARNING: NTFY_ANNOUNCE_TOPIC looks guessable: use a long random value (e.g. 32+ chars) to prevent topic enumeration")
+		}
+	} else {
+		utils.Log("Announcement banners disabled (NTFY_ANNOUNCE_TOPIC unset)")
 	}
 
 	// Initialize node registry persistence

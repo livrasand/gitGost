@@ -29,11 +29,13 @@ const maintenanceFallbackPage = `<!DOCTYPE html>
 `
 
 // maintenanceAllowedPath decide qué rutas siguen disponibles en modo
-// mantenimiento: salud, estado, admin (para restaurar), git smart HTTP
-// (clone/fetch y el mensaje de suspensión de push) y los assets de la
-// propia página de mantenimiento.
+// mantenimiento: salud, estado, anuncios (el banner debe seguir visible
+// durante la propia página de mantenimiento; se sirve 503 solo en HTML),
+// admin (para restaurar), git smart HTTP (clone/fetch y el mensaje de
+// suspensión de push) y los assets de la propia página de mantenimiento.
 func maintenanceAllowedPath(path string) bool {
-	if path == "/health" || path == "/api/status" {
+	if path == "/health" || path == "/api/status" || path == "/api/announcement" ||
+		path == "/announcement.js" {
 		return true
 	}
 	if strings.HasPrefix(path, "/admin/") {

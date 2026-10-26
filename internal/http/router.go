@@ -10,8 +10,6 @@ import (
 	announcementpkg "github.com/livrasand/gitGost/internal/announcement"
 
 	"github.com/livrasand/gitGost/internal/config"
-	nodepkg "github.com/livrasand/gitGost/internal/node"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -330,37 +328,6 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.GET("/metrics", MetricsHandler)
 	r.GET("/api/config", ConfigHandler)
 
-	// GitGost Node Protocol: los nodos de almacenamiento inician la conexión
-	// (saliente, sin puertos abiertos) y mantienen el socket vivo.
-	r.GET("/node/ws", nodepkg.WSHandler)
-
-	// API endpoint for listing nodes (optional ZKP authentication)
-	r.GET("/api/nodes", anonymousAuthMiddleware(), zkpAuthMiddlewareOptional(), nodepkg.ListHandler)
-
-	// API endpoints for node operations (require ZKP authentication)
-	nodesAPI := r.Group("/api/nodes", anonymousAuthMiddleware(), zkpAuthMiddleware())
-	{
-		nodesAPI.POST("/pair", nodepkg.PairHandler)
-		nodesAPI.GET("/:id/repos", nodepkg.NodeReposHandler)
-		nodesAPI.POST("/:id/repos", nodepkg.NodeRepoCreateFullHandler)
-		nodesAPI.GET("/:id/refs/:repo", nodepkg.NodeRefsHandler)
-		nodesAPI.POST("/:id/repo/create", nodepkg.NodeRepoCreateHandler)
-		nodesAPI.POST("/:id/repo/delete", nodepkg.NodeRepoDeleteHandler)
-		nodesAPI.POST("/:id/fs/read", nodepkg.NodeFSReadHandler)
-		nodesAPI.POST("/:id/fs/write", nodepkg.NodeFSWriteHandler)
-		nodesAPI.POST("/:id/fs/list", nodepkg.NodeFSListHandler)
-		nodesAPI.POST("/:id/cmd/ping", nodepkg.NodeCmdHandler)
-	}
-
-	ggAPI := r.Group("/api/gg", zkpAuthMiddlewareOptional())
-	{
-		ggAPI.GET("/repos/:owner/:repo/tree", nodepkg.GGRepoTreeHandler)
-		ggAPI.GET("/repos/:owner/:repo/raw", nodepkg.GGRepoRawHandler)
-		ggAPI.GET("/repos/:owner/:repo/info", nodepkg.GGRepoInfoHandler)
-		ggAPI.GET("/repos/:owner/:repo/branches", nodepkg.GGRepoBranchesHandler)
-		ggAPI.GET("/repos/:owner/:repo/tags", nodepkg.GGRepoTagsHandler)
-	}
-
 	r.GET("/VERIFY", VerifyHandler)
 	r.GET("/gitgost-bin", BinaryHandler)
 	r.POST("/v1/pageviews", EthicalMetricsPageviewHandler)
@@ -384,8 +351,6 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.StaticFile("/.well-known/security.txt", "./web/.well-known/security.txt")
 	r.Static("/assets", "./web/assets")
 	r.StaticFile("/ethicalmetrics.js", "./web/ethicalmetrics.js")
-	r.StaticFile("/zkp-client.js", "./web/zkp-client.js")
-	r.StaticFile("/bip39-words.js", "./web/bip39-words.js")
 	r.StaticFile("/announcement.js", "./web/announcement.js")
 
 	v1 := r.Group("/v1")
@@ -476,6 +441,8 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/users/contributions", prCheckLimiter(), UserContributionsHandler)
 		api.GET("/gh-proxy/*path", proxyLimiter(), GitHubAPIProxyHandler)
 		api.GET("/gh-raw/*path", proxyLimiter(), GitHubRawProxyHandler)
+		api.GET("/gh-camo/*path", proxyLimiter(), GitHubCamoProxyHandler)
+		api.GET("/gh-img/*path", proxyLimiter(), GitHubImagesProxyHandler)
 		api.GET("/gh-avatar/*path", proxyLimiter(), GitHubAvatarProxyHandler)
 		api.GET("/blame/:provider/:owner/:repo", proxyLimiter(), BlameHandler)
 		api.GET("/file-history/:provider/:owner/:repo", proxyLimiter(), FileHistoryHandler)
@@ -522,13 +489,6 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	// memoria), alimentado por el subscriber ntfy/UnifiedPush. Durante el
 	// modo mantenimiento esta ruta sigue viva (maintenanceAllowedPath).
 	r.GET("/api/announcement", announcementpkg.RateLimit(), announcementpkg.Handler)
-	zkp := r.Group("/api/zkp")
-	zkp.Use(zkpSecurity(), prCheckWindowLimiter("ZKP rate limit exceeded", 30, time.Minute))
-	{
-		zkp.POST("/register", ZKPRegisterHandler)
-		zkp.POST("/challenge", ZKPChallengeHandler)
-		zkp.POST("/verify", ZKPVerifyHandler)
-	}
 
 	r.NoRoute(func(c *gin.Context) {
 		// Las rutas de API desconocidas deben fallar con 404 JSON; servir el
@@ -544,7 +504,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 				return
 			}
 			parts := strings.Split(strings.Trim(c.Request.URL.Path, "/"), "/")
-			isProvider := len(parts) > 0 && (parts[0] == "gh" || parts[0] == "gl" || parts[0] == "cb" || parts[0] == "gg")
+			isProvider := len(parts) > 0 && (parts[0] == "gh" || parts[0] == "gl" || parts[0] == "cb")
 			if isProvider && len(parts) >= 2 {
 				if len(parts) == 2 {
 					serveDocumentWithGate(c, "./web/profile.html")

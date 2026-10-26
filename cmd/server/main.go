@@ -17,7 +17,6 @@ import (
 	"github.com/livrasand/gitGost/internal/announcement"
 	"github.com/livrasand/gitGost/internal/config"
 	handler "github.com/livrasand/gitGost/internal/http"
-	"github.com/livrasand/gitGost/internal/node"
 	"github.com/livrasand/gitGost/internal/utils"
 
 	"github.com/joho/godotenv"
@@ -150,23 +149,6 @@ func main() {
 		utils.Log("Announcement banners disabled (NTFY_ANNOUNCE_TOPIC unset)")
 	}
 
-	// Initialize node registry persistence
-	nodeStore, err := node.OpenStore(nodeDBPath())
-	if err != nil {
-		utils.Log("WARNING: node registry persistence disabled: %v", err)
-	} else {
-		node.NodeStore = nodeStore
-		defer nodeStore.Close()
-		if err := node.LoadProvisioned(); err != nil {
-			utils.Log("WARNING: no se pudieron cargar nodos persistidos: %v", err)
-		} else {
-			utils.Log("Node registry persistence enabled (%s)", nodeDBPath())
-		}
-	}
-
-	// Sweep stale ZKP registrations (identities without a Forge node) hourly
-	handler.StartZKPRegistrationSweeper(1 * time.Hour)
-
 	// Setup router
 	router := handler.SetupRouter(cfg)
 
@@ -176,13 +158,6 @@ func main() {
 	if err := http.ListenAndServe(addr, router); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func nodeDBPath() string {
-	if v := os.Getenv("GITGOST_HOME"); v != "" {
-		return v + "/nodes.db"
-	}
-	return os.ExpandEnv("$HOME/.gitgost/nodes.db")
 }
 
 func gateKeyPath() string {

@@ -465,14 +465,50 @@
         .rel-asset-row {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.35rem 0;
+            gap: 0.75rem;
+            padding: 0.6rem 0.75rem;
             font-size: 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 0;
+            background: var(--bg-secondary);
+            margin-bottom: 0.5rem;
+            transition: border-color 0.15s ease, background 0.15s ease;
         }
-        .rel-asset-icon { color: var(--fg-muted); flex-shrink: 0; display: inline-flex; }
-        .rel-asset-name { color: var(--accent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-        .rel-asset-meta { color: var(--fg-muted); font-size: 0.7rem; display: inline-flex; gap: 0.4rem; white-space: nowrap; }
-        /* Botón "volver al árbol" de la vista de archivos: visible solo en móvil con archivo abierto. */
+        .rel-asset-row:hover {
+            border-color: var(--accent);
+            background: var(--bg);
+        }
+        .rel-asset-icon { color: var(--fg-muted); flex-shrink: 0; display: inline-flex; font-size: 1.1rem; }
+        .rel-asset-name { color: var(--accent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; font-weight: 500; }
+        .rel-asset-meta { color: var(--fg-muted); font-size: 0.72rem; display: inline-flex; gap: 0.5rem; white-space: nowrap; align-items: center; }
+        .rel-asset-meta .sep { opacity: 0.4; }
+        .rel-asset-actions { display: flex; gap: 0.4rem; margin-left: auto; flex-shrink: 0; }
+        .rel-asset-row .ft-btn { font-size: 0.72rem; padding: 0.25rem 0.6rem; }
+        /* Botones generales (ft-btn): estilo consistente sin border-radius. */
+        .ft-btn {
+            padding: 0.22rem 0.55rem;
+            border: 1px solid var(--border);
+            border-radius: 0;
+            background: transparent;
+            color: var(--fg);
+            font-size: 0.7rem;
+            cursor: pointer;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .ft-btn:hover { border-color: var(--fg-secondary); background: var(--bg-secondary); }
+        .ft-btn.active { color: var(--accent); border-color: var(--accent); }
+        .rel-assets-header {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--fg);
+            margin: 1rem 0 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .rel-assets-header .count { color: var(--fg-muted); font-weight: 400; }
         .file-back-btn {
             display: none;
             align-items: center;
@@ -2072,8 +2108,88 @@
             display: flex;
             grid-template-columns: none;
             justify-content: space-between;
+            position: fixed;
+            top: auto;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            border-bottom: 0;
+            padding: 0.35rem 2rem;
+            align-items: center;
+            font-size: 0.72rem;
+            color: var(--fg-secondary);
         }
         .command-statusbar .statusbar-right { margin-left: auto; }
+        .command-statusbar .statusbar-command-menu {
+            bottom: calc(100% + 0.25rem);
+        }
+
+        .statusbar-command {
+            position: relative;
+        }
+
+        .statusbar-command-trigger {
+            border: 0;
+            padding: 0;
+            color: var(--fg-secondary);
+            background: transparent;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .statusbar-command-trigger:hover,
+        .statusbar-command-trigger:focus-visible {
+            color: var(--fg);
+            outline: none;
+        }
+
+        .statusbar-command-menu {
+            position: absolute;
+            bottom: calc(100% + 0.25rem);
+            left: 0;
+            width: 14rem;
+            padding: 0.25rem 0;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            box-shadow: none;
+        }
+
+        .statusbar-command-menu[hidden] {
+            display: none;
+        }
+
+        .statusbar-command-menu a,
+        .statusbar-command-menu button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            border: 0;
+            padding: 0.4rem 0.75rem;
+            color: var(--fg);
+            background: transparent;
+            font: inherit;
+            font-size: 0.72rem;
+            text-align: left;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .statusbar-command-menu a:hover,
+        .statusbar-command-menu button:hover,
+        .statusbar-command-menu a:focus-visible,
+        .statusbar-command-menu button:focus-visible {
+            background: var(--bg-hover);
+            outline: none;
+        }
+
+        .statusbar-command-menu-divider {
+            height: 1px;
+            margin: 0.25rem 0;
+            background: var(--border);
+        }
         #ref-select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7280'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.5rem center; padding-right: 1.5rem; }
         #ref-select option { background: var(--bg); color: var(--fg); }
 
@@ -3518,14 +3634,6 @@
                             <span id="msb-star-text">Star</span>
                             <span id="msb-star-count"></span>
                         </button>
-                        <button class="msb-btn" id="msb-fork-btn" style="display:none" onclick="doFork()" title="Fork this repository to your node">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.5 12a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 0a6 6 0 0 0-6 6v1.5h12V18a6 6 0 0 0-6-6Zm9-4.25a2.75 2.75 0 1 1 0-5.5 2.75 2.75 0 0 1 0 5.5Zm0 0a4.75 4.75 0 0 0-4.6 6"/></svg>
-                            <span id="msb-fork-text">Fork</span>
-                        </button>
-                        <button class="msb-btn" id="msb-watch-btn" style="display:none" onclick="doWatch()" title="Watch this repository for updates">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.75 12c2-4 5-6 9.25-6s7.25 2 9.25 6c-2 4-5 6-9.25 6s-7.25-2-9.25-6z"/><circle cx="12" cy="12" r="3"/></svg>
-                            <span id="msb-watch-text">Watch</span>
-                        </button>
                         <button class="msb-btn" onclick="doClone()">
                             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8.25a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0V12m0 3.75a2.75 2.75 0 1 0 0 5.5a2.75 2.75 0 0 0 0-5.5m0 0V12m10-3.75a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0V9a3 3 0 0 1-3 3H7"/></svg>
                             Clone
@@ -3580,14 +3688,6 @@
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.704 4.325a1.5 1.5 0 0 1 2.592 0l1.818 3.12a1.5 1.5 0 0 0 .978.712l3.53.764a1.5 1.5 0 0 1 .8 2.465l-2.405 2.693a1.5 1.5 0 0 0-.374 1.15l.363 3.593a1.5 1.5 0 0 1-2.097 1.524l-3.304-1.456a1.5 1.5 0 0 0-1.21 0l-3.304 1.456a1.5 1.5 0 0 1-2.097-1.524l.363-3.593a1.5 1.5 0 0 0-.373-1.15l-2.406-2.693a1.5 1.5 0 0 1 .8-2.465l3.53-.764a1.5 1.5 0 0 0 .979-.711z" />
 </svg> <span id="sb-star-text">Star</span> <span id="sb-star-count"></span></button>
-                    <button class="sidebar-btn" id="sb-fork-btn" style="display:none" onclick="doFork()" title="Fork this repository to your node"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-	<path d="M0 0h24v24H0z" fill="none" />
-	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.5 12a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 0a6 6 0 0 0-6 6v1.5h12V18a6 6 0 0 0-6-6Zm9-4.25a2.75 2.75 0 1 1 0-5.5 2.75 2.75 0 0 1 0 5.5Zm0 0a4.75 4.75 0 0 0-4.6 6" />
-</svg> <span id="sb-fork-text">Fork</span></button>
-                    <button class="sidebar-btn" id="sb-watch-btn" style="display:none" onclick="doWatch()" title="Watch this repository for updates"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-	<path d="M0 0h24v24H0z" fill="none" />
-	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.75 12c2-4 5-6 9.25-6s7.25 2 9.25 6c-2 4-5 6-9.25 6s-7.25-2-9.25-6z"/><circle cx="12" cy="12" r="3"/>
-</svg> <span id="sb-watch-text">Watch</span></button>
                     <button class="sidebar-btn" onclick="doClone()"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 	<path d="M0 0h24v24H0z" fill="none" />
 	<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8.25a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0V12m0 3.75a2.75 2.75 0 1 0 0 5.5a2.75 2.75 0 0 0 0-5.5m0 0V12m10-3.75a2.75 2.75 0 1 0 0-5.5a2.75 2.75 0 0 0 0 5.5m0 0V9a3 3 0 0 1-3 3H7" />
@@ -3662,14 +3762,6 @@
             return (window.gitgostCaptcha && window.gitgostCaptcha.proxy) || (API_BASE + '/api/captcha');
         }
 
-        function ggApiHeaders() {
-            const headers = {};
-            try {
-                const s = JSON.parse(localStorage.getItem('zkp_session') || 'null');
-                if (s && s.session_token) headers['X-ZKP-Token'] = s.session_token;
-            } catch(_) {}
-            return headers;
-        }
 
         const nativeFetch = window.fetch.bind(window);
         function proxiedProviderFetch(input, opts = {}) {
@@ -3809,8 +3901,8 @@
         }
 
         const _pathParts = window.location.pathname.split('/').filter(Boolean);
-        const _isCleanPath = _pathParts.length >= 3 && (_pathParts[0] === 'gh' || _pathParts[0] === 'gl' || _pathParts[0] === 'cb' || _pathParts[0] === 'gg');
-        const SAFE_PROVIDERS = new Set(['gh', 'gl', 'cb', 'gg']);
+        const _isCleanPath = _pathParts.length >= 3 && (_pathParts[0] === 'gh' || _pathParts[0] === 'gl' || _pathParts[0] === 'cb');
+        const SAFE_PROVIDERS = new Set(['gh', 'gl', 'cb']);
         function sanitizeProvider(p) {
             const v = String(p || '').toLowerCase();
             return SAFE_PROVIDERS.has(v) ? v : 'gh';
@@ -3847,7 +3939,7 @@
         }
         function sanitizeProvider(p) {
             const v = String(p || 'gh');
-            return (v === 'gh' || v === 'gl' || v === 'cb' || v === 'gg') ? v : 'gh';
+            return (v === 'gh' || v === 'gl' || v === 'cb') ? v : 'gh';
         }
         function sanitizeRepoPart(v) {
             const s = String(v || '');
@@ -3883,7 +3975,7 @@
         // Devuelve null si el path no pertenece a este esquema (p.ej. ?owner=&repo=).
         function parseRepoRoute(pathname) {
             const parts = String(pathname || '').split('/').filter(Boolean);
-            if (parts.length < 3 || !['gh', 'gl', 'cb', 'gg'].includes(parts[0])) return null;
+            if (parts.length < 3 || !['gh', 'gl', 'cb'].includes(parts[0])) return null;
             const route = { provider: parts[0], owner: parts[1], repo: parts[2] };
             try {
                 route.owner = decodeURIComponent(parts[1]);
@@ -4128,19 +4220,6 @@
             const sbStarBtn = document.getElementById('sb-star-btn');
             if (sbStarBtn) sbStarBtn.disabled = false;
 
-            // Show Fork/Watch buttons for gitGost repos
-            if (rv.provider === 'gg') {
-                const msbForkBtn = document.getElementById('msb-fork-btn');
-                const msbWatchBtn = document.getElementById('msb-watch-btn');
-                const sbForkBtn = document.getElementById('sb-fork-btn');
-                const sbWatchBtn = document.getElementById('sb-watch-btn');
-                if (msbForkBtn) msbForkBtn.style.display = '';
-                if (msbWatchBtn) msbWatchBtn.style.display = '';
-                if (sbForkBtn) sbForkBtn.style.display = '';
-                if (sbWatchBtn) sbWatchBtn.style.display = '';
-                updateForkBtnState();
-                updateWatchBtnState();
-            }
 
             loadRepoInfo();
             loadLanguages();
@@ -4461,14 +4540,6 @@
                     } else if (rv.provider === 'gh') {
                         const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}`);
                         if (res.ok) d = await res.json();
-                    } else if (rv.provider === 'gg') {
-                        const res = await fetch(`${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/branches`, { headers: ggApiHeaders() });
-                        if (res.ok) {
-                            const dd = await res.json();
-                            const bs = Array.isArray(dd.branches) ? dd.branches : [];
-                            const def = bs.find(b => b === 'main' || b === 'master') || bs[0];
-                            if (def) d = { default_branch: def };
-                        }
                     } else {
                         const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                         const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}`);
@@ -4490,14 +4561,6 @@
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const items = await res.json();
                     item = items.find(i => i.name.toLowerCase() === 'readme.md');
-                } else if (rv.provider === 'gg') {
-                    const res = await fetch(`${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/tree?path=`, {
-                        headers: ggApiHeaders()
-                    });
-                    if (res.ok) {
-                        const items = await res.json();
-                        item = items.find(i => (i.name || '').toLowerCase() === 'readme.md');
-                    }
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const ref = currentBranch();
@@ -6457,25 +6520,7 @@
             }
         }
 
-        async function fetchGGBranches() {
-            try {
-                const res = await fetch(`${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/branches`, { headers: ggApiHeaders() });
-                if (!res.ok) return [];
-                const d = await res.json();
-                const arr = Array.isArray(d.branches) ? d.branches : [];
-                return arr.map(name => ({ name: String(name) }));
-            } catch (_) { return []; }
-        }
 
-        async function fetchGGTags() {
-            try {
-                const res = await fetch(`${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/tags`, { headers: ggApiHeaders() });
-                if (!res.ok) return [];
-                const d = await res.json();
-                const arr = Array.isArray(d.tags) ? d.tags : [];
-                return arr.map(name => ({ name: String(name) }));
-            } catch (_) { return []; }
-        }
 
         async function loadRefSelectData() {
             try {
@@ -6504,8 +6549,6 @@
                         if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
                         page++;
                     }
-                } else if (rv.provider === 'gg') {
-                    branches = await fetchGGBranches();
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     let page = 1;
@@ -6533,8 +6576,6 @@
                         const data = await res.json();
                         if (Array.isArray(data)) tags = data.map(t => t.name);
                     }
-                } else if (rv.provider === 'gg') {
-                    tags = (await fetchGGTags()).map(t => t.name);
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/tags?per_page=100`);
@@ -6576,8 +6617,6 @@
                         if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
                         page++;
                     }
-                } else if (rv.provider === 'gg') {
-                    branches = await fetchGGBranches();
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     let page = 1;
@@ -6605,8 +6644,6 @@
                         const data = await res.json();
                         if (Array.isArray(data)) tags = data.map(t => t.name);
                     }
-                } else if (rv.provider === 'gg') {
-                    tags = (await fetchGGTags()).map(t => t.name);
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/tags?per_page=100`);
@@ -6715,8 +6752,6 @@
                         page++;
                         if (page > 10) break;
                     }
-                } else if (rv.provider === 'gg') {
-                    tags = await fetchGGTags();
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     let page = 1;
@@ -7044,7 +7079,7 @@
                         : '';
                     const dateLabel = fmtDate(a.created_at || a.updated_at);
                     const meta = [size, downloads, dateLabel].filter(Boolean)
-                        .join('<span style="opacity:0.5;">·</span>');
+                        .join('<span class="sep">·</span>');
                     const url = a.browser_download_url || '';
                     return `<div class="rel-asset-row">
                         <span class="rel-asset-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
@@ -7053,13 +7088,14 @@
 </svg></span>
                         <span class="rel-asset-name" title="${escAttr(url)}">${escHtml(a.name)}</span>
                         <span class="rel-asset-meta">${meta}</span>
-                        ${url ? `<button type="button" class="ft-btn rel-dl-btn" data-url="${escAttr(url)}" title="Download this asset">download</button>` +
-                                `<button type="button" class="ft-btn rel-copy-btn" data-url="${escAttr(url)}" title="Copy the direct download URL">copy link</button>` : ''}
+                        ${url ? `<span class="rel-asset-actions"><button type="button" class="ft-btn rel-dl-btn" data-url="${escAttr(url)}" title="Download this asset">download</button>` +
+                                `<button type="button" class="ft-btn rel-copy-btn" data-url="${escAttr(url)}" title="Copy the direct download URL">copy link</button></span>` : ''}
                     </div>`;
                 }).join('');
                 assetsHtml = `<div style="margin-top:1rem;">
-                    <div style="font-size:0.75rem;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.4rem;">` +
-                        `Assets (${assets.length})${totalSize > 0 ? ' · ' + formatBytes(totalSize) : ''}</div>
+                    <div class="rel-assets-header">
+                        Assets <span class="count">(${assets.length})${totalSize > 0 ? ' · ' + formatBytes(totalSize) : ''}</span>
+                    </div>
                     ${items}
                 </div>`;
             }
@@ -8079,21 +8115,97 @@
                     loadCommitCount();
                     loadContributors();
                     loadDeployments();
-                } else if (rv.provider === 'gg') {
-                    const res = await fetch(`${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/info`, {
-                        headers: ggApiHeaders()
-                    });
-                    if (!res.ok) return;
+                } else if (rv.provider === 'cb') {
+                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}`);
+                    if (!res.ok) {
+                        const sbDesc = document.getElementById('sb-desc');
+                        if (sbDesc) sbDesc.textContent = `codeberg API error ${res.status}`;
+                        return;
+                    }
                     const d = await res.json();
-                    const bar = document.getElementById('repo-info');
-                    const infoDesc = document.getElementById('info-desc');
-                    if (infoDesc && d.name) infoDesc.textContent = d.name;
+                    const bar       = document.getElementById('repo-info');
+                    const infoStars = document.getElementById('info-stars');
+                    const infoForks = document.getElementById('info-forks');
+                    const infoLang  = document.getElementById('info-lang');
+                    const infoDesc  = document.getElementById('info-desc');
+                    if (infoStars) infoStars.textContent = `★ ${d.stars_count?.toLocaleString() || 0}`;
+                    if (infoForks) infoForks.textContent = `⑂ ${d.forks_count || 0} forks`;
+                    if (infoLang && d.language) infoLang.textContent = d.language;
+                    if (infoDesc && d.description) infoDesc.textContent = d.description;
                     if (bar) bar.style.display = 'flex';
-                    rv.branch = '';
-                    rv.stars = 0;
+                    rv.language = d.language || rv.language;
+                    rv.branch = d.default_branch || rv.branch;
+                    rv.stars = d.stars_count || 0;
+                    setRepoHomepage(d.website);
+
+                    const sbDesc = document.getElementById('sb-desc');
+                    if (sbDesc) sbDesc.textContent = d.description || '—';
+                    const sbTags = document.getElementById('sb-tags');
+                    if (sbTags && d.topics && d.topics.length > 0) {
+                        sbTags.innerHTML = d.topics.map(t => `<a class="sidebar-tag" href="/?tag=${encodeURIComponent(t)}" title="Search ${escAttr(t)}">${escHtml(t)}</a>`).join('');
+                    }
+                    const sbVis = document.getElementById('sb-vis');
+                    if (sbVis) {
+                        sbVis.textContent = d.private ? 'private' : 'public';
+                        sbVis.className = 'val ' + (d.private ? '' : 'pub');
+                    }
+                    const sbCreated = document.getElementById('sb-created');
+                    if (sbCreated && d.created_at) {
+                        sbCreated.textContent = new Date(d.created_at).toLocaleDateString('en', {year:'numeric', month:'short', day:'numeric'});
+                    }
+                    const sbForks = document.getElementById('sb-forks');
+                    if (sbForks) sbForks.textContent = d.forks_count ? d.forks_count.toLocaleString() : '0';
+                    const sbWatching = document.getElementById('sb-watching');
+                    if (sbWatching) {
+                        try {
+                            // Gitea/Codeberg no incluye el conteo de watchers en el JSON del repo:
+                            // se obtiene del header de paginación X-Total-Count de /subscribers.
+                            const wRes = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/subscribers?limit=1`);
+                            if (wRes.ok) {
+                                const total = wRes.headers.get('X-Total-Count');
+                                if (total != null) sbWatching.textContent = Number(total).toLocaleString();
+                            }
+                        } catch(_) {}
+                    }
+                    const sbLicense = document.getElementById('sb-license');
+                    if (sbLicense) {
+                        const ref = currentBranch() || rv.branch || 'master';
+                        try {
+                            // El proxy de Codeberg bloquea /raw/<file>?ref= (403): se lista la raíz
+                            // con /contents (1 request) y se lee el archivo de licencia real (1 request),
+                            // en vez de probar hasta 5 nombres con rutas no permitidas.
+                            const listRes = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/contents/?ref=${encodeURIComponent(ref)}`);
+                            if (listRes.ok) {
+                                const items = await listRes.json();
+                                const licItem = Array.isArray(items)
+                                    ? items.find(f => f && f.type === 'file' && /^(LICENSE|COPYING)(\.(md|txt))?$/i.test(f.name || ''))
+                                    : null;
+                                if (licItem) {
+                                    const licPath = (licItem.path || '').split('/').map(encodeURIComponent).join('/');
+                                    const licRes = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/contents/${licPath}?ref=${encodeURIComponent(ref)}`);
+                                    if (licRes.ok) {
+                                        const data = await licRes.json();
+                                        const label = _detectLicense(decodeBase64Utf8(data.content || ''));
+                                        if (label) sbLicense.textContent = label;
+                                    }
+                                }
+                            }
+                        } catch(_) {}
+                    }
                     const sbSize = document.getElementById('sb-size');
-                    if (sbSize && d.size) sbSize.textContent = formatBytes(d.size);
-                } else if (rv.provider === 'gl') {
+                    if (sbSize) sbSize.textContent = d.size ? formatBytes(d.size * 1024) : '—';
+                    const sbStarCount = document.getElementById('sb-star-count');
+                    if (sbStarCount) sbStarCount.textContent = d.stars_count ? d.stars_count.toLocaleString() : '';
+                    updateStatusbarPath();
+
+                    const navWiki = document.getElementById('nav-wiki');
+                    if (navWiki && d.has_wiki) {
+                        navWiki.style.display = '';
+                    }
+
+                    loadCommitCount();
+                    loadContributors();
+                } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const glToken = sessionStorage.getItem('gl_token');
                     const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}?statistics=true`, glToken ? { headers: { 'PRIVATE-TOKEN': glToken } } : {});
@@ -8186,96 +8298,6 @@
                     loadCommitCount();
                     loadContributors();
                     loadDeployments();
-                } else if (rv.provider === 'cb') {
-                    const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}`);
-                    if (!res.ok) {
-                        const sbDesc = document.getElementById('sb-desc');
-                        if (sbDesc) sbDesc.textContent = `codeberg API error ${res.status}`;
-                        return;
-                    }
-                    const d = await res.json();
-                    const bar       = document.getElementById('repo-info');
-                    const infoStars = document.getElementById('info-stars');
-                    const infoForks = document.getElementById('info-forks');
-                    const infoLang  = document.getElementById('info-lang');
-                    const infoDesc  = document.getElementById('info-desc');
-                    if (infoStars) infoStars.textContent = `★ ${d.stars_count?.toLocaleString() || 0}`;
-                    if (infoForks) infoForks.textContent = `⑂ ${d.forks_count || 0} forks`;
-                    if (infoLang && d.language) infoLang.textContent = d.language;
-                    if (infoDesc && d.description) infoDesc.textContent = d.description;
-                    if (bar) bar.style.display = 'flex';
-                    rv.language = d.language || rv.language;
-                    rv.branch = d.default_branch || rv.branch;
-                    rv.stars = d.stars_count || 0;
-                    setRepoHomepage(d.website);
-
-                    const sbDesc = document.getElementById('sb-desc');
-                    if (sbDesc) sbDesc.textContent = d.description || '—';
-                    const sbTags = document.getElementById('sb-tags');
-                    if (sbTags && d.topics && d.topics.length > 0) {
-                        sbTags.innerHTML = d.topics.map(t => `<a class="sidebar-tag" href="/?tag=${encodeURIComponent(t)}" title="Search ${escAttr(t)}">${escHtml(t)}</a>`).join('');
-                    }
-                    const sbVis = document.getElementById('sb-vis');
-                    if (sbVis) {
-                        sbVis.textContent = d.private ? 'private' : 'public';
-                        sbVis.className = 'val ' + (d.private ? '' : 'pub');
-                    }
-                    const sbCreated = document.getElementById('sb-created');
-                    if (sbCreated && d.created_at) {
-                        sbCreated.textContent = new Date(d.created_at).toLocaleDateString('en', {year:'numeric', month:'short', day:'numeric'});
-                    }
-                    const sbForks = document.getElementById('sb-forks');
-                    if (sbForks) sbForks.textContent = d.forks_count ? d.forks_count.toLocaleString() : '0';
-                    const sbWatching = document.getElementById('sb-watching');
-                    if (sbWatching) {
-                        try {
-                            // Gitea/Codeberg no incluye el conteo de watchers en el JSON del repo:
-                            // se obtiene del header de paginación X-Total-Count de /subscribers.
-                            const wRes = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/subscribers?limit=1`);
-                            if (wRes.ok) {
-                                const total = wRes.headers.get('X-Total-Count');
-                                if (total != null) sbWatching.textContent = Number(total).toLocaleString();
-                            }
-                        } catch(_) {}
-                    }
-                    const sbLicense = document.getElementById('sb-license');
-                    if (sbLicense) {
-                        const ref = currentBranch() || rv.branch || 'master';
-                        try {
-                            // El proxy de Codeberg bloquea /raw/<file>?ref= (403): se lista la raíz
-                            // con /contents (1 request) y se lee el archivo de licencia real (1 request),
-                            // en vez de probar hasta 5 nombres con rutas no permitidas.
-                            const listRes = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/contents/?ref=${encodeURIComponent(ref)}`);
-                            if (listRes.ok) {
-                                const items = await listRes.json();
-                                const licItem = Array.isArray(items)
-                                    ? items.find(f => f && f.type === 'file' && /^(LICENSE|COPYING)(\.(md|txt))?$/i.test(f.name || ''))
-                                    : null;
-                                if (licItem) {
-                                    const licPath = (licItem.path || '').split('/').map(encodeURIComponent).join('/');
-                                    const licRes = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/contents/${licPath}?ref=${encodeURIComponent(ref)}`);
-                                    if (licRes.ok) {
-                                        const data = await licRes.json();
-                                        const label = _detectLicense(decodeBase64Utf8(data.content || ''));
-                                        if (label) sbLicense.textContent = label;
-                                    }
-                                }
-                            }
-                        } catch(_) {}
-                    }
-                    const sbSize = document.getElementById('sb-size');
-                    if (sbSize) sbSize.textContent = d.size ? formatBytes(d.size * 1024) : '—';
-                    const sbStarCount = document.getElementById('sb-star-count');
-                    if (sbStarCount) sbStarCount.textContent = d.stars_count ? d.stars_count.toLocaleString() : '';
-                    updateStatusbarPath();
-
-                    const navWiki = document.getElementById('nav-wiki');
-                    if (navWiki && d.has_wiki) {
-                        navWiki.style.display = '';
-                    }
-
-                    loadCommitCount();
-                    loadContributors();
                 }
             } catch(e) {
                 const sbDesc = document.getElementById('sb-desc');
@@ -9182,12 +9204,6 @@
                 const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/contents/${pathStr}?ref=${encodeURIComponent(ref)}`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 return await res.json();
-            } else if (rv.provider === 'gg') {
-                const res = await fetch(`${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/tree?path=${encodeURIComponent(pathStr)}`, {
-                    headers: ggApiHeaders()
-                });
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                return await res.json();
             } else {
                 const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                 const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/tree?path=${encodeURIComponent(pathStr)}&per_page=100&ref=${encodeURIComponent(ref)}`);
@@ -9667,15 +9683,6 @@
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const data = await res.json();
                     content = decodeBase64Utf8(data.content);
-                } else if (rv.provider === 'gg') {
-                    const path = encodeURIComponent(item.path || item.name || '');
-                    const res = await fetch(`${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/raw?path=${path}`, {
-                        headers: ggApiHeaders()
-                    });
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    const data = await res.json();
-                    content = decodeBase64Utf8(data.data_b64 || '');
-                    if (!fileSize && data.len) fileSize = data.len;
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const fp  = encodeURIComponent(item.path || item.name);
@@ -9699,9 +9706,7 @@
                             ? `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${branch}/${item.path}`
                             : `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/${item.path}`;
                     }
-                    if (rv.provider === 'gg') {
-                        imgUrl = `${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/raw?path=${encodeURIComponent(item.path || item.name)}`;
-                    }
+                    
                     const safeImgUrl = sanitizeHttpUrl(imgUrl);
                     _renderFilePanel(name, { path: item.path || item.name, lastCommitScope: opts.lastCommitScope || 'file', content, size: fileSize, imgUrl: safeImgUrl, isImage: true, previewHtml: `<div style="padding:1rem;text-align:center;"><img src="${escHtml(safeImgUrl)}" alt="${escHtml(name)}" style="max-width:100%;max-height:80vh;object-fit:contain;border-radius: 0;" /></div>` });
                 } else if (name.toLowerCase().endsWith('.md')) {
@@ -9714,9 +9719,7 @@
                             ? `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${branch}/${dir}`
                             : `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/${dir}`;
                     }
-                    if (rv.provider === 'gg') {
-                        mdBaseUrl = `${API_BASE}/api/gg/repos/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/raw?path=${encodeURIComponent(dir)}`;
-                    }
+                    
                     _renderFilePanel(name, { path: item.path || item.name, lastCommitScope: opts.lastCommitScope || 'file', content, size: fileSize, isMd: true, previewHtml: `<div class="readme">${renderMd(content, mdBaseUrl)}</div>` });
                 } else {
                     _renderFilePanel(name, { path: item.path || item.name, lastCommitScope: opts.lastCommitScope || 'file', content, size: fileSize, previewHtml: _buildCodeHtml(content, name) });
@@ -10485,67 +10488,6 @@
             _updateStarBtn();
         }
 
-        // ---- Fork / Watch for gitGost repos ----
-        function _forkKey() { return `gg:fork:${rv.owner}/${rv.repo}`; }
-        function _watchKey() { return `gg:watch:${rv.owner}/${rv.repo}`; }
-        function _isForked() { return !!localStorage.getItem(_forkKey()); }
-        function _isWatched() { return !!localStorage.getItem(_watchKey()); }
-
-        function doFork() {
-            if (rv.provider !== 'gg') return;
-            const key = _forkKey();
-            if (_isForked()) {
-                localStorage.removeItem(key);
-            } else {
-                localStorage.setItem(key, JSON.stringify({
-                    owner: rv.owner,
-                    repo: rv.repo,
-                    full_name: `${rv.owner}/${rv.repo}`,
-                    forked_at: new Date().toISOString()
-                }));
-            }
-            updateForkBtnState();
-        }
-
-        function doWatch() {
-            if (rv.provider !== 'gg') return;
-            const key = _watchKey();
-            if (_isWatched()) {
-                localStorage.removeItem(key);
-            } else {
-                localStorage.setItem(key, JSON.stringify({
-                    owner: rv.owner,
-                    repo: rv.repo,
-                    full_name: `${rv.owner}/${rv.repo}`,
-                    watched_at: new Date().toISOString()
-                }));
-            }
-            updateWatchBtnState();
-        }
-
-        function updateForkBtnState() {
-            const forked = _isForked();
-            const msbForkText = document.getElementById('msb-fork-text');
-            const sbForkText = document.getElementById('sb-fork-text');
-            const msbForkSvg = document.querySelector('#msb-fork-btn svg path:last-child');
-            const sbForkSvg = document.querySelector('#sb-fork-btn svg path:last-child');
-            if (msbForkText) msbForkText.textContent = forked ? 'Forked' : 'Fork';
-            if (sbForkText) sbForkText.textContent = forked ? 'Forked' : 'Fork';
-            if (msbForkSvg) msbForkSvg.setAttribute('fill', forked ? 'currentColor' : 'none');
-            if (sbForkSvg) sbForkSvg.setAttribute('fill', forked ? 'currentColor' : 'none');
-        }
-
-        function updateWatchBtnState() {
-            const watched = _isWatched();
-            const msbWatchText = document.getElementById('msb-watch-text');
-            const sbWatchText = document.getElementById('sb-watch-text');
-            const msbWatchSvg = document.querySelector('#msb-watch-btn svg path:last-child');
-            const sbWatchSvg = document.querySelector('#sb-watch-btn svg path:last-child');
-            if (msbWatchText) msbWatchText.textContent = watched ? 'Watching' : 'Watch';
-            if (sbWatchText) sbWatchText.textContent = watched ? 'Watching' : 'Watch';
-            if (msbWatchSvg) msbWatchSvg.setAttribute('fill', watched ? 'currentColor' : 'none');
-            if (sbWatchSvg) sbWatchSvg.setAttribute('fill', watched ? 'currentColor' : 'none');
-        }
 
         function doClone() {
             if (document.getElementById('clone-modal-overlay')) return;
@@ -11187,8 +11129,47 @@
         </div>
         <div class="statusbar-right"></div>
     </footer>
-    <script src="/bip39-words.js"></script>
-    <script src="/zkp-client.js?v=3"></script>
+    <script>
+        (function () {
+            var trigger = document.getElementById('command-trigger');
+            var menu = document.getElementById('command-menu');
+            if (!trigger || !menu) return;
+
+            function closeCommandMenu() {
+                menu.hidden = true;
+                trigger.setAttribute('aria-expanded', 'false');
+            }
+
+            trigger.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var open = menu.hidden;
+                menu.hidden = !open;
+                trigger.setAttribute('aria-expanded', String(open));
+            });
+
+            document.addEventListener('click', function (e) {
+                if (menu.hidden) return;
+                if (!menu.contains(e.target) && e.target !== trigger) closeCommandMenu();
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closeCommandMenu();
+            });
+
+            menu.querySelectorAll('[data-cmd]').forEach(function (el) {
+                el.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var cmd = el.getAttribute('data-cmd');
+                    closeCommandMenu();
+                    if (cmd === 'toggle-theme') {
+                        window.toggleTheme();
+                        return;
+                    }
+                    window.location.href = cmd === 'home' ? '/' : '/' + cmd;
+                });
+            });
+        })();
+    </script>
     <script src="/announcement.js"></script>
     <!-- Menta SDK loader: it decides whether the gate is active and only then
          injects the SDK (which defines the <menta-widget> custom element). -->

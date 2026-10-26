@@ -136,7 +136,6 @@ func TestProviderSlugFromPath(t *testing.T) {
 		{"/v1/gl/owner/repo/issues/5/reactions", "gl"},
 		{"/v1/cb/owner/repo/issues/5/comments/12/reactions", "cb"},
 		{"/v1/gh/owner/repo/issues/5/comments/12/reactions", "gh"},
-		{"/v1/gg/owner/repo/info/refs", "gg"},
 		{"/v2/jobs", ""},
 		{"/", ""},
 		{"", ""},

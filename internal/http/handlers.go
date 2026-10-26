@@ -28,10 +28,8 @@ import (
 	"github.com/livrasand/gitGost/internal/database"
 	"github.com/livrasand/gitGost/internal/git"
 	"github.com/livrasand/gitGost/internal/github"
-	nodepkg "github.com/livrasand/gitGost/internal/node"
 	"github.com/livrasand/gitGost/internal/provider"
 	cbprovider "github.com/livrasand/gitGost/internal/provider/codeberg"
-	gitgostprovider "github.com/livrasand/gitGost/internal/provider/gitgost"
 	ghprovider "github.com/livrasand/gitGost/internal/provider/github"
 	glprovider "github.com/livrasand/gitGost/internal/provider/gitlab"
 	"github.com/livrasand/gitGost/internal/tokenpool"
@@ -254,9 +252,6 @@ func providerFromPath(path string) provider.Provider {
 	if strings.HasPrefix(path, "/v1/cb/") {
 		return cbprovider.New()
 	}
-	if strings.HasPrefix(path, "/v1/gg/") {
-		return gitgostprovider.New()
-	}
 	return ghprovider.New()
 }
 
@@ -264,7 +259,7 @@ func providerSlugFromPath(path string) string {
 	segments := strings.Split(strings.TrimPrefix(path, "/"), "/")
 	if len(segments) >= 2 {
 		switch segments[1] {
-		case "gh", "gl", "cb", "gg":
+		case "gh", "gl", "cb":
 			return segments[1]
 		}
 	}
@@ -3790,18 +3785,25 @@ func GitLabProxyHandler(c *gin.Context) {
 }
 
 func GitHubRawProxyHandler(c *gin.Context) {
+	githubMediaProxy(c, "https://raw.githubusercontent.com/", "raw.githubusercontent.com", "/api/gh-raw/")
+}
+
+// githubMediaProxy sirve imágenes remotas de hosts concretos de GitHub a
+// través del servidor (camo y user-images) para que los README de perfil se
+// vean igual que en GitHub aunque el navegador no pueda alcanzarlos.
+func githubMediaProxy(c *gin.Context, host, name, prefix string) {
 	if c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead {
 		c.AbortWithStatusJSON(http.StatusMethodNotAllowed, gin.H{"error": "only GET/HEAD allowed"})
 		return
 	}
-
-	path := strings.TrimPrefix(c.Request.URL.Path, "/api/gh-raw/")
+	_ = name
+	path := strings.TrimPrefix(c.Request.URL.Path, prefix)
 	if path == "" || strings.Contains(path, "..") {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid raw path"})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid media path"})
 		return
 	}
 
-	target := "https://raw.githubusercontent.com/" + path
+	target := host + path
 	if c.Request.URL.RawQuery != "" {
 		target += "?" + c.Request.URL.RawQuery
 	}
@@ -3817,8 +3819,8 @@ func GitHubRawProxyHandler(c *gin.Context) {
 	client := newSafeHTTPClient(45 * time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
-		utils.Log("GitHub raw proxy error: %v", err)
-		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "failed to reach raw.githubusercontent.com"})
+		utils.Log("GitHub %s proxy error: %v", name, err)
+		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "failed to reach " + name})
 		return
 	}
 	defer resp.Body.Close()
@@ -3830,8 +3832,16 @@ func GitHubRawProxyHandler(c *gin.Context) {
 	}
 	c.Writer.WriteHeader(resp.StatusCode)
 	if _, err := io.Copy(c.Writer, resp.Body); err != nil {
-		utils.Log("GitHub raw proxy copy error: %v", err)
+		utils.Log("GitHub %s proxy copy error: %v", name, err)
 	}
+}
+
+func GitHubCamoProxyHandler(c *gin.Context) {
+	githubMediaProxy(c, "https://camo.githubusercontent.com/", "camo.githubusercontent.com", "/api/gh-camo/")
+}
+
+func GitHubImagesProxyHandler(c *gin.Context) {
+	githubMediaProxy(c, "https://user-images.githubusercontent.com/", "user-images.githubusercontent.com", "/api/gh-img/")
 }
 
 func GitHubAvatarProxyHandler(c *gin.Context) {
@@ -4362,7 +4372,6 @@ func UsersSearchHandler(c *gin.Context) {
 	ghChan := make(chan searchResult, 1)
 	glChan := make(chan searchResult, 1)
 	cbChan := make(chan searchResult, 1)
-	ggChan := make(chan searchResult, 1)
 
 	if provider == "gh" || provider == "all" || provider == "" {
 		wg.Add(1)
@@ -4394,16 +4403,6 @@ func UsersSearchHandler(c *gin.Context) {
 		cbChan <- searchResult{results: []gin.H{}}
 	}
 
-	if provider == "gg" || provider == "all" || provider == "" {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			ggChan <- searchResult{results: searchGitGostUsers(query)}
-		}()
-	} else {
-		ggChan <- searchResult{results: []gin.H{}}
-	}
-
 	done := make(chan struct{})
 	go func() {
 		wg.Wait()
@@ -4418,14 +4417,12 @@ func UsersSearchHandler(c *gin.Context) {
 	close(ghChan)
 	close(glChan)
 	close(cbChan)
-	close(ggChan)
 
 	// Collect and merge results
 	results := []gin.H{}
 	results = append(results, (<-ghChan).results...)
 	results = append(results, (<-glChan).results...)
 	results = append(results, (<-cbChan).results...)
-	results = append(results, (<-ggChan).results...)
 
 	c.JSON(http.StatusOK, gin.H{
 		"query":   query,
@@ -4734,31 +4731,98 @@ func searchCodebergUsers(query, clientToken string) []gin.H {
 	return results
 }
 
-func searchGitGostUsers(query string) []gin.H {
-	results := []gin.H{}
-	zkpState.Lock()
-	defer zkpState.Unlock()
-	q := strings.ToLower(query)
-	for identity := range zkpState.registrations {
-		if strings.Contains(strings.ToLower(identity), q) {
-			results = append(results, gin.H{
-				"provider":   "gitgost",
-				"username":   identity,
-				"name":       identity,
-				"avatar_url": "",
-				"url":        fmt.Sprintf("/gg/%s", identity),
-			})
-			if len(results) >= 100 {
-				break
-			}
-		}
+
+// El mismo patrón que profileCache, para la lista de repos del perfil.
+var (
+	reposCacheMu   sync.Mutex
+	reposCacheData = map[string]reposCacheEntry{}
+)
+
+type reposCacheEntry struct {
+	repos     []gin.H
+	expiresAt time.Time
+}
+
+func reposCacheKey(provider, username, userType string) string {
+	return provider + "|" + username + "|" + userType
+}
+
+func reposCacheGet(provider, username, userType string) ([]gin.H, bool) {
+	reposCacheMu.Lock()
+	defer reposCacheMu.Unlock()
+	entry, ok := reposCacheData[reposCacheKey(provider, username, userType)]
+	if !ok || time.Now().After(entry.expiresAt) {
+		return nil, false
 	}
-	return results
+	return entry.repos, true
+}
+
+func reposCacheSet(provider, username, userType string, repos []gin.H, ttl time.Duration) {
+	reposCacheMu.Lock()
+	defer reposCacheMu.Unlock()
+	reposCacheData[reposCacheKey(provider, username, userType)] = reposCacheEntry{
+		repos:     repos,
+		expiresAt: time.Now().Add(ttl),
+	}
+}
+
+type reposResult struct {
+	repos       []gin.H
+	rateLimited bool
 }
 
 type profileResult struct {
-	profile  gin.H
-	notFound bool
+	profile    gin.H
+	notFound   bool
+	rateLimit  bool
+	retryAfter int
+}
+
+func rateLimitRetryAfter(resp *http.Response) int {
+	if reset, err := strconv.ParseInt(resp.Header.Get("X-RateLimit-Reset"), 10, 64); err == nil {
+		if secs := int(reset - time.Now().Unix()); secs > 0 && secs < 3600 {
+			return secs
+		}
+		return 60
+	}
+	return 60
+}
+
+// Cache en memoria de perfiles de usuarios para sobrevivir a rate limits del
+// proveedor: si upstream responde 403/429, se sirve el último resultado bueno
+// (hasta 1 hora de antigüedad) en lugar de fallar.
+var (
+	profileCacheMu    sync.Mutex
+	profileCacheData  = map[string]profileCacheEntry{}
+)
+
+type profileCacheEntry struct {
+	profile   gin.H
+	expiresAt time.Time
+}
+
+func profileCacheKey(provider, username string) string {
+	return provider + "|" + username
+}
+
+func profileCacheGet(provider, username string) (gin.H, bool) {
+	profileCacheMu.Lock()
+	defer profileCacheMu.Unlock()
+	key := profileCacheKey(provider, username)
+	entry, ok := profileCacheData[key]
+	if !ok || time.Now().After(entry.expiresAt) {
+		return nil, false
+	}
+	return entry.profile, true
+}
+
+func profileCacheSet(provider, username string, profile gin.H, ttl time.Duration) {
+	profileCacheMu.Lock()
+	defer profileCacheMu.Unlock()
+	profileCacheData[profileCacheKey(provider, username)] = profileCacheEntry{
+		profile:   profile,
+		expiresAt: time.Now().Add(ttl),
+	}
 }
 
 func UserProfileHandler(c *gin.Context) {
@@ -4797,11 +4861,24 @@ func UserProfileHandler(c *gin.Context) {
 	if result.profile == nil {
 		if result.notFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		} else if result.rateLimit {
+			if cached, ok := profileCacheGet(provider, username); ok {
+				c.JSON(http.StatusOK, cached)
+				return
+			}
+			if result.retryAfter > 0 {
+				c.Header("Retry-After", strconv.Itoa(result.retryAfter))
+			}
+			c.JSON(http.StatusTooManyRequests, gin.H{
+				"error":   "rate limited upstream",
+				"retries": result.retryAfter,
+			})
 		} else {
 			c.JSON(http.StatusBadGateway, gin.H{"error": "upstream service error"})
 		}
 		return
 	}
+	profileCacheSet(provider, username, result.profile, time.Hour)
 	c.JSON(http.StatusOK, result.profile)
 }
 
@@ -4830,7 +4907,13 @@ func gitHubUserProfile(username, clientToken string) profileResult {
 	if resp.StatusCode != http.StatusOK {
 		utils.Log("GitHub user profile returned status: %d", resp.StatusCode)
 		notFound := resp.StatusCode == http.StatusNotFound
-		return profileResult{profile: nil, notFound: notFound}
+		rateLimit := resp.StatusCode == http.StatusTooManyRequests ||
+			(resp.StatusCode == http.StatusForbidden && resp.Header.Get("X-RateLimit-Remaining") == "0")
+		retryAfter := 0
+		if rateLimit {
+			retryAfter = rateLimitRetryAfter(resp)
+		}
+		return profileResult{profile: nil, notFound: notFound, rateLimit: rateLimit, retryAfter: retryAfter}
 	}
 
 	var d struct {
@@ -5793,32 +5876,41 @@ func UserReposHandler(c *gin.Context) {
 		clientToken = strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(auth, "token "), "Bearer "))
 	}
 
-	var repos []gin.H
+	var rr reposResult
 	switch provider {
 	case "gl":
-		repos = gitLabUserRepos(username, userType, clientToken)
+		rr.repos = gitLabUserRepos(username, userType, clientToken)
 	case "cb":
-		repos = codebergUserRepos(username, userType, clientToken)
-	case "gg":
-		repos = gitGostUserRepos(username, c)
+		rr.repos = codebergUserRepos(username, userType, clientToken)
 	default:
-		repos = gitHubUserRepos(username, clientToken)
+		rr = gitHubUserRepos(username, clientToken)
 	}
 
-	if repos == nil {
+	if rr.repos == nil {
+		if rr.rateLimited {
+			if cached, ok := reposCacheGet(provider, username, userType); ok {
+				c.Header("X-Cache-Stale", "1")
+				c.JSON(http.StatusOK, gin.H{"repos": cached})
+				return
+			}
+			c.Header("Retry-After", "60")
+			c.JSON(http.StatusTooManyRequests, gin.H{"error": "rate limited upstream"})
+			return
+		}
 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"repos": repos})
+	reposCacheSet(provider, username, userType, rr.repos, time.Hour)
+	c.JSON(http.StatusOK, gin.H{"repos": rr.repos})
 }
 
-func gitHubUserRepos(username, clientToken string) []gin.H {
+func gitHubUserRepos(username, clientToken string) reposResult {
 	apiURL := fmt.Sprintf("https://api.github.com/users/%s/repos?per_page=30&sort=updated&type=all", url.PathEscape(username))
 
 	client := newSafeHTTPClient(10 * time.Second)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
-		return nil
+		return reposResult{}
 	}
 	token := tokenpool.NextGitHubToken()
 	if token == "" {
@@ -5830,13 +5922,15 @@ func gitHubUserRepos(username, clientToken string) []gin.H {
 	resp, err := client.Do(req)
 	if err != nil {
 		utils.Log("GitHub user repos error: %v", err)
-		return nil
+		return reposResult{}
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		utils.Log("GitHub user repos returned status: %d", resp.StatusCode)
-		return nil
+		rateLimited := resp.StatusCode == http.StatusTooManyRequests ||
+			(resp.StatusCode == http.StatusForbidden && resp.Header.Get("X-RateLimit-Remaining") == "0")
+		return reposResult{repos: nil, rateLimited: rateLimited}
 	}
 
 	var d []struct {
@@ -5853,7 +5947,7 @@ func gitHubUserRepos(username, clientToken string) []gin.H {
 
 	if err := json.NewDecoder(resp.Body).Decode(&d); err != nil {
 		utils.Log("GitHub user repos decode error: %v", err)
-		return nil
+		return reposResult{}
 	}
 
 	repos := make([]gin.H, 0, len(d))
@@ -5871,7 +5965,7 @@ func gitHubUserRepos(username, clientToken string) []gin.H {
 			"updated_at":  r.UpdatedAt,
 		})
 	}
-	return repos
+	return reposResult{repos: repos}
 }
 
 func gitLabUserRepos(username, userType, clientToken string) []gin.H {
@@ -6086,48 +6180,6 @@ func codebergUserRepos(username, userType, clientToken string) []gin.H {
 	return repos
 }
 
-func gitGostUserRepos(account string, c *gin.Context) []gin.H {
-	token := c.GetHeader("X-ZKP-Token")
-	identity := ""
-	if token != "" {
-		var ok bool
-		identity, ok = ValidateSessionToken(token)
-		if !ok {
-			return nil
-		}
-	}
-
-	if identity != "" && identity != account {
-		return nil
-	}
-
-	nodes := nodepkg.ListByAccount(account)
-	repos := make([]gin.H, 0)
-	for _, n := range nodes {
-		rawRepos, _ := n["repositories"].([]interface{})
-		for _, r := range rawRepos {
-			obj, ok := r.(map[string]interface{})
-			if !ok {
-				continue
-			}
-			name, _ := obj["name"].(string)
-			repos = append(repos, gin.H{
-				"provider":    "gg",
-				"name":        name,
-				"full_name":   account + "/" + name,
-				"description": "",
-				"language":    "",
-				"stars":       0,
-				"forks":       0,
-				"fork":        false,
-				"html_url":    "/gg/" + url.PathEscape(account) + "/" + url.PathEscape(name),
-				"updated_at":  "",
-				"size":        obj["size"],
-			})
-		}
-	}
-	return repos
-}
 
 func TrendingHandler(c *gin.Context) {
 	provider := c.Param("provider")

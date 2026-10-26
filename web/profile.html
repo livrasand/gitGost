@@ -120,6 +120,85 @@
         .statusbar .crumb { color: var(--fg-muted); }
         .statusbar .crumb.provider { color: var(--accent); }
         .statusbar .current { color: var(--fg); }
+        .command-statusbar {
+            position: fixed;
+            top: auto;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            border-bottom: 0;
+            padding: 0.35rem 2rem;
+            font-size: 0.72rem;
+            color: var(--fg-secondary);
+        }
+        .command-statusbar .statusbar-right { margin-left: auto; }
+
+        .statusbar-command {
+            position: relative;
+        }
+
+        .statusbar-command-trigger {
+            border: 0;
+            padding: 0;
+            color: var(--fg-secondary);
+            background: transparent;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .statusbar-command-trigger:hover,
+        .statusbar-command-trigger:focus-visible {
+            color: var(--fg);
+            outline: none;
+        }
+
+        .statusbar-command-menu {
+            position: absolute;
+            bottom: calc(100% + 0.25rem);
+            left: 0;
+            width: 14rem;
+            padding: 0.25rem 0;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            box-shadow: none;
+        }
+
+        .statusbar-command-menu[hidden] {
+            display: none;
+        }
+
+        .statusbar-command-menu a,
+        .statusbar-command-menu button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            border: 0;
+            padding: 0.4rem 0.75rem;
+            color: var(--fg);
+            background: transparent;
+            font: inherit;
+            font-size: 0.72rem;
+            text-align: left;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .statusbar-command-menu a:hover,
+        .statusbar-command-menu button:hover,
+        .statusbar-command-menu a:focus-visible,
+        .statusbar-command-menu button:focus-visible {
+            background: var(--bg-hover);
+            outline: none;
+        }
+
+        .statusbar-command-menu-divider {
+            height: 1px;
+            margin: 0.25rem 0;
+            background: var(--border);
+        }
 
         .profile-layout {
             display: flex;
@@ -255,7 +334,7 @@
             font-weight: 700;
             color: var(--fg);
         }
-        .readme h1 { font-size: 1.5em; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; }
+        .readme h1 { font-size: 2em; }
         .readme h2 { font-size: 1.25em; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; }
         .readme h3 { font-size: 1.1em; }
         .readme h4 { font-size: 1em; }
@@ -289,7 +368,17 @@
         }
         .readme ul, .readme ol { margin: 0.75em 0; padding-left: 1.5em; }
         .readme li { margin: 0.25em 0; }
-        .readme img { max-width: 100%; vertical-align: middle; border-radius: 0; }
+        .readme img { display: inline-block; max-width: 100%; vertical-align: middle; border-radius: 0; }
+        .readme h1, .readme h2, .readme h3, .readme h4, .readme h5, .readme h6 { position: relative; }
+        .readme h1 { font-size: 2em; padding-bottom: 0.3em; }
+        .readme .anchor { opacity: 0; display: inline-block; margin-left: 0.35em; vertical-align: middle; transition: opacity 0.1s ease; }
+        .readme .anchor svg { fill: var(--fg-muted, #6e7781); }
+        .readme h1:hover .anchor, .readme h2:hover .anchor, .readme h3:hover .anchor,
+        .readme h4:hover .anchor, .readme h5:hover .anchor, .readme h6:hover .anchor,
+        .readme .anchor:focus { opacity: 1; }
+        .readme .contains-task-list { padding-left: 0.4em; }
+        .readme .task-list-item { list-style: none; }
+        .readme .task-list-item input[type="checkbox"] { margin: 0 0.4em 0 -1.4em; vertical-align: middle; }
         .readme table { border-collapse: collapse; margin: 1em 0; display: block; overflow-x: auto; }
         .readme th, .readme td { border: 1px solid var(--border); padding: 0.4em 0.8em; }
         .readme th { background: var(--bg-secondary); }
@@ -434,141 +523,6 @@
         .person-name { color: var(--fg-muted); font-size: 0.72rem; margin-top: 0.1rem; }
 
         /* ---- Nodes panel ---- */
-        .nodes-panel {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 0.75rem;
-        }
-        .nodes-panel .node-form {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            align-items: flex-end;
-            margin-bottom: 1rem;
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: 0;
-            background: var(--bg-secondary);
-        }
-        .nodes-panel .node-field {
-            display: flex;
-            flex-direction: column;
-            gap: 0.2rem;
-            flex: 1 1 140px;
-            min-width: 120px;
-        }
-        .nodes-panel .node-field label {
-            font-size: 0.65rem;
-            color: var(--fg-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-        .nodes-panel .node-field input {
-            font-family: inherit;
-            font-size: 0.72rem;
-            padding: 0.35rem 0.5rem;
-            border: 1px solid var(--border);
-            border-radius: 0;
-            background: var(--bg);
-            color: var(--fg);
-            outline: none;
-        }
-        .nodes-panel .node-field input:focus { border-color: var(--accent); }
-        .nodes-panel .node-form-btn {
-            font-family: inherit;
-            font-size: 0.72rem;
-            padding: 0.35rem 0.8rem;
-            border: 1px solid var(--accent);
-            border-radius: 0;
-            background: var(--accent);
-            color: #fff;
-            cursor: pointer;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-        .nodes-panel .node-form-btn:hover { opacity: 0.85; }
-        .nodes-panel .node-form-btn:disabled { opacity: 0.4; cursor: default; }
-
-        .nodes-panel .node-list { display: flex; flex-direction: column; gap: 0; }
-        .nodes-panel .node-card {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.6rem;
-            padding: 0.6rem 0;
-            border-bottom: 1px solid var(--border);
-        }
-        .nodes-panel .node-card:last-child { border-bottom: none; }
-        .nodes-panel .node-card:hover { background: var(--bg-hover); }
-        .nodes-panel .node-card-left {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            min-width: 0;
-            flex: 1;
-        }
-        .nodes-panel .node-status {
-            width: 0.55em;
-            height: 0.55em;
-            border-radius: 0;
-            flex-shrink: 0;
-        }
-        .nodes-panel .node-status.connected { background: var(--hm-2); }
-        .nodes-panel .node-status.disconnected { background: var(--fg-secondary); }
-        .nodes-panel .node-status.connecting { background: var(--alert-warning); }
-        .nodes-panel .node-card-name {
-            color: var(--accent);
-            font-weight: 600;
-            font-size: 0.78rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .nodes-panel .node-card-id {
-            color: var(--fg-secondary);
-            font-size: 0.65rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .nodes-panel .node-card-actions {
-            display: flex;
-            gap: 0.35rem;
-            flex-shrink: 0;
-        }
-        .nodes-panel .node-btn {
-            font-family: inherit;
-            font-size: 0.65rem;
-            padding: 0.2rem 0.5rem;
-            border: 1px solid var(--border);
-            border-radius: 0;
-            background: var(--bg);
-            color: var(--fg-muted);
-            cursor: pointer;
-        }
-        .nodes-panel .node-btn:hover { border-color: var(--accent); color: var(--accent); }
-        .nodes-panel .node-btn.danger:hover { border-color: var(--alert-caution); color: var(--alert-caution); }
-        .nodes-panel .node-empty {
-            color: var(--fg-secondary);
-            font-size: 0.72rem;
-            padding: 1rem 0;
-        }
-        .nodes-panel .node-form-btn.secondary {
-            background: transparent;
-            color: var(--fg-muted);
-            border-color: var(--border);
-        }
-        .nodes-panel .node-form-btn.secondary:hover {
-            border-color: var(--fg-secondary);
-            color: var(--fg);
-        }
-        .nodes-panel .status {
-            font-size: 0.72rem;
-            margin-top: 0.4rem;
-            color: var(--fg-secondary);
-        }
-        .nodes-panel .status.ok { color: #22c55e; }
-        .nodes-panel .status.error { color: #ef4444; }
-
         .orgs-row {
             display: flex;
             flex-wrap: wrap;
@@ -894,180 +848,6 @@
                 font-size: 0.75rem;
             }
         }
-        /* New Repository Modal Styles */
-        .new-repo-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 10000;
-            background: rgba(0, 0, 0, 0.65);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(4px);
-        }
-        .new-repo-overlay.active {
-            display: flex;
-        }
-        .new-repo-modal {
-            background: var(--bg-secondary, #161b22);
-            border: 1px solid var(--border, #30363d);
-            border-radius: 0;
-            width: 500px;
-            max-width: 92vw;
-            max-height: 90vh;
-            overflow-y: auto;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            color: var(--fg, #c9d1d9);
-            box-shadow: none;
-        }
-        .new-repo-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.7rem 1rem;
-            border-bottom: 1px solid var(--border, #30363d);
-            font-size: 0.82rem;
-            font-weight: 600;
-        }
-        .new-repo-close {
-            background: none;
-            border: none;
-            color: var(--fg-muted, #8b949e);
-            cursor: pointer;
-            font-size: 1.2rem;
-            line-height: 1;
-            padding: 0 2px;
-        }
-        .new-repo-close:hover {
-            color: var(--fg, #c9d1d9);
-        }
-        .new-repo-content {
-            padding: 1.25rem;
-        }
-        .new-repo-field {
-            margin-bottom: 0.85rem;
-        }
-        .new-repo-field label {
-            display: block;
-            font-size: 0.72rem;
-            color: var(--fg-muted, #8b949e);
-            margin-bottom: 0.35rem;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-        .new-repo-field input,
-        .new-repo-field select,
-        .new-repo-field textarea {
-            width: 100%;
-            padding: 0.45rem 0.65rem;
-            background: var(--bg, #0d1117);
-            border: 1px solid var(--border, #30363d);
-            border-radius: 0;
-            color: var(--fg, #c9d1d9);
-            font-family: inherit;
-            font-size: 0.8rem;
-            box-sizing: border-box;
-        }
-        .new-repo-field input:focus,
-        .new-repo-field select:focus,
-        .new-repo-field textarea:focus {
-            outline: none;
-            border-color: var(--accent, #58a6ff);
-        }
-        .new-repo-field textarea {
-            min-height: 80px;
-            resize: vertical;
-        }
-        .new-repo-field select {
-            cursor: pointer;
-        }
-        .new-repo-hint {
-            font-size: 0.7rem;
-            color: var(--fg-muted, #8b949e);
-            margin-bottom: 1rem;
-            line-height: 1.45;
-        }
-        .new-repo-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.75rem;
-            margin-top: 1rem;
-        }
-        .new-repo-btn {
-            padding: 0.55rem 1.25rem;
-            background: var(--accent, #58a6ff);
-            color: #000;
-            border: none;
-            border-radius: 0;
-            font-family: inherit;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: opacity 0.15s;
-        }
-        .new-repo-btn:hover {
-            opacity: 0.88;
-        }
-        .new-repo-btn:disabled {
-            opacity: 0.45;
-            cursor: not-allowed;
-        }
-        .new-repo-btn-secondary {
-            background: transparent;
-            color: var(--fg-muted, #8b949e);
-            border: 1px solid var(--border, #30363d);
-        }
-        .new-repo-btn-secondary:hover {
-            color: var(--fg, #c9d1d9);
-            border-color: var(--fg-muted, #8b949e);
-        }
-        .new-repo-status {
-            margin-top: 0.75rem;
-            font-size: 0.75rem;
-            min-height: 1em;
-            word-break: break-word;
-        }
-        .new-repo-status.ok {
-            color: #3fb950;
-        }
-        .new-repo-status.err {
-            color: #f85149;
-        }
-        .new-repo-status.busy {
-            color: var(--fg-muted, #8b949e);
-        }
-        .new-repo-node-select {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-        .new-repo-node-select select {
-            flex: 1;
-        }
-        .new-repo-node-status {
-            width: 0.55em;
-            height: 0.55em;
-            border-radius: 0;
-            flex-shrink: 0;
-        }
-        .new-repo-node-status.connected {
-            background: var(--hm-2, #006d32);
-        }
-        .new-repo-node-status.disconnected {
-            background: var(--fg-secondary, #6b7280);
-        }
-        @media (max-width: 500px) {
-            .new-repo-modal {
-                width: 92vw;
-                margin: 1rem;
-            }
-        }
-
-        /* Skeleton loading */
-        @keyframes shimmer {
-            0%   { background-position: -400px 0; }
-            100% { background-position: 400px 0; }
-        }
         .skeleton-item {
             display: flex;
             flex-direction: column;
@@ -1144,264 +924,6 @@
         </div>
     </div>
 
-    <!-- New Repository Modal -->
-    <div id="new-repo-overlay" class="new-repo-overlay">
-        <div class="new-repo-modal" role="dialog" aria-modal="true" aria-label="Create New Repository">
-            <div class="new-repo-header">
-                <span>New repository</span>
-                <button class="new-repo-close" id="new-repo-close" aria-label="Close">&times;</button>
-            </div>
-            <div class="new-repo-content">
-                <div class="new-repo-hint">A new home for your code and its history. Have a repo already?</div>
-                
-                <div class="new-repo-field">
-                    <label for="new-repo-name">Name</label>
-                    <input type="text" id="new-repo-name" placeholder="my-next-repo" maxlength="100" autocomplete="off" spellcheck="false">
-                </div>
-                
-                <div class="new-repo-field">
-                    <label for="new-repo-desc">Description</label>
-                    <textarea id="new-repo-desc" placeholder="what it does and what it will do..."></textarea>
-                </div>
-                
-                <div class="new-repo-field">
-                    <label for="new-repo-node">Node</label>
-                    <div class="new-repo-node-select">
-                        <select id="new-repo-node">
-                            <option value="">Select a node...</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
-                    <div class="new-repo-field" style="flex: 1;">
-                        <label for="new-repo-visibility">Visibility</label>
-                        <select id="new-repo-visibility">
-                            <option value="public">public</option>
-                            <option value="private">private</option>
-                        </select>
-                    </div>
-                    <div class="new-repo-field" style="flex: 1;">
-                        <label for="new-repo-readme">README</label>
-                        <select id="new-repo-readme">
-                            <option value="no">no</option>
-                            <option value="yes">yes</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
-                    <div class="new-repo-field" style="flex: 1;">
-                        <label for="new-repo-gitignore">.gitignore</label>
-                        <select id="new-repo-gitignore">
-                            <option value="none">none</option>
-                            <option value="Node">Node</option>
-                            <option value="Python">Python</option>
-                            <option value="Go">Go</option>
-                            <option value="Java">Java</option>
-                            <option value="C++">C++</option>
-                        </select>
-                    </div>
-                    <div class="new-repo-field" style="flex: 1;">
-                        <label for="new-repo-license">LICENSE</label>
-                        <select id="new-repo-license">
-                            <option value="none">none</option>
-                            <option value="MIT">MIT</option>
-                            <option value="Apache-2.0">Apache 2.0</option>
-                            <option value="GPL-3.0">GPL 3.0</option>
-                            <option value="AGPL-3.0">AGPL 3.0</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="new-repo-actions">
-                    <button class="new-repo-btn new-repo-btn-secondary" id="new-repo-cancel">Cancel</button>
-                    <button class="new-repo-btn" id="new-repo-create">Create</button>
-                </div>
-                
-                <div class="new-repo-status" id="new-repo-status"></div>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        // New Repository Modal Logic
-        window.openNewRepoModal = function openNewRepoModal() {
-            const overlay = document.getElementById('new-repo-overlay');
-            if (!overlay) return;
-            
-            // Load user nodes
-            window.loadNewRepoNodes();
-            
-            // Show modal
-            overlay.classList.add('active');
-            
-            // Focus on name field
-            const nameInput = document.getElementById('new-repo-name');
-            if (nameInput) {
-                nameInput.focus();
-                nameInput.select();
-            }
-        }
-        
-        window.closeNewRepoModal = function closeNewRepoModal() {
-            const overlay = document.getElementById('new-repo-overlay');
-            if (overlay) overlay.classList.remove('active');
-            
-            // Clear status
-            const statusEl = document.getElementById('new-repo-status');
-            if (statusEl) {
-                statusEl.textContent = '';
-                statusEl.className = 'new-repo-status';
-            }
-        }
-        
-        window.loadNewRepoNodes = async function loadNewRepoNodes() {
-            const select = document.getElementById('new-repo-node');
-            if (!select) return;
-            
-            select.innerHTML = '<option value="">Loading nodes...</option>';
-            
-            try {
-                const data = await window.apiGet('/api/nodes');
-                const nodes = (data && Array.isArray(data.nodes)) ? data.nodes : [];
-                
-                if (nodes.length === 0) {
-                    select.innerHTML = '<option value="">No nodes available - pair a node first</option>';
-                    return;
-                }
-                
-                select.innerHTML = '<option value="">Select a node...</option>' +
-                    nodes.map(n => {
-                        const statusClass = n.online ? 'connected' : 'disconnected';
-                        const statusTitle = n.online ? 'Online' : 'Offline';
-                        return `<option value="${window.escAttr(n.id)}" data-status="${statusClass}">${window.escHtml(n.name || n.id)}</option>`;
-                    }).join('');
-            } catch (_) {
-                select.innerHTML = '<option value="">Failed to load nodes</option>';
-            }
-        }
-        
-        window.createNewRepo = async function createNewRepo() {
-            const name = (document.getElementById('new-repo-name')?.value || '').trim();
-            const desc = (document.getElementById('new-repo-desc')?.value || '').trim();
-            const nodeId = document.getElementById('new-repo-node')?.value;
-            const visibility = document.getElementById('new-repo-visibility')?.value || 'public';
-            const readme = document.getElementById('new-repo-readme')?.value || 'no';
-            const gitignore = document.getElementById('new-repo-gitignore')?.value || 'none';
-            const license = document.getElementById('new-repo-license')?.value || 'none';
-            const btn = document.getElementById('new-repo-create');
-            const statusEl = document.getElementById('new-repo-status');
-            
-            if (!name) {
-                if (statusEl) {
-                    statusEl.textContent = 'Repository name is required';
-                    statusEl.className = 'new-repo-status err';
-                }
-                return;
-            }
-            
-            if (!nodeId) {
-                if (statusEl) {
-                    statusEl.textContent = 'Please select a node';
-                    statusEl.className = 'new-repo-status err';
-                }
-                return;
-            }
-            
-            if (btn) btn.disabled = true;
-            if (statusEl) {
-                statusEl.textContent = 'Creating repository...';
-                statusEl.className = 'new-repo-status busy';
-            }
-            
-            try {
-                const res = await fetch(window.API_BASE + '/api/nodes/' + encodeURIComponent(nodeId) + '/repos', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-ZKP-Token': zkpSessionToken()
-                    },
-                    body: JSON.stringify({
-                        name: name,
-                        description: desc,
-                        visibility: visibility,
-                        readme: readme,
-                        gitignore: gitignore,
-                        license: license
-                    })
-                });
-                
-                const data = await res.json();
-                
-                if (res.ok && data.repo_id) {
-                    if (statusEl) {
-                        statusEl.textContent = 'Repository created successfully!';
-                        statusEl.className = 'new-repo-status ok';
-                    }
-                    // Refresh nodes list
-                    window._nodesCache = null;
-                    if (typeof window._loadNodes === 'function') window._loadNodes();
-                    
-                    // Close modal after 2 seconds
-                    setTimeout(async () => {
-                        window.closeNewRepoModal();
-                        // Reload repos
-                        if (window.PROVIDER === 'gg' && window.USERNAME) {
-                            const typeParam = '';
-                            const reposData = await window.apiGet(`/api/users/repos?provider=gg&user=${encodeURIComponent(window.USERNAME)}${typeParam}`);
-                            if (reposData && Array.isArray(reposData.repos)) {
-                                window.renderRepos(reposData.repos);
-                            }
-                        }
-                    }, 2000);
-                } else {
-                    if (statusEl) {
-                        statusEl.textContent = data.error || 'Failed to create repository';
-                        statusEl.className = 'new-repo-status err';
-                    }
-                }
-            } catch (e) {
-                if (statusEl) {
-                    statusEl.textContent = e.message || 'Network error';
-                    statusEl.className = 'new-repo-status err';
-                }
-            } finally {
-                if (btn) btn.disabled = false;
-            }
-        }
-        
-        // Bind events
-        document.addEventListener('DOMContentLoaded', function() {
-            // Open modal on event
-            window.addEventListener('zkp-new-repo', window.openNewRepoModal);
-            
-            const overlay = document.getElementById('new-repo-overlay');
-            if (!overlay) return;
-            
-            // Close button
-            const closeBtn = document.getElementById('new-repo-close');
-            if (closeBtn) closeBtn.addEventListener('click', window.closeNewRepoModal);
-            
-            // Cancel button
-            const cancelBtn = document.getElementById('new-repo-cancel');
-            if (cancelBtn) cancelBtn.addEventListener('click', window.closeNewRepoModal);
-            
-            // Create button
-            const createBtn = document.getElementById('new-repo-create');
-            if (createBtn) createBtn.addEventListener('click', window.createNewRepo);
-            
-            // Close on overlay click
-            overlay.addEventListener('click', function(e) {
-                if (e.target === overlay) window.closeNewRepoModal();
-            });
-            
-            // Close on Escape
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') window.closeNewRepoModal();
-            });
-        });
-    </script>
 
     <div class="statusbar">
         <div class="statusbar-left">
@@ -1424,7 +946,6 @@
                 <button type="button" data-mobile-view="projects" id="mobile-nav-projects" hidden>projects <span class="count" id="mobile-projects-count"></span></button>
                 <button type="button" data-mobile-view="packages" id="mobile-nav-packages" hidden>packages <span class="count" id="mobile-packages-count"></span></button>
                 <button type="button" data-mobile-view="members" id="mobile-nav-members" hidden>members <span class="count" id="mobile-members-count"></span></button>
-                <button type="button" data-mobile-view="nodes" id="mobile-nav-nodes" hidden>nodes <span class="count" id="mobile-nodes-count"></span></button>
                 <button type="button" data-mobile-about>about</button>
             </div>
         </nav>
@@ -1486,21 +1007,6 @@
                 members
                 <span class="count" id="nav-members-count"></span>
             </a>
-            <a href="#" id="nav-nodes" style="display:none;" onclick="openNodes(); return false;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-                    <path d="M0 0h24v24H0z" fill="none"/>
-                    <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
-                        <rect x="2" y="2" width="20" height="8" rx="2"/>
-                        <rect x="2" y="14" width="20" height="8" rx="2"/>
-                        <circle cx="6" cy="6" r="1" fill="currentColor" stroke="none"/>
-                        <circle cx="6" cy="18" r="1" fill="currentColor" stroke="none"/>
-                        <line x1="10" y1="6" x2="18" y2="6"/>
-                        <line x1="10" y1="18" x2="18" y2="18"/>
-                    </g>
-                </svg>
-                nodes
-                <span class="count" id="nav-nodes-count"></span>
-            </a>
         </nav>
 
         <main class="main-content" id="main-content">
@@ -1534,24 +1040,6 @@
             <div class="section-title view-hidden" id="packages-section-title"></div>
             <div id="packages-section" class="repo-list view-hidden"></div>
 
-            <div class="section-title view-hidden" id="nodes-section-title">nodes</div>
-            <div id="nodes-section" class="nodes-panel view-hidden">
-                <div id="node-pair-form" class="node-form" style="display:none; margin-top:.6rem;">
-                    <div class="node-field">
-                        <label for="pair-code-input">pairing code</label>
-                        <input type="text" id="pair-code-input" placeholder="XXXXXX" maxlength="12" autocomplete="off" />
-                    </div>
-                    <div class="node-field">
-                        <label for="pair-node-id-input">node id</label>
-                        <input type="text" id="pair-node-id-input" placeholder="ABCDEF0123456789" spellcheck="false" />
-                    </div>
-                    <button class="node-form-btn" onclick="submitPair()">submit pair</button>
-                    <button class="node-form-btn secondary" onclick="cancelPair()">cancel</button>
-                    <div class="status" id="pair-status"></div>
-                </div>
-                <button class="node-form-btn" id="node-pair-btn" onclick="pairNode()" style="margin-bottom:1rem;">pair node</button>
-                <div id="node-list" class="node-list"></div>
-            </div>
         </main>
 
         <aside class="right-sidebar">
@@ -1642,9 +1130,9 @@
             observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
         })();
 
-        // Ruta limpia: /gh|gl|cb|gg/{username}
+        // Ruta limpia: /gh|gl|cb/{username}
         const _pathParts = window.location.pathname.split('/').filter(Boolean);
-        const _validProviders = { gh: true, gl: true, cb: true, gg: true };
+        const _validProviders = { gh: true, gl: true, cb: true };
         window.PROVIDER = _validProviders[_pathParts[0]] ? _pathParts[0] : 'gh';
         window.USERNAME = '';
         try {
@@ -1696,70 +1184,6 @@
 		<circle cx="16.894" cy="7.106" r="1.03" fill="currentColor" />
 	</g>
         </svg>`;
-
-        // Deterministic "beam" avatar for gitGost-native identities (mirrors zkp-client.js's
-        // GitGostAvatar, duplicated here since this inline script runs before that file loads).
-        function ggAvatarDataUri(name, size) {
-            if (window.GitGostAvatar) return window.GitGostAvatar.dataUri(name, size);
-            const BEAM_SIZE = 36;
-            const COLORS = ['#92A1C6', '#146A7C', '#F0AB3D', '#C271B4', '#C20D90'];
-            function hashCode(str) {
-                let hash = 0;
-                for (let i = 0; i < str.length; i++) {
-                    hash = (hash << 5) - hash + str.charCodeAt(i);
-                    hash = hash & hash;
-                }
-                return Math.abs(hash);
-            }
-            function getUnit(n, range, index) {
-                const value = n % range;
-                if (index && (n % (index * range)) / index < range) return -value;
-                return value;
-            }
-            function getBoolean(n, n2) { return !!(n % n2); }
-            function pickColor(n) { return COLORS[n % COLORS.length]; }
-            function getContrast(hex) {
-                const r = parseInt(hex.slice(1, 3), 16);
-                const g = parseInt(hex.slice(3, 5), 16);
-                const b = parseInt(hex.slice(5, 7), 16);
-                const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-                return yiq >= 128 ? '#000000' : '#ffffff';
-            }
-            const n = hashCode(String(name || ''));
-            const wrapperColor = pickColor(n);
-            const faceColor = getContrast(wrapperColor);
-            const backgroundColor = pickColor(n + 13);
-            const preTX = getUnit(n, 10, 1);
-            const wrapperTranslateX = preTX < 5 ? preTX + BEAM_SIZE / 9 : preTX;
-            const preTY = getUnit(n, 10, 2);
-            const wrapperTranslateY = preTY < 5 ? preTY + BEAM_SIZE / 9 : preTY;
-            const wrapperRotate = getUnit(n, 360);
-            const wrapperScale = 1 + getUnit(n, BEAM_SIZE / 12) / 10;
-            const isMouthOpen = getBoolean(n, 2);
-            const isCircle = getBoolean(n, 1);
-            const eyeSpread = getUnit(n, 5);
-            const mouthSpread = getUnit(n, 3);
-            const faceRotate = getUnit(n, 10, 3);
-            const faceTranslateX = wrapperTranslateX > BEAM_SIZE / 6 ? wrapperTranslateX / 2 : getUnit(n, 8, 1);
-            const faceTranslateY = wrapperTranslateY > BEAM_SIZE / 6 ? wrapperTranslateY / 2 : getUnit(n, 7, 2);
-            const maskId = 'beam' + n;
-            const mouth = isMouthOpen
-                ? `<path d="M15 ${19 + mouthSpread}c2 1 4 1 6 0" stroke="${faceColor}" fill="none" stroke-linecap="round"/>`
-                : `<path d="M13,${19 + mouthSpread} a1,0.75 0 0,0 10,0" fill="${faceColor}"/>`;
-            const s = size || BEAM_SIZE;
-            const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${BEAM_SIZE} ${BEAM_SIZE}" width="${s}" height="${s}" role="img">` +
-                `<mask id="${maskId}" maskUnits="userSpaceOnUse" x="0" y="0" width="${BEAM_SIZE}" height="${BEAM_SIZE}">` +
-                `<rect width="${BEAM_SIZE}" height="${BEAM_SIZE}" rx="${BEAM_SIZE * 2}" fill="#FFFFFF"/></mask>` +
-                `<g mask="url(#${maskId})">` +
-                `<rect width="${BEAM_SIZE}" height="${BEAM_SIZE}" fill="${backgroundColor}"/>` +
-                `<rect x="0" y="0" width="${BEAM_SIZE}" height="${BEAM_SIZE}" transform="translate(${wrapperTranslateX} ${wrapperTranslateY}) rotate(${wrapperRotate} ${BEAM_SIZE / 2} ${BEAM_SIZE / 2}) scale(${wrapperScale})" fill="${wrapperColor}" rx="${isCircle ? BEAM_SIZE : BEAM_SIZE / 6}"/>` +
-                `<g transform="translate(${faceTranslateX} ${faceTranslateY}) rotate(${faceRotate} ${BEAM_SIZE / 2} ${BEAM_SIZE / 2})">` +
-                mouth +
-                `<rect x="${14 - eyeSpread}" y="14" width="1.5" height="2" rx="1" stroke="none" fill="${faceColor}"/>` +
-                `<rect x="${20 + eyeSpread}" y="14" width="1.5" height="2" rx="1" stroke="none" fill="${faceColor}"/>` +
-                `</g></g></svg>`;
-            return 'data:image/svg+xml,' + encodeURIComponent(svg);
-        }
 
         window.escHtml = function escHtml(s) {
             return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -1833,9 +1257,6 @@
             if (PROVIDER === 'cb') {
                 return { label: 'codeberg', name: 'codeberg.org', color: '#2185D0', icon: codebergBadgeIcon() };
             }
-            if (PROVIDER === 'gg') {
-                return { label: 'gitGost', name: 'gitGost', color: '#e53dab', icon: '<svg viewBox="0 0 24 24" width="1em" height="1em" style="display:block;fill:#e53dab;"><circle cx="12" cy="12" r="10"/></svg>' };
-            }
             return { label: 'github', name: 'github.com', color: '#181717', icon: githubBadgeIcon() };
         }
 
@@ -1854,19 +1275,10 @@
             return fetch(target.toString(), opts);
         }
 
-        function zkpSessionToken() {
-            try {
-                const s = JSON.parse(localStorage.getItem('zkp_session') || 'null');
-                return (s && s.session_token) ? s.session_token : '';
-            } catch (_) { return ''; }
-        }
-
         window.apiGet = async function apiGet(path) {
             try {
                 await _configReady;
                 const headers = authHeaders();
-                const zkpt = zkpSessionToken();
-                if (zkpt) headers['X-ZKP-Token'] = zkpt;
                 const res = await fetch(`${API_BASE}${path}`, { headers });
                 if (!res.ok) return null;
                 return await res.json();
@@ -1939,14 +1351,13 @@
                             <div class="sb-name">${safeName || safeUser}</div>
                             <div class="sb-user">@${safeUser}</div>
 
-                            ${PROVIDER === 'gg' ? '' : `<div class="badges">
+                            <div class="badges">
                                 <a href="${safeUrl}" target="_blank" rel="noopener noreferrer"><span class="provider-badge" style="color:${meta.color};border-color:${meta.color};margin-top: 5px;">${meta.icon}${meta.label}</span></a>
                                 <span class="type-badge">${typeLabel}</span>
-                            </div>`}
+                            </div>
                         </div>
                     </div>
                     ${safeBio ? `<p class="sb-bio">${safeBio}</p>` : ''}
-                    ${window.PROVIDER === 'gg' && !window.isSelfProfile() ? `<button class="sb-btn" id="follow-btn" onclick="toggleFollow()">${window.isFollowing(safeUser) ? 'unfollow' : 'follow'}</button>` : ''}
                     ${stats.length ? `<div class="stats-grid">${stats.join('')}</div>` : ''}
                     <ul class="meta-list">
                         ${safeLocation ? `<li><span class="k">location</span><span class="v">${safeLocation}</span></li>` : ''}
@@ -2010,20 +1421,6 @@
             const lang = r.language ? escHtml(r.language) : '';
             const ago = timeAgo(r.updated_at);
             const visibility = r.fork ? 'fork' : 'public';
-            const isGitGost = PROVIDER === 'gg';
-            const forked = isGitGost && isRepoForked(owner, name);
-            const watched = isGitGost && isRepoWatched(owner, name);
-            const forkWatchBtns = isGitGost ? `
-                <div class="repo-fork-watch-row">
-                    <button type="button" class="repo-fork-btn" data-owner="${safeOwner}" data-repo="${safeName}" onclick="event.stopPropagation(); toggleRepoFork(this)" title="${forked ? 'You have forked this repository' : 'Fork this repository to your node'}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="${forked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.5 12a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 0a6 6 0 0 0-6 6v1.5h12V18a6 6 0 0 0-6-6Zm9-4.25a2.75 2.75 0 1 1 0-5.5 2.75 2.75 0 0 1 0 5.5Zm0 0a4.75 4.75 0 0 0-4.6 6"/></svg>
-                        <span class="repo-fork-text">${forked ? 'Forked' : 'Fork'}</span>
-                    </button>
-                    <button type="button" class="repo-watch-btn" data-owner="${safeOwner}" data-repo="${safeName}" onclick="event.stopPropagation(); toggleRepoWatch(this)" title="${watched ? 'Stop watching this repository' : 'Watch this repository for updates'}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="${watched ? 'currentColor' : 'none'}" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.75 12c2-4 5-6 9.25-6s7.25 2 9.25 6c-2 4-5 6-9.25 6s-7.25-2-9.25-6z"/><circle cx="12" cy="12" r="3"/></svg>
-                        <span class="repo-watch-text">${watched ? 'Watching' : 'Watch'}</span>
-                    </button>
-                </div>` : '';
             return `
                 <div class="repo-card">
                     <div class="repo-card-head">
@@ -2037,7 +1434,6 @@
                         ${(r.forks || 0) > 0 ? `<span>⑂ ${formatNumber(r.forks)}</span>` : ''}
                         ${ago ? `<span>updated ${ago}</span>` : ''}
                     </div>
-                    ${forkWatchBtns}
                 </div>
             `;
         }
@@ -2077,73 +1473,6 @@
             const sbAboutSkeleton = document.getElementById('sb-about-skeleton');
             if (profileSkeleton) profileSkeleton.style.display = 'none';
             if (sbAboutSkeleton) sbAboutSkeleton.style.display = 'none';
-        }
-
-        // ---- Fork / Watch for gitGost repos ----
-        function isRepoForked(owner, repo) {
-            return !!localStorage.getItem(`gg:fork:${owner}/${repo}`);
-        }
-
-        function isRepoWatched(owner, repo) {
-            return !!localStorage.getItem(`gg:watch:${owner}/${repo}`);
-        }
-
-        function updateRepoForkBtn(btn) {
-            if (!btn) return;
-            const owner = btn.dataset.owner;
-            const repo = btn.dataset.repo;
-            const forked = isRepoForked(owner, repo);
-            const text = btn.querySelector('.repo-fork-text');
-            if (text) text.textContent = forked ? 'Forked' : 'Fork';
-            const svg = btn.querySelector('svg path:last-child');
-            if (svg) svg.setAttribute('fill', forked ? 'currentColor' : 'none');
-        }
-
-        function updateRepoWatchBtn(btn) {
-            if (!btn) return;
-            const owner = btn.dataset.owner;
-            const repo = btn.dataset.repo;
-            const watched = isRepoWatched(owner, repo);
-            const text = btn.querySelector('.repo-watch-text');
-            if (text) text.textContent = watched ? 'Watching' : 'Watch';
-            const svg = btn.querySelector('svg path:last-child');
-            if (svg) svg.setAttribute('fill', watched ? 'currentColor' : 'none');
-        }
-
-        function toggleRepoFork(btn) {
-            const owner = btn.dataset.owner;
-            const repo = btn.dataset.repo;
-            const key = `gg:fork:${owner}/${repo}`;
-            const wasForked = isRepoForked(owner, repo);
-            if (wasForked) {
-                localStorage.removeItem(key);
-            } else {
-                localStorage.setItem(key, JSON.stringify({
-                    owner,
-                    repo,
-                    full_name: `${owner}/${repo}`,
-                    forked_at: new Date().toISOString()
-                }));
-            }
-            updateRepoForkBtn(btn);
-        }
-
-        function toggleRepoWatch(btn) {
-            const owner = btn.dataset.owner;
-            const repo = btn.dataset.repo;
-            const key = `gg:watch:${owner}/${repo}`;
-            const wasWatched = isRepoWatched(owner, repo);
-            if (wasWatched) {
-                localStorage.removeItem(key);
-            } else {
-                localStorage.setItem(key, JSON.stringify({
-                    owner,
-                    repo,
-                    full_name: `${owner}/${repo}`,
-                    watched_at: new Date().toISOString()
-                }));
-            }
-            updateRepoWatchBtn(btn);
         }
 
         // ---- Repos con star del usuario (GitHub / Codeberg; GitLab no lo expone) ----
@@ -2221,11 +1550,6 @@
             if (_currentView === 'packages') return;
             switchView('packages');
         }
-        function openNodes() {
-            if (_currentView === 'nodes') return;
-            switchView('nodes');
-        }
-
         function switchView(view, push) {
             if (push === undefined) push = true;
             if (_currentView === view) return;
@@ -2235,7 +1559,6 @@
             const isPeople = view === 'followers' || view === 'following' || view === 'members';
             const isProjects = view === 'projects';
             const isPackages = view === 'packages';
-            const isNodes = view === 'nodes';
             _currentView = view;
 
             if (push) {
@@ -2246,7 +1569,7 @@
             if (isOverview) {
                 document.title = _prevTitle || `${USERNAME} · gitGost`;
             } else {
-                const label = view === 'followers' ? 'followers' : view === 'following' ? 'following' : view === 'members' ? 'members' : view === 'projects' ? 'projects' : view === 'packages' ? 'packages' : view === 'nodes' ? 'nodes' : 'starred';
+                const label = view === 'followers' ? 'followers' : view === 'following' ? 'following' : view === 'members' ? 'members' : view === 'projects' ? 'projects' : view === 'packages' ? 'packages' : 'starred';
                 document.title = `${USERNAME} · ${label} · gitGost`;
             }
 
@@ -2263,21 +1586,18 @@
             show(document.getElementById('projects-section'), isProjects);
             show(document.getElementById('packages-section-title'), isPackages);
             show(document.getElementById('packages-section'), isPackages);
-            show(document.getElementById('nodes-section-title'), isNodes);
-            show(document.getElementById('nodes-section'), isNodes);
             const aside = document.querySelector('.right-sidebar');
             if (aside) aside.style.display = isOverview ? '' : 'none';
 
             const navLinks = document.querySelectorAll('.left-nav a');
             for (let i = 0; i < navLinks.length; i++) {
-                navLinks[i].classList.toggle('active', isOverview ? i === 0 : ((isStars && i === 2) || (isProjects && i === 3) || (isPackages && i === 4) || (view === 'members' && i === 5) || (isNodes && i === 6)));
+                navLinks[i].classList.toggle('active', isOverview ? i === 0 : ((isStars && i === 2) || (isProjects && i === 3) || (isPackages && i === 4) || (view === 'members' && i === 5)));
             }
 
             if (isStars) _loadStars();
             if (isPeople) _loadPeople(view);
             if (isProjects) _loadProjects();
             if (isPackages) _loadPackages();
-            if (isNodes) window._loadNodes();
             updateMobileProfileNav(view);
         }
 
@@ -2487,180 +1807,6 @@
             listEl.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(packagesHtml) : escHtml(packagesHtml);
         }
 
-        // ---- Follow (localStorage, gitGost native profiles only) ----
-        function _getFollowing() {
-            try { return JSON.parse(localStorage.getItem('gg_following') || '[]'); }
-            catch (_) { return []; }
-        }
-        function _saveFollowing(list) {
-            localStorage.setItem('gg_following', JSON.stringify(list));
-        }
-        window.isFollowing = function isFollowing(identity) {
-            return _getFollowing().includes(identity);
-        };
-        window.isSelfProfile = function isSelfProfile() {
-            if (window.PROVIDER !== 'gg') return false;
-            let session = null;
-            try { session = JSON.parse(localStorage.getItem('zkp_session') || 'null'); } catch (_) {}
-            return !!(session && session.identity === window.USERNAME);
-        };
-        window.toggleFollow = function toggleFollow() {
-            const list = _getFollowing();
-            const idx = list.indexOf(window.USERNAME);
-            if (idx === -1) list.push(window.USERNAME);
-            else list.splice(idx, 1);
-            _saveFollowing(list);
-            const btn = document.getElementById('follow-btn');
-            if (btn) btn.textContent = window.isFollowing(window.USERNAME) ? 'unfollow' : 'follow';
-        }
-
-        // ---- Nodes (backend API) ----
-        window._nodesCache = null;
-        function _nodeHtml(n, idx) {
-            const safeName = escHtml(n.name || 'unnamed');
-            const safeId = escHtml(n.id || '');
-            const statusClass = n.online ? 'connected' : 'disconnected';
-            const statusLabel = n.online ? 'online' : 'offline';
-            const fw = n.firmware ? escHtml(n.firmware) : '';
-            const uptime = n.uptime_s ? formatUptime(n.uptime_s) : '';
-            const storage = n.storage_max ? `${formatBytes(n.storage_free || 0)} / ${formatBytes(n.storage_max)}` : '';
-            const ramTotal = n.ram_total || 0;
-            const ramFree = n.heap_free || 0;
-            const ram = ramTotal ? `${formatBytes(ramTotal - ramFree)} / ${formatBytes(ramTotal)}` : '';
-            const rssi = (n.wifi_rssi !== undefined && n.wifi_rssi !== null) ? `${n.wifi_rssi} dBm` : '';
-            const lastSeen = n.last_seen ? timeAgo(n.last_seen) : '';
-            return `
-                <div class="node-card" data-idx="${idx}">
-                    <div class="node-card-left">
-                        <span class="node-status ${statusClass}" title="${statusLabel}"></span>
-                        <span>
-                            <span class="node-card-name">${safeName}</span>
-                            <span class="node-card-id">${safeId}</span>
-                        </span>
-                    </div>
-                    <div class="node-card-actions">
-                        ${fw ? `<span class="node-btn" style="cursor:default;">${fw}</span>` : ''}
-                        <span class="node-status-label" style="font-size:0.65rem;color:var(--fg-secondary);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;">${statusLabel}${lastSeen && !n.online ? ' · ' + lastSeen : ''}</span>
-                    </div>
-                </div>
-                ${uptime || storage || ram || rssi ? `<div style="padding:0 0 0.5rem 1.2rem;display:flex;gap:0.9rem;color:var(--fg-secondary);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:0.65rem;flex-wrap:wrap;">
-                    ${uptime ? `<span>uptime ${uptime}</span>` : ''}
-                    ${storage ? `<span>storage ${storage}</span>` : ''}
-                    ${ram ? `<span>ram ${ram}</span>` : ''}
-                    ${rssi ? `<span>wifi ${rssi}</span>` : ''}
-                </div>` : ''}
-            `;
-        }
-        function formatUptime(seconds) {
-            const d = Math.floor(seconds / 86400);
-            const h = Math.floor((seconds % 86400) / 3600);
-            const m = Math.floor((seconds % 3600) / 60);
-            if (d > 0) return `${d}d ${h}h`;
-            if (h > 0) return `${h}h ${m}m`;
-            return `${m}m`;
-        }
-        function formatBytes(bytes) {
-            if (bytes >= 1073741824) return (bytes / 1073741824).toFixed(1) + ' GB';
-            if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + ' MB';
-            if (bytes >= 1024) return (bytes / 1024).toFixed(1) + ' KB';
-            return bytes + ' B';
-        }
-        window._loadNodes = async function _loadNodes() {
-            const listEl = document.getElementById('node-list');
-            const navCount = document.getElementById('nav-nodes-count');
-            if (!listEl) return;
-            listEl.innerHTML = '<div class="node-empty">loading...</div>';
-            try {
-                const data = await window.apiGet('/api/nodes');
-                const nodes = (data && Array.isArray(data.nodes)) ? data.nodes : [];
-                window._nodesCache = nodes;
-                if (navCount) navCount.textContent = nodes.length || '';
-                const mobileNodes = document.getElementById('mobile-nav-nodes');
-                const mobileNodesCount = document.getElementById('mobile-nodes-count');
-                if (mobileNodes) mobileNodes.hidden = false;
-                if (mobileNodesCount) mobileNodesCount.textContent = nodes.length || '';
-                if (!nodes.length) {
-                    listEl.innerHTML = '<div class="node-empty">no nodes paired yet — use "pair node" to add one</div>';
-                    window.renderRepos([]);
-                    return;
-                }
-                listEl.innerHTML = nodes.map(_nodeHtml).join('');
-                const repos = [];
-                for (const node of nodes) {
-                    if (node.repositories && Array.isArray(node.repositories)) {
-                        for (const r of node.repositories) {
-                            repos.push({
-                                name: r.name || '',
-                                size: r.size || 0,
-                                full_name: (USERNAME || '') + '/' + (r.name || ''),
-                                description: '',
-                                language: '',
-                                stars: 0,
-                                forks: 0,
-                                updated_at: '',
-                            });
-                        }
-                    }
-                }
-                window.renderRepos(repos);
-                const statsGrid = document.querySelector('.sb-about .stats-grid');
-                if (statsGrid && repos.length) {
-                    const statDivs = statsGrid.querySelectorAll('.stat');
-                    for (const div of statDivs) {
-                        const label = div.querySelector('.l');
-                        if (label && label.textContent.trim() === 'public repos') {
-                            const value = div.querySelector('.v');
-                            if (value) value.textContent = formatNumber(repos.length);
-                            break;
-                        }
-                    }
-                }
-            } catch (_) {
-                listEl.innerHTML = '<div class="node-empty">failed to load nodes</div>';
-            }
-        }
-        function pairNode() {
-            const form = document.getElementById('node-pair-form');
-            form.style.display = form.style.display === 'none' ? 'block' : 'none';
-        }
-        function cancelPair() {
-            document.getElementById('node-pair-form').style.display = 'none';
-            document.getElementById('pair-status').textContent = '';
-        }
-        async function submitPair() {
-            const code = (document.getElementById('pair-code-input').value || '').trim();
-            const nodeId = (document.getElementById('pair-node-id-input').value || '').trim().toUpperCase();
-            const statusEl = document.getElementById('pair-status');
-            if (!code || !nodeId) { statusEl.textContent = 'code and node id required'; statusEl.className = 'status error'; return; }
-            statusEl.textContent = 'pairing...'; statusEl.className = 'status';
-            try {
-                const res = await fetch(API_BASE + '/api/nodes/pair', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-ZKP-Token': zkpSessionToken()
-                    },
-                    body: JSON.stringify({ code, node_id: nodeId })
-                });
-                const data = await res.json();
-                if (res.ok && data.node_id) {
-                    statusEl.textContent = 'paired: ' + data.node_id;
-                    statusEl.className = 'status ok';
-                    document.getElementById('node-pair-form').style.display = 'none';
-                    document.getElementById('pair-code-input').value = '';
-                    document.getElementById('pair-node-id-input').value = '';
-                    window._nodesCache = null;
-                    window._loadNodes();
-                } else {
-                    statusEl.textContent = data.error || 'pair failed';
-                    statusEl.className = 'status error';
-                }
-            } catch (_) {
-                statusEl.textContent = 'network error';
-                statusEl.className = 'status error';
-            }
-        }
-
         // ---- Seguidores / siguiendo (vista SPA reutilizada para ambas listas) ----
         let _profileData = null;
         let _peopleCache = {};
@@ -2827,6 +1973,62 @@
                     <div class="readme-content readme">${html}</div>
                 </div>
             `;
+            enhanceReadme(section);
+        }
+
+        // Estilo GitHub para el README: ancla en headings al hover (§),
+        // checkboxes de task-list envueltos, imágenes con lazy-load y
+        // fallback de reintentos cuando el remoto falla.
+        function enhanceReadme(scope) {
+            if (!scope) return;
+            const root = scope.querySelector('.readme-content') || scope;
+            const used = new Set();
+            root.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((h) => {
+                if (h.querySelector('a.anchor')) return;
+                let slug = (h.textContent || '').trim().toLowerCase()
+                    .replace(/[^\p{L}\p{N}\- ]/gu, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/^-+|-+$/g, '') || 'section';
+                let id = slug, n = 2;
+                while (used.has(id)) id = `${slug}-${n++}`;
+                used.add(id);
+                h.id = id;
+                const a = document.createElement('a');
+                a.className = 'anchor';
+                a.href = `#${id}`;
+                a.setAttribute('aria-label', 'Anchor link to heading');
+                a.innerHTML = '<svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M7.775 3.275a.75.75 0 0 0 1.06 1.06l1.25-1.25a2 2 0 1 1 2.83 2.83l-2.5 2.5a2 2 0 0 1-2.83 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a4 4 0 0 0-4.95-4.95l-1.25 1.25Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.75.75 0 0 0-1.06-1.06l-1.25 1.25a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l2.5-2.5a2 2 0 0 1 2.83 0 .751.751 0 0 1 .018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a4 4 0 0 0 4.95 4.95Z"></path></svg>';
+                h.appendChild(a);
+            });
+            root.querySelectorAll('li').forEach((li) => {
+                if (!li.querySelector('input[type=checkbox]')) return;
+                li.classList.add('task-list-item');
+                li.parentNode.classList.add('contains-task-list');
+                const cb = li.querySelector('input[type=checkbox]');
+                if (cb) cb.setAttribute('disabled', 'disabled');
+            });
+            root.querySelectorAll('img').forEach((img) => {
+                img.loading = 'lazy';
+                const fallbacks = [];
+                try {
+                    const u = new URL(img.src, window.location.href);
+                    if (u.hostname === 'camo.githubusercontent.com') {
+                        fallbacks.push(`${window.API_BASE}/api/gh-camo${u.pathname}`);
+                    } else if (u.hostname === 'user-images.githubusercontent.com') {
+                        fallbacks.push(`${window.API_BASE}/api/gh-img${u.pathname}`);
+                    }
+                } catch (_) {}
+                img.onerror = () => {
+                    for (let i = 0; i < fallbacks.length; i++) {
+                        const fb = fallbacks[i];
+                        if (img.src === fb) continue;
+                        img.onerror = null;
+                        img.src = fb;
+                        return;
+                    }
+                    img.onerror = null;
+                };
+            });
         }
 
         // ---- README del perfil (repo {user}/{user} en gh/gl; repo ".profile" en Codeberg) ----
@@ -3027,13 +2229,14 @@
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        function showError() {
+        function showError(msg) {
             const header = document.getElementById('profile-header');
             if (header) header.innerHTML = '';
             const sbAbout = document.getElementById('sb-about');
             if (sbAbout) sbAbout.innerHTML = '';
             const main = document.getElementById('main-content');
-            if (main) main.innerHTML = `<div class="profile-error">profile "${escHtml(USERNAME)}" not found on ${escHtml(providerMeta().label)}</div>`;
+            const extra = msg ? ` — ${escHtml(msg)}` : '';
+            if (main) main.innerHTML = `<div class="profile-error">profile "${escHtml(USERNAME)}" not found on ${escHtml(providerMeta().label)}${extra}</div>`;
         }
 
         async function checkServiceStatus() {
@@ -3081,56 +2284,20 @@
 
             showProfileSkeletons();
 
-            // gitGost native profile — no external API needed
-            if (PROVIDER === 'gg') {
-                let session = null;
-                try { session = JSON.parse(localStorage.getItem('zkp_session') || 'null'); } catch (_) {}
-                const identity = USERNAME;
-                const isSelf = session && session.identity === identity;
-
-                const ggProfile = {
-                    username: identity,
-                    name: identity,
-                    avatar_url: ggAvatarDataUri(identity, 128),
-                    bio: 'gitGost user · registered via Zero-Knowledge Proof',
-                    url: '',
-                    location: '',
-                    type: 'user',
-                    followers: 0,
-                    following: 0,
-                    public_repos: 0,
-                    joined_at: session ? new Date().toISOString() : '',
-                };
-                renderProfile(ggProfile);
-
-                // Nodes tab for self
-                if (isSelf) {
-                    window._loadNodes();
-                    const navNodes = document.getElementById('nav-nodes');
-                    if (navNodes) navNodes.style.display = '';
-                    const mobileNodes = document.getElementById('mobile-nav-nodes');
-                    if (mobileNodes) mobileNodes.hidden = false;
-                    const navProjects = document.getElementById('nav-projects');
-                    if (navProjects) navProjects.style.display = 'none';
-                    const navPackages = document.getElementById('nav-packages');
-                    if (navPackages) navPackages.style.display = 'none';
-                } else {
-                    // visiting someone else's gg profile
-                    const navProjects = document.getElementById('nav-projects');
-                    if (navProjects) navProjects.style.display = 'none';
-                    const navPackages = document.getElementById('nav-packages');
-                    if (navPackages) navPackages.style.display = 'none';
-                    const navNodes = document.getElementById('nav-nodes');
-                    if (navNodes) navNodes.style.display = 'none';
-                    const mobileNodes = document.getElementById('mobile-nav-nodes');
-                    if (mobileNodes) mobileNodes.hidden = true;
+            const profileURL = `${API_BASE}/api/users/profile?provider=${PROVIDER}&user=${encodeURIComponent(USERNAME)}`;
+            const cacheKey = `gg_profile_cache:${PROVIDER}:${USERNAME}`;
+            let p = null;
+            try {
+                const pres = await fetch(profileURL, { headers: authHeaders() });
+                if (pres.ok) {
+                    p = await pres.json();
+                    try { sessionStorage.setItem(cacheKey, JSON.stringify(p)); } catch (_) {}
+                } else if (pres.status === 429) {
+                    const cached = sessionStorage.getItem(cacheKey);
+                    if (cached) { try { p = JSON.parse(cached); } catch (_) {} }
+                    if (!p) { hideProfileSkeletons(); showError(`rate limited on ${providerMeta().label} — try again in a minute`); return; }
                 }
-
-                if (_initialView !== 'overview') switchView(_initialView, false);
-                return;
-            }
-
-            const p = await apiGet(`/api/users/profile?provider=${PROVIDER}&user=${encodeURIComponent(USERNAME)}`);
+            } catch (_) {}
             if (!p) {
                 showError();
                 return;
@@ -3361,8 +2528,52 @@
         </div>
         <div class="statusbar-right"></div>
     </footer>
-    <script src="/bip39-words.js"></script>
-    <script src="/zkp-client.js?v=3"></script>
+    <script>
+        (function () {
+            var trigger = document.getElementById('command-trigger');
+            var menu = document.getElementById('command-menu');
+            if (!trigger || !menu) return;
+
+            function closeCommandMenu() {
+                menu.hidden = true;
+                trigger.setAttribute('aria-expanded', 'false');
+            }
+
+            trigger.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var open = menu.hidden;
+                menu.hidden = !open;
+                trigger.setAttribute('aria-expanded', String(open));
+            });
+
+            document.addEventListener('click', function (e) {
+                if (menu.hidden) return;
+                if (!menu.contains(e.target) && e.target !== trigger) closeCommandMenu();
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closeCommandMenu();
+            });
+
+            menu.querySelectorAll('[data-cmd]').forEach(function (el) {
+                el.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var cmd = el.getAttribute('data-cmd');
+                    closeCommandMenu();
+                    if (cmd === 'toggle-theme') {
+                        var root = document.documentElement;
+                        var base = root.getAttribute('data-theme')
+                            || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                        var mode = base === 'dark' ? 'light' : 'dark';
+                        root.setAttribute('data-theme', mode);
+                        try { localStorage.setItem('theme', mode); } catch (err) {}
+                        return;
+                    }
+                    window.location.href = cmd === 'home' ? '/' : '/' + cmd;
+                });
+            });
+        })();
+    </script>
     <script src="/announcement.js"></script>
     <!-- Menta SDK loader: it decides whether the gate is active and only then
          injects the SDK (which defines the <menta-widget> custom element). -->

@@ -11160,6 +11160,8 @@
                 el.addEventListener('click', function (e) {
                     e.preventDefault();
                     var cmd = el.getAttribute('data-cmd');
+                    var allowed = ['home', 'cli', 'git-extension', 'settings', 'legal', 'about', 'stats', 'toggle-theme'];
+                    if (allowed.indexOf(cmd) === -1) return;
                     closeCommandMenu();
                     if (cmd === 'toggle-theme') {
                         window.toggleTheme();

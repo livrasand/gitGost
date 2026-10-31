@@ -74,6 +74,9 @@ That’s it. No login, token, name, or email required — gitGost provides stron
 <img
   src="https://img.shields.io/badge/sourcehut-Coming%20Soon-lightgrey?logo=sourcehut&logoColor=white"
   alt="sourcehut – Coming Soon"/>
+<img
+  src="https://custom-icon-badges.demolab.com/badge/Espresso-Coming%20Soon-lightgrey.svg?logo=espresso&logoColor=white"
+  alt="sourcehut – Coming Soon"/>
 
 <br />
 

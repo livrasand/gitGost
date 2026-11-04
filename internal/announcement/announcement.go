@@ -11,8 +11,6 @@ import (
 	"time"
 )
 
-// Los cinco niveles de anuncio admitidos, alineados con la tipografía de
-// admonitions del issue #219 (note/tip/important/warning/caution).
 var validTypes = map[string]bool{
 	"note":      true,
 	"tip":       true,
@@ -21,21 +19,15 @@ var validTypes = map[string]bool{
 	"caution":   true,
 }
 
-// githubLinkRe restringe el link opcional a URLs de issues/PRs del
-// repositorio gitGost en GitHub (decisión del issue: link = URL de GitHub).
 var githubLinkRe = regexp.MustCompile(`^https://github\.com/livrasand/gitGost/(issues|pull)/[0-9]+$`)
 
 const (
 	maxTitleLen   = 120
 	maxMessageLen = 500
-	// Vida por defecto si el payload no incluye expires_at.
-	defaultTTL = 24 * time.Hour
-	// vida máxima admitida para expires_at (evita anuncios inmortales por error).
-	maxTTL = 7 * 24 * time.Hour
+	defaultTTL    = 24 * time.Hour
+	maxTTL        = 7 * 24 * time.Hour
 )
 
-// Announcement es el estado público de un anuncio activo. El navegador
-// recibe exactamente estos campos, nunca el topic ni credenciales de ntfy.
 type Announcement struct {
 	ID        string     `json:"id"`
 	Type      string     `json:"type"`
@@ -45,8 +37,6 @@ type Announcement struct {
 	ExpiresAt *time.Time `json:"expires_at,omitempty"`
 }
 
-// urgentPayload es el JSON aceptado vía ntfy. Estructura mínima:
-// {"action":"post"|"clear", ...campos del anuncio}.
 type urgentPayload struct {
 	Action    string  `json:"action"`
 	Type      string  `json:"type"`
@@ -64,14 +54,12 @@ type store struct {
 
 var current store
 
-// isExpired comprueba si el anuncio vigente ha caducado.
 func isExpired(now time.Time) bool {
 	current.mu.RLock()
 	defer current.mu.RUnlock()
 	return current.cur == nil || now.After(current.exAt)
 }
 
-// Active devuelve el anuncio activo o nil si no hay (o ha expirado).
 func Active(now time.Time) *Announcement {
 	current.mu.RLock()
 	defer current.mu.RUnlock()
@@ -82,13 +70,10 @@ func Active(now time.Time) *Announcement {
 	return &a
 }
 
-// SetPublic publica la copia inmutable para handlers externos (principalmente
-// tests o un futuro admin UI); solo pasa por sanitize ya validado.
 func SetPublic(a *Announcement, expires time.Time) {
 	storeSet(a, expires)
 }
 
-// Clear limpia el anuncio activo ("removing/clearing through ntfy").
 func Clear() {
 	current.mu.Lock()
 	current.cur = nil
@@ -103,9 +88,6 @@ func storeSet(a *Announcement, expires time.Time) {
 	current.mu.Unlock()
 }
 
-// Process aplica el payload crudo recibido por ntfy: valida, normaliza y
-// decide si publica, reemplaza o limpia. Mensajes inválidos se descartan (no
-// crean banners) sin necesidad de detener el subscriber.
 func Process(raw []byte, now time.Time) error {
 	if len(raw) == 0 {
 		return fmt.Errorf("empty payload")
@@ -130,9 +112,6 @@ func Process(raw []byte, now time.Time) error {
 	}
 }
 
-// normalize valida y completa un payload "post". Todo campo sospechoso hace
-// fallar la petición: el anuncio nace del propio servidor gitGost, así que
-// importa que nada malformado "deje pasar" un banner arbitrario.
 func normalize(p *urgentPayload, now time.Time) (*Announcement, time.Time, error) {
 	title := strings.TrimSpace(p.Title)
 	message := strings.TrimSpace(p.Message)
@@ -177,7 +156,6 @@ func normalize(p *urgentPayload, now time.Time) (*Announcement, time.Time, error
 		if d := t.Sub(now); d <= 0 {
 			return nil, time.Time{}, fmt.Errorf("expires_at is in the past")
 		} else if d > maxTTL {
-			// Descartamos silenciosamente el TTL excesivo: acotamos al máximo.
 			expires = now.Add(maxTTL)
 		} else {
 			expires = t
@@ -195,8 +173,6 @@ func normalize(p *urgentPayload, now time.Time) (*Announcement, time.Time, error
 	return a, expires, nil
 }
 
-// announcementID genera un hash corto y estable a partir del contenido para
-// que el dismiss en localStorage persista entre navegaciones/regeneraciones.
 func announcementID(title, message string, expires time.Time) string {
 	h := sha256.Sum256([]byte(title + "\x00" + message + "\x00" + expires.UTC().Format(time.RFC3339)))
 	return hex.EncodeToString(h[:8])

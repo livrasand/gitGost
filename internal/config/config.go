@@ -64,9 +64,6 @@ func getEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
-// Los marcadores contra los que limpia sanitize() se leen del propio
-// .env.example en lugar de estar escritos a mano en el código: si el archivo
-// cambia (nuevos valores de ejemplo), el sanitizador se adapta solo.
 var (
 	exampleOnce    sync.Once
 	exampleMarkers []string
@@ -77,10 +74,6 @@ func exampleMarkerValues() []string {
 	return exampleMarkers
 }
 
-// loadExampleMarkers busca .env.example cerca del directorio de trabajo y
-// devuelve sus valores que parecen placeholders sin rellenar ("your_github_token_here",
-// "https://your-project.supabase.co", …). Los valores con apariencia de valor
-// real (p. ej. GITHUB_TOKEN=ghp_xxx) no se consideran basura.
 func loadExampleMarkers() []string {
 	var markers []string
 	for _, path := range []string{".env.example", "../.env.example", "../../.env.example"} {
@@ -113,12 +106,6 @@ func looksLikePlaceholder(value string) bool {
 	return strings.Contains(value, "your_") || strings.Contains(value, "your-")
 }
 
-// sanitize descarta los valores de ejemplo del .env.example ("your_github_token_here",
-// "https://your-project.supabase.co", …): si alguien copia el ejemplo sin rellenar,
-// tratamos lo mismo que vacío en lugar de enviar basura a las APIs upstream.
-// Los marcadores exactos se leen de .env.example (exampleMarkerValues); los
-// prefijos "your_" / "your-" quedan como red de seguridad por si el archivo no
-// está disponible en el directorio de trabajo del binario.
 func sanitize(value string) string {
 	v := strings.TrimSpace(value)
 	if v == "" {

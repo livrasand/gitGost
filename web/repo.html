@@ -10,6 +10,7 @@
         />
     <link rel="icon" href="/assets/logos/gitgost-logo.svg" type="image/svg+xml" />
     <title>gitGost — repo</title>
+    <link rel="stylesheet" href="/assets/github-markdown.css">
     <link rel="stylesheet" href="/assets/winui-scrollbar.css" />
     <link id="hljs-theme-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github.min.css" />
     <link id="hljs-theme-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github-dark.min.css" disabled />
@@ -582,9 +583,9 @@
         .readme input[type="checkbox"] { margin-right: 0.4em; vertical-align: middle; }
         .readme li:has(> input[type="checkbox"]) { list-style: none; margin-left: -1.4em; }
 
-        .readme img {
-            display: block;
-            max-width: 100%;
+         .readme img {
+             display: inline-block;
+             max-width: 100%;
             height: auto;
             margin: 1rem 0;
             border-radius: 0;
@@ -751,7 +752,7 @@
         }
         .repo-info span { display: flex; align-items: center; gap: 0.3rem; }
         .repo-info .stars { color: var(--accent); }
-        
+
         .left-nav {
             width: 300px;
             border-right: 1px solid var(--border);
@@ -865,6 +866,32 @@
         }
         .sidebar-row .val.pub { color: #22c55e; }
         .sidebar-row .val.mirror { color: var(--fg-muted); }
+        .sidebar-wiki-link {
+            display: block;
+            padding: 0.2rem 0.5rem;
+            margin: 0 0 0.1rem;
+            font-size: 0.75rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            color: var(--fg-muted);
+            text-decoration: none;
+            border: 1px solid transparent;
+            border-radius: 0;
+        }
+        .sidebar-wiki-link:hover {
+            background: var(--bg-hover);
+            border-color: var(--border);
+            color: var(--fg);
+        }
+        .sidebar-wiki-link.is-active {
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+        .right-sidebar.wiki-mode .sidebar-section:not(#sb-wiki-section) {
+            display: none !important;
+        }
+        .right-sidebar.wiki-mode #sb-wiki-section {
+            display: block !important;
+        }
         .sidebar-actions {
             display: flex;
             flex-direction: column;
@@ -3659,6 +3686,13 @@
                 <div class="sidebar-desc" id="sb-desc">—</div>
                 <div class="sidebar-tags" id="sb-tags"></div>
             </div>
+            <div class="sidebar-section" id="sb-wiki-section" style="display:none">
+                <div class="sidebar-label">Wiki</div>
+                <div id="sb-wiki-list"></div>
+                <div id="sb-wiki-open" style="padding:0.2rem 0 0;">
+                    <a href="#" id="sb-wiki-open-link" target="_blank" rel="noopener" style="color:var(--fg-muted);text-decoration:none;font-size:0.75rem;">Open wiki ↗</a>
+                </div>
+            </div>
             <div class="sidebar-section">
                 <div class="sb-home-row" id="sb-home-row" style="display:none">
                     <a class="sb-home-link" id="sb-home-link" href="#" target="_blank" rel="noopener">
@@ -3755,9 +3789,6 @@
         }
         const API_BASE = getApiBase();
 
-        // El widget de Menta nunca habla con Menta directamente: Menta rechaza
-        // los origenes que no tiene registrados (403 sin cabeceras CORS).
-        // Todo el trafico del captcha pasa por el proxy de mismo origen.
         function captchaEndpoint() {
             return (window.gitgostCaptcha && window.gitgostCaptcha.proxy) || (API_BASE + '/api/captcha');
         }
@@ -3890,6 +3921,7 @@
         }
 
         const params = new URLSearchParams(window.location.search);
+        const ESPRESSO_BASE = 'https://espresso.livrasand.com';
         function escJsStr(s) {
             return String(s)
                 .replace(/\\/g, '\\\\')
@@ -3901,10 +3933,13 @@
         }
 
         const _pathParts = window.location.pathname.split('/').filter(Boolean);
-        const _isCleanPath = _pathParts.length >= 3 && (_pathParts[0] === 'gh' || _pathParts[0] === 'gl' || _pathParts[0] === 'cb');
-        const SAFE_PROVIDERS = new Set(['gh', 'gl', 'cb']);
+        let _pp0 = _pathParts[0] || '';
+        if (_pp0 === 'gitgost' || _pp0 === 'espresso') _pp0 = 'gg';
+        const _isCleanPath = _pathParts.length >= 3 && (_pp0 === 'gh' || _pp0 === 'gl' || _pp0 === 'cb' || _pp0 === 'gg');
+        const SAFE_PROVIDERS = new Set(['gh', 'gl', 'cb', 'gg']);
         function sanitizeProvider(p) {
             const v = String(p || '').toLowerCase();
+            if (v === 'gitgost' || v === 'espresso') return 'gg';
             return SAFE_PROVIDERS.has(v) ? v : 'gh';
         }
         function sanitizePathAtom(s) {
@@ -3914,7 +3949,7 @@
         const rv = {
             owner:    _isCleanPath ? decodeURIComponent(_pathParts[1] || '') : (params.get('owner') || ''),
             repo:     _isCleanPath ? decodeURIComponent(_pathParts[2] || '') : (params.get('repo')  || ''),
-            provider: _isCleanPath ? _pathParts[0] : (params.get('provider') || 'gh'),
+            provider: _isCleanPath ? _pp0 : (params.get('provider') || 'gh'),
             branch:   params.get('branch') || '',
             path:     [],
         };
@@ -3938,8 +3973,9 @@
             if (v) PATH_TO_VIEW[v] = k;
         }
         function sanitizeProvider(p) {
-            const v = String(p || 'gh');
-            return (v === 'gh' || v === 'gl' || v === 'cb') ? v : 'gh';
+            const v = String(p || 'gh').toLowerCase();
+            if (v === 'gitgost' || v === 'espresso') return 'gg';
+            return (v === 'gh' || v === 'gl' || v === 'cb' || v === 'gg') ? v : 'gh';
         }
         function sanitizeRepoPart(v) {
             const s = String(v || '');
@@ -3948,6 +3984,16 @@
         function safeProvider() { return sanitizeProvider(rv.provider); }
         function safeOwner() { return sanitizeRepoPart(rv.owner); }
         function safeRepo() { return sanitizeRepoPart(rv.repo); }
+        function isEspresso() { return rv.provider === 'gg'; }
+        function ggHeaders() {
+            const h = {};
+            const t = localStorage.getItem('gitgost_zkp_token') || localStorage.getItem('gg_zkp_token') || sessionStorage.getItem('gitgost_zkp_token');
+            if (t) h['X-ZKP-Token'] = t;
+            return h;
+        }
+        function ggRepoBase() {
+            return `/api/gg/repos/${encodeURIComponent(safeOwner())}/${encodeURIComponent(safeRepo())}`;
+        }
         function repoBasePath() {
             return `/${safeProvider()}/${encodeURIComponent(safeOwner())}/${encodeURIComponent(safeRepo())}`;
         }
@@ -3957,12 +4003,10 @@
         }
         function encSeg(s) { return encodeURIComponent(String(s == null ? '' : s)); }
 
-        // URL de una vista de detalle: /gh|gl|cb/owner/repo/<kind>/<id>
         function buildDetailUrl(kind, id) {
             return `${repoBasePath()}/${kind}/${encSeg(id)}`;
         }
 
-        // URL de árbol o archivo: /gh|gl|cb/owner/repo/tree|blob/<ref>/<ruta...>
         function buildFilesUrl(mode, ref, segs) {
             let url = `${repoBasePath()}/${mode === 'blob' ? 'blob' : 'tree'}`;
             if (ref) url += `/${encSeg(ref)}`;
@@ -3971,11 +4015,9 @@
             return url;
         }
 
-        // Convierte un pathname (/gh/o/r/...) en una ruta de la app.
-        // Devuelve null si el path no pertenece a este esquema (p.ej. ?owner=&repo=).
         function parseRepoRoute(pathname) {
             const parts = String(pathname || '').split('/').filter(Boolean);
-            if (parts.length < 3 || !['gh', 'gl', 'cb'].includes(parts[0])) return null;
+            if (parts.length < 3 || !['gh', 'gl', 'cb', 'gg'].includes(parts[0])) return null;
             const route = { provider: parts[0], owner: parts[1], repo: parts[2] };
             try {
                 route.owner = decodeURIComponent(parts[1]);
@@ -3987,8 +4029,6 @@
             } catch(_) { rest = parts.slice(3).filter(Boolean); }
             if (!rest.length) return { ...route, kind: 'view', view: 'home' };
             const head = rest[0];
-            // Las rutas de detalle van antes que las vistas de lista:
-            // /releases/v1.0 es el detalle de una release, /releases la lista.
             if (rest.length >= 2 && rest[1]) {
                 if (head === 'issues')      return { ...route, kind: 'issue', num: rest[1] };
                 if (head === 'pulls')       return { ...route, kind: 'pr', num: rest[1] };
@@ -4020,14 +4060,12 @@
             }
         }
 
-        // Empuja la URL de la ruta en el historial si es distinta a la actual.
         function go(route) {
             const url = routeUrl(route);
             if (window.location.pathname !== url) history.pushState({ route }, '', url);
             else history.replaceState({ route }, '', url);
         }
 
-        // Ejecuta una ruta sin tocar la URL (popstate / carga inicial).
         function navigateTo(route, push) {
             switch (route.kind) {
                 case 'view':       showView(route.view, push); break;
@@ -4207,6 +4245,7 @@
             if (forkLink) {
                 if (rv.provider === 'gh') forkLink.href = `https://github.com/${rv.owner}/${rv.repo}/fork`;
                 else if (rv.provider === 'cb') forkLink.href = `https://codeberg.org/${rv.owner}/${rv.repo}/fork`;
+                else if (isEspresso()) forkLink.href = `https://espresso.livrasand.com/${rv.owner}/${rv.repo}/-/forks/new`;
                 else forkLink.href = `https://gitlab.com/${rv.owner}/${rv.repo}/-/forks/new`;
             }
 
@@ -4214,6 +4253,7 @@
             if (sbSettings) {
                 if (rv.provider === 'gh') sbSettings.href = `https://github.com/${rv.owner}/${rv.repo}/settings`;
                 else if (rv.provider === 'cb') sbSettings.href = `https://codeberg.org/${rv.owner}/${rv.repo}/settings`;
+                else if (isEspresso()) sbSettings.href = `https://espresso.livrasand.com/${rv.owner}/${rv.repo}/-/settings`;
                 else sbSettings.href = `https://gitlab.com/${rv.owner}/${rv.repo}/edit`;
             }
 
@@ -4231,6 +4271,8 @@
             checkPackages();
             const codePanel = document.getElementById('code-panel');
             if (codePanel) codePanel.addEventListener('click', handlePanelLinkClick);
+            const rightSidebar = document.getElementById('right-sidebar');
+            if (rightSidebar) rightSidebar.addEventListener('click', handlePanelLinkClick);
 
             const initialRoute = parseRepoRoute(window.location.pathname);
             if (initialRoute) navigateTo(initialRoute, false);
@@ -4241,9 +4283,6 @@
                 if (route) navigateTo(route, false);
             });
 
-            // Ctrl/Cmd+click y shift+click: deja que el navegador abra la pestaña/ventana
-            // nueva. Se corta la propagación en fase de captura para que los onclick que
-            // hacen preventDefault (navegación SPA) no cancelen el comportamiento nativo.
             document.addEventListener('click', function(e) {
                 if (!(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)) return;
                 if (!e.target.closest('a[href]')) return;
@@ -4258,9 +4297,6 @@
                 return null;
             }
 
-            // Filas clicables (data-goto): click normal navega dentro de la SPA;
-            // Ctrl/Cmd+click abre en pestaña nueva (las filas son divs, sin
-            // comportamiento nativo del navegador).
             document.addEventListener('click', function(e) {
                 if (e.button !== 0) return;
                 if (e.target.closest('.compare-check')) return;
@@ -4284,7 +4320,6 @@
                 }
             });
 
-            // Botón central sobre filas data-goto: abre en pestaña nueva.
             document.addEventListener('auxclick', function(e) {
                 if (e.button !== 1) return;
                 if (e.target.closest('a')) return;
@@ -4308,6 +4343,10 @@
             setActiveNav(view);
             document.title = `${rv.owner}/${rv.repo} · gitGost`;
 
+            const wikiSection = document.getElementById('sb-wiki-section');
+            if (wikiSection) wikiSection.style.display = 'none';
+            document.getElementById('right-sidebar')?.classList.remove('wiki-mode');
+
             if (push) {
                 history.pushState({ view: view }, '', buildViewUrl(view));
             }
@@ -4315,8 +4354,6 @@
             const fileTree = document.getElementById('file-tree');
             const codePanel = document.getElementById('code-panel');
 
-            // En móvil la vista "files" oculta el panel del archivo hasta tocar un archivo;
-            // al cambiar de vista se restaura el panel.
             if (view !== 'files') {
                 codePanel.style.display = '';
                 document.querySelector('.repo-layout')?.classList.remove('mobile-file-open');
@@ -4384,9 +4421,7 @@
             }
         }
 
-        // ---- Rutas de detalle (deep-linking con URL compartible) ----
 
-        // Abre la vista de archivos en un ref y ruta concretos (/tree/... o /blob/...).
         async function openFilesRoute(route, push) {
             if (push) go(route);
             setActiveNav('files');
@@ -4398,7 +4433,6 @@
             fileTree.style.display = '';
             showRepoSkeletons(true);
             if (_isMobileFiles()) {
-                // En móvil el panel se muestra al tocar un archivo (o si la ruta es un blob).
                 codePanel.style.display = 'none';
                 document.querySelector('.repo-layout')?.classList.remove('mobile-file-open');
             }
@@ -4420,6 +4454,9 @@
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 return await res.json();
             }
+            if (isEspresso()) {
+                throw new Error('issues are not available for gitGost repos');
+            }
             const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
             const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/issues/${num}`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -4437,13 +4474,15 @@
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 return await res.json();
             }
+            if (isEspresso()) {
+                throw new Error('pull requests are not available for gitGost repos');
+            }
             const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
             const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/merge_requests/${num}`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return await res.json();
         }
 
-        // Issue por URL directa: usa la caché si existe; si no, lo busca en la API.
         async function gotoIssueDetail(num, push) {
             if (push !== false) go({ kind: 'issue', num });
             const panel = hideFileTreePanel('loading issue...');
@@ -4528,9 +4567,6 @@
 
         async function loadReadme() {
             const panel = document.getElementById('code-panel');
-            // La URL del repo puede llegar sin ?branch= (index.html no la incluye) y loadRepoInfo
-            // corre en paralelo; sin la rama por defecto, las imágenes relativas del README se
-            // resuelven a una ruta sin /raw/branch/, que el proxy cb rechaza con 403.
             if (!currentBranch()) {
                 try {
                     let d = null;
@@ -4539,6 +4575,9 @@
                         if (res.ok) d = await res.json();
                     } else if (rv.provider === 'gh') {
                         const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}`);
+                        if (res.ok) d = await res.json();
+                    } else if (isEspresso()) {
+                        const res = await fetch(`${ggRepoBase()}`, { headers: ggHeaders() });
                         if (res.ok) d = await res.json();
                     } else {
                         const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
@@ -4561,6 +4600,11 @@
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const items = await res.json();
                     item = items.find(i => i.name.toLowerCase() === 'readme.md');
+                } else if (isEspresso()) {
+                    const res = await fetch(`${ggRepoBase()}/tree?path=`, { headers: ggHeaders() });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const items = await res.json();
+                    item = items.find(i => i.name.toLowerCase() === 'readme.md');
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const ref = currentBranch();
@@ -4576,13 +4620,12 @@
                         text = text.replace(/is undefined/g, 'is hosted on GitLab.com');
                         text = text.replace(/located at undefined/g, 'located at https://gitlab.com/gitlab-org/gitlab-foss/');
                         text = text.split('\n').filter(line => !line.includes('undefined')).join('\n');
-                        _renderFilePanel('README.md', { path: 'README.md', lastCommitScope: 'repo', content: text, size: readmeSize, isMd: true, previewHtml: `<div class="readme">${renderMd(text)}</div>` });
+                        _renderFilePanel('README.md', { path: 'README.md', lastCommitScope: 'repo', content: text, size: readmeSize, isMd: true, previewHtml: `<div class="readme markdown-body">${renderMd(text)}</div>` });
                         panel.querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
                         return;
                     }
                 }
                 if (item) {
-                    // silentUrl: el README se muestra en la vista 'home', no debe cambiar la URL a /blob/.
                     await loadFile(item, { lastCommitScope: 'repo', silentUrl: true });
                 } else {
                     panel.innerHTML = '<div class="code-loading">no README</div>';
@@ -4622,9 +4665,6 @@
                     ]);
                     if (lRes.ok) _bugsLabels = await lRes.json();
                     if (mRes.ok) _bugsMilestones = await mRes.json();
-                    // Listar colaboradores exige permisos de push en GitHub: sin
-                    // token la respuesta siempre es 403 (ruido en la consola
-                    // del navegador), asi que solo se pide con token.
                     if (sessionStorage.getItem('gh_token')) {
                         try {
                             const cRes = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/collaborators?per_page=100`);
@@ -4650,6 +4690,9 @@
                     }
                     const lRes = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/labels?limit=100`);
                     if (lRes.ok) _bugsLabels = await lRes.json();
+                } else if (isEspresso()) {
+                    panel.innerHTML = '<div class="code-loading" style="color:var(--accent)">issues are not available for gitGost repos</div>';
+                    return;
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const [rOpen, rClosed] = await Promise.all([
@@ -5019,6 +5062,7 @@
                 } else if (rv.provider === 'cb') {
                     const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/issues/${num}/comments?limit=100`);
                     if (res.ok) comments = await res.json();
+                } else if (isEspresso()) {
                 } else {
                     const res = await fetch(`/api/gl-notes/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/${num}`);
                     if (res.ok) comments = await res.json();
@@ -5040,7 +5084,7 @@
                             : `<div class="reply-avatar"><img src="/assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>`}
                         <div class="comment-bubble">
                             <div class="comment-meta"><strong style="color:var(--fg);">${profileLink(cUser)}</strong> &middot; ${cDate}</div>
-                            <div class="readme" style="font-size:0.8rem;">${renderMd(cBody)}</div>
+                            <div class="readme markdown-body" style="font-size:0.8rem;">${renderMd(cBody)}</div>
                             ${reactionHtml}
                             <div class="comment-reactions">
                                 ${REACTION_EMOJIS.map(r => `<button class="comment-reaction-btn" onclick="addIssueReaction('${escJsStr(rv.provider)}','${escJsStr(rv.owner)}','${escJsStr(rv.repo)}',${escJsStr(num)},'${r.key}',${escJsStr(c.id || 0)})" title="${r.label}">${r.emoji}</button>`).join('')}
@@ -5527,6 +5571,9 @@
                         const t = rClosed.headers.get('X-Total-Count');
                         if (t) closedTotal = parseInt(t);
                     }
+                } else if (isEspresso()) {
+                    panel.innerHTML = '<div class="code-loading" style="color:var(--accent)">pull requests are not available for gitGost repos</div>';
+                    return;
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const [rOpen, rClosed] = await Promise.all([
@@ -5771,7 +5818,7 @@
                         <div class="reply-avatar"><img src="/assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                         <div class="comment-bubble">
                             <div class="comment-meta"><strong style="color:var(--fg);">${profileLink(cUser)}</strong> ${answerBadge} · ${cDate}</div>
-                            <div class="readme" style="font-size:0.8rem;">${renderMd(cBody)}</div>
+                            <div class="readme markdown-body" style="font-size:0.8rem;">${renderMd(cBody)}</div>
                         </div>
                     </li>`;
                 }).join('');
@@ -5898,11 +5945,32 @@
             }
         }
 
-        let _wikiCache = { slug: '', html: '' };
+let _wikiCache = { slug: '', html: '' };
 
-        async function loadWiki(page) {
+function renderWikiSidebar(navPages, activeSlug, openUrl) {
+    const section = document.getElementById('sb-wiki-section');
+    const list = document.getElementById('sb-wiki-list');
+    const openLink = document.getElementById('sb-wiki-open-link');
+    if (!section || !list || !openLink) return;
+    section.style.display = '';
+    list.innerHTML = '';
+    if (openUrl) openLink.href = openUrl;
+    (navPages || []).forEach(p => {
+        const active = p.slug === activeSlug;
+        const target = p.slug + (p.anchor ? '#' + p.anchor : '');
+        const a = document.createElement('a');
+        a.className = 'sidebar-wiki-link' + (active ? ' is-active' : '');
+        a.href = '#';
+        a.setAttribute('data-wiki', escAttr(target));
+        a.textContent = escHtml(p.title);
+        list.appendChild(a);
+    });
+}
+
+async function loadWiki(page) {
             const panel = document.getElementById('code-panel');
             if (!panel) return;
+            document.getElementById('right-sidebar')?.classList.add('wiki-mode');
 
             const full = page || 'Home';
             const hashIdx = full.indexOf('#');
@@ -5975,23 +6043,9 @@
 
                     const safeOwner = encodeURIComponent(rv.owner || '');
                     const safeRepo = encodeURIComponent(rv.repo || '');
-                    let navHtml = '';
-                    if (navPages.length > 0) {
-                        navHtml = `<div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;color:var(--fg-muted);display:flex;gap:0.5rem;flex-wrap:wrap;">
-                            ${navPages.map(p => {
-                                const active = p.slug === pageSlug && (p.anchor || '') === anchor;
-                                const target = p.slug + (p.anchor ? '#' + p.anchor : '');
-                                return `<a href="#" data-wiki="${escAttr(target)}" style="color:${active ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${active ? 'var(--accent)' : 'var(--border)'};border-radius: 0;">${escHtml(p.title)}</a>`;
-                            }).join('')}
-                            <a href="https://github.com/${safeOwner}/${safeRepo}/wiki" target="_blank" style="color:var(--accent);text-decoration:none;padding:0.15rem 0.4rem;">Open on GitHub ↗</a>
-                        </div>`;
-                    } else {
-                        navHtml = `<div style="padding:0.5rem 1.25rem 1rem;font-size:0.72rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;color:var(--fg-muted);">
-                            <a href="https://github.com/${safeOwner}/${safeRepo}/wiki" target="_blank" style="color:var(--accent);">Open wiki on GitHub ↗</a>
-                        </div>`;
-                    }
+                    renderWikiSidebar(navPages, pageSlug, `https://github.com/${safeOwner}/${safeRepo}/wiki`);
 
-                    panel.innerHTML = navHtml + `<div class="readme">${renderMd(pageText, null, true)}</div>`;
+                    panel.innerHTML = `<div class="readme markdown-body">${renderMd(pageText, null, true)}</div>`;
                     _wikiCache = { slug: pageSlug, html: panel.innerHTML };
                 } else if (rv.provider === 'cb') {
                     const listRes = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/wiki/pages?limit=100`);
@@ -6036,16 +6090,9 @@
                         });
                     }
 
-                    const sidebar = `<div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;color:var(--fg-muted);display:flex;gap:0.5rem;flex-wrap:wrap;">
-                        ${navPages.map(p => {
-                            const active = p.slug === targetSubUrl && (p.anchor || '') === anchor;
-                            const target = p.slug + (p.anchor ? '#' + p.anchor : '');
-                            return `<a href="#" data-wiki="${escAttr(target)}" style="color:${active ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${active ? 'var(--accent)' : 'var(--border)'};border-radius: 0;">${escHtml(p.title)}</a>`;
-                        }).join('')}
-                        <a href="https://codeberg.org/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/wiki" target="_blank" style="color:var(--accent);text-decoration:none;padding:0.15rem 0.4rem;">Open on Codeberg ↗</a>
-                    </div>`;
+                    renderWikiSidebar(navPages, targetSubUrl, `https://codeberg.org/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/wiki`);
 
-                    panel.innerHTML = sidebar + `<div class="readme" style="padding-top:0;">${renderMd(content, null, true)}</div>`;
+                    panel.innerHTML = `<div class="readme markdown-body" style="padding-top:0;">${renderMd(content, null, true)}</div>`;
                     _wikiCache = { slug: targetSubUrl, html: panel.innerHTML };
                 				} else if (rv.provider === 'gl') {
                     					const res = await fetch(`${API_BASE}/api/gl-wiki/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}?with_content=1`);
@@ -6062,16 +6109,10 @@
                     const targetSlug = wikiPage ? pageSlug : (pages[0]?.slug || '');
                     if (!wikiPage) wikiPage = pages[0];
 
-                    const sidebar = `<div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;color:var(--fg-muted);display:flex;gap:0.5rem;flex-wrap:wrap;">
-                        ${pages.map(p => {
-                            const active = p.slug === targetSlug;
-                            return `<a href="#" data-wiki="${escAttr(p.slug)}" style="color:${active ? 'var(--accent)' : 'var(--fg-muted)'};text-decoration:none;padding:0.15rem 0.4rem;border:1px solid ${active ? 'var(--accent)' : 'var(--border)'};border-radius: 0;">${escHtml(p.title)}</a>`;
-                        }).join('')}
-                        <a href="https://gitlab.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/-/wikis" target="_blank" style="color:var(--accent);text-decoration:none;padding:0.15rem 0.4rem;">Open on GitLab ↗</a>
-                    </div>`;
+                    renderWikiSidebar(pages, targetSlug, `https://gitlab.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/-/wikis`);
 
                     const content = wikiPage.content || '';
-                    panel.innerHTML = sidebar + `<div class="readme" style="padding-top:0;">${renderMd(content, null, true)}</div>`;
+                    panel.innerHTML = `<div class="readme markdown-body" style="padding-top:0;">${renderMd(content, null, true)}</div>`;
                     _wikiCache = { slug: wikiPage.slug, html: panel.innerHTML };
                 }
 
@@ -6138,6 +6179,14 @@
                     commits = await res.json();
                     if (!Array.isArray(commits)) {
                         console.warn('cb-commits: unexpected response', commits);
+                        commits = [];
+                    }
+                } else if (isEspresso()) {
+                    const res = await fetch(`${ggRepoBase()}/commits?per_page=30${refQ}`, { headers: ggHeaders() });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text().catch(()=>'')}`);
+                    commits = await res.json();
+                    if (!Array.isArray(commits)) {
+                        console.warn('gg-commits: unexpected response', commits);
                         commits = [];
                     }
                 } else {
@@ -6398,8 +6447,6 @@
         let _releasesCache = null;
         let _currentReleaseView = 'list';
 
-        // Normaliza un asset de release al mismo shape en las tres forjas,
-        // conservando todos los metadatos disponibles para la vista dedicada.
         function _normAsset(a) {
             return {
                 id: String(a.id || ''),
@@ -6415,8 +6462,6 @@
             };
         }
 
-        // Etiqueta legible del tipo de asset: content-type de la API o deducido
-        // por la extensión del nombre de archivo.
         function _assetTypeLabel(a) {
             const extMap = {
                 zip: 'application/zip', '7z': 'application/x-7z-compressed',
@@ -6499,11 +6544,14 @@
                     if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
                     page++;
                 }
-            } else {
-                const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
-                const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/releases?per_page=30`);
-                if (res.ok) releases = await res.json();
-            }
+} else if (isEspresso()) {
+                    panel.innerHTML = '<div class="code-loading" style="color:var(--accent)">releases are not available for gitGost repos</div>';
+                    return;
+                } else {
+                    const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
+                    const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/releases?per_page=30`);
+                    if (res.ok) releases = await res.json();
+                }
             return releases.map(normalizeRelease);
         }
 
@@ -6549,6 +6597,14 @@
                         if (!/<[^>]+>;\s*rel="next"/.test(link)) break;
                         page++;
                     }
+                } else if (isEspresso()) {
+                    try {
+                        const res = await fetch(`${ggRepoBase()}/branches`, { headers: ggHeaders() });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (Array.isArray(data)) branches = data.map(b => typeof b === 'string' ? b : (b.name || b));
+                        }
+                    } catch(_) {}
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     let page = 1;
@@ -6564,7 +6620,15 @@
                     }
                 }
                 let tags = [];
-                if (rv.provider === 'gh') {
+                if (isEspresso()) {
+                    try {
+                        const res = await fetch(`${ggRepoBase()}/tags`, { headers: ggHeaders() });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (Array.isArray(data)) tags = data.map(t => typeof t === 'string' ? t : (t.name || t));
+                        }
+                    } catch(_) {}
+                } else if (rv.provider === 'gh') {
                     const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/tags?per_page=100`);
                     if (res.ok) {
                         const data = await res.json();
@@ -6593,7 +6657,15 @@
             panel.innerHTML = '<div class="code-loading">loading branches...</div>';
             try {
                 let branches = [];
-                if (rv.provider === 'gh') {
+                if (isEspresso()) {
+                    try {
+                        const res = await fetch(`${ggRepoBase()}/branches`, { headers: ggHeaders() });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (Array.isArray(data)) branches = data.map(b => typeof b === 'string' ? { name: b } : b);
+                        }
+                    } catch(_) {}
+                } else if (rv.provider === 'gh') {
                     let page = 1;
                     while (true) {
                         const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/branches?per_page=100&page=${page}`);
@@ -6632,7 +6704,15 @@
                     }
                 }
                 let tags = [];
-                if (rv.provider === 'gh') {
+                if (isEspresso()) {
+                    try {
+                        const res = await fetch(`${ggRepoBase()}/tags`, { headers: ggHeaders() });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (Array.isArray(data)) tags = data.map(t => typeof t === 'string' ? t : (t.name || t));
+                        }
+                    } catch(_) {}
+                } else if (rv.provider === 'gh') {
                     const res = await ghFetch(`https://api.github.com/repos/${rv.owner}/${rv.repo}/tags?per_page=100`);
                     if (res.ok) {
                         const data = await res.json();
@@ -6669,7 +6749,9 @@
                 ? `https://codeberg.org/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/src/branch/`
                 : rv.provider === 'gh'
                     ? `https://github.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/tree/`
-                    : `https://gitlab.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/-/tree/`;
+                    : isEspresso()
+                        ? `https://espresso.livrasand.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/-/tree/`
+                        : `https://gitlab.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/-/tree/`;
             const defaultName = (branches.find(b => b.name === 'main' || b.name === 'master') || branches[0]).name;
             const branchOptions = branches.map(b => `<option value="${escAttr(b.name)}">${escHtml(b.name)}</option>`).join('');
             const tagOptions = (tags || []).map(t => `<option value="${escAttr(t)}">${escHtml(t)}</option>`).join('');
@@ -6752,6 +6834,14 @@
                         page++;
                         if (page > 10) break;
                     }
+                } else if (isEspresso()) {
+                    try {
+                        const res = await fetch(`${ggRepoBase()}/tags?per_page=100`, { headers: ggHeaders() });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (Array.isArray(data)) tags = data.map(t => typeof t === 'string' ? t : (t.name || t));
+                        }
+                    } catch(_) {}
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     let page = 1;
@@ -6784,7 +6874,9 @@
                 ? `https://codeberg.org/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/src/tag/`
                 : rv.provider === 'gh'
                     ? `https://github.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/releases/tag/`
-                    : `https://gitlab.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/-/tags/`;
+                    : isEspresso()
+                        ? `https://espresso.livrasand.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/-/tags/`
+                        : `https://gitlab.com/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/-/tags/`;
             const header = `<div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;">
                 <span style="font-size:0.85rem;font-weight:600;color:var(--fg);">${tags.length.toLocaleString()} tags</span>
             </div>`;
@@ -6807,7 +6899,6 @@
             panel.innerHTML = header + '<div class="commit-list">' + list + '</div>';
         }
 
-        // Abre el contenido del repo en la ref de un tag (árbol de archivos interno).
         function openTag(tagName) {
             if (!tagName) return;
             go({ kind: 'files', mode: 'tree', ref: tagName, segs: [] });
@@ -6836,8 +6927,6 @@
                     const res = await cbFetch(`${CB_BASE}/packages/${rv.owner}?limit=50`);
                     if (res.ok) {
                         const data = await res.json();
-                        // El paquete de Codeberg referencia su repo (repository.name); se
-                        // acepta también full_name (owner/name) como respaldo del filtro.
                         has = Array.isArray(data) && data.some(p => p.repository?.name === rv.repo || ((p.full_name || '').split('/').pop() === rv.repo));
                     }
                 } else if (rv.provider === 'gl') {
@@ -7148,9 +7237,6 @@
             });
         }
 
-        // Descarga de assets de release a través del proxy del backend
-        // (/api/release-asset): misma origen, Content-Disposition: attachment,
-        // sin navegaciones externas (importante en el WebView de Capacitor).
         function _downloadReleaseAsset(url) {
             if (!url) return;
             const proxied = `${API_BASE}/api/release-asset/${rv.provider}/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}?url=${encodeURIComponent(url)}`;
@@ -7162,9 +7248,6 @@
             a.remove();
         }
 
-        // URL de descarga directa (en la forja original) de un fichero concreto
-        // de un package publicado. Se enruta por el proxy del backend
-        // (/api/package-file) para forzar Content-Disposition: attachment.
         function _pkgFileDownloadURL(f, pkg) {
             if (rv.provider === 'cb') {
                 const o = encodeURIComponent(rv.owner);
@@ -7262,10 +7345,6 @@
             return files;
         }
 
-        // Un commit se identifica por su SHA. Si el ref no puede ser uno (por
-        // ejemplo, una URL manipulada a mano) no se llama a la API: GitHub
-        // responde 422 "No commit found for SHA" y el navegador lo vuelca en
-        // la consola como error de red.
         function plausibleCommitRef(ref) {
             const s = String(ref || '').trim();
             if (!s || s.length > 120) return false;
@@ -7300,6 +7379,9 @@
                     commit = await resCommit.json();
                     const diffText = resDiff.ok ? await resDiff.text() : '';
                     files = diffText ? parseGitDiff(diffText) : (commit.files || []);
+                } else if (isEspresso()) {
+                    panel.innerHTML = '<div class="code-loading" style="color:var(--accent)">commit details are not available for gitGost repos</div>';
+                    return;
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const [resCommit, resDiff] = await Promise.all([
@@ -7419,7 +7501,6 @@
             if (count > 0) console.log('shiki highlighted', count, 'files');
         }
 
-        // ---- @pierre/diffs (render de diffs y código, vía CDN con fallback) ----
         let _pierreMod = null;
         let _pierreLoading = null;
         const _pierreViewers = new Map();
@@ -7469,9 +7550,6 @@
             _pierreViewers.clear();
         }
 
-        // Reconstruye un diff unificado completo (diff --git + ---/+++ + hunks) para
-        // parsePatchFiles: el patch de GitHub (commits y files de PR) y el diff de
-        // GitLab solo traen los hunks; Codeberg ya entrega el diff unificado.
         function _gitPatchForFile(f) {
             const patch = f.patch || f.diff || '';
             if (!patch) return '';
@@ -7487,8 +7565,6 @@
             return lines.join('\n');
         }
 
-        // ---- Header de archivo estilo GitHub para los diffs ----
-        // Almacena el patch crudo por clave pierreKey para el botón "copiar patch".
         const _cdfPatchStore = {};
 
         function _cdfSplitPath(filename) {
@@ -7498,7 +7574,6 @@
                 : { dir: filename.slice(0, idx + 1), name: filename.slice(idx + 1) };
         }
 
-        // Barras de stat estilo GitHub: 5 bloques proporcionales +/−.
         function _cdfStatBars(adds, dels) {
             const total = (adds || 0) + (dels || 0);
             if (!total) return '';
@@ -7546,7 +7621,6 @@
                     </div>`;
         }
 
-        // Delegación global: colapsar/expandir archivo y copiar patch.
         document.addEventListener('click', e => {
             const toggle = e.target.closest('.cdf-toggle');
             if (toggle) {
@@ -7566,9 +7640,6 @@
             }
         });
 
-        // Sustituye el <pre> plano de cada .commit-diff-file por el render de
-        // @pierre/diffs. Si el CDN o el parseo fallan, el <pre> queda como fallback
-        // y _highlightDiffs lo resalta con Shiki.
         async function _upgradeDiffsWithPierre(root, patchByKey) {
             const mod = await _getPierreDiffs();
             if (!mod || !root) return;
@@ -7609,7 +7680,6 @@
             }
         }
 
-        // Re-renderiza los viewers activos con el tema actual (toggleTheme).
         async function _rethemePierreDiffs() {
             if (!_pierreViewers.size) return;
             const mod = await _getPierreDiffs();
@@ -7705,7 +7775,6 @@
             _highlightDiffs(panel);
         }
 
-        // Alterna entre escritura y preview (renderMd + hljs) en un editor de comentario.
         function setReplyTab(textareaId, mode) {
             const textarea = document.getElementById(textareaId);
             if (!textarea) return;
@@ -7947,9 +8016,6 @@
                         cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/pulls/${num}/files?limit=100`),
                         cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/pulls/${num}.diff`)
                     ]);
-                    // Codeberg no incluye el patch en /pulls/{n}/files: el diff completo
-                    // viene de pulls/{n}.diff (parseGitDiff lo divide por archivo) y los
-                    // conteos +- de la API de files se usan si están disponibles.
                     const apiFiles = resFiles.ok ? await resFiles.json() : [];
                     const diffText = resDiff.ok ? await resDiff.text() : '';
                     const diffFiles = diffText ? parseGitDiff(diffText) : [];
@@ -7963,6 +8029,9 @@
                         };
                     });
                     if (!files.length && Array.isArray(apiFiles)) files = apiFiles;
+                } else if (isEspresso()) {
+                    listEl.innerHTML = '<div class="bugs-empty">files unavailable for gitGost repos</div>';
+                    return;
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const iid = pr.iid || num;
@@ -8010,7 +8079,6 @@
             _highlightDiffs(listEl);
         }
 
-        // Etiquetas de licencia estilo choosealicense.com para los SPDX id / keys más comunes.
         const LICENSE_LABELS = {
             'AGPL-3.0': 'GNU AGPLv3',
             'GPL-3.0': 'GNU GPLv3',
@@ -8028,7 +8096,6 @@
             if (key === 'NOASSERTION') return null;
             return LICENSE_LABELS[key] || raw;
         }
-        // Detecta la licencia a partir del contenido de un archivo LICENSE (para Codeberg).
         function _detectLicense(text) {
             if (!text) return null;
             const t = String(text).slice(0, 6000);
@@ -8039,7 +8106,6 @@
                 return 'GNU LGPL';
             }
             if (/\bGNU GENERAL PUBLIC LICENSE\b/i.test(t)) {
-                // Version 2 sin sufijo (2.1) para no capturar referencias a LGPLv2.1.
                 if (/Version\s+2(?!\.\d)/i.test(t)) return 'GNU GPLv2';
                 if (/Version\s+3\b/i.test(t)) return 'GNU GPLv3';
                 return 'GNU GPL';
@@ -8158,8 +8224,6 @@
                     const sbWatching = document.getElementById('sb-watching');
                     if (sbWatching) {
                         try {
-                            // Gitea/Codeberg no incluye el conteo de watchers en el JSON del repo:
-                            // se obtiene del header de paginación X-Total-Count de /subscribers.
                             const wRes = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/subscribers?limit=1`);
                             if (wRes.ok) {
                                 const total = wRes.headers.get('X-Total-Count');
@@ -8171,9 +8235,6 @@
                     if (sbLicense) {
                         const ref = currentBranch() || rv.branch || 'master';
                         try {
-                            // El proxy de Codeberg bloquea /raw/<file>?ref= (403): se lista la raíz
-                            // con /contents (1 request) y se lee el archivo de licencia real (1 request),
-                            // en vez de probar hasta 5 nombres con rutas no permitidas.
                             const listRes = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/contents/?ref=${encodeURIComponent(ref)}`);
                             if (listRes.ok) {
                                 const items = await listRes.json();
@@ -8205,6 +8266,57 @@
 
                     loadCommitCount();
                     loadContributors();
+                } else if (isEspresso()) {
+                    const res = await fetch(`${ggRepoBase()}/info`, { headers: ggHeaders() });
+                    if (!res.ok) {
+                        const sbDesc = document.getElementById('sb-desc');
+                        if (sbDesc) sbDesc.textContent = `espresso API error ${res.status}`;
+                        return;
+                    }
+                    const d = await res.json();
+                    const bar       = document.getElementById('repo-info');
+                    const infoStars = document.getElementById('info-stars');
+                    const infoForks = document.getElementById('info-forks');
+                    const infoLang  = document.getElementById('info-lang');
+                    const infoDesc  = document.getElementById('info-desc');
+                    if (infoStars) infoStars.textContent = '★ 0';
+                    if (infoForks) infoForks.textContent = ` fork 0 forks`;
+                    if (infoLang) infoLang.textContent = '—';
+                    if (infoDesc) infoDesc.textContent = d.name || '—';
+                    if (bar) bar.style.display = 'flex';
+                    rv.language = rv.language;
+                    rv.branch = rv.branch || 'master';
+                    rv.stars = 0;
+                    setRepoHomepage('');
+
+                    const sbDesc = document.getElementById('sb-desc');
+                    if (sbDesc) sbDesc.textContent = d.name || '—';
+                    const sbTags = document.getElementById('sb-tags');
+                    if (sbTags) sbTags.innerHTML = '';
+                    const sbVis = document.getElementById('sb-vis');
+                    if (sbVis) {
+                        sbVis.textContent = 'public';
+                        sbVis.className = 'val pub';
+                    }
+                    const sbCreated = document.getElementById('sb-created');
+                    if (sbCreated) sbCreated.textContent = '—';
+                    const sbForks = document.getElementById('sb-forks');
+                    if (sbForks) sbForks.textContent = '0';
+                    const sbWatching = document.getElementById('sb-watching');
+                    if (sbWatching) sbWatching.textContent = '0';
+                    const sbLicense = document.getElementById('sb-license');
+                    if (sbLicense) sbLicense.textContent = '—';
+                    const sbSize = document.getElementById('sb-size');
+                    if (sbSize) sbSize.textContent = d.size ? formatBytes(d.size) : '—';
+                    const sbStarCount = document.getElementById('sb-star-count');
+                    if (sbStarCount) sbStarCount.textContent = '';
+                    updateStatusbarPath();
+
+                    const navWiki = document.getElementById('nav-wiki');
+                    if (navWiki) navWiki.style.display = 'none';
+
+                    loadCommitCount();
+                    loadContributors();
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const glToken = sessionStorage.getItem('gl_token');
@@ -8225,11 +8337,6 @@
                     if (bar) bar.style.display = 'flex';
                     rv.branch = d.default_branch || rv.branch;
                     rv.stars = d.star_count || 0;
-
-                    // GitLab Pages: el endpoint /pages del proyecto exige autenticación (403 sin token);
-                    // Since we cannot verify if Pages is actually published without authentication,
-                    // and the GitLab API v4 projects endpoint does not include a separate homepage field,
-                    // we do not automatically set a Pages URL to avoid pointing to non-existent sites.
 
                     const sbDesc = document.getElementById('sb-desc');
                     if (sbDesc) sbDesc.textContent = d.description || '—';
@@ -8252,8 +8359,6 @@
                     const sbLicense = document.getElementById('sb-license');
                     if (sbLicense) {
                         try {
-                            // El endpoint /license de GitLab requiere autenticación (404 sin token):
-                            // se detecta leyendo el archivo de licencia desde el tree.
                             const treeRes = await fetch(`https://gitlab.com/api/v4/projects/${d.id}/repository/tree?per_page=100`);
                             if (treeRes.ok) {
                                 const tree = await treeRes.json();
@@ -8310,8 +8415,6 @@
 
         let _securityFile = null;
 
-        // Muestra el botón "Security Policy" en el sidebar derecho solo si el repo
-        // tiene un archivo de seguridad en la raíz (SECURITY.md o security.md).
         async function _checkSecurityPolicy() {
             const btn = document.getElementById('sb-security-btn');
             if (!btn) return;
@@ -8360,9 +8463,6 @@
             }
         }
 
-        // GitLab /repository/contributors no incluye el username (solo name/email).
-        // Se resuelve desde los commits recientes (author.username) y, como fallback,
-        // por email vía el proxy existente gl-avatar (que también devuelve username).
         async function _glContributorUsernames(list) {
             const map = new Map();
             if (!Array.isArray(list) || list.length === 0) return map;
@@ -8392,11 +8492,6 @@
             return map;
         }
 
-        // Codeberg/Forgejo no expone /stats/contributors (404 verificado): los
-        // contribuidores se agregan desde los commits recientes (cada commit trae
-        // author.login, full_name y avatar_url), agrupando por autor y contando
-        // commits como aportes. Devuelve el mismo shape {author, total} que
-        // normaliza _cbContributorStats.
         async function _cbContributorsFromCommits(maxAuthors, maxPages) {
             const stats = [];
             const byLogin = new Map();
@@ -8421,8 +8516,6 @@
             return stats;
         }
 
-        // Normaliza {author, total} al shape común de contribuidores
-        // (login, name, contributions, avatar_url) para reutilizar el render.
         function _cbContributorStats(list) {
             if (!Array.isArray(list)) return [];
             return list.map(s => {
@@ -8451,31 +8544,23 @@
                     const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/contributors?per_page=10`);
                     if (res.ok) list = await res.json();
                 } else if (rv.provider === 'cb') {
-                    // Se agregan autores desde los commits recientes; el conteo es el
-                    // de autores únicos encontrados (límite para el rate limit).
                     const stats = await _cbContributorsFromCommits(50, 5);
                     cbTotal = stats.length;
                     list = _cbContributorStats(stats).slice(0, 10);
                 }
             } catch(_) {}
-            // El que más commits ha hecho queda primero (y por tanto visible en el sidebar).
             if (Array.isArray(list) && list.length > 1) {
                 list = list.slice().sort((a, b) => (b.contributions || b.commits || 0) - (a.contributions || a.commits || 0));
             }
             if (!Array.isArray(list) || list.length === 0) return;
-            // GitLab no incluye el username en /contributors: se resuelve por email
-            // con el mismo patrón que loadCommits (commits recientes + gl-avatar).
             const userMap = rv.provider === 'gl' ? await _glContributorUsernames(list) : new Map();
             const html = list.map((c, i) => {
                 if (!c) return '';
                 const top = i === 0 && list.length > 1;
                 const name = c.login || c.name || '';
-                // username real solo si viene del login del repo o del mapa por email;
-                // si no se resolvió (GitLab sin token) se muestra el nombre sin enlace.
                 const login = c.login || userMap.get(c.email) || '';
                 const username = login || name;
                 const commits = c.contributions || c.commits || 0;
-                // GitLab no devuelve avatar: se usa gravatar a partir del email (patrón existente).
                 const avatar = c.avatar_url || (c.email ? `https://www.gravatar.com/avatar/${md5(String(c.email).trim().toLowerCase())}?s=56&d=identicon` : '');
                 if (!username || !avatar) return '';
                 const img = `<img src="${escAttr(avatar)}" alt="${escAttr(username)}" loading="lazy">`;
@@ -8486,7 +8571,6 @@
             if (!html) return;
             box.innerHTML = html;
             section.style.display = '';
-            // conteo total para el enlace "View all contributors"
             const countEl = document.getElementById('sb-contributors-count');
             if (countEl) {
                 try {
@@ -8543,11 +8627,9 @@
                         if (page > 10) break;
                     }
                 } else if (rv.provider === 'cb') {
-                    // Vista completa: más páginas de commits para cubrir más autores.
                     const stats = await _cbContributorsFromCommits(200, 20);
                     list = _cbContributorStats(stats);
                 }
-                // El que más commits ha hecho debe aparecer primero en la vista.
                 if (list.length > 1) {
                     list = list.slice().sort((a, b) => (b.contributions || b.commits || 0) - (a.contributions || a.commits || 0));
                 }
@@ -8573,12 +8655,9 @@
                 if (!c) return '';
                 const top = i === 0 && list.length > 1;
                 const name = c.login || c.name || '';
-                // username real solo si viene del login del repo o del mapa por email;
-                // si no se resolvió (GitLab sin token) se muestra el nombre sin enlace.
                 const login = c.login || userMap.get(c.email) || '';
                 const username = login || name;
                 const commits = c.contributions || c.commits || 0;
-                // GitLab no devuelve avatar: se usa gravatar a partir del email (patrón existente).
                 const avatar = c.avatar_url || (c.email ? `https://www.gravatar.com/avatar/${md5(String(c.email).trim().toLowerCase())}?s=56&d=identicon` : '');
                 const img = avatar
                     ? `<img src="${escAttr(avatar)}" alt="${escAttr(username)}" loading="lazy" style="width:2rem;height:2rem;border-radius: 0;object-fit:cover;background:var(--accent);flex:none;">`
@@ -8618,8 +8697,6 @@
             const section = document.getElementById('sb-deployments-section');
             const box = document.getElementById('sb-deployments');
             if (!section || !box) return;
-            // Codeberg/Gitea no expone un endpoint público de deployments; GitHub lo expone
-            // públicamente y GitLab solo responde con token: la sección se carga cuando puede funcionar.
             if (rv.provider === 'cb') return;
             if (rv.provider === 'gl' && !sessionStorage.getItem('gl_token')) return;
             let items = [];
@@ -8630,7 +8707,6 @@
                     if (res.ok) {
                         const deploys = await res.json();
                         if (Array.isArray(deploys)) {
-                            // El estado de cada deployment vive en un endpoint aparte: se consulta en paralelo.
                             const statuses = await Promise.all(deploys.map(async d => {
                                 if (!d || !d.statuses_url) return '';
                                 try {
@@ -8687,7 +8763,6 @@
             if (!html) return;
             box.innerHTML = html;
             section.style.display = '';
-            // conteo total para el enlace "View all deployments" (headers del mismo response)
             const countEl = document.getElementById('sb-deployments-count');
             if (countEl && total > 0) countEl.textContent = total.toLocaleString();
         }
@@ -8695,7 +8770,6 @@
         async function loadDeploymentsView() {
             const panel = document.getElementById('code-panel');
             panel.innerHTML = '<div class="code-loading">loading deployments...</div>';
-            // Igual que en el sidebar: Codeberg no expone deployments; GitLab exige token.
             if (rv.provider === 'cb') {
                 panel.innerHTML = '<div class="bugs-empty">deployments are not available on codeberg</div>';
                 return;
@@ -8719,7 +8793,6 @@
                         page++;
                         if (page > 10) break;
                     }
-                    // Resolve deployment statuses from statuses_url
                     const statuses = await Promise.all(items.map(async d => {
                         if (!d || !d.statuses_url) return '';
                         try {
@@ -8760,7 +8833,6 @@
                         status: d.status || ''
                     }));
                 }
-                // Codeberg/Gitea no expone un endpoint público de deployments.
                 renderDeploymentsView(items);
             } catch(e) {
                 const em = escHtml((e && e.message) ? e.message : String(e)); panel.innerHTML = `<div class="code-loading" style="color:var(--accent)">error: </div>`;
@@ -8817,6 +8889,15 @@
                         const link = res.headers.get('Link') || '';
                         const match = link.match(/[?&]page=(\d+)>; rel="last"/);
                         el.textContent = match ? parseInt(match[1]).toLocaleString() : '?';
+                    }
+                } else if (isEspresso()) {
+                    const res = await fetch(`${ggRepoBase()}/commits?per_page=1`, { headers: ggHeaders() });
+                    if (!res.ok) { el.textContent = '?'; return; }
+                    const total = res.headers.get('X-Total-Count');
+                    if (total) {
+                        el.textContent = parseInt(total).toLocaleString();
+                    } else {
+                        el.textContent = '?';
                     }
                 } else {
                     const res = await fetch(`${API_BASE}/api/gl-commit-count/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}`);
@@ -8955,7 +9036,6 @@
                     if (!res.ok) { if (section) section.style.display = 'none'; return; }
                     const data = await res.json();
                     tags = Array.isArray(data) ? data : [];
-                    // GitHub no expone el total de tags: se consulta la última página para un total exacto.
                     const link = res.headers.get('Link') || '';
                     const match = link.match(/&page=(\d+)>; rel="last"/);
                     if (match) {
@@ -8989,7 +9069,6 @@
                 if (tags.length > 0) {
                     el.textContent = total.toLocaleString();
                     if (listEl) {
-                        // Solo la última tag (más reciente) se muestra destacada, como Latest en Releases.
                         const latestName = tags[0].name || '';
                         const latestHtml = `<a href="${escAttr(buildFilesUrl('tree', latestName, []))}" data-tag="${escAttr(latestName)}" onclick="openTag(this.dataset.tag); return false;" style="display:block;padding:0.3rem 0;color:var(--fg);text-decoration:none;">
                             <div style="font-size:0.82rem;font-weight:500;line-height:1.3;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">${escHtml(latestName)} <span class="release-latest-badge">Latest</span></div>
@@ -9008,7 +9087,6 @@
         const LANGUAGE_COLORS_CACHE_KEY = 'gg_language_colors';
         const LANGUAGE_COLORS_CACHE_TTL = 24 * 60 * 60 * 1000;
         async function loadLanguageColors() {
-            // Mismo esquema de colores que index.html: color real por lenguaje, con caché compartida.
             try {
                 const cached = JSON.parse(localStorage.getItem(LANGUAGE_COLORS_CACHE_KEY) || 'null');
                 if (cached && cached.data && Date.now() - cached.timestamp < LANGUAGE_COLORS_CACHE_TTL) {
@@ -9069,6 +9147,8 @@
                     if (!langRes.ok) return;
                     const data = await langRes.json();
                     entries = Object.entries(data);
+                } else if (isEspresso()) {
+                    return;
                 } else {
                     return;
                 }
@@ -9080,7 +9160,6 @@
                     '#4F5D95','#2b7489','#563d7c','#A97BFF','#00ADD8',
                     '#dea584','#701516','#c397d8','#6e4c13','#3d6117',
                 ];
-                // Usa los colores reales por lenguaje (igual que index.html); la paleta local queda como respaldo.
                 const hasColors = await loadLanguageColors();
 
                 const bar   = document.getElementById('sb-lang-bar');
@@ -9092,7 +9171,7 @@
                 legend.innerHTML = '';
 
                 entries.forEach(([lang, value], i) => {
-                    const pct = (rv.provider === 'gh' || rv.provider === 'cb') ? (value / total * 100).toFixed(1) : value.toFixed(1);
+                    const pct = (rv.provider === 'gh' || rv.provider === 'cb' || isEspresso()) ? (value / total * 100).toFixed(1) : value.toFixed(1);
                     const color = hasColors ? languageColor(lang) : colors[i % colors.length];
                     const seg = document.createElement('div');
                     seg.className = 'lang-bar-seg';
@@ -9112,7 +9191,6 @@
 
         const ICON_BASE = '/assets/MaterialIconTheme/material-icon-theme--';
 
-        // extension -> nombre del svg del tema (fallback: document)
         const _iconExtMap = {
             js: 'javascript', mjs: 'javascript', cjs: 'javascript',
             jsx: 'react', ts: 'typescript', tsx: 'react-ts',
@@ -9136,7 +9214,6 @@
             txt: 'document', text: 'document'
         };
 
-        // nombre de archivo (o prefijo) -> nombre del svg del tema
         const _iconNameMap = {
             'readme': 'readme', 'license': 'license', 'copying': 'license', 'unlicense': 'unlicense',
             'package.json': 'npm', 'tsconfig': 'tsconfig', 'jsconfig': 'jsconfig',
@@ -9150,7 +9227,6 @@
             'go.mod': 'go-mod', 'go.sum': 'go-mod', 'package-lock.json': 'lock', 'yarn.lock': 'lock', 'pnpm-lock.yaml': 'lock'
         };
 
-        // carpeta -> folder-{nombre} (fallback: folder-other)
         const _iconFolderMap = {
             'node_modules': 'folder-node', 'src': 'folder-src', 'components': 'folder-components',
             'test': 'folder-test', 'tests': 'folder-test', '__tests__': 'folder-test', 'spec': 'folder-test', 'e2e': 'folder-test',
@@ -9204,6 +9280,11 @@
                 const res = await cbFetch(`${CB_BASE}/repos/${rv.owner}/${rv.repo}/contents/${pathStr}?ref=${encodeURIComponent(ref)}`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 return await res.json();
+            } else if (isEspresso()) {
+                const res = await fetch(`${ggRepoBase()}/tree?path=${encodeURIComponent(pathStr)}&ref=${encodeURIComponent(ref)}`, { headers: ggHeaders() });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const raw = await res.json();
+                return raw.map(i => ({ name: i.name, type: i.type === 'tree' ? 'dir' : 'file', path: i.path, download_url: null }));
             } else {
                 const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                 const res = await fetch(`https://gitlab.com/api/v4/projects/${enc}/repository/tree?path=${encodeURIComponent(pathStr)}&per_page=100&ref=${encodeURIComponent(ref)}`);
@@ -9232,7 +9313,6 @@
             const input = document.getElementById('statusbar-file-search');
             if (input) input.value = item.path || item.name || '';
             _closeStatusbarFileSearch();
-            // Sin push aquí: loadFile ya refleja el archivo en la URL (/blob/...).
             showView('files', false);
             loadFile(item);
         }
@@ -9256,7 +9336,6 @@
                     button.setAttribute('role', 'option');
                     button.textContent = item.path || item.name;
                     button.addEventListener('click', (e) => {
-                        // Ctrl/Cmd+click: abre el archivo en pestaña nueva.
                         if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
                             e.preventDefault();
                             window.open(buildFilesUrl('blob', currentBranch(), String(item.path || item.name || '').split('/').filter(Boolean)), '_blank', 'noopener');
@@ -9405,11 +9484,9 @@
                 const data = await res.json();
                 return (data || []).map(i => _searchItem(i.filename, i.path || i.filename));
             }
-            // Forgejo's public API has no repository-scoped code search. Search file contents
-            // client-side in a bounded set to keep the page responsive on large repositories.
             _codeSearchSubsetNote = false;
             const binary = /\.(?:7z|avif|bin|bmp|class|dll|exe|gif|gz|ico|jar|jpe?g|mp3|mp4|otf|pdf|png|so|tar|ttf|webm|woff2?|zip)$/i;
-            const maxFileSize = 1024 * 1024; // 1 MiB: archivos más grandes se descartan antes de fetchear.
+            const maxFileSize = 1024 * 1024;
             const maxCandidates = 100;
             const allFiles = await _allRepositoryFiles();
             const eligible = allFiles.filter(i => !binary.test(i.path) && (!i.size || i.size <= maxFileSize));
@@ -9469,7 +9546,6 @@
                     button.appendChild(note);
                 }
                 button.onclick = (e) => {
-                    // Ctrl/Cmd+click o botón central: abre el archivo en pestaña nueva.
                     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
                         e.preventDefault();
                         window.open(buildFilesUrl('blob', currentBranch(), String(item.path || item.name || '').split('/').filter(Boolean)), '_blank', 'noopener');
@@ -9493,7 +9569,6 @@
             if (!query) { input && input.focus(); return; }
             const panel = document.getElementById('code-panel');
             panel.innerHTML = '<div class="code-loading">searching repository...</div>';
-            // En móvil los resultados se muestran como vista detalle (ocultando el árbol).
             if (_isMobileFiles()) _openMobileFile();
             try {
                 const items = mode === 'code'
@@ -9517,7 +9592,6 @@
         function _buildTreeNode(item, pathParts, depth) {
             const isDir = item.type === 'dir' || item.type === 'tree';
             const indent = depth * 14;
-            // URL compartible del nodo (para abrir en pestaña nueva).
             const nodeUrl = buildFilesUrl(isDir ? 'tree' : 'blob', currentBranch(), [...pathParts, item.name]);
 
             const wrapper = document.createElement('div');
@@ -9543,8 +9617,6 @@
             row.appendChild(name);
             wrapper.appendChild(row);
 
-            // Las filas del árbol son divs: el navegador no les da comportamiento
-            // nativo, así que Ctrl/Cmd+click y botón central se gestionan aquí.
             const openNodeInNewTab = (e) => {
                 e.preventDefault();
                 window.open(nodeUrl, '_blank', 'noopener');
@@ -9596,7 +9668,6 @@
             return wrapper;
         }
 
-        // Vista de archivos en móvil: flujo lista-detalle (árbol -> archivo -> volver).
         function _isMobileFiles() {
             return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 768px)').matches;
         }
@@ -9634,7 +9705,6 @@
                 });
 
                 if (opts.blobPath != null) {
-                    // Ruta /blob/<ref>/<ruta>: abre el archivo indicado sin tocar la URL.
                     const target = items.find(i => (i.path || i.name) === opts.blobPath)
                         || items.find(i => i.name === opts.blobPath.split('/').pop());
                     if (target) loadFile(target, { silentUrl: true });
@@ -9654,7 +9724,6 @@
         async function loadFile(item, opts) {
             opts = opts || {};
             if (!opts.silentUrl) {
-                // Refleja el archivo abierto en la URL: /blob/<ref>/<ruta>.
                 go({ kind: 'files', mode: 'blob', ref: currentBranch(), segs: String(item.path || item.name || '').split('/').filter(Boolean) });
             }
             const panel = document.getElementById('code-panel');
@@ -9683,6 +9752,12 @@
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const data = await res.json();
                     content = decodeBase64Utf8(data.content);
+                } else if (isEspresso()) {
+                    const path = (item.path || item.name || '').split('/').map(encodeURIComponent).join('/');
+                    const ref = currentBranch();
+                    const res = await fetch(`${ggRepoBase()}/raw?path=${path}&ref=${encodeURIComponent(ref)}`, { headers: ggHeaders() });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    content = await res.text();
                 } else {
                     const enc = encodeURIComponent(`${rv.owner}/${rv.repo}`);
                     const fp  = encodeURIComponent(item.path || item.name);
@@ -9697,18 +9772,22 @@
                 const name = item.name || '';
                 const ext = name.toLowerCase().split('.').pop();
                 const imageExts = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico', 'avif', 'apng'];
-                if (imageExts.includes(ext)) {
-                    let imgUrl = item.download_url || item.url || `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/${item.path}`;
-                    if (rv.provider === 'gh') imgUrl = `${API_BASE}/api/gh-raw/${rv.owner}/${rv.repo}/${currentBranch()}/${item.path}`;
+if (imageExts.includes(ext)) {
+                    let imageUrl = item.download_url || item.url || `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/${item.path}`;
+                    if (rv.provider === 'gh') imageUrl = `${API_BASE}/api/gh-raw/${rv.owner}/${rv.repo}/${currentBranch()}/${item.path}`;
                     if (rv.provider === 'cb') {
                         const branch = currentBranch();
-                        imgUrl = branch
+                        imageUrl = branch
                             ? `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${branch}/${item.path}`
                             : `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/${item.path}`;
                     }
-                    
-                    const safeImgUrl = sanitizeHttpUrl(imgUrl);
-                    _renderFilePanel(name, { path: item.path || item.name, lastCommitScope: opts.lastCommitScope || 'file', content, size: fileSize, imgUrl: safeImgUrl, isImage: true, previewHtml: `<div style="padding:1rem;text-align:center;"><img src="${escHtml(safeImgUrl)}" alt="${escHtml(name)}" style="max-width:100%;max-height:80vh;object-fit:contain;border-radius: 0;" /></div>` });
+                    if (isEspresso()) {
+                        const path = (item.path || item.name || '').split('/').map(encodeURIComponent).join('/');
+                        imageUrl = `${ggRepoBase()}/raw?path=${path}&ref=${encodeURIComponent(currentBranch())}`;
+                    }
+
+const safeImgUrl = sanitizeHttpUrl(imageUrl);
+                    _renderFilePanel(name, { path: item.path || item.name, lastCommitScope: opts.lastCommitScope || 'file', content, size: fileSize, imageUrl: safeImgUrl, isImage: true, previewHtml: `<div style="padding:1rem;text-align:center;"><img src="${escHtml(safeImgUrl)}" alt="${escHtml(name)}" style="max-width:100%;max-height:80vh;object-fit:contain;border-radius: 0;" /></div>` });
                 } else if (name.toLowerCase().endsWith('.md')) {
                     const dir = item.path ? item.path.substring(0, item.path.lastIndexOf('/') + 1) : '';
                     let mdBaseUrl = `https://gitlab.com/${rv.owner}/${rv.repo}/-/raw/${currentBranch()}/${dir}`;
@@ -9719,8 +9798,12 @@
                             ? `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/raw/branch/${branch}/${dir}`
                             : `${getApiBase()}/api/cb-proxy/${rv.owner}/${rv.repo}/${dir}`;
                     }
-                    
-                    _renderFilePanel(name, { path: item.path || item.name, lastCommitScope: opts.lastCommitScope || 'file', content, size: fileSize, isMd: true, previewHtml: `<div class="readme">${renderMd(content, mdBaseUrl)}</div>` });
+                    if (isEspresso()) {
+                        const dirPath = (dir || '').split('/').map(encodeURIComponent).join('/');
+                        mdBaseUrl = `${ggRepoBase()}/raw?path=${dirPath}&ref=${encodeURIComponent(currentBranch())}`;
+                    }
+
+                    _renderFilePanel(name, { path: item.path || item.name, lastCommitScope: opts.lastCommitScope || 'file', content, size: fileSize, isMd: true, previewHtml: `<div class="readme markdown-body">${renderMd(content, mdBaseUrl)}</div>` });
                 } else {
                     _renderFilePanel(name, { path: item.path || item.name, lastCommitScope: opts.lastCommitScope || 'file', content, size: fileSize, previewHtml: _buildCodeHtml(content, name) });
                 }
@@ -9798,8 +9881,6 @@
             const objAuthor = (c.author && typeof c.author === 'object') ? c.author : null;
             const objCommitter = (c.committer && typeof c.committer === 'object') ? c.committer : null;
             const loginOf = (o) => o ? (o.login || o.username || (o.user && (o.user.login || o.user.name)) || '') : '';
-            // El campo "author" varía por proveedor: objeto {name,user} en GitHub,
-            // author_name plano en GitLab/Gitea; si falta, se cae al committer.
             const name =
                 (objAuthor && (objAuthor.name || loginOf(objAuthor))) ||
                 (typeof c.author === 'string' && c.author) ||
@@ -9815,7 +9896,6 @@
             };
         }
 
-        // Reintenta ante 429 (rate limit del proveedor) esperando Retry-After.
         async function _apiFetchRetry429(doFetch, maxRetries = 2) {
             let res = await doFetch();
             for (let attempt = 0; res && res.status === 429 && attempt < maxRetries; attempt++) {
@@ -9826,16 +9906,10 @@
             return res;
         }
 
-        // Blame unificado: el backend (/api/blame) reconstruye la atribución de
-        // líneas caminando el historial de commits, así que funciona igual para
-        // GitHub, GitLab y Codeberg sin depender de endpoints propios por forja.
         async function _fetchBlame(path) {
             const q = new URLSearchParams({ path, ref: currentBranch() || '' });
             const url = `${API_BASE}/api/blame/${rv.provider}/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}?${q}`;
             const res = await _apiFetchRetry429(() => fetch(url));
-            // Parseo defensivo: si el backend responde HTML (p. ej. un build
-            // sin el endpoint), JSON.parse falla y en Safari eso se manifiesta
-            // como "The string did not match the expected pattern".
             const text = await res.text();
             let data;
             try {
@@ -9851,7 +9925,6 @@
             return ranges.find(range => line >= Number(range.start) && line <= Number(range.end)) || {};
         }
 
-        // Patch que un commit aplicó a un archivo concreto (para el diff en blame).
         async function _fetchCommitFilePatch(sha, filePath) {
             if (!sha) return '';
             if (rv.provider === 'gh') {
@@ -9895,8 +9968,6 @@
                 return escHtml(line);
             };
             const fmtDate = d => d ? new Date(d).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
-            // Agrupa líneas consecutivas por commit: cabecera con autor/sha/fecha
-            // y diff desplegable del cambio introducido por ese commit.
             const groups = [];
             lines.forEach((line, i) => {
                 const lineNumber = i + 1;
@@ -9927,7 +9998,6 @@
             }).join('');
             body.innerHTML = `<div class="blame-header">blame / ${escHtml(path)} · ${lines.length} lines</div><div class="blame-panel">${rows}</div>`;
 
-            // Diff perezoso: se descarga el patch del commit al expandir por primera vez.
             body.querySelectorAll('.blame-diff-toggle').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const groupEl = btn.closest('.blame-group');
@@ -9988,9 +10058,6 @@
             }
         }
 
-        // Historial completo de un archivo (vista tipo GitHub): lista paginada de
-        // commits que tocaron el archivo, servida por el backend (/api/file-history),
-        // con diff desplegable por commit y botón "load more".
         let _fhState = null;
 
         async function _fetchFileHistory(path, page) {
@@ -10054,7 +10121,6 @@
                 listEl.insertAdjacentHTML('beforeend', '<div class="code-loading">no commits found</div>');
             }
 
-            // Diff perezoso por commit, igual que en el blame.
             listEl.querySelectorAll('.blame-diff-toggle[data-fh-sha]').forEach(btn => {
                 btn.addEventListener('click', async (ev) => {
                     ev.stopPropagation();
@@ -10142,8 +10208,6 @@
             }
         }
 
-        // Consulta el último commit (del repositorio en la vista home, del archivo al abrirlo)
-        // y lo muestra encima del toolbar, sin bloquear la visualización si falla.
         async function _loadLastCommit(filePath, scope) {
             try {
                 scope = scope || 'file';
@@ -10194,7 +10258,6 @@
                 }
                 const panel = document.getElementById('code-panel');
                 if (!panel) return;
-                // Si el usuario navegó a otro archivo mientras se resolvía la consulta, no insertar.
                 if (!_activeFile || _activeFile.path !== filePath) return;
                 const toolbar = panel.querySelector('.file-toolbar');
                 if (!toolbar) return;
@@ -10212,7 +10275,6 @@
                     `</span>`;
                 panel.insertBefore(div, toolbar);
             } catch (e) {
-                // La consulta del último commit es informativa; ante cualquier fallo se omite.
             }
         }
 
@@ -10226,9 +10288,6 @@
             return '';
         }
 
-        // Vista de código con una fila por línea para permitir permalinks
-        // (#L10 o #L10-L20) tipo GitHub: número de línea clicable que copia
-        // la URL permanente; Shift+clic extiende el rango desde el ancla.
         function _buildCodeHtml(text, name) {
             const lang = detectLang(name || '');
             const lines = String(text || '').split('\n');
@@ -10308,7 +10367,6 @@
             }
         }
 
-        // Aplica el permalink del hash actual (#L5 / #L5-L20) tras renderizar código.
         function _applyLineAnchors() {
             if (!document.querySelector('#file-body .cl-row')) return;
             const sel = _parseLineHash();
@@ -10440,7 +10498,6 @@
             }).join('');
         }
 
-        // Navega a un directorio del breadcrumb actualizando también la URL.
         function openTreeDir(pathPartsJson) {
             let pp = [];
             try { pp = JSON.parse(pathPartsJson) || []; } catch(_) { pp = []; }
@@ -10608,8 +10665,6 @@
         function handlePanelLinkClick(e) {
             const a = e.target.closest('a');
             if (!a) return;
-            // Con modificadores (Ctrl/Cmd/shift) o botón central se deja el
-            // comportamiento nativo del navegador intacto.
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
             const wiki = a.getAttribute('data-wiki');
             const anchor = a.getAttribute('data-anchor');
@@ -10620,8 +10675,6 @@
                 e.preventDefault();
                 scrollToAnchor(anchor);
             } else {
-                // Enlaces internos de la app (issues, PRs, commits enlazados
-                // desde el markdown): navegación SPA como GitHub.
                 const href = a.getAttribute('href') || '';
                 if (/^\//.test(href)) {
                     let route = null;
@@ -10717,7 +10770,6 @@
             _rethemePierreDiffs();
         };
 
-        // Sync mobile sidebar panel with the real (desktop) sidebar data
         function syncMobileSidebar() {
             const syncText = (fromId, toId) => {
                 const from = document.getElementById(fromId);
@@ -10742,7 +10794,6 @@
             syncText('sb-contributors-count', 'msb-contributors-count');
             syncText('sb-star-text', 'msb-star-text');
             syncText('sb-star-count', 'msb-star-count');
-            // releases
             const relSec = document.getElementById('sb-releases-section');
             const msbRelLabel = document.getElementById('msb-rel-label');
             const msbRel = document.getElementById('msb-latest-release');
@@ -10751,7 +10802,6 @@
                 msbRel.innerHTML = sbRel.innerHTML;
                 msbRelLabel.style.display = relSec.style.display === 'none' ? 'none' : '';
             }
-            // tags
             const tSec = document.getElementById('sb-tags-section');
             const msbTSec = document.getElementById('msb-tags-section');
             if (tSec && msbTSec) {
@@ -10759,7 +10809,6 @@
                 syncText('sb-tags-count', 'msb-tags-count');
                 msbTSec.style.display = tSec.style.display === 'none' ? 'none' : '';
             }
-            // languages
             const langSec = document.getElementById('sb-langs-section');
             const msbLangSec = document.getElementById('msb-langs-section');
             if (langSec && msbLangSec) {
@@ -10767,21 +10816,18 @@
                 syncHtml('sb-lang-legend', 'msb-lang-legend');
                 msbLangSec.style.display = langSec.style.display === 'none' ? 'none' : '';
             }
-            // contributors
             const cSec = document.getElementById('sb-contributors-section');
             const msbCSec = document.getElementById('msb-contributors-section');
             if (cSec && msbCSec) {
                 syncHtml('sb-contributors', 'msb-contributors');
                 msbCSec.style.display = cSec.style.display === 'none' ? 'none' : '';
             }
-            // deployments
             const dSec = document.getElementById('sb-deployments-section');
             const msbDSec = document.getElementById('msb-deployments-section');
             if (dSec && msbDSec) {
                 syncHtml('sb-deployments', 'msb-deployments');
                 msbDSec.style.display = dSec.style.display === 'none' ? 'none' : '';
             }
-            // homepage
             const homeRow = document.getElementById('sb-home-row');
             const msbHomeRow = document.getElementById('msb-home-row');
             if (homeRow && msbHomeRow) {
@@ -10797,7 +10843,6 @@
             }
         }
 
-        // Toggle mobile sidebar panel visibility (full-screen overlay)
         function toggleMobileSidebar() {
             const panel = document.getElementById('mobile-sidebar-panel');
             if (!panel) return;
@@ -10817,15 +10862,11 @@
             document.body.classList.remove('panel-open');
         }
 
-        // Autolinks estilo GitHub sobre el markdown crudo, solo fuera de bloques
-        // de código, código inline y URLs: menciones @usuario, referencias a
-        // issue/PR #123 y SHAs de commit (7-40 hex con al menos una letra a-f).
         function _mdAutolinkGitHub(md) {
             const profileBase = rv.provider === 'gh' ? 'https://github.com/'
                 : rv.provider === 'gl' ? 'https://gitlab.com/'
                 : 'https://codeberg.org/';
             const base = repoBasePath();
-            // Segmenta preservando bloques cercados, código inline y URLs planas intactos.
             const segments = String(md || '').split(/(```[\s\S]*?(?:```|$)|~~~[\s\S]*?(?:~~~|$)|`[^`\n]*`|https?:\/\/[^\s<>()]+)/g);
             return segments.map((seg, i) => {
                 if (i % 2 === 1) return seg;
@@ -10861,7 +10902,6 @@
                         return `<a href="#" data-wiki="${escAttr(target)}"${t}>${text}</a>`;
                     }
                 }
-                // file: permitido para enlaces locales en READMEs (página abierta desde disco).
                 const safeScheme = /^(?:https?|mailto|ftp|sftp|tel|sms|file):/i;
                 if (typeof href === 'string' && /^[a-z][a-z0-9+.-]*:/i.test(href) && !safeScheme.test(href)) {
                     return `<a href="#"${t}>${text}</a>`;
@@ -10871,7 +10911,6 @@
             renderer.code = function(token) {
                 const code = (token && token.text != null) ? token.text : (arguments[0] || '');
                 const lang = (token && token.lang != null) ? token.lang : (arguments[1] || '');
-                // Bloques ```mermaid: se convierten en un div pendiente que _renderMermaid sustituye por el diagrama.
                 if (typeof mermaid !== 'undefined' && String(lang).trim().split(/\s+/)[0].toLowerCase() === 'mermaid') {
                     return `<div class="mermaid">${escHtml(code)}</div>`;
                 }
@@ -10906,8 +10945,6 @@
                 }
                 return `<img src="${escAttr(src)}" alt="${escAttr(alt)}"${title ? ` title="${escAttr(title)}"` : ''} style="max-width:100%;border-radius: 0;" onerror="this.style.display='none'" />`;
             };
-            // Alertas estilo GitHub: blockquote cuyo primer párrafo es [!NOTE]/[!TIP]/[!IMPORTANT]/[!WARNING]/[!CAUTION].
-            // El renderer de blockquote recibe el HTML interno ya renderizado; se sustituye el marcador por el título.
             const _alertMeta = {
                 note:      { label: 'Note',      icon: '<svg class="octicon octicon-info" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>' },
                 tip:       { label: 'Tip',       icon: '<svg class="octicon octicon-light-bulb" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"></path></svg>' },
@@ -10937,8 +10974,6 @@
                 const map = { 'smile':'😄','grin':'😁','joy':'😂','heart_eyes':'😍','sunglasses':'😎','thumbsup':'👍','+1':'👍','thumbsdown':'👎','-1':'👎','clap':'👏','rocket':'🚀','fire':'🔥','star':'⭐','star2':'🌟','sparkles':'✨','warning':'⚠️','x':'❌','white_check_mark':'✅','heavy_check_mark':'✔️','exclamation':'❗','question':'❓','bulb':'💡','wrench':'🔧','hammer':'🔨','gear':'⚙️','lock':'🔒','unlock':'🔓','key':'🔑','mag':'🔍','bug':'🐛','tada':'🎉','construction':'🚧','memo':'📝','pencil':'📝','book':'📖','books':'📚','package':'📦','link':'🔗','computer':'💻','desktop_computer':'🖥️','iphone':'📱','email':'📧','mailbox':'📫','inbox_tray':'📥','outbox_tray':'📤','chart_with_upwards_trend':'📈','chart_with_downwards_trend':'📉','bar_chart':'📊','calendar':'📆','clock1':'🕐','hourglass':'⌛','zap':'⚡','umbrella':'☂️','sunny':'☀️','cloud':'☁️','snowflake':'❄️','rainbow':'🌈','earth_americas':'🌎','globe_with_meridians':'🌐','wave':'👋','eyes':'👀','100':'💯','speech_balloon':'💬','thought_balloon':'💭','zzz':'💤','muscle':'💪','pray':'🙏','point_right':'👉','point_left':'👈','point_up':'☝️','point_down':'👇','raised_hands':'🙌','ok_hand':'👌','v':'✌️','skull':'💀','ghost':'👻','robot':'🤖','alien':'👽','see_no_evil':'🙈','hear_no_evil':'🙉','speak_no_evil':'🙊','rotating_light':'🚨','no_entry':'⛔','stop_sign':'🛑','recycle':'♻️','heart':'❤️','broken_heart':'💔','blue_heart':'💙','green_heart':'💚','yellow_heart':'💛','purple_heart':'💜','orange_heart':'🧡','black_heart':'🖤','white_heart':'🤍','thinking':'🤔','facepalm':'🤦','shrug':'🤷','information_source':'ℹ️','new':'🆕','free':'🆓','cool':'🆒','ok':'🆗','sos':'🆘','up':'🆙','vs':'🆚','abc':'🔤','1234':'🔢','symbols':'🔣','arrow_right':'➡️','arrow_left':'⬅️','arrow_up':'⬆️','arrow_down':'⬇️','back':'🔙','end':'🔚','on':'🔛','soon':'🔜','top':'🔝','repeat':'🔁','fast_forward':'⏩','rewind':'⏪','twisted_rightwards_arrows':'🔀','loud_sound':'🔊','mute':'🔇','bell':'🔔','no_bell':'🔕','mega':'📣','loudspeaker':'📢','dart':'🎯','trophy':'🏆','medal_sports':'🏅','1st_place_medal':'🥇','2nd_place_medal':'🥈','3rd_place_medal':'🥉','video_game':'🎮','joystick':'🕹️','art':'🎨','musical_note':'🎵','notes':'🎶','microphone':'🎤','headphones':'🎧','guitar':'🎸','pizza':'🍕','hamburger':'🍔','coffee':'☕','beer':'🍺','cake':'🎂','birthday':'🎂','apple':'🍎','banana':'🍌','grapes':'🍇','strawberry':'🍓','dog':'🐶','cat':'🐱','mouse':'🐭','bear':'🐻','panda_face':'🐼','fox_face':'🦊','wolf':'🐺','lion':'🦁','tiger':'🐯','cow':'🐮','pig':'🐷','frog':'🐸','monkey_face':'🐵','chicken':'🐔','penguin':'🐧','bird':'🐦','fish':'🐟','whale':'🐳','dolphin':'🐬','turtle':'🐢','snake':'🐍','bug':'🐛','ant':'🐜','bee':'🐝','butterfly':'🦋','crab':'🦀','shark':'🦈','whale2':'🐋','elephant':'🐘','gorilla':'🦍','unicorn':'🦄','zebra':'🦓' };
                 return map[name] || match;
             });
-            // marked no parsea markdown dentro de bloques HTML (ej. tablas <table>);
-            // convierte los enlaces [texto](url) de esas líneas a <a> antes del parseo.
             const tableMd = emojified.split('\n').map(line => {
                 if (!/<(?:table|thead|tbody|tfoot|tr|td|th)[\s>]|<\/(?:table|thead|tbody|tfoot|tr|td|th)>/i.test(line)) return line;
                 return line.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g, (m, label, url, title) =>
@@ -10961,8 +10996,6 @@
                     const resolved = rawBase.replace(/\/$/, '') + '/' + src.replace(/^\.?\//, '');
                     out = out.replace(srcQuoted, quote + resolved + quote);
                 }
-                // Evitar 403 por hotlinking en dominios externos (ej. ziglang.org):
-                // no enviar Referer con la petición de imagen.
                 if (!/referrerpolicy\s*=/.test(out)) {
                     out = out.replace(/src=("[^"]+"|'[^']+')/, (m, q) => `${m} referrerpolicy="no-referrer"`);
                 }
@@ -10984,17 +11017,11 @@
                     ADD_ATTR: ['target','rel','data-anchor','data-wiki','referrerpolicy']
                 });
             } else {
-                // Fail-closed: sin sanitizer disponible (CDN bloqueado/offline)
-                // el HTML crudo del README NUNCA llega al DOM; se muestra como texto.
                 result = `<pre class="markdown-raw-fallback">${escHtml(result)}</pre>`;
             }
             return result;
         }
 
-        // ---- Diagramas Mermaid en markdown ----
-        // Los bloques ```mermaid se convierten en <div class="mermaid">; un MutationObserver los
-        // detecta al insertarse en el DOM (README, archivos .md, wiki, issues, PRs, releases, comentarios)
-        // y los sustituye por el SVG renderizado.
         let _mermaidSeq = 0;
         let _mermaidTimer = null;
         const _mermaidQueue = new Set();
@@ -11009,7 +11036,6 @@
             if (typeof mermaid === 'undefined' || !el || !(el instanceof HTMLElement)) return;
             const src = (el.getAttribute('data-mermaid-src') || el.textContent || '').trim();
             if (!src) return;
-            // Se retira la clase de "pendiente" para que el observer no lo reprocese.
             el.classList.remove('mermaid');
             el.setAttribute('data-mermaid-src', src);
             try {
@@ -11021,7 +11047,6 @@
                 div.innerHTML = result.svg;
                 el.replaceWith(div);
             } catch (err) {
-                // Fallback: se mantiene la fuente visible (estilo .mermaid como bloque de código).
                 el.classList.add('mermaid');
                 console.warn('mermaid render failed:', err && err.message ? err.message : err);
             }
@@ -11066,7 +11091,6 @@
             _mermaidObserver.observe(document.body, { childList: true, subtree: true });
         }
 
-        // Oculta imágenes del README rechazadas por el servidor (403/404) en vez de dejar el icono roto.
         document.addEventListener('error', (e) => {
             const t = e.target;
             if (t instanceof HTMLImageElement && t.closest('.readme')) {
@@ -11074,8 +11098,6 @@
             }
         }, true);
 
-        // init() se invoca al final del script para que todas las declaraciones
-        // const/let (p.ej. _pierreViewers, languageColors) ya estén inicializadas.
         if (!rv.owner || !rv.repo) {
             document.body.innerHTML = '<div style="padding:2rem;font-family:monospace;color:#f76f53;">Error: missing owner/repo parameters in the URL.</div>';
         } else {
@@ -11089,7 +11111,6 @@
             localStorage.setItem('gitgost-nav-collapsed', nav.classList.contains('collapsed') ? '1' : '');
         }
 
-        // Restaura el estado colapsado persistido de la navegación lateral.
         if (localStorage.getItem('gitgost-nav-collapsed')) {
             document.getElementById('left-nav')?.classList.add('collapsed');
         }
@@ -11101,8 +11122,6 @@
             localStorage.removeItem('gitgost-nav-collapsed');
         }
 
-        // Cualquier enlace del nav distinto de "code" (el que alterna el
-        // colapso) devuelve la barra a su estado expandido.
         document.querySelectorAll('.left-nav a').forEach(a => {
             if ((a.getAttribute('onclick') || '').includes('toggleLeftNav')) return;
             a.addEventListener('click', expandLeftNav);
@@ -11181,9 +11200,6 @@
             const w = document.getElementById(id);
             if (!w) return '';
             if (w.token) return w.token;
-            // Without a previous token: the proof-of-work is solved in the
-            // browser (direct widget, /shield or local proxy) instead of
-            // returning null.
             if (window.gitgostCaptcha && typeof window.gitgostCaptcha.solve === "function") {
                 try {
                     const result = await window.gitgostCaptcha.solve({
@@ -11234,17 +11250,11 @@
                     return true;
                 });
             }
-            // The proof-of-work is solved by the shared loader
-            // (/assets/captcha-loader.js) against the local proxy, so no
-            // Menta widget (and no Menta session) is created here.
             function gateSubmit(token, kind) {
                 const status = document.getElementById("gate-status");
                 const button = document.getElementById("gate-submit");
                 const value = token;
                 if (!value) { gateSolve(); return; }
-                // The proof-of-work was solved against Menta; here the proof
-                // is only handed to gitGost so it can issue the session cookie
-                // (a single server-to-server call to Menta).
                 const payload = kind === "shield"
                     ? { shield_clearance: value }
                     : { captcha_token: value };
@@ -11264,9 +11274,6 @@
                     if (button) { button.disabled = false; }
                 });
             }
-            // The proof-of-work is solved in the browser against Menta through
-            // the gitGost local proxy (same origin, so no CORS), just like in
-            // /challenge.html; afterwards the proof is handed to the server.
             function gateSolve() {
                 const status = document.getElementById("gate-status");
                 if (status) status.textContent = "Solving a proof-of-work challenge…";
@@ -11284,10 +11291,6 @@
                     if (status) status.textContent = "Could not initialize the verification. Check your connection and try again.";
                 });
             }
-            // The shared loader (/assets/captcha-loader.js) asks /api/config
-            // once: it predicts whether the gate is enabled and only then
-            // injects the Menta SDK. With CAPTCHA off there is no widget and
-            // no /init.
             if (window.gitgostCaptchaReady) window.gitgostCaptchaReady.then(function (enabled) {
                 const overlay = document.getElementById("gate-overlay");
                 const button = document.getElementById("gate-submit");

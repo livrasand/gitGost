@@ -25,8 +25,6 @@ func GitHubTokens() []string {
 		if t == "" {
 			break
 		}
-		// Ignora placeholders copiados del .env.example: mandarlos como Authorization
-		// provoca 401 en GitHub cuando en realidad funcionaría el modo anónimo.
 		if isPlaceholder(t) {
 			continue
 		}
@@ -39,8 +37,6 @@ func isPlaceholder(token string) bool {
 	return strings.HasPrefix(token, "your_") || strings.HasPrefix(token, "your-")
 }
 
-// NextGitHubToken returns the next available GitHub token in round-robin order.
-// Tokens in cooldown (rate-limited) are skipped. Returns "" if none are configured.
 func NextGitHubToken() string {
 	tokens := GitHubTokens()
 	if len(tokens) == 0 {
@@ -59,7 +55,6 @@ func NextGitHubToken() string {
 		index = idx + 1
 		return t
 	}
-	// All tokens are in cooldown; return the one that resets first.
 	var best string
 	var bestUntil time.Time
 	for _, t := range tokens {
@@ -71,8 +66,6 @@ func NextGitHubToken() string {
 	return best
 }
 
-// MarkGitHubRateLimited puts token in cooldown until resetAt (unix seconds).
-// If resetAt is empty, a short default cooldown is applied.
 func MarkGitHubRateLimited(token, resetAt string) {
 	if token == "" {
 		return

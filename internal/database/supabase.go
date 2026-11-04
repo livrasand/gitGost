@@ -94,8 +94,6 @@ func (c *SupabaseClient) HasReportFromIP(ctx context.Context, hash, ip string) (
 		return false, nil
 	}
 
-	// hash e ip provienen de input del usuario: sin QueryEscape un valor como
-	// "x&ip=neq." alteraría los filtros PostgREST del resto de la consulta.
 	url := fmt.Sprintf("%s/rest/v1/reports?hash=eq.%s&ip=eq.%s&select=id", c.URL, url.QueryEscape(hash), url.QueryEscape(ip))
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

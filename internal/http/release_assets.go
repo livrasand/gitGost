@@ -14,12 +14,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Descarga de assets de releases (experiencia tipo GitHub): el navegador pide
-// el asset a gitGost y este lo transmite en stream desde la forja original,
-// forzando Content-Disposition: attachment. Así la descarga funciona en un
-// solo clic desde el mismo origen (incluido el WebView de Capacitor), sin
-// navegaciones externas ni bloqueadores de popups.
-
 var releaseAssetHosts = map[string][]string{
 	"gh": {
 		"github.com",
@@ -58,12 +52,6 @@ func releaseAssetHostAllowed(provider, host string) bool {
 	return false
 }
 
-// resolveUpstreamURL valida la URL cruda aportada por el cliente contra el
-// allowlist de hosts del proveedor y devuelve una URL reconstruida campo a
-// campo a partir del parseo validado. La petición saliente se construye
-// siempre con esta URL reconstruida, nunca con la cadena cruda del cliente,
-// de modo que el valor usado en el request es una constante del servidor
-// (bloqueando SSRF via userinfo, scheme, host o discrepancias de parseo).
 func resolveUpstreamURL(rawURL, provider string) (*url.URL, error) {
 	if _, ok := releaseAssetHosts[provider]; !ok {
 		return nil, errInvalidURLProvider
@@ -78,8 +66,6 @@ func resolveUpstreamURL(rawURL, provider string) (*url.URL, error) {
 	if !releaseAssetHostAllowed(provider, parsed.Host) {
 		return nil, errURLHostNotAllowed
 	}
-	// Reconstruye la URL desde las partes validadas: el host ya pasó el
-	// allowlist y el scheme se fuerza a https.
 	return &url.URL{
 		Scheme:   "https",
 		Host:     parsed.Host,
@@ -89,11 +75,6 @@ func resolveUpstreamURL(rawURL, provider string) (*url.URL, error) {
 	}, nil
 }
 
-// streamProxiedFile transmite en stream un archivo desde la forja original
-// (allowlist por proveedor) hacia el cliente, forzando siempre
-// Content-Disposition: attachment. Se usa tanto para assets de release como
-// para ficheros concretos de packages, de modo que la descarga funcione en un
-// solo clic desde el mismo origen (incluido el WebView de Capacitor).
 func streamProxiedFile(c *gin.Context) {
 	provider := c.Param("provider")
 	switch provider {
@@ -131,9 +112,6 @@ func streamProxiedFile(c *gin.Context) {
 	req.Header.Set("User-Agent", "gitGost/1.0")
 	client := &http.Client{
 		Timeout: 10 * time.Minute,
-		// El allowlist solo se comprueba en la primera petición; sin esta
-		// política un asset controlado podría 302 a una dirección interna
-		// (SSRF vía redirect) o degradar a HTTP en claro.
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			if len(via) >= 5 {
 				return fmt.Errorf("too many redirects")
@@ -177,20 +155,14 @@ func streamProxiedFile(c *gin.Context) {
 		fmt.Sprintf("attachment; filename=\"%s\"", strings.ReplaceAll(filename, "\"", "")))
 	c.Writer.WriteHeader(http.StatusOK)
 	if _, err := io.Copy(c.Writer, resp.Body); err != nil {
-		// La descarga ya empezó; solo registrar el corte.
 		return
 	}
 }
 
-// ReleaseAssetDownloadHandler: descarga de assets de releases (experiencia
-// tipo GitHub) a través del proxy del backend.
 func ReleaseAssetDownloadHandler(c *gin.Context) {
 	streamProxiedFile(c)
 }
 
-// PackageFileDownloadHandler: descarga de ficheros concretos de un package
-// publicado (Codeberg/GitLab), con la misma lógica de allowlist y
-// Content-Disposition que los assets de release.
 func PackageFileDownloadHandler(c *gin.Context) {
 	streamProxiedFile(c)
 }

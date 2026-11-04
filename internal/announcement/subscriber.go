@@ -12,15 +12,11 @@ import (
 	"github.com/livrasand/gitGost/internal/utils"
 )
 
-// ntfyEvent es un evento del stream JSON de ntfy (GET /{topic}/json).
-// Solo nos interesan los "message"; open/keepalive/heartbeat se descartan.
 type ntfyEvent struct {
 	Event   string `json:"event"`
 	Message string `json:"message"`
 }
 
-// Options agrupa la configuración del subscriber, para poder testear con un
-// httptest.Server sin tocar variables de entorno.
 type Options struct {
 	BaseURL string
 	Topic   string
@@ -28,9 +24,6 @@ type Options struct {
 	Client  *http.Client
 }
 
-// Run mantiene el streaming activo contra ntfy con reconexión exponencial
-// (1s → 60s). Se detiene limpio cuando ctx se cancela. El estado vive solo en
-// memoria: al reiniciar el proceso el subscriber aguarda el siguiente mensaje.
 func Run(ctx context.Context, opts Options) {
 	const (
 		minBackoff = time.Second
@@ -69,7 +62,6 @@ func Run(ctx context.Context, opts Options) {
 	}
 }
 
-// streamOnce abre la conexión HTTP streaming y la consume hasta cierre/error.
 func streamOnce(ctx context.Context, opts Options, url string, handle func(raw []byte)) error {
 	if opts.Client == nil {
 		opts.Client = &http.Client{Timeout: 0}
@@ -117,8 +109,6 @@ func streamOnce(ctx context.Context, opts Options, url string, handle func(raw [
 	return nil
 }
 
-// processNtfyMessage valida y aplica el payload recibido. Mensajes
-// malformados o no autorizados-ish (JSON inesperado) nunca crean banners.
 func processNtfyMessage(raw []byte) {
 	if err := Process(raw, time.Now().UTC()); err != nil {
 		utils.Log("announcement: discarded message: %v", err)

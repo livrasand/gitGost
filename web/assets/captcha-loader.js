@@ -17,20 +17,12 @@
     var state = { enabled: false, api: "", proxy: "", error: null };
     window.gitgostCaptcha = state;
 
-    // Menta solo admite peticiones de navegador desde origenes registrados en
-    // su instancia; para el resto responde 403 y sin cabeceras CORS. gitGost
-    // no esta registrado alli, asi que el navegador NUNCA habla con Menta
-    // directamente: el widget y el flujo /shield van siempre por el proxy de
-    // mismo origen (/api/captcha), que reenvia la llamada servidor-a-servidor.
     function proxyEndpoint() {
         return apiBase().replace(/\/+$/, "") + "/api/captcha";
     }
     state.proxy = proxyEndpoint();
     window.gitgostCaptchaEndpoint = function () { return state.proxy; };
 
-    // El widget lee data-cap-api-endpoint al crear su sesion, asi que el
-    // atributo tiene que estar puesto ANTES de que el elemento se conecte al
-    // documento (o antes de que el SDK lo defina).
     function applyEndpoint(root) {
         var scope = (root && root.querySelectorAll) ? root : document;
         var widgets = scope.querySelectorAll("menta-widget");
@@ -58,9 +50,6 @@
         state.observer.observe(document.documentElement || document, { childList: true, subtree: true });
     }
 
-    // El SDK declara sus clases en el ambito global: cargarlo dos veces en la
-    // misma pagina lanza "Can't create duplicate variable: 'CapWidget'". Se
-    // busca cualquier copia ya presente antes de insertar una nueva.
     function existingSdkScript(src) {
         var scripts = document.querySelectorAll("script[src]");
         for (var i = 0; i < scripts.length; i++) {
@@ -120,9 +109,6 @@
                 }
                 var cfgBase = originOf(cfg && cfg.menta_api);
                 if (!cfgBase) throw new Error("menta-api-unknown");
-                // El endpoint del proxy se fija antes de cargar el SDK: al
-                // definirse el elemento, el widget ya abre su sesion contra
-                // el proxy (nunca contra Menta, que rechazaria el origen).
                 applyEndpoint(document);
                 watchWidgets();
                 return loadSdk(cfgBase + "/menta-captcha.js")
@@ -149,23 +135,12 @@
         for (var i = 0; i < view.length; i++) out += view[i].toString(16).padStart(2, "0");
         return out;
     }
-    // Coste esperado del reto: 16^dificultad intentos. Menta sube la
-    // dificultad cuando la IP acumula fallos, y un reto de 6 ceros (16
-    // millones de hashes) no se resuelve en un navegador: en ese caso se
-    // cambia al flujo /shield, que devuelve un reto mas suave.
     var POW_MAX_COST = 2000000;
     var POW_BUDGET_MS = 20000;
 
     function powCost(target) {
         return Math.pow(16, String(target || "").length);
     }
-    // El PoW se resuelve en lotes: WebCrypto digiere en paralelo (hilo del
-    // navegador) y así un reto de 65k hashes tarda milisegundos en lugar de
-    // los varios segundos que costaría resolverlos de uno en uno.
-    // Menta descarta los retos resueltos en menos de 0,2 s (no es humano) y
-    // marca como bots las series de tiempos idénticos, así que tras encontrar
-    // el nonce se espera a que el reto tenga una duración humana y con algo
-    // de dispersion.
     var POW_MIN_SOLVE_MS = 300;
     var POW_JITTER_MS = 400;
     async function solvePow(salt, target, budgetMs) {
@@ -206,10 +181,6 @@
         if (!redeem.ok || !redeem.data || !redeem.data.clearance_token) throw new Error("shield-redeem-failed:" + redeem.status);
         return redeem.data.clearance_token;
     }
-    // Flujo completo de Menta contra el proxy: /init -> /challenge -> PoW ->
-    // /redeem. Se hace aqui (y no solo con el widget) porque Menta exige al
-    // menos 0,5 s entre /init y /challenge: el widget abriria su sesion y
-    // pediria el reto nada mas tocarlo, lo que Menta rechaza con 403.
     async function solveWithSession(base) {
         var init = await postJson(base + "/init", {});
         if (!init.ok || !init.data || !init.data.session_id) throw new Error("init-failed:" + init.status);
@@ -229,11 +200,6 @@
         if (!redeem.ok || !redeem.data || !redeem.data.token) throw new Error("redeem-failed:" + redeem.status);
         return redeem.data.token;
     }
-    // Resuelve el reto contra el proxy local (mismo origen: sin CORS).
-    // El flujo universal /shield de Menta va primero: esta pensado para
-    // paginas que no estan registradas en su instancia (nuestro caso) y su
-    // reto es mas barato. Si Menta responde con un reto demasiado caro
-    // para el navegador, se prueba el flujo de sesion (/init -> /challenge).
     async function solveProofOfWork(path, allowShield) {
         var attempts = [];
         if (allowShield) {
@@ -255,17 +221,10 @@
         options = options || {};
         var widget = options.widget || (options.widgetId ? document.getElementById(options.widgetId) : null);
         var path = options.path || (window.location.pathname + window.location.search);
-        // Un token ya resuelto (el visitante pulso el widget) se reutiliza.
         if (widget && widget.token) return { token: widget.token, kind: "captcha", via: "widget" };
         return solveProofOfWork(path, options.allowShield !== false);
     };
 
-    // El widget de Menta resuelve el reto por su cuenta, sin limite de tiempo
-    // y con el PoW secuencial: con la dificultad que Menta aplica a las IP con
-    // fallos recientes, el navegador puede quedarse minutos calculando. Se
-    // sustituye su metodo solve() por el flujo con presupuesto de tiempo de
-    // este cargador y se anula su sesion (el widget no necesita abrirla: la
-    // abre solveWithSession).
     function setWidgetLabel(widget, text, solved) {
         var shadow = widget && widget.shadowRoot;
         if (!shadow) return;

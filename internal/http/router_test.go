@@ -88,7 +88,6 @@ func (m *mockReadCloser) Close() error {
 func TestAnonymousAuthMiddleware(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	// Sin API key: todas las rutas pasan sin credenciales.
 	r := gin.New()
 	r.Use(anonymousAuthMiddleware())
 	r.GET("/test", func(c *gin.Context) {
@@ -102,7 +101,6 @@ func TestAnonymousAuthMiddleware(t *testing.T) {
 		t.Errorf("Request sin credenciales debe pasar, got status %d", w.Code)
 	}
 
-	// Las rutas del protocolo smart HTTP de Git también pasan siempre.
 	r = gin.New()
 	r.Use(anonymousAuthMiddleware())
 	r.GET("/v1/gh/:owner/:repo/info/refs", func(c *gin.Context) {

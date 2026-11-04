@@ -28,7 +28,35 @@ func resolveGitHubToken(token string) string {
 	return tokenpool.NextGitHubToken()
 }
 
-// nonNilStrings avoids serializing nil slices as null (GitHub rejects labels:null)
+func FindTokenForOwner(forkOwner string) string {
+	for _, token := range tokenpool.GitHubTokens() {
+		req, err := http.NewRequest("GET", "https://api.github.com/user", nil)
+		if err != nil {
+			continue
+		}
+		resp, err := githubDo(req, token)
+		if err != nil || resp == nil {
+			continue
+		}
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			continue
+		}
+		var user struct {
+			Login string `json:"login"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+			resp.Body.Close()
+			continue
+		}
+		resp.Body.Close()
+		if user.Login == forkOwner {
+			return token
+		}
+	}
+	return ""
+}
+
 func nonNilStrings(v []string) []string {
 	if v == nil {
 		return []string{}
@@ -36,8 +64,6 @@ func nonNilStrings(v []string) []string {
 	return v
 }
 
-// githubDo executes a request with the given token and marks the token as
-// rate-limited when GitHub returns 403/429 (rate limit exceeded).
 func githubDo(req *http.Request, token string) (*http.Response, error) {
 	if token != "" {
 		req.Header.Set("Authorization", "token "+token)
@@ -880,8 +906,6 @@ type PRTimelineEvent struct {
 	} `json:"source,omitempty"`
 }
 
-// Author returns the most relevant login for the event, since timeline events
-// inconsistently use "actor", "user", "assignee" or "requested_reviewer".
 func (e *PRTimelineEvent) Author() string {
 	switch {
 	case e.Actor != nil && e.Actor.Login != "":
@@ -897,8 +921,6 @@ func (e *PRTimelineEvent) Author() string {
 	}
 }
 
-// TargetTitle returns the title of the linked issue/PR for cross-references
-// and connected events, or the milestone title for milestoned events.
 func (e *PRTimelineEvent) TargetInfo() (title, url string) {
 	if e.Source != nil && e.Source.Issue.Title != "" {
 		ref := fmt.Sprintf("#%d %s", e.Source.Issue.Number, e.Source.Issue.Title)
@@ -1105,30 +1127,26 @@ func GetExistingPR(owner, repo, forkOwner, branchName string) (string, bool, err
 	return prs[0].HTMLURL, true, nil
 }
 
-// IssueTemplate represents a GitHub issue template
-// Supports both Markdown templates (.md) and Issue Forms (.yml/.yaml)
 type IssueTemplate struct {
 	Name        string           `json:"name"`
 	Description string           `json:"description"`
-	Content     string           `json:"content"` // For markdown templates
-	Body        []IssueFormField `json:"body"`    // For issue forms
+	Content     string           `json:"content"`
+	Body        []IssueFormField `json:"body"`
 	About       string           `json:"about"`
 	Labels      []string         `json:"labels"`
 	Assignees   []string         `json:"assignees"`
 	Title       string           `json:"title"`
 	Filename    string           `json:"filename"`
-	Type        string           `json:"type"` // "markdown" or "form"
+	Type        string           `json:"type"`
 }
 
-// IssueFormField represents a field in a GitHub Issue Form
 type IssueFormField struct {
-	Type        string               `json:"type"` // input, textarea, dropdown, checkboxes, markdown
+	Type        string               `json:"type"`
 	ID          string               `json:"id"`
 	Attributes  IssueFormAttributes  `json:"attributes"`
 	Validations IssueFormValidations `json:"validations"`
 }
 
-// IssueFormAttributes holds the attributes for a form field
 type IssueFormAttributes struct {
 	Label       string   `json:"label"`
 	Description string   `json:"description"`
@@ -1139,12 +1157,10 @@ type IssueFormAttributes struct {
 	Multiple    bool     `json:"multiple"`
 }
 
-// IssueFormValidations holds validation rules for a form field
 type IssueFormValidations struct {
 	Required bool `json:"required"`
 }
 
-// IssueTemplatesResponse represents the response from GitHub's issue templates API
 type IssueTemplatesResponse struct {
 	Templates          []IssueTemplate `json:"templates"`
 	BlankIssuesEnabled bool            `json:"blank_issues_enabled"`
@@ -1333,7 +1349,6 @@ func parseIssueTemplatesConfig(raw string) (*issueTemplatesConfig, error) {
 	return &cfg, nil
 }
 
-// GetIssueTemplates fetches the issue templates for a repository
 func GetIssueTemplates(owner, repo string) (*IssueTemplatesResponse, error) {
 	token := tokenpool.NextGitHubToken()
 	items, err := githubGetContentList(owner, repo, ".github/ISSUE_TEMPLATE", token)
@@ -1393,7 +1408,6 @@ func GetIssueTemplates(owner, repo string) (*IssueTemplatesResponse, error) {
 	return result, nil
 }
 
-// RenderIssueFormBody renders the issue form fields into a markdown body
 func RenderIssueFormBody(template *IssueTemplate, values map[string]string) string {
 	var body strings.Builder
 
@@ -1436,7 +1450,6 @@ func RenderIssueFormBody(template *IssueTemplate, values map[string]string) stri
 	return body.String()
 }
 
-// RenderMarkdownTemplateBody renders a markdown template with user values
 func RenderMarkdownTemplateBody(template *IssueTemplate, values map[string]string) string {
 	content := template.Content
 	for key, value := range values {

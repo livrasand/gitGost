@@ -16,38 +16,23 @@ import (
 	"time"
 )
 
-// Fase 2 — descarga por bundle con Range Requests.
-//
-// El servidor clona el repositorio, crea un bundle y lo sube a Openbin (CDN
-// con TTL). Este módulo crea el job remoto, espera a que el bundle esté listo
-// y lo descarga por rangos de bytes (resume a nivel byte) en el cache local.
-// Al final materializa el repo con `git clone <bundle> <destino>`.
-
-// errRemoteJobsUnsupported indica que el servidor no expone /v2/jobs; el
-// llamador debe hacer fallback a la descarga por capas (Fase 1).
 var errRemoteJobsUnsupported = errors.New("remote jobs unsupported")
 
-// remotePollInterval es la espera entre consultas de estado del job remoto.
 var remotePollInterval = 2 * time.Second
 
-// remotePollTimeout acota la espera total del bundle; maxPollErrors tolera
-// fallos transitorios del GET de estado antes de fallar el job.
 var (
 	remotePollTimeout = 30 * time.Minute
 	maxPollErrors     = 3
 )
 
-// jobHTTPClient evita que el cliente se cuelgue si el servidor no responde.
 var jobHTTPClient = &http.Client{Timeout: 60 * time.Second}
 
-// prefixHost mapea el prefijo de ruta del servidor gitGost al host del repo.
 var prefixHost = map[string]string{
 	"gh": "github.com",
 	"gl": "gitlab.com",
 	"cb": "codeberg.org",
 }
 
-// remoteJobState es el estado de un job remoto devuelto por el servidor.
 type remoteJobState struct {
 	ID       string               `json:"id"`
 	Status   string               `json:"status"`
@@ -56,7 +41,6 @@ type remoteJobState struct {
 	Result   *remoteJobBundleInfo `json:"result"`
 }
 
-// remoteJobBundleInfo es el artefacto final del job remoto (bundle en Openbin).
 type remoteJobBundleInfo struct {
 	Slug          string `json:"slug"`
 	Cid           string `json:"cid"`
@@ -68,7 +52,6 @@ type remoteJobBundleInfo struct {
 	DefaultBranch string `json:"defaultBranch"`
 }
 
-// serverBase devuelve la URL base del servidor gitGost (env GITGOST_SERVER o default).
 func serverBase() string {
 	if v := os.Getenv("GITGOST_SERVER"); v != "" {
 		return strings.TrimRight(v, "/")
@@ -76,17 +59,11 @@ func serverBase() string {
 	return "https://gitgost.livrasand.com"
 }
 
-// runCloneBundle ejecuta el flujo de Fase 2: job remoto en el servidor,
-// descarga del bundle con resume por bytes y materialización local. Si el
-// servidor no soporta jobs remotos, devuelve errRemoteJobsUnsupported.
 func runCloneBundle(s *Store, job *Job) error {
 	if job.Target == "" {
 		return fmt.Errorf("job de clone sin directorio destino")
 	}
 
-	// La URL efectiva del job es la reescrita del servidor; de ella se
-	// reconstruye la URL original del repo (el servidor solo acepta https
-	// de github/gitlab/codeberg, nunca scp-like).
 	originalURL, err := originalRepoURL(job.URL)
 	if err != nil {
 		return errRemoteJobsUnsupported
@@ -109,8 +86,6 @@ func runCloneBundle(s *Store, job *Job) error {
 		return fmt.Errorf("el job remoto %s no devolvió una URL de descarga", id)
 	}
 
-	// Descarga del bundle con checkpoint: el archivo parcial del cache es el
-	// punto de reanudación (si el proceso se corta, solo faltan esos bytes).
 	cacheFile := bundleCachePath(job.ID)
 	if err := downloadBundle(s, job, result.DownloadURL, cacheFile, result.Size, result.Sha256); err != nil {
 		return fmt.Errorf("descargar bundle: %w", err)
@@ -119,7 +94,6 @@ func runCloneBundle(s *Store, job *Job) error {
 	if err := materializeClone(cacheFile, job.Target, originForJob(job, originalURL), result.DefaultBranch); err != nil {
 		return err
 	}
-	// El bundle ya se materializó: liberar el cache (puede pesar gigabytes).
 	if err := os.Remove(cacheFile); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("eliminar bundle del cache: %w", err)
 	}
@@ -127,8 +101,6 @@ func runCloneBundle(s *Store, job *Job) error {
 	return nil
 }
 
-// originForJob devuelve la URL del remote origin del repo resultante: la
-// original del usuario cuando existe, o la reconstruida (igual que la Fase 1).
 func originForJob(job *Job, fallback string) string {
 	if job.Origin != "" {
 		return job.Origin
@@ -136,8 +108,6 @@ func originForJob(job *Job, fallback string) string {
 	return fallback
 }
 
-// originalRepoURL reconstruye la URL https original a partir de la URL
-// reescrita del servidor (/v1/<gh|gl|cb>/<owner>/<repo>).
 func originalRepoURL(rewritten string) (string, error) {
 	u, err := url.Parse(rewritten)
 	if err != nil {
@@ -154,7 +124,6 @@ func originalRepoURL(rewritten string) (string, error) {
 	return fmt.Sprintf("https://%s/%s/%s.git", host, parts[2], parts[3]), nil
 }
 
-// createRemoteJob crea un job de descarga en el servidor y devuelve su ID.
 func createRemoteJob(repoURL string) (string, error) {
 	body, _ := json.Marshal(map[string]string{"url": repoURL})
 	req, err := http.NewRequest(http.MethodPost, serverBase()+"/v2/jobs", bytes.NewReader(body))
@@ -170,8 +139,6 @@ func createRemoteJob(repoURL string) (string, error) {
 	defer resp.Body.Close()
 	switch resp.StatusCode {
 	case http.StatusNotFound, http.StatusUnauthorized, http.StatusForbidden:
-		// Sin /v2 o sin permisos: el servidor no soporta jobs remotos para este
-		// cliente; el llamador hace fallback a la descarga por capas.
 		return "", errRemoteJobsUnsupported
 	}
 	if resp.StatusCode >= 300 {
@@ -190,10 +157,6 @@ func createRemoteJob(repoURL string) (string, error) {
 	return out.ID, nil
 }
 
-// waitRemoteJob consulta el estado del job remoto hasta que el bundle esté
-// listo (ready) o el servidor reporte un fallo (failed). Tolera un número
-// acotado de errores transitorios del GET y falla con timeout si el servidor
-// no termina el bundle dentro de remotePollTimeout.
 func waitRemoteJob(s *Store, job *Job, id string) (*remoteJobBundleInfo, error) {
 	deadline := time.Now().Add(remotePollTimeout)
 	consecutiveErrors := 0
@@ -225,7 +188,7 @@ func waitRemoteJob(s *Store, job *Job, id string) (*remoteJobBundleInfo, error) 
 			return nil, errors.New(msg)
 		case "cancelled":
 			return nil, fmt.Errorf("el job remoto %s fue cancelado", id)
-		default: // queued | running
+		default:
 			if time.Now().After(deadline) {
 				return nil, fmt.Errorf(
 					"timeout esperando el bundle del job %s (más de %s)", id, remotePollTimeout)
@@ -240,7 +203,6 @@ func waitRemoteJob(s *Store, job *Job, id string) (*remoteJobBundleInfo, error) 
 	}
 }
 
-// getRemoteJob consulta el estado de un job remoto (con timeout finito).
 func getRemoteJob(id string) (*remoteJobState, error) {
 	req, err := http.NewRequest(http.MethodGet, serverBase()+"/v2/jobs/"+id, nil)
 	if err != nil {
@@ -263,9 +225,6 @@ func getRemoteJob(id string) (*remoteJobState, error) {
 	return &st, nil
 }
 
-// downloadBundle descarga el bundle a dest verificando su sha256. Si el
-// archivo parcial ya coincide en tamaño y hash, se salta la descarga
-// (checkpoint); si el hash final no coincide, se descarta y se reintenta.
 func downloadBundle(s *Store, job *Job, downloadURL, dest string, size int64, sha string) error {
 	if st, err := os.Stat(dest); err == nil && st.Size() == size {
 		ok, err := hashMatches(dest, sha)
@@ -276,8 +235,6 @@ func downloadBundle(s *Store, job *Job, downloadURL, dest string, size int64, sh
 			_ = s.SetProgress(job.ID, "Bundle ya descargado en cache")
 			return nil
 		}
-		// Archivo completo pero corrupto: descartarlo antes de re-descargar para
-		// que downloadRange no pida un Range inválido (bytes=<size>-).
 		_ = os.Remove(dest)
 	}
 
@@ -291,7 +248,6 @@ func downloadBundle(s *Store, job *Job, downloadURL, dest string, size int64, sh
 	if ok {
 		return nil
 	}
-	// Bundle corrupto: descartar el parcial y reintentar una vez desde cero.
 	_ = s.SetProgress(job.ID, "Bundle con hash incorrecto; descargando de nuevo...")
 	_ = os.Remove(dest)
 	if err := downloadWithRetry(s, job, downloadURL, dest, size); err != nil {
@@ -305,7 +261,6 @@ func downloadBundle(s *Store, job *Job, downloadURL, dest string, size int64, sh
 	return nil
 }
 
-// downloadWithRetry descarga con reintentos ante fallos de red (backoff).
 func downloadWithRetry(s *Store, job *Job, rawURL, dest string, size int64) error {
 	var lastErr error
 	backoff := retryBase
@@ -328,9 +283,6 @@ func downloadWithRetry(s *Store, job *Job, rawURL, dest string, size int64) erro
 	return lastErr
 }
 
-// downloadRange descarga rawURL a dest reanudando desde el tamaño actual del
-// archivo (Range: bytes=<len>-). Si el servidor ignora el Range (200), se
-// reinicia desde cero para no duplicar bytes.
 func downloadRange(rawURL, dest string, size int64, progress func(string)) error {
 	if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
 		return fmt.Errorf("crear cache: %w", err)
@@ -340,8 +292,6 @@ func downloadRange(rawURL, dest string, size int64, progress func(string)) error
 	if st, err := os.Stat(dest); err == nil {
 		partial = st.Size()
 	}
-	// Un parcial igual o mayor que el tamaño total no se puede reanudar con
-	// Range: reiniciar desde cero (descarga completa) para recuperarse solo.
 	if size > 0 && partial >= size {
 		partial = 0
 	}
@@ -364,7 +314,6 @@ func downloadRange(rawURL, dest string, size int64, progress func(string)) error
 	case http.StatusPartialContent:
 	case http.StatusOK:
 		if partial > 0 {
-			// Sin soporte de Range: reiniciar la descarga desde cero.
 			partial = 0
 		}
 	default:
@@ -418,10 +367,6 @@ func downloadRange(rawURL, dest string, size int64, progress func(string)) error
 	return nil
 }
 
-// materializeClone crea el repo destino desde el bundle y fija el remote
-// origin a la URL original del usuario. Si el destino ya tiene .git (resume
-// tras una materialización completada), solo se reajusta el origin. Cuando el
-// servidor reportó la rama por defecto, se asegura el checkout de esa rama.
 func materializeClone(bundlePath, target, originURL, defaultBranch string) error {
 	if _, err := os.Stat(filepath.Join(target, ".git")); os.IsNotExist(err) {
 		if err := runGit("", "clone", bundlePath, target); err != nil {
@@ -443,12 +388,10 @@ func materializeClone(bundlePath, target, originURL, defaultBranch string) error
 	return nil
 }
 
-// bundleCachePath devuelve la ruta del bundle en cache para un job.
 func bundleCachePath(jobID int64) string {
 	return filepath.Join(jobDataDir(), "cache", fmt.Sprintf("%d.bundle", jobID))
 }
 
-// jobDataDir devuelve el directorio de datos del cliente (env GITGOST_HOME o ~/.gitgost).
 func jobDataDir() string {
 	if v := os.Getenv("GITGOST_HOME"); v != "" {
 		return v
@@ -460,7 +403,6 @@ func jobDataDir() string {
 	return filepath.Join(home, ".gitgost")
 }
 
-// hashMatches compara el sha256 de un archivo con el esperado.
 func hashMatches(path, want string) (bool, error) {
 	got, err := sha256File(path)
 	if err != nil {
@@ -469,7 +411,6 @@ func hashMatches(path, want string) (bool, error) {
 	return strings.EqualFold(got, want), nil
 }
 
-// sha256File calcula el hash sha256 de un archivo sin cargarlo en memoria.
 func sha256File(path string) (string, error) {
 	f, err := os.Open(path)
 	if err != nil {

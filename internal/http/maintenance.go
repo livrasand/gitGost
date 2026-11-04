@@ -28,11 +28,6 @@ const maintenanceFallbackPage = `<!DOCTYPE html>
 </html>
 `
 
-// maintenanceAllowedPath decide qué rutas siguen disponibles en modo
-// mantenimiento: salud, estado, anuncios (el banner debe seguir visible
-// durante la propia página de mantenimiento; se sirve 503 solo en HTML),
-// admin (para restaurar), git smart HTTP (clone/fetch y el mensaje de
-// suspensión de push) y los assets de la propia página de mantenimiento.
 func maintenanceAllowedPath(path string) bool {
 	if path == "/health" || path == "/api/status" || path == "/api/announcement" ||
 		path == "/announcement.js" {
@@ -52,11 +47,6 @@ func maintenanceAllowedPath(path string) bool {
 	return false
 }
 
-// maintenanceMiddleware intercepta todo el tráfico cuando el modo
-// mantenimiento está activo y responde 503: JSON para la API y HTML
-// (web/maintenance.html) para navegadores. El registro debe hacerse
-// antes de declarar las rutas (gin encadena la cadena global en ese
-// momento) y también aplica a rutas no registradas (NoRoute).
 func maintenanceMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !isMaintenanceMode() {
@@ -90,8 +80,6 @@ func maintenanceMiddleware() gin.HandlerFunc {
 	}
 }
 
-// serveMaintenancePage escribe la página de mantenimiento con status 503.
-// El archivo se lee por petición (consistente con el index de NoRoute).
 func serveMaintenancePage(c *gin.Context) {
 	body, err := os.ReadFile(maintenancePagePath)
 	if err != nil {

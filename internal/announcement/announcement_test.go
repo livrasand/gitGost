@@ -147,8 +147,6 @@ func TestSubscriberEndToEnd(t *testing.T) {
 			w.Write([]byte(m + "\n"))
 			flusher.Flush()
 		}
-		// El handler devuelve: HTTP chunked cierra el stream (EOF para el
-		// cliente) y streamOnce regresa con lo leído.
 	}))
 	defer srv.Close()
 
@@ -197,8 +195,6 @@ func TestExpiryKillsVisibility(t *testing.T) {
 }
 
 func TestProcessInMemoryOnlyAcrossRestartSim(t *testing.T) {
-	// Documenta el contrato: el estado vive en memoria del paquete; nada lo
-	// persiste tras un reinicio (decisión del issue). Test directo del store.
 	reset()
 	mustProcess(t, `{"title":"a","message":"b"}`, time.Now().UTC())
 	if Active(time.Now().UTC()) == nil {

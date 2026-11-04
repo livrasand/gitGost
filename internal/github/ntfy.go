@@ -15,15 +15,10 @@ func NtfyTopicForPR(prHash string) string {
 	return fmt.Sprintf("gitgost-%s", prHash)
 }
 
-// NtfyTopicForIssue devuelve el topic de ntfy asociado a una issue. El topic es
-// determinista a partir de provider/owner/repo/número para que el cliente pueda
-// suscribirse sin una cuenta y el servidor publicar las novedades de la issue.
 func NtfyTopicForIssue(owner, repo, number string) string {
 	return fmt.Sprintf("gitgost-%s-%s-issue-%s", sanitizeTopicSegment(owner), sanitizeTopicSegment(repo), number)
 }
 
-// sanitizeTopicSegment limpia un segmento del topic para que solo contenga
-// caracteres seguros en un nombre de topic de ntfy ([a-zA-Z0-9_-]).
 func sanitizeTopicSegment(s string) string {
 	var b strings.Builder
 	for _, r := range strings.ToLower(s) {
@@ -51,9 +46,6 @@ func NtfyServiceURL() string {
 	return "https://gitgost.livrasand.com"
 }
 
-// NtfyToken devuelve un token opcional (NTFY_TOKEN) para autenticar las
-// publicaciones contra un servidor ntfy con control de acceso. Sin él,
-// cualquier persona que conozca el topic puede leerlo y publicar en él.
 func NtfyToken() string {
 	return os.Getenv("NTFY_TOKEN")
 }
@@ -93,9 +85,6 @@ func PublishNtfyEvent(prHash, title, message, actions string) error {
 	return nil
 }
 
-// PublishNtfyIssueComment publica una actualización en el topic de una issue
-// (p. ej. un comentario nuevo) para que los suscriptores del topic reciban la
-// novedad. El topic es determinista: NtfyTopicForIssue.
 func PublishNtfyIssueComment(owner, repo, number, title, message, actions string) error {
 	topic := NtfyTopicForIssue(owner, repo, number)
 	url := fmt.Sprintf("%s/%s", NtfyBaseURL(), topic)

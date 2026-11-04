@@ -73,7 +73,6 @@ func TestRateLimitPerIP(t *testing.T) {
 	if w.Code != http.StatusTooManyRequests {
 		t.Fatalf("req 4: got %d, want 429", w.Code)
 	}
-	// Otra IP no se ve afectada.
 	w2 := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/l", nil)
 	req.RemoteAddr = "203.0.113.99:1234"

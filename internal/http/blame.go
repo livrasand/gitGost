@@ -16,12 +16,6 @@ import (
 	"github.com/livrasand/gitGost/internal/utils"
 )
 
-// Blame universal para las tres forjas. Ninguna API pública lo ofrece de forma
-// homogénea (Gitea ni siquiera tiene endpoint de blame), así que se calcula
-// aquí: se lista el historial de commits que tocaron el archivo y se recorren
-// los parches de atrás hacia adelante atribuyendo cada línea del contenido
-// final al commit que la introdujo.
-
 const (
 	blameMaxCommits  = 60
 	blameHTTPTimeout = 20 * time.Second
@@ -105,9 +99,6 @@ func BlameHandler(c *gin.Context) {
 		entries[i] = blameEntry{finalIdx: i}
 	}
 
-	// Recorrido inverso: del commit más reciente al más antiguo. Cada parche
-	// transforma el estado "después del commit" en el estado "antes"; las líneas
-	// '+' que desaparecen al retroceder fueron introducidas por ese commit.
 	for i := len(commits) - 1; i >= 0; i-- {
 		hunks, hunkErr := blameFileHunks(client, provider, owner, repo, path, commits[i])
 		if hunkErr != nil || len(hunks) == 0 {
@@ -116,8 +107,6 @@ func BlameHandler(c *gin.Context) {
 		entries = blameApplyReverse(entries, hunks, commits[i].Sha, results)
 	}
 
-	// Líneas sin atribuir (historial truncado o parche fallido): se asignan al
-	// commit más antiguo conocido para que el blame no salga lleno de huecos.
 	oldest := commits[len(commits)-1]
 	for i, sha := range results {
 		if sha == "" {
@@ -173,7 +162,6 @@ func blameApplyReverse(entries []blameEntry, hunks []blameHunk, sha string, resu
 		for _, line := range h.lines {
 			switch {
 			case line == "" || strings.HasPrefix(line, "\\"):
-				// "\ No newline at end of file": ignorar.
 			case strings.HasPrefix(line, "+"):
 				if pos < len(entries) {
 					e := entries[pos]
@@ -257,7 +245,6 @@ func blameGetJSON(client *http.Client, target string, headers map[string]string,
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		// Codeberg sufre timeouts puntuales: reintentar una vez antes de fallar.
 		time.Sleep(500 * time.Millisecond)
 		resp, err = client.Do(req)
 	}
@@ -282,7 +269,6 @@ func blameGetText(client *http.Client, target string, headers map[string]string)
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		// Codeberg sufre timeouts puntuales: reintentar una vez antes de fallar.
 		time.Sleep(500 * time.Millisecond)
 		resp, err = client.Do(req)
 	}
@@ -297,7 +283,6 @@ func blameGetText(client *http.Client, target string, headers map[string]string)
 	return string(b), err
 }
 
-// Devuelve los hunks del diff unificado que afectan al archivo concreto.
 func blameFileHunks(client *http.Client, provider, owner, repo, path string, cm blameCommitInfo) ([]blameHunk, error) {
 	switch provider {
 	case "gh":
@@ -350,7 +335,7 @@ func blameFileHunks(client *http.Client, provider, owner, repo, path string, cm 
 			}
 		}
 		return blameParseHunks(body), nil
-	default: // cb: diff crudo del commit
+	default:
 		headers := map[string]string{}
 		if token := os.Getenv("CODEBERG_TOKEN"); token != "" {
 			headers["Authorization"] = "token " + token
@@ -365,7 +350,6 @@ func blameFileHunks(client *http.Client, provider, owner, repo, path string, cm 
 	}
 }
 
-// Extrae del diff completo la sección "diff --git" correspondiente al archivo.
 func blameExtractFileSection(diff, path string) string {
 	sections := strings.Split(diff, "\ndiff --git ")
 	for i, s := range sections {

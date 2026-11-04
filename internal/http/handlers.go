@@ -20,6 +20,7 @@ import (
 	"os"
 	"regexp"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -826,11 +827,6 @@ func SetBuildInfo(hash, built, repo string) {
 	sourceRepo = repo
 }
 
-// ConfigHandler publica la configuración mínima que el frontend necesita para
-// resolver el CAPTCHA. Además del flag del gate, anuncia la base de la API
-// de Menta: así el navegador sabe contra qué host resolver el proof-of-work
-// sin que gitGost tenga que hardcodear la URL de Menta en el HTML, y el
-// cliente puede derivarla del propio SDK que sirve Menta.
 func ConfigHandler(c *gin.Context) {
 	body := gin.H{"captcha_gate": captchaGateEnabled()}
 	if captchaGateEnabled() && mentaAPIEndpoint != "" {
@@ -1009,15 +1005,10 @@ func InitPanicConfig(password, adminTopic string) {
 	ntfyAdminTopic = adminTopic
 }
 
-// constantTimeEquals compara dos strings sin filtrar información por timing.
 func constantTimeEquals(a, b string) bool {
 	return subtle.ConstantTimeCompare([]byte(a), []byte(b)) == 1
 }
 
-// safeSameHostRedirects es una política CheckRedirect que compara cada salto
-// contra la petición inicial (via[0]): solo permite seguir redirecciones
-// HTTPS hacia el mismo host. Sin ella, un upstream puede redirigir el fetch
-// del servidor a direcciones internas (SSRF vía redirect).
 func safeSameHostRedirects(maxRedirects int) func(*http.Request, []*http.Request) error {
 	return func(req *http.Request, via []*http.Request) error {
 		if len(via) >= maxRedirects {
@@ -1037,22 +1028,14 @@ func safeSameHostRedirects(maxRedirects int) func(*http.Request, []*http.Request
 	}
 }
 
-// newSafeHTTPClient construye un cliente HTTP con límite de tiempo y la
-// política de redirecciones same-host segura. Usarlo en lugar de
-// &http.Client{Timeout: ...} en todos los fetches salientes.
 func newSafeHTTPClient(timeout time.Duration) *http.Client {
 	return &http.Client{Timeout: timeout, CheckRedirect: safeSameHostRedirects(3)}
 }
 
-// verifyAdminPassword valida la contraseña de administrador en tiempo
-// constante y solo si PANIC_PASSWORD está configurado.
 func verifyAdminPassword(password string) bool {
 	return password != "" && panicPassword != "" && constantTimeEquals(password, panicPassword)
 }
 
-// isValidContentHash valida el formato de los hashes de identidad usados por
-// moderación y apelaciones (derivados con HMAC-SHA256 truncado a 8 hex):
-// entre 8 y 64 caracteres hexadecimales, sin operadores PostgREST ni metacaracteres.
 func isValidContentHash(hash string) bool {
 	if len(hash) < 8 || len(hash) > 64 {
 		return false
@@ -1065,15 +1048,8 @@ func isValidContentHash(hash string) bool {
 	return true
 }
 
-// minUserTokenLen es la longitud mínima aceptada para user tokens aportados
-// por el cliente. El token ES la credencial de identidad anónima: cualquiera
-// que lo presente puede publicar bajo el mismo hash (y provocar el ban
-// colateral de ese contenido). Tokens triviales ("test", "1234") permiten
-// apropiación de identidad por adivinación, así que se exige entropía mínima.
-// Los tokens generados por el servidor miden 16 caracteres base32.
 const minUserTokenLen = 12
 
-// isValidUserToken valida un user token suministrado por el cliente.
 func isValidUserToken(token string) bool {
 	if len(token) < minUserTokenLen || len(token) > 256 {
 		return false
@@ -1094,17 +1070,12 @@ func isPanicMode() bool {
 	return panicMode
 }
 
-// isMaintenanceMode reporta si el modo mantenimiento está activo
-// (estado protegido por panicMode: se activa junto a panicMode).
 func isMaintenanceMode() bool {
 	panicMu.Lock()
 	defer panicMu.Unlock()
 	return maintenanceMode
 }
 
-// InitMaintenance activa o desactiva el modo mantenimiento al arranque.
-// La activación fuerza panicMode=true (bloquea pushes); la desactivación
-// no toca panicMode para no desactivar un panic humano por accidente.
 func InitMaintenance(active bool, source string) {
 	panicMu.Lock()
 	defer panicMu.Unlock()
@@ -1121,14 +1092,12 @@ func InitMaintenance(active bool, source string) {
 	utils.Log("maintenance mode %s (source: %s)", state, source)
 }
 
-// isSponsorBanner reporta si el banner de donaciones está activo.
 func isSponsorBanner() bool {
 	panicMu.Lock()
 	defer panicMu.Unlock()
 	return sponsorBanner
 }
 
-// InitSponsorBanner activa o desactiva el banner de donaciones al arranque.
 func InitSponsorBanner(active bool, source string) {
 	panicMu.Lock()
 	defer panicMu.Unlock()
@@ -1286,9 +1255,6 @@ func PanicHandler(c *gin.Context) {
 	})
 }
 
-// SponsorBannerHandler activa o desactiva el banner de donaciones.
-// No afecta a panicMode ni a maintenanceMode: es un banner informativo
-// que puede convivir con el servicio en marcha.
 func SponsorBannerHandler(c *gin.Context) {
 	var req struct {
 		Password string `json:"password"`
@@ -1516,7 +1482,6 @@ func CreateAnonymousIssueHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "title and body are required"})
 		return
 	}
-
 
 	prov := providerFromPath(c.Request.URL.Path)
 	if req.GitHubToken != "" {
@@ -1902,9 +1867,6 @@ func GitLabAvatarHandler(c *gin.Context) {
 		return
 	}
 
-	// GitLab.com ya no permite /api/v4/users sin token (403): el avatar se resuelve
-	// por Gravatar (esquema que GitLab usa por defecto) sin depender de la API.
-	// Con GITLAB_TOKEN configurado se consulta la API real para avatar/username.
 	username := ""
 	avatarURL := ""
 
@@ -1934,7 +1896,6 @@ func GitLabAvatarHandler(c *gin.Context) {
 	}
 
 	if avatarURL == "" {
-		// Fallback: Gravatar, mismo esquema que GitLab para avatares por defecto.
 		sum := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(email))))
 		avatarURL = fmt.Sprintf("https://www.gravatar.com/avatar/%s?d=identicon&s=64", hex.EncodeToString(sum[:]))
 	}
@@ -2442,9 +2403,6 @@ func GitLabWikiProxyHandler(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	// Solo los estados que indican wiki inaccesible o no disponible (proyecto
-	// privado, sin permisos o wiki deshabilitada) se normalizan a 200 con lista
-	// vacía para que el frontend muestre el estado sin errores de red.
 	if resp.StatusCode == http.StatusUnauthorized ||
 		resp.StatusCode == http.StatusForbidden ||
 		resp.StatusCode == http.StatusNotFound {
@@ -2458,7 +2416,6 @@ func GitLabWikiProxyHandler(c *gin.Context) {
 		return
 	}
 
-	// Propagar el resto de respuestas no-200 del upstream (p. ej. 429 o 5xx).
 	if resp.StatusCode != http.StatusOK {
 		c.Data(resp.StatusCode, "application/json", body)
 		return
@@ -2496,7 +2453,6 @@ func CreateAnonymousCommentHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "user_token demasiado débil: mínimo 12 caracteres imprimibles"})
 		return
 	}
-
 
 	userToken := req.UserToken
 	if strings.TrimSpace(userToken) != "" && !isValidUserToken(userToken) {
@@ -2590,9 +2546,6 @@ func CreateAnonymousCommentHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// publishIssueCommentNtfy publica en el topic de la issue una notificación de
-// comentario nuevo (fire-and-forget), para que los suscriptores del topic
-// reciban la novedad sin bloquear la respuesta de la API.
 func publishIssueCommentNtfy(owner, repo string, number int, commentURL string) {
 	go func() {
 		topic := github.NtfyTopicForIssue(owner, repo, strconv.Itoa(number))
@@ -2636,7 +2589,6 @@ func CreateAnonymousPRCommentHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "user_token demasiado débil: mínimo 12 caracteres imprimibles"})
 		return
 	}
-
 
 	userToken := req.UserToken
 	if strings.TrimSpace(userToken) != "" && !isValidUserToken(userToken) {
@@ -2755,7 +2707,6 @@ func CreateAnonymousDiscussionCommentHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "user_token demasiado débil: mínimo 12 caracteres imprimibles"})
 		return
 	}
-
 
 	userToken := req.UserToken
 	if strings.TrimSpace(userToken) != "" && !isValidUserToken(userToken) {
@@ -3074,8 +3025,6 @@ func getSecretKey() []byte {
 			return secretKey
 		}
 	}
-	// Un CSPRNG roto haría predecibles los hashes de moderación y los tokens
-	// de apelación: es mejor abortar que degradar a un valor determinista.
 	panic("crypto/rand unavailable: cannot derive moderation identity key")
 }
 
@@ -3083,16 +3032,9 @@ func deriveHash(owner, repo string, number int, userToken string) string {
 	input := fmt.Sprintf("%s/%s#%d|%s", owner, repo, number, userToken)
 	h := hmac.New(sha256.New, getSecretKey())
 	h.Write([]byte(input))
-	// 64 bits truncados: con solo 32 bits la colisión de cumpleaños llegaba a
-	// ~65k comentarios y el hash es la clave de moderación (ban por hash borra
-	// TODO el contenido que lo comparte). 16 hex mantienen compatibilidad con
-	// los hashes de 8 ya almacenados (los lookups son por igualdad exacta).
 	return hex.EncodeToString(h.Sum(nil))[:16]
 }
 
-// generateUserToken genera el token de identidad anónima del autor. Si el
-// CSPRNG falla se devuelve error: degradar a un valor predecible permitiría
-// suplantación de identidad, así que la petición debe abortar.
 func generateUserToken() (string, error) {
 	buf := make([]byte, 10)
 	if _, err := rand.Read(buf); err != nil {
@@ -3131,9 +3073,6 @@ func getScheme(r *http.Request) string {
 	if r.TLS != nil {
 		return "https"
 	}
-	// Solo aceptar el header cuando el Host coincide con el dominio de
-	// producción (SERVICE_URL): en local o detrás de hosts desconocidos, un
-	// atacante podría falsificarlo para generar URLs https falsas.
 	if scheme := r.Header.Get("X-Forwarded-Proto"); scheme == "https" && isTrustedProxyHost(r.Host) {
 		return scheme
 	}
@@ -3387,9 +3326,6 @@ func PRStatusHandler(c *gin.Context) {
 	})
 }
 
-// IssueStatusHandler devuelve el topic de ntfy (y su URL de suscripción) para una
-// issue concreta, de modo que un usuario pueda suscribirse a las notificaciones
-// de esa issue sin cuenta.
 func IssueStatusHandler(c *gin.Context) {
 	c.Header("Cache-Control", "no-store")
 	owner := strings.TrimSpace(c.Param("owner"))
@@ -3687,7 +3623,6 @@ func CodebergProxyHandler(c *gin.Context) {
 	client := newSafeHTTPClient(45 * time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
-		// Codeberg sufre timeouts puntuales: reintentar una vez antes de devolver 502.
 		time.Sleep(500 * time.Millisecond)
 		resp, err = client.Do(req)
 	}
@@ -3696,9 +3631,6 @@ func CodebergProxyHandler(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "failed to reach Codeberg"})
 		return
 	}
-	// Si Codeberg rechaza el token por scopes insuficientes (p.ej. read:package
-	// en /packages) devuelve 403 incluso para contenido público. Se reintenta
-	// sin token para que la UI no oculte secciones por un 403 de configuración.
 	if allowedAPIPath && resp.StatusCode == http.StatusForbidden && req.Header.Get("Authorization") != "" {
 		anonReq := req.Clone(c.Request.Context())
 		anonReq.Header.Del("Authorization")
@@ -3709,9 +3641,6 @@ func CodebergProxyHandler(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	// Gitea/Codeberg devuelve 404 en /contributors cuando el repo tiene demasiada
-	// historia (el cálculo de autores se aborta server-side). Se degrada con una
-	// lista vacía para que el frontend oculte la sección sin error de red.
 	if resp.StatusCode == http.StatusNotFound && strings.HasSuffix(path, "/contributors") {
 		c.Writer.Header().Set("Content-Type", "application/json")
 		c.Writer.WriteHeader(http.StatusOK)
@@ -3788,9 +3717,6 @@ func GitHubRawProxyHandler(c *gin.Context) {
 	githubMediaProxy(c, "https://raw.githubusercontent.com/", "raw.githubusercontent.com", "/api/gh-raw/")
 }
 
-// githubMediaProxy sirve imágenes remotas de hosts concretos de GitHub a
-// través del servidor (camo y user-images) para que los README de perfil se
-// vean igual que en GitHub aunque el navegador no pueda alcanzarlos.
 func githubMediaProxy(c *gin.Context, host, name, prefix string) {
 	if c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead {
 		c.AbortWithStatusJSON(http.StatusMethodNotAllowed, gin.H{"error": "only GET/HEAD allowed"})
@@ -3928,10 +3854,6 @@ func ghProxyCachePut(key string, e ghProxyCacheEntry) {
 	ghProxyCache[key] = e
 }
 
-// GitHubAPIProxyHandler keeps browser requests to api.github.com on the server.
-// Successful GET responses are cached and revalidated with If-None-Match so
-// repeat visits don't burn the shared rate limit; when upstream is still
-// rate-limited, a cached copy is served instead of a 429.
 func GitHubAPIProxyHandler(c *gin.Context) {
 	path := strings.TrimPrefix(c.Request.URL.Path, "/api/gh-proxy/")
 	if path == "" || strings.Contains(path, "..") {
@@ -4009,6 +3931,19 @@ func GitHubAPIProxyHandler(c *gin.Context) {
 	}
 }
 
+func starsAsInt(v interface{}) int {
+	switch n := v.(type) {
+	case int:
+		return n
+	case int64:
+		return int(n)
+	case float64:
+		return int(n)
+	default:
+		return 0
+	}
+}
+
 func SearchHandler(c *gin.Context) {
 	query := c.Query("q")
 	provider := c.Query("provider")
@@ -4021,8 +3956,6 @@ func SearchHandler(c *gin.Context) {
 
 	results := []gin.H{}
 
-	// Support GitHub-style `topic:<name>` queries: use the topic for every provider
-	// so GitLab/Codeberg don't receive the literal "topic:" prefix.
 	if topicParam == "" && strings.HasPrefix(query, "topic:") {
 		if topic := strings.TrimSpace(strings.TrimPrefix(query, "topic:")); topic != "" {
 			topicParam = topic
@@ -4052,6 +3985,12 @@ func SearchHandler(c *gin.Context) {
 		cbResults := searchCodeberg(cbQuery, topicParam)
 		results = append(results, cbResults...)
 	}
+
+	sort.Slice(results, func(i, j int) bool {
+		si := starsAsInt(results[i]["stars"])
+		sj := starsAsInt(results[j]["stars"])
+		return si > sj
+	})
 
 	c.JSON(http.StatusOK, gin.H{
 		"query":   query,
@@ -4209,7 +4148,7 @@ type gitLabLangCacheEntry struct {
 	at       time.Time
 }
 
-var gitLabLanguageCache sync.Map // projectID int -> gitLabLangCacheEntry
+var gitLabLanguageCache sync.Map
 
 const gitLabLanguageCacheTTL = 24 * time.Hour
 
@@ -4352,19 +4291,15 @@ func UsersSearchHandler(c *gin.Context) {
 		return
 	}
 
-	// Token del cliente (localStorage) como respaldo cuando el servidor no tiene env token.
 	clientToken := ""
 	if auth := c.GetHeader("Authorization"); auth != "" {
 		clientToken = strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(auth, "token "), "Bearer "))
 	}
 
-	// Fan out provider searches concurrently
 	type searchResult struct {
 		results []gin.H
 	}
 
-	// Deadline global: los reintentos de proveedores lentos no deben extender
-	// la latencia total del request de forma indefinida.
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 45*time.Second)
 	defer cancel()
 
@@ -4418,7 +4353,6 @@ func UsersSearchHandler(c *gin.Context) {
 	close(glChan)
 	close(cbChan)
 
-	// Collect and merge results
 	results := []gin.H{}
 	results = append(results, (<-ghChan).results...)
 	results = append(results, (<-glChan).results...)
@@ -4430,9 +4364,6 @@ func UsersSearchHandler(c *gin.Context) {
 	})
 }
 
-// CodeSearchHandler keeps provider credentials on the server, matching the
-// repository and user search endpoints. GitHub's code search rejects anonymous
-// browser requests, so calling it from repo.html causes a visible 401.
 func CodeSearchHandler(c *gin.Context) {
 	query := strings.TrimSpace(c.Query("q"))
 	owner := strings.TrimSpace(c.Query("owner"))
@@ -4496,8 +4427,6 @@ func CodeSearchHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"results": results})
 }
 
-// GitHubPackagesHandler avoids exposing GitHub's package endpoint directly to
-// browsers. It uses the same bot-token-first policy as repository/user search.
 func GitHubPackagesHandler(c *gin.Context) {
 	owner := strings.TrimSpace(c.Param("owner"))
 	if owner == "" {
@@ -4675,9 +4604,6 @@ func searchCodebergUsers(query, clientToken string) []gin.H {
 		token = clientToken
 	}
 
-	// Codeberg exige el scope read:user para users/search; si el token configurado
-	// no lo tiene responde 403, así que se reintenta sin token (la búsqueda
-	// anónima funciona). El segundo intento también cubre timeouts puntuales.
 	for attempt := 0; attempt < 2; attempt++ {
 		req, err := http.NewRequest("GET", apiURL, nil)
 		if err != nil {
@@ -4724,15 +4650,12 @@ func searchCodebergUsers(query, clientToken string) []gin.H {
 		} else {
 			utils.Log("Codeberg users search returned status: %d", resp.StatusCode)
 		}
-		// Fallback: reintentar sin token si el token no sirvió (scope insuficiente).
 		token = ""
 	}
 
 	return results
 }
 
-
-// El mismo patrón que profileCache, para la lista de repos del perfil.
 var (
 	reposCacheMu   sync.Mutex
 	reposCacheData = map[string]reposCacheEntry{}
@@ -4788,12 +4711,9 @@ func rateLimitRetryAfter(resp *http.Response) int {
 	return 60
 }
 
-// Cache en memoria de perfiles de usuarios para sobrevivir a rate limits del
-// proveedor: si upstream responde 403/429, se sirve el último resultado bueno
-// (hasta 1 hora de antigüedad) en lugar de fallar.
 var (
-	profileCacheMu    sync.Mutex
-	profileCacheData  = map[string]profileCacheEntry{}
+	profileCacheMu   sync.Mutex
+	profileCacheData = map[string]profileCacheEntry{}
 )
 
 type profileCacheEntry struct {
@@ -4834,7 +4754,6 @@ func UserProfileHandler(c *gin.Context) {
 		return
 	}
 
-	// Token del cliente (localStorage) como respaldo cuando el servidor no tiene env token.
 	clientToken := ""
 	if auth := c.GetHeader("Authorization"); auth != "" {
 		clientToken = strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(auth, "token "), "Bearer "))
@@ -4845,7 +4764,6 @@ func UserProfileHandler(c *gin.Context) {
 	case "gl":
 		result = gitLabUserProfile(username, clientToken)
 		if result.profile == nil && !result.notFound {
-			// Los grupos no se resuelven por /users; probar como grupo.
 			result = gitLabGroupProfile(username, clientToken)
 		}
 	case "cb":
@@ -4854,7 +4772,6 @@ func UserProfileHandler(c *gin.Context) {
 			result = codebergOrgProfile(username, clientToken)
 		}
 	default:
-		// GitHub resuelve usuarios y organizaciones por /users/{login}.
 		result = gitHubUserProfile(username, clientToken)
 	}
 
@@ -4943,7 +4860,6 @@ func gitHubUserProfile(username, clientToken string) profileResult {
 		userType = "org"
 	}
 
-	// LinkedIn/YouTube no vienen en /users/{login}: se obtienen de las cuentas sociales conectadas.
 	socials := map[string]string{}
 	if d.Type != "Organization" {
 		socials = githubSocialAccounts(d.Login, token)
@@ -4977,9 +4893,6 @@ func gitHubUserProfile(username, clientToken string) profileResult {
 	}
 }
 
-// githubSocialAccounts obtiene las cuentas sociales conectadas del usuario
-// (GET /users/{username}/social_accounts); GitHub no las expone en el perfil.
-// Devuelve un mapa provider -> url.
 func githubSocialAccounts(username, token string) map[string]string {
 	accounts := map[string]string{}
 	apiURL := fmt.Sprintf("https://api.github.com/users/%s/social_accounts?per_page=100", url.PathEscape(username))
@@ -5014,12 +4927,6 @@ func githubSocialAccounts(username, token string) map[string]string {
 	return accounts
 }
 
-// UserStarredHandler proxy GET /users/{login}/starred. El navegador no debe llamar a
-// api.github.com directamente: sin token el rate-limit por IP (60/h) responde 403. Aquí
-// se usa el bot token del servidor, con el del cliente de respaldo. Codeberg (Gitea)
-// exige auth para /users/{user}/starred (401 sin token); si la consulta falla se
-// responde lista vacía (200) para que el navegador no loguee errores de red por una
-// sección opcional del perfil.
 func UserStarredHandler(c *gin.Context) {
 	username := strings.TrimSpace(c.Query("user"))
 	provider := strings.TrimSpace(c.Query("provider"))
@@ -5079,7 +4986,6 @@ func UserStarredHandler(c *gin.Context) {
 		}
 		if resp.StatusCode != http.StatusOK {
 			resp.Body.Close()
-			// Sección opcional: lista vacía en vez de propagar el error de red.
 			break
 		}
 		var items []json.RawMessage
@@ -5099,10 +5005,6 @@ func UserStarredHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, starred)
 }
 
-// UserOrgsHandler devuelve las organizaciones públicas de un usuario. Codeberg exige
-// auth para /users/{user}/orgs (401 sin token); se intenta con el token del
-// servidor/cliente y, si falla, se responde lista vacía (200) para que el navegador no
-// loguee errores de red por una sección opcional del perfil.
 func UserOrgsHandler(c *gin.Context) {
 	username := strings.TrimSpace(c.Query("user"))
 	provider := strings.TrimSpace(c.Query("provider"))
@@ -5169,8 +5071,6 @@ func UserOrgsHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, orgs)
 }
 
-// UserEventsHandler proxies GET /users/{login}/events de GitHub (usado por el
-// heatmap de commits del perfil), con el mismo motivo que UserStarredHandler.
 func UserEventsHandler(c *gin.Context) {
 	username := strings.TrimSpace(c.Query("user"))
 	if username == "" {
@@ -5224,10 +5124,6 @@ func UserEventsHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, events)
 }
 
-// UserContributionsHandler devuelve el gráfico anual de contribuciones de un
-// usuario de GitHub (el mismo que muestra su perfil), usado por el heatmap de
-// la sidebar. Con token usa la GraphQL API (conteos exactos por día); sin token
-// parsea el HTML público de github.com/{login} (niveles 0-4 por día).
 func UserContributionsHandler(c *gin.Context) {
 	username := strings.TrimSpace(c.Query("user"))
 	if username == "" {
@@ -5247,7 +5143,6 @@ func UserContributionsHandler(c *gin.Context) {
 	}
 	result, err := ghContributionsScrape(username)
 	if err != nil {
-		// github.com devuelve 404 para usuarios inexistentes; el resto son fallos de red/parseo.
 		if strings.Contains(err.Error(), "status 404") {
 			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 			return
@@ -5261,8 +5156,6 @@ func UserContributionsHandler(c *gin.Context) {
 var ghTotalContributionsRe = regexp.MustCompile(`([\d,]+)\s+contributions in the last year`)
 var ghContributionCellRe = regexp.MustCompile(`data-date="([0-9]{4}-[0-9]{2}-[0-9]{2})"[^>]*data-level="([0-4])"`)
 
-// ghContributionsGraphQL consulta la contributionCalendar de GitHub vía GraphQL:
-// datos exactos por día (incluye commits, PRs, issues, reviews y discusiones).
 func ghContributionsGraphQL(username, token string) (map[string]any, bool) {
 	body, err := json.Marshal(map[string]any{
 		"query":     `query($login:String!){user(login:$login){contributionsCollection{restrictedContributionsCount contributionCalendar{totalContributions weeks{contributionDays{date contributionCount}}}}}}`,
@@ -5327,8 +5220,6 @@ func ghContributionsGraphQL(username, token string) (map[string]any, bool) {
 	}, true
 }
 
-// ghContributionsScrape parsea las celdas del contribution calendar del HTML
-// público del perfil (sin token): data-level va de 0 a 4, sin conteo exacto.
 func ghContributionsScrape(username string) (map[string]any, error) {
 	apiURL := fmt.Sprintf("https://github.com/%s", url.PathEscape(username))
 	req, err := http.NewRequest("GET", apiURL, nil)
@@ -5520,10 +5411,6 @@ func gitLabUserCount(userID int, kind, clientToken string) int {
 	return 0
 }
 
-// codebergAPIGet hace GET a la API de Codeberg. Codeberg responde 403 cuando el
-// token configurado no tiene los scopes necesarios, incluso para contenido público;
-// por eso, ante un 403 se reintenta una vez sin token. Devuelve body, status y
-// X-Total-Count (cuando el endpoint es un listado).
 func codebergAPIGet(apiPath, token string) ([]byte, int, int) {
 	client := newSafeHTTPClient(10 * time.Second)
 	for attempt := 0; attempt < 2; attempt++ {
@@ -5569,8 +5456,6 @@ func codebergUserProfile(username, clientToken string) profileResult {
 	authToken := token
 
 	var lastStatusCode int
-	// Codeberg exige el scope read:user para endpoints de usuarios; si el token
-	// configurado no lo tiene responde 403, así que se reintenta sin token.
 	for attempt := 0; attempt < 2; attempt++ {
 		req, err := http.NewRequest("GET", apiURL, nil)
 		if err != nil {
@@ -5607,9 +5492,6 @@ func codebergUserProfile(username, clientToken string) profileResult {
 				return profileResult{profile: nil, notFound: false}
 			}
 
-			// Codeberg (Forgejo) no incluye el campo type en /users/{login}, así que
-			// las organizaciones se detectan consultando /orgs/{login}: si responde
-			// 200, el perfil se resuelve como organización (con sus miembros públicos).
 			if d.Type == "organization" {
 				return codebergOrgProfile(d.Login, clientToken)
 			}
@@ -5617,9 +5499,6 @@ func codebergUserProfile(username, clientToken string) profileResult {
 				return codebergOrgProfile(d.Login, clientToken)
 			}
 
-			// /users/{login} no expone el total de repos ni paquetes: se obtienen de
-			// los endpoints de listado (X-Total-Count), con reintento anónimo si el
-			// token carece de scopes.
 			reposTotal, packagesTotal := 0, 0
 			if d.Login != "" {
 				esc := url.PathEscape(d.Login)
@@ -5677,8 +5556,6 @@ func codebergOrgProfile(username, clientToken string) profileResult {
 	authToken := token
 
 	var lastStatusCode int
-	// Codeberg exige el scope read:user para endpoints de usuarios; si el token
-	// configurado no lo tiene responde 403, así que se reintenta sin token.
 	for attempt := 0; attempt < 2; attempt++ {
 		req, err := http.NewRequest("GET", apiURL, nil)
 		if err != nil {
@@ -5708,8 +5585,6 @@ func codebergOrgProfile(username, clientToken string) profileResult {
 				return profileResult{profile: nil, notFound: false}
 			}
 
-			// /orgs/{org} no incluye totales ni miembros: se completan con los
-			// endpoints públicos (listados con X-Total-Count y public_members).
 			reposTotal, packagesTotal := 0, 0
 			var members []gin.H
 			if o.Username != "" {
@@ -5769,11 +5644,6 @@ func codebergOrgProfile(username, clientToken string) profileResult {
 	return profileResult{profile: nil, notFound: notFound}
 }
 
-// UserReadmeHandler devuelve el README del repo de perfil: {user}/{user} en gh/gl,
-// y el repo ".profile" en Codeberg (con fallback a {user}/{user}).
-// Se sirve por el backend en vez de fetch directo del navegador: gitlab.com responde
-// 302 hacia /users/sign_in para repos inexistentes/privados y el navegador bloquea
-// esa redirección cross-origin por CORS.
 func UserReadmeHandler(c *gin.Context) {
 	provider := c.Query("provider")
 	username := strings.TrimSpace(c.Query("user"))
@@ -5783,7 +5653,6 @@ func UserReadmeHandler(c *gin.Context) {
 		return
 	}
 
-	// Token del cliente (localStorage) como respaldo cuando el servidor no tiene env token.
 	clientToken := ""
 	if auth := c.GetHeader("Authorization"); auth != "" {
 		clientToken = strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(auth, "token "), "Bearer "))
@@ -5797,20 +5666,15 @@ func UserReadmeHandler(c *gin.Context) {
 		basePrefixes = []string{fmt.Sprintf("https://gitlab.com/%s/%s/-/raw/", url.PathEscape(username), url.PathEscape(username))}
 	case "cb":
 		refs = []string{"main", "master"}
-		// Codeberg/Forgejo guarda el README de perfil en el repo ".profile" (no en
-		// {user}/{user} como Gitea). Se intenta ".profile" primero y se mantiene la
-		// convención antigua como fallback para usuarios que aún usen ese nombre.
 		basePrefixes = []string{
 			fmt.Sprintf("https://codeberg.org/%s/.profile/raw/branch/", url.PathEscape(username)),
 			fmt.Sprintf("https://codeberg.org/%s/%s/raw/branch/", url.PathEscape(username), url.PathEscape(username)),
 		}
-	default: // gh
+	default:
 		refs = []string{"HEAD", "master", "main"}
 		basePrefixes = []string{fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/", url.PathEscape(username), url.PathEscape(username))}
 	}
 
-	// No seguir redirecciones: GitLab responde 302 a /users/sign_in cuando el repo no
-	// existe o es privado; sin esto terminaríamos con el HTML de la página de login.
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -5836,7 +5700,7 @@ func UserReadmeHandler(c *gin.Context) {
 			if err != nil {
 				continue
 			}
-			body, readErr := io.ReadAll(io.LimitReader(resp.Body, 2<<20)) // máx 2 MiB
+			body, readErr := io.ReadAll(io.LimitReader(resp.Body, 2<<20))
 			resp.Body.Close()
 			if readErr != nil {
 				continue
@@ -5854,12 +5718,9 @@ func UserReadmeHandler(c *gin.Context) {
 		}
 	}
 
-	// Sin README: 200 con contenido vacío. La ausencia de README es un caso normal,
-	// no un error, y el navegador loguea como fallo de red cualquier 404 del fetch.
 	c.JSON(http.StatusOK, gin.H{"content": "", "base_url": ""})
 }
 
-// UserReposHandler devuelve los repositorios públicos de un usuario u organización (gh/gl/cb).
 func UserReposHandler(c *gin.Context) {
 	provider := c.Query("provider")
 	username := strings.TrimSpace(c.Query("user"))
@@ -5870,7 +5731,6 @@ func UserReposHandler(c *gin.Context) {
 		return
 	}
 
-	// Token del cliente (localStorage) como respaldo cuando el servidor no tiene env token.
 	clientToken := ""
 	if auth := c.GetHeader("Authorization"); auth != "" {
 		clientToken = strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(auth, "token "), "Bearer "))
@@ -5969,7 +5829,6 @@ func gitHubUserRepos(username, clientToken string) reposResult {
 }
 
 func gitLabUserRepos(username, userType, clientToken string) []gin.H {
-	// Los proyectos de un grupo se listan por /groups/{path}/projects; los de un usuario requieren su ID.
 	apiURL := ""
 	if userType == "org" {
 		apiURL = fmt.Sprintf("https://gitlab.com/api/v4/groups/%s/projects?per_page=30&order_by=updated_at&include_subgroups=false", url.PathEscape(username))
@@ -5978,7 +5837,6 @@ func gitLabUserRepos(username, userType, clientToken string) []gin.H {
 		if userID > 0 {
 			apiURL = fmt.Sprintf("https://gitlab.com/api/v4/users/%d/projects?per_page=30&order_by=updated_at", userID)
 		} else {
-			// Puede ser un grupo sin resolverse como usuario.
 			apiURL = fmt.Sprintf("https://gitlab.com/api/v4/groups/%s/projects?per_page=30&order_by=updated_at&include_subgroups=false", url.PathEscape(username))
 		}
 	}
@@ -6118,7 +5976,6 @@ func codebergUserRepos(username, userType, clientToken string) []gin.H {
 
 	resp, err := doReq(apiURL, token)
 	if err == nil && resp.StatusCode == http.StatusForbidden {
-		// Scope read:user faltante: reintentar sin token (la API pública funciona).
 		resp.Body.Close()
 		token = ""
 		resp, err = doReq(apiURL, token)
@@ -6128,7 +5985,6 @@ func codebergUserRepos(username, userType, clientToken string) []gin.H {
 		return nil
 	}
 
-	// Si el usuario no existe, probar como organización.
 	if resp.StatusCode != http.StatusOK && userType != "org" {
 		resp.Body.Close()
 		apiURL = fmt.Sprintf("https://codeberg.org/api/v1/orgs/%s/repos?limit=30&sort=updated", url.PathEscape(username))
@@ -6179,7 +6035,6 @@ func codebergUserRepos(username, userType, clientToken string) []gin.H {
 	}
 	return repos
 }
-
 
 func TrendingHandler(c *gin.Context) {
 	provider := c.Param("provider")
@@ -6499,21 +6354,18 @@ func getTrendingCodeberg(sort string, perPage, page int) []gin.H {
 	return results
 }
 
-// GetIssueTemplatesHandler returns the issue templates for a repository
 func GetIssueTemplatesHandler(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
 
 	prov := providerFromPath(c.Request.URL.Path)
 
-	// Only GitHub supports issue templates via API
 	_, ok := prov.(*ghprovider.GitHubProvider)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "issue templates only supported for GitHub"})
 		return
 	}
 
-	// Use the GitHub package directly since provider interface doesn't have this method yet
 	templates, err := github.GetIssueTemplates(owner, repo)
 	if err != nil {
 		utils.Log("Error fetching issue templates: %v", err)

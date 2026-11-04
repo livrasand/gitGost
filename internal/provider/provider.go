@@ -39,9 +39,6 @@ type Event struct {
 	Summary     string `json:"summary,omitempty"`
 }
 
-// Summarize fills e.Summary with a short human-readable description of the
-// event so clients (CLI, ntfy notifications) can render a GitHub-like timeline
-// without knowing provider-specific event names.
 func (e *Event) Summarize() {
 	if e.Summary != "" {
 		return
@@ -125,8 +122,6 @@ func (e *Event) Summarize() {
 	}
 }
 
-// SortEvents orders events chronologically (oldest first). Events with an
-// unparsable or empty timestamp keep their relative order at the end.
 func SortEvents(events []Event) {
 	sort.SliceStable(events, func(i, j int) bool {
 		ti, erri := time.Parse(time.RFC3339, events[i].CreatedAt)

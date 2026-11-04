@@ -35,9 +35,6 @@ var (
 
 var appealStartTmpl = template.Must(template.New("appealStart").Parse(appealHTML))
 
-// Sesiones de administrador en memoria: la contraseña nunca viaja en el HTML
-// ni se persiste en cookies; el navegador solo recibe un token de sesión
-// aleatorio de un solo uso de propósito, revocable y con TTL.
 const (
 	adminSessionCookie = "admin_session"
 	adminSessionTTL    = time.Hour
@@ -271,7 +268,6 @@ func AppealStartHandler(c *gin.Context) {
 }
 
 func AppealViewHandler(c *gin.Context) {
-	// Página con datos sensibles del ticket: nunca cacheable.
 	c.Header("Cache-Control", "no-store")
 	ticketID := c.Param("ticket")
 
@@ -390,11 +386,7 @@ func notifyAdminAppeal(ticketID, hash string) {
 }
 
 func AdminAppealsHandler(c *gin.Context) {
-	// Panel autenticado con hashes y mensajes: nunca cacheable.
 	c.Header("Cache-Control", "no-store")
-	// Autenticación solo por POST (formulario de login) o por cookie de
-	// sesión. Nunca por query string: la contraseña acabaría en logs de
-	// acceso y proxies intermedios.
 	if c.Request.Method == http.MethodPost {
 		password := c.PostForm("password")
 		if !verifyAdminPassword(password) {
@@ -542,8 +534,6 @@ func AdminAppealResolveHandler(c *gin.Context) {
 		}
 	}
 
-	// Se acepta una sesión válida o la contraseña directa (para clientes no
-	// navegador). Ambas verificaciones son en tiempo constante.
 	if !validAdminSession(sessionToken) && !verifyAdminPassword(c.PostForm("password")) {
 		c.String(http.StatusUnauthorized, "Unauthorized")
 		return
@@ -596,7 +586,6 @@ func AdminAppealResolveHandler(c *gin.Context) {
 	}
 
 	if validAdminSession(sessionToken) {
-		// Renovar la sesión tras una acción para sesiones activas.
 		c.SetSameSite(http.SameSiteStrictMode)
 		c.SetCookie(adminSessionCookie, sessionToken, int(adminSessionTTL.Seconds()), "/admin/", "", true, true)
 	}

@@ -8,8 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// apiLimiterStore limita el fetch público de /api/announcement (30 req/min
-// por IP): suficiente para el fetch de cada page-load, no para scraping masivo.
 var (
 	apiLimiterMax  = 30
 	apiLimiterWin  = time.Minute
@@ -44,7 +42,6 @@ func rateLimitWith(max int, win time.Duration) gin.HandlerFunc {
 			}
 		} else {
 			if len(apiLimiterStore) >= apiLimiterSize {
-				// Limpieza simple de expirados antes de rechazar.
 				for k, v := range apiLimiterStore {
 					if now.After(v.expiry) {
 						delete(apiLimiterStore, k)
@@ -68,10 +65,6 @@ func limiterGet(ip string) (*limiterEntry, bool) {
 	return e, ok
 }
 
-// Handler expone el estado del anuncio activo, sin exponer el topic ntfy ni
-// credenciales: el navegador solo recibe el payload sanitizado.
-//   - 204 cuando no hay anuncio activo (silencio limpio, sin favores a scrapers)
-//   - 200 + JSON activo, con Cache-Control: no-store (cambios en caliente)
 func Handler(c *gin.Context) {
 	a := Active(time.Now().UTC())
 	if a == nil {

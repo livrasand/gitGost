@@ -13,7 +13,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// gateDocument escribe un index.html temporal y devuelve su ruta.
 func gateDocument(t *testing.T) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "index.html")
@@ -23,8 +22,6 @@ func gateDocument(t *testing.T) string {
 	return path
 }
 
-// withGateEnabled activa el gate con un secreto fijo y devuelve una función
-// que restaura el estado global.
 func withGateEnabled(t *testing.T, secret string) {
 	t.Helper()
 	gin.SetMode(gin.TestMode)

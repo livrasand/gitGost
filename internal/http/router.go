@@ -9,8 +9,8 @@ import (
 
 	announcementpkg "github.com/livrasand/gitGost/internal/announcement"
 
-	"github.com/livrasand/gitGost/internal/config"
 	"github.com/gin-gonic/gin"
+	"github.com/livrasand/gitGost/internal/config"
 )
 
 func isLocalhostOrigin(origin string) bool {
@@ -47,9 +47,6 @@ func securityHeaders() gin.HandlerFunc {
 		c.Header("X-Frame-Options", "DENY")
 		c.Header("X-Content-Type-Options", "nosniff")
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
-		// El origen de Menta se deriva de la configuración (MENTA_API_ENDPOINT)
-		// para que el navegador pueda resolver el proof-of-work directamente
-		// contra Menta sin que la URL esté hardcodeada en el HTML.
 		mentaOrigin := ""
 		if mentaAPIEndpoint != "" {
 			if u, err := url.Parse(mentaAPIEndpoint); err == nil {
@@ -103,10 +100,6 @@ var (
 	prCheckLimiterWin = time.Minute
 )
 
-// Los proxies de forge (gh/cb/gl) sirven todas las peticiones del frontend
-// (vista código, commits, README, sidebar...), que disparan ráfagas de decenas
-// de llamadas al abrir una página. Compartir el limitador estricto de
-// prCheckLimiter provocaba 429 inmediatos, así que tienen uno propio más alto.
 var (
 	proxyLimiterMax = 240
 	proxyLimiterWin = time.Minute
@@ -151,9 +144,6 @@ func v2Limiter() gin.HandlerFunc {
 	}
 }
 
-// v1WriteLimiter acota por IP las escrituras anónimas del protocolo Git
-// (issues, comentarios y reacciones): los clientes Git no llevan CAPTCHA ni
-// llave API — su única defensa anti-spam es la tarifa de peticiones.
 const (
 	v1WriteLimiterMax = 10
 	v1WriteLimiterWin = time.Minute
@@ -173,10 +163,6 @@ func v1WriteLimiter() gin.HandlerFunc {
 	}
 }
 
-// gitFetchLimiter acota por IP la lectura Git (clone/fetch vía info/refs y
-// upload-pack): mantiene el uso del CLI fluido y frena el scraping masivo del
-// protocolo smart HTTP. El push (git-receive-pack) se descarta del contador:
-// ya tiene su propio límite de 5 PRs/hora dentro del handler.
 const (
 	gitFetchLimiterMax = 60
 	gitFetchLimiterWin = time.Minute
@@ -218,8 +204,6 @@ func captchaLimiter() gin.HandlerFunc {
 	}
 }
 
-// gateStatusLimiter acota la consulta de estado del gate. Es una respuesta
-// ligera, pero se limita aparte para no gastar la cuota del challenge.
 const (
 	gateStatusLimiterMax = 120
 	gateStatusLimiterWin = time.Minute
@@ -281,10 +265,6 @@ func isValidRepoName(name string) bool {
 	return true
 }
 
-// gitSmartHTTPSuffixes son los sufijos exactos del protocolo smart HTTP de
-// Git. Solo estos caminos quedan exentos de cualquier comprobación; usar
-// strings.Contains permitía que cualquier ruta futura con wildcard que
-// contuviese estas cadenas se saltase la lógica silenciosamente.
 var gitSmartHTTPSuffixes = []string{
 	"/info/refs",
 	"/git-upload-pack",
@@ -338,8 +318,6 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.GET("/badges/:badge", BadgeHandler)
 	r.GET("/badge/:owner/:repo", BadgePRCountHandler)
 	r.GET("/install", InstallScriptHandler)
-	// Challenge page ligero (flujo tipo Menta): el gate redirige aquí a los
-	// documentos HTML sin sesión de gate en vez de servir la app completa.
 	r.StaticFile("/challenge.html", "./web/challenge.html")
 	r.StaticFile("/robots.txt", "./web/robots.txt")
 	r.StaticFile("/llms.txt", "./web/llms.txt")
@@ -425,9 +403,6 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/pr-status/:hash", PRStatusHandler)
 		api.GET("/issue-status/:owner/:repo/:number", IssueStatusHandler)
 		api.GET("/pr/:hash/status", prCheckLimiter(), PRCheckHandler)
-		// Extracción de browse/download muy scrapeada: requiere sesión de
-		// CAPTCHA (cookie "gost_gate" emitida tras resolver Menta). La CLI no
-		// pasa por aquí; consigue contenido por /v1 (upload-pack) sin CAPTCHA.
 		api.GET("/search", SearchHandler)
 		api.GET("/users/search", prCheckLimiter(), UsersSearchHandler)
 		api.GET("/code/search", prCheckLimiter(), CodeSearchHandler)
@@ -461,8 +436,6 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/gh-discussion/:owner/:repo/:number", proxyLimiter(), GitHubDiscussionDetailProxyHandler)
 		api.GET("/gh-wiki/:owner/:repo/:page", proxyLimiter(), GitHubWikiProxyHandler)
 		api.GET("/gl-wiki/:owner/:repo", proxyLimiter(), GitLabWikiProxyHandler)
-		// Ruta aparte del proxy /captcha/*path para no chocar el catch-all:
-		// el frontend POSTs aquí el token del widget y hereda la cookie.
 		api.POST("/captcha-gate", captchaLimiter(), CaptchaGateTokenHandler)
 		api.GET("/captcha-gate/status", gateStatusLimiter(), CaptchaGateStatusHandler)
 		api.Any("/captcha/*path", captchaLimiter(), MentaCaptchaProxyHandler)
@@ -485,15 +458,9 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	}
 
 	r.GET("/api/status", ServiceStatusHandler)
-	// Banner de anuncios: el estado vive en el paquete announcement (solo
-	// memoria), alimentado por el subscriber ntfy/UnifiedPush. Durante el
-	// modo mantenimiento esta ruta sigue viva (maintenanceAllowedPath).
 	r.GET("/api/announcement", announcementpkg.RateLimit(), announcementpkg.Handler)
 
 	r.NoRoute(func(c *gin.Context) {
-		// Las rutas de API desconocidas deben fallar con 404 JSON; servir el
-		// índice HTML aquí hacía que el frontend intentase parsear HTML como
-		// JSON cuando el cliente hablaba con un backend más antiguo.
 		if strings.HasPrefix(c.Request.URL.Path, "/api/") {
 			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "unknown API endpoint"})
 			return
@@ -532,9 +499,6 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 				return
 			}
 		}
-		// Ruta desconocida: responder 404 real (soft-404 con 200 hacía que
-		// rutas como /.env parecieran existir y confundía a escáneres y
-		// clientes HTTP), pero sirviendo el índice para navegación humana.
 		body, err := os.ReadFile("./web/index.html")
 		if err != nil {
 			c.String(http.StatusInternalServerError, "index unavailable")

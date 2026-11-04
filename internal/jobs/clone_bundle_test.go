@@ -13,10 +13,6 @@ import (
 	"testing"
 )
 
-// fakeBundleServer simula el servidor gitGost de Fase 2: acepta la creación
-// del job remoto, reporta el bundle listo y sirve el bundle con soporte de
-// Range. Devuelve un accessor que devuelve una copia sincronizada de los
-// headers Range recibidos.
 func fakeBundleServer(t *testing.T, bundlePath string) (*httptest.Server, func() []string) {
 	t.Helper()
 	data, err := os.ReadFile(bundlePath)
@@ -60,7 +56,6 @@ func fakeBundleServer(t *testing.T, bundlePath string) (*httptest.Server, func()
 			}
 			mu.Unlock()
 			if strings.HasPrefix(rng, "bytes=") {
-				// El rango llega como "bytes=N-": quitar el sufijo "-" antes de parsear.
 				spec := strings.TrimSuffix(strings.TrimPrefix(rng, "bytes="), "-")
 				n, err := strconv.ParseInt(spec, 10, 64)
 				if err != nil || n < 0 || n >= int64(len(data)) {
@@ -82,7 +77,6 @@ func fakeBundleServer(t *testing.T, bundlePath string) (*httptest.Server, func()
 	return srv, snapshot
 }
 
-// withServerURL fija GITGOST_SERVER para que serverBase() apunte al fake.
 func withServerURL(t *testing.T, u string) {
 	t.Helper()
 	old := os.Getenv("GITGOST_SERVER")
@@ -96,7 +90,6 @@ func withServerURL(t *testing.T, u string) {
 	})
 }
 
-// withHome fija GITGOST_HOME (directorio de datos del cliente) a un tempdir.
 func withHome(t *testing.T, dir string) {
 	t.Helper()
 	old := os.Getenv("GITGOST_HOME")
@@ -110,7 +103,6 @@ func withHome(t *testing.T, dir string) {
 	})
 }
 
-// makeBundle crea un bundle git real desde un repo de prueba.
 func makeBundle(t *testing.T) string {
 	t.Helper()
 	src := buildRepo(t, 3)
@@ -121,8 +113,6 @@ func makeBundle(t *testing.T) string {
 	return bundle
 }
 
-// TestRunCloneBundleFull valida el flujo completo de Fase 2: job remoto,
-// descarga del bundle, materialización con git clone y origin original.
 func TestRunCloneBundleFull(t *testing.T) {
 	bundle := makeBundle(t)
 	srv, _ := fakeBundleServer(t, bundle)
@@ -168,9 +158,6 @@ func TestRunCloneBundleFull(t *testing.T) {
 	}
 }
 
-// TestDownloadBundleResumes valida el resume por bytes: con la primera mitad
-// del bundle en cache, la descarga pide Range desde ese punto y el archivo
-// final coincide con el hash esperado.
 func TestDownloadBundleResumes(t *testing.T) {
 	bundle := makeBundle(t)
 	data, err := os.ReadFile(bundle)
@@ -195,7 +182,6 @@ func TestDownloadBundleResumes(t *testing.T) {
 		t.Fatalf("Get: %v", err)
 	}
 
-	// Checkpoint: primera mitad del bundle ya descargada en cache.
 	dest := bundleCachePath(job.ID)
 	if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
 		t.Fatalf("crear cache: %v", err)
@@ -225,8 +211,6 @@ func TestDownloadBundleResumes(t *testing.T) {
 	}
 }
 
-// TestDownloadBundleHashMismatchRetries valida que un bundle corrupto (mismo
-// tamaño, hash distinto) se descarta y se descarga de nuevo una vez.
 func TestDownloadBundleHashMismatchRetries(t *testing.T) {
 	bundle := makeBundle(t)
 	data, err := os.ReadFile(bundle)

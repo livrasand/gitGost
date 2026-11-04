@@ -43,17 +43,10 @@ git push gost fix-typo:main
 
 That’s it. No login, token, name, or email required — gitGost provides strong anonymity features, but not perfect anonymity — see the [Threat Model](#threat-model).
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/livrasand/gitGost)
-[![Docs](https://img.shields.io/badge/docs-mintlify-blue?logo=readthedocs&logoColor=white)](https://mintlify.wiki/livrasand/gitGost/introduction)
-[![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/livrasand)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Security Responsible Disclosure](https://img.shields.io/badge/Security-Responsible%20Disclosure-yellow)](SECURITY.md)
 [![Legal Notice](https://img.shields.io/badge/Legal-Notice%20%26%20CLA-red)](LEGAL.md)
-[![Powered by Go](https://img.shields.io/badge/Powered%20by-Go-00ADD8.svg?logo=go)](https://go.dev)
-[![Privacy First](https://img.shields.io/badge/Privacy-First-59316b)](https://github.com/livrasand/gitGost)
 [![GitHub repo size](https://img.shields.io/github/repo-size/livrasand/gitGost)](https://github.com/livrasand/gitGost)
-[![Coffee Drunk](https://img.shields.io/badge/coffee%20drunk-1%20cup&#47;d-6F4E37)](https://github.com/livrasand/gitGost)
-[![GitHub Sponsors](https://img.shields.io/github/sponsors/livrasand?label=GitHub%20Sponsors)](https://github.com/sponsors/livrasand)
 <a href="https://github.com/badges/shields/pulse" alt="Activity">
         <img src="https://img.shields.io/github/commit-activity/m/livrasand/gitGost" /></a>
   <img
@@ -84,61 +77,6 @@ That’s it. No login, token, name, or email required — gitGost provides stron
 > [View PR ↗](https://github.com/mehdi7129/inky-photo-frame/pull/3) *(Example from mehdi7129/inky-photo-frame)*
 
 ⭐ Star this repo if you believe developers deserve the right to contribute anonymously.
-
-## Features
-
-| Feature                     | Description                                                                 |
-|-----------------------------|-----------------------------------------------------------------------------|
-| **Total Anonymity**         | Strips author name, email, timestamps, and all identifying metadata. PRs created by neutral `@gitgost-anonymous` service account. |
-| **One-Command Setup**       | Just `git remote add gost <url>` – no accounts, tokens, or browser extensions. |
-| **Battle-tested Security**  | Rate limiting, repository size caps, commit validation. Written in pure Go with minimal dependencies – fully auditable. |
-| **Works Everywhere**        | Terminal, CI/CD, Docker, scripts – any public GitHub repo, anywhere Git runs. |
-| **Anonymous Repo Browser**  | Browse code, files, branches, commits, releases, issues, pull requests, discussions and wikis across GitHub, GitLab and Codeberg — no account needed. |
-| **Anonymous Contributions** | Push code and open pull requests without exposing your identity; open anonymous issues and comment on issues, PRs and GitHub Discussions. |
-| **Open Source & AGPL**      | 100% transparent. Fork it, audit it, host it yourself.                     |
-
-## Web and Android Interface
-
-gitGost also includes a privacy-first web interface for browsing and contributing to repositories across multiple Git forges — no account required.
-
-| Category | Features |
-|----------|----------|
-| **Explore** | Trending repositories, recently updated projects, popular repositories, users, stars, repository discovery |
-| **Repository** | Repository overview, README rendering, license, languages, stars, forks, releases, tags, contributors, packages, repository statistics |
-| **Code Browser** | Browse files and directories, syntax highlighting, Markdown rendering, latest commit per file |
-| **Commits** | Commit history, author, date, commit message, commit hash |
-| **Branches** | Browse branches, default branch, protected branches |
-| **Releases** | Browse releases, release notes, latest release |
-| **Tags** | Browse repository tags |
-| **Packages** | Browse published packages |
-| **Wiki** | Browse project wikis with Markdown rendering |
-| **Issues** | Browse issues, create anonymous issues, anonymous issue comments |
-| **Pull Requests** | Browse pull requests, create anonymous pull requests, anonymous PR comments |
-| **GitHub Discussions** | Browse discussions, anonymous discussion comments |
-| **Search & Navigation** | Repository navigation, forge switching, tag browsing |
-| **Identity Protection** | Anonymous browsing (`goster`), no account required, metadata stripping, anonymous contributions |
-| **Supported Forges** | GitHub, GitLab, Codeberg (Bitbucket, Gitea and SourceHut planned) |
-
-## Quick Start
-
-```bash
-# 1. Add the remote (replace with any public repo)
-git remote add gost https://gitgost.livrasand.com/v1/gh/username/repo
-
-# 2. Create your branch and commit with a detailed message
-git checkout -b my-cool-fix
-git commit -am "fix: typo in documentation
-
-This commit fixes a grammatical error in the README.
-The word 'recieve' should be 'receive'."
-
-# 3. Push – PR opens anonymously
-git push gost my-cool-fix:main
-```
-
-Done. The PR appears instantly from `@gitgost-anonymous` with your commit message as the PR description.
-
-**Pro tip:** Write detailed commit messages! Your commit message becomes the PR description, allowing you to provide context while staying anonymous.
 
 ## Use Your Own Service Account
 
@@ -238,18 +176,6 @@ You can download the app from GitHub's [Releases](https://github.com/livrasand/g
   <img src="./web/assets/phone-screenshots/6.jpeg" width="180" />
 </p>
 
-## Why developers love gitGost
-
-> “Your commit history shouldn’t be an HR liability forever.”
-
-- No permanent public record of your activity  
-- Safely contribute to controversial projects (employer or country doesn’t like it? no problem)  
-- Stop email harvesting & doxxing from public commits  
-- Fix that one annoying typo without attaching your name for eternity  
-- Be a ghost when you want to be
-
-Built for developers who actually care about privacy.
-
 ## 💸 Donations
 
 gitGost is a non-profit project run entirely by volunteers, not employees.
@@ -283,93 +209,9 @@ error: push rejected: repository has opted out of gitGost
 
 If the file does not exist or `DENY_ALL` is not set, contributions are allowed by default.
 
-## Legitimate Use Cases
+## Repository Policy & Threat Model
 
-gitGost is intended for responsible, good-faith contributions where identity exposure is unnecessary or undesirable.
-
-Examples include:
-
-Fixing typos or documentation errors without creating a permanent contribution record
-Contributing to projects that may conflict with employer policies
-Participating in politically sensitive or controversial repositories
-Reducing exposure to email harvesting and scraping
-Experimenting or testing changes without attaching personal metadata
-Contributing from jurisdictions where visibility may create risk
-
-gitGost is designed to enable privacy — not remove accountability from the review process.
-
-All pull requests are public and subject to maintainer approval.
-
-## When NOT to use gitGost
-
-Do not use gitGost for:
-
-Harassment or abuse
-Spam or automated PR flooding
-Evading bans or moderation
-Submitting malicious code
-Avoiding legal responsibility
-Circumventing repository contribution policies
-
-gitGost enforces rate limits, validation checks, and repository constraints. Abuse attempts will be mitigated.
-
-If your goal is to harm, disrupt, or deceive — this project is not for you.
-
-## Threat Model
-
-gitGost is designed to protect against common identification threats in contributions to public repos, but does not offer perfect anonymity. Below details what it protects against, what it does not, who it protects against, and key assumptions.
-
-For a terse, user-facing view of guarantees and data retention, see [Privacy Guarantees](Privacy%20Guarantees.md).
-
-### gitGost protects against:
-
-- Public exposure of name and email in commits
-- Direct association between personal GitHub account and PR
-- Passive metadata collection in public repos
-- Permanent history of minor contributions
-
-### gitGost does NOT protect against:
-
-- IP identification (using VPN/Tor is recommended)
-- Code style analysis (stylometry)
-- Advanced temporal correlation
-- Targeted deanonymization by adversaries with resources
-
-### Considered adversaries
-
-- Recruiters / HR
-- Hostile maintainers
-- Email scrapers
-- Governments or companies with basic monitoring
-
-### Not considered adversaries
-
-- Nation states with infrastructure access
-- Actors with active user surveillance
-- Deep forensic code style analysis
-
-### Explicit assumptions
-
-gitGost assumes the user:
-
-- Uses a trustworthy network (VPN / Tor)
-- Does not reuse unique phrases or identifiable style
-- Does not mix anonymous and personal contributions to the same repo
-- Understands that perfect anonymity does not exist
-
-For the full model, see [THREAT_MODEL.md](THREAT_MODEL.md). For more operational details, see [SECURITY.md](SECURITY.md).
-
-## Security & Limits (we’re not reckless)
-
-- Max 5 PRs/IP/hour
-- Repository size ≤ 500 MB
-- Commit size ≤ 10 MB
-- Full validation of refs and objects
-- No persistence of your data
-
-> **GitHub only:** Due to GitHub's platform limits, fork repositories created by gitGost are manually deleted to stay under the 40,000-repository cap. This is a GitHub-specific constraint and does not affect functionality.
-
-Everything is designed to prevent abuse while keeping you anonymous.
+See [USAGE_POLICY.md](USAGE_POLICY.md) for repository opt-out, legitimate use cases, restrictions, threat model, and security limits.
 
 ## gitGost for Resilient Networking
 
@@ -468,7 +310,7 @@ My goal isn't to change how Git works.
 
 My goal is to make Git more resilient when the network isn't.
 
-# gitGost Forge is now [Espresso](https://github.com/livrasand/espresso). Here's what that means.
+## gitGost Forge is now [Espresso](https://github.com/livrasand/espresso). Here's what that means.
 
 gitGost Forge is now Espresso. Same mission, new name: keep your Git repositories on hardware you own and control. Your code, your device, your independence.
 
@@ -642,200 +484,6 @@ torsocks git push gost my-branch:main
 
 WSL2 has its own network stack separate from Windows, so anonymity is preserved correctly.
 
-## Made with ❤️ for privacy
-
-## Service Administration
-
-### Panic button — suspend and restore the service
-
-If abusive activity is detected (bot submissions, coordinated spam), you can suspend the service immediately. While suspended, all pushes are rejected with an explanatory message and the site shows a banner.
-
-**Suspend the service:**
-
-```bash
-curl -X POST https://gitgost.livrasand.com/admin/panic \
-  -H "Content-Type: application/json" \
-  -d '{"password":"<PANIC_PASSWORD>","active":true}'
-```
-
-**Restore the service:**
-
-```bash
-curl -X POST https://gitgost.livrasand.com/admin/panic \
-  -H "Content-Type: application/json" \
-  -d '{"password":"<PANIC_PASSWORD>","active":false}'
-```
-
-> **Note:** If you receive a ntfy alert with action buttons (Activate Panic / Deactivate Panic), those buttons use single-use tokens valid for **10 minutes**. If the tokens expire before you tap them, use the `curl` commands above with your `PANIC_PASSWORD` — those always work.
-
-**Handy shell aliases** (add to your `~/.zshrc` or `~/.bashrc`):
-
-```bash
-export PANIC_PASSWORD="your-password-here"
-
-alias gitgost-suspend='curl -s -X POST https://gitgost.livrasand.com/admin/panic \
-  -H "Content-Type: application/json" \
-  -d "{\"password\":\"$PANIC_PASSWORD\",\"active\":true}"'
-
-alias gitgost-restore='curl -s -X POST https://gitgost.livrasand.com/admin/panic \
-  -H "Content-Type: application/json" \
-  -d "{\"password\":\"$PANIC_PASSWORD\",\"active\":false}"'
-```
-
-Then simply run `gitgost-restore` to bring the service back online.
-
-### Maintenance mode — full 503 page for scrapers
-
-While panic mode only suspends pushes and shows a banner, **maintenance mode** blocks the whole web surface with a `503` NotABug-style page (`web/maintenance.html`) and `Retry-After` / `X-Robots-Tag: noindex` headers — designed to shed relentless AI scrapers while the app keeps running (and logging their traffic).
-
-Still available in maintenance mode:
-
-- **git access**: `clone`/`fetch` work as usual; `push` is rejected with the suspension message
-- `/health`, `/api/status` (used by the page to auto-recover), `/admin/*` (to restore), `/assets/*` (logo/favicon)
-
-Blocked: everything else — API paths (`/api/`, `/v1/`, `/v2/`, `/node/`) return `{"error":"maintenance","retry_after":300}`, browsers get the maintenance page.
-
-**Activate at startup** (before traffic hits the app):
-
-```bash
-MAINTENANCE_MODE=true   # env var / fly secrets set MAINTENANCE_MODE=true
-```
-
-**Toggle at runtime** (no restart, uses the panic password or a ntfy action token):
-
-```bash
-curl -X POST https://gitgost.livrasand.com/admin/panic \
-  -H "Content-Type: application/json" \
-  -d '{"password":"<PANIC_PASSWORD>","maintenance":true}'
-# restore everything:
-curl -X POST https://gitgost.livrasand.com/admin/panic \
-  -H "Content-Type: application/json" \
-  -d '{"password":"<PANIC_PASSWORD>","maintenance":false}'
-```
-
-Notes:
-- Enabling maintenance also forces panic mode (pushes blocked); disabling maintenance with `"active":false` clears both.
-- `GET /api/status` reports `{"panic_mode":..., "maintenance_mode":..., "sponsor_banner":...}`; the maintenance page polls it every hour and reloads when maintenance ends.
-- The page also self-refreshes via `<meta http-equiv="refresh" content="300">`.
-
-Handy aliases:
-
-```bash
-alias gitgost-maint-on='curl -s -X POST https://gitgost.livrasand.com/admin/panic \
-  -H "Content-Type: application/json" \
-  -d "{\"password\":\"$PANIC_PASSWORD\",\"active\":true,\"maintenance\":true}"'
-
-alias gitgost-maint-off='curl -s -X POST https://gitgost.livrasand.com/admin/panic \
-  -H "Content-Type: application/json" \
-  -d "{\"password\":\"$PANIC_PASSWORD\",\"active\":false,\"maintenance\":false}"'
-```
-
-### Donation banner — show or hide the sponsor banner
-
-The site can display a "sustained by you" banner at the top, pointing to [GitHub Sponsors](https://github.com/sponsors/livrasand). It is purely informational: it never blocks pushes and can be toggled without restarting the service. Visitors can dismiss it with the ✕ button; the banner then stays hidden in their browser for 30 days (`localStorage`).
-
-**Show the banner:**
-
-```bash
-curl -X POST https://gitgost.livrasand.com/admin/sponsor \
-  -H "Content-Type: application/json" \
-  -d '{"password":"<PANIC_PASSWORD>","active":true}'
-# → {"sponsor_banner":true,"state":"activated"}
-```
-
-**Hide the banner:**
-
-```bash
-curl -X POST https://gitgost.livrasand.com/admin/sponsor \
-  -H "Content-Type: application/json" \
-  -d '{"password":"<PANIC_PASSWORD>","active":false}'
-```
-
-**Persist across restarts** (env var / fly secret):
-
-```bash
-SPONSOR_BANNER=true
-```
-
-Handy aliases:
-
-```bash
-alias gitgost-sponsor-on='curl -s -X POST https://gitgost.livrasand.com/admin/sponsor \
-  -H "Content-Type: application/json" \
-  -d "{\"password\":\"$PANIC_PASSWORD\",\"active\":true}"'
-
-alias gitgost-sponsor-off='curl -s -X POST https://gitgost.livrasand.com/admin/sponsor \
-  -H "Content-Type: application/json" \
-  -d "{\"password\":\"$PANIC_PASSWORD\",\"active\":false}"'
-```
-
-### Announcement banners (ntfy / UnifiedPush)
-
-The web UI can show one global announcement banner at the top of every page (including the maintenance page). Announcements are delivered over a **private ntfy topic** — the server only subscribes; you publish from the ntfy app, CLI, or web UI. The state lives purely in server memory (no database): after a restart, the subscriber waits for the next message.
-
-**Server configuration** (see `.env.example`):
-
-```bash
-NTFY_ANNOUNCE_TOPIC=my-long-random-topic-value    # empty = feature disabled
-NTFY_ANNOUNCE_TOKEN=tk_yourntfytoken              # optional, if your ntfy requires auth
-NTFY_BASE_URL=https://ntfy.sh                     # defaults to ntfy.sh
-```
-
-**Publishing an announcement:**
-
-```bash
-curl -d '{
-  "action":"post",
-  "type":"warning",
-  "title":"GitHub issues unavailable",
-  "message":"Issue pages may not load correctly while GitHub recovers.",
-  "link":"https://github.com/livrasand/gitGost/issues/219",
-  "expires_at":"2026-09-16T23:00:00Z"
-}' -H "Title: announcement" ntfy.sh/my-long-random-topic-value
-```
-
-Fields:
-
-- `action`: `post` to show a banner, `clear` to remove the active one.
-- `type`: `note` (blue, default), `tip` (green), `important` (purple), `warning` (amber), `caution` (red).
-- `title` / `message`: required, sanitized HTML-escaped on the browser side; 120/400 char limits.
-- `link`: optional; only `https://github.com/livrasand/gitGost/issues|pull/<number>` links are accepted.
-- `expires_at`: optional RFC3339 timestamp; defaults to 24h, capped at 7 days.
-
-**How it stays private:** `GET /api/announcement` returns `204` (silent) or a `200` JSON with only the sanitized payload (`id`, `type`, `title`, `message`, `link`, `expires_at`) with `Cache-Control: no-store`. The topic name, token, and ntfy infrastructure are never exposed to the browser. Dismissal is stored per-announcement in the visitor's `localStorage` (no cookies); stale dismiss keys are pruned on each fetch. Endpoints are rate limited at 30 requests/minute/IP, and the API works during maintenance mode so the banner stays visible on the maintenance page.
-
-> **Note:** use a long random topic (32+ chars). Without `NTFY_ANNOUNCE_TOKEN`, anyone who learns the topic could publish banners on your instance.
-
-**Operational cheat sheet:**
-
-```bash
-# Show a banner (must run while the server is streaming the topic)
-curl -d '{"action":"post","type":"warning","title":"GitHub issues unavailable","message":"Issue and pull request pages may not load correctly.","link":"https://github.com/livrasand/gitGost/issues/XXX"}' \
-  -H "Title: announcement" ntfy.sh/<NTFY_ANNOUNCE_TOPIC>
-
-# Remove the active banner
-curl -d '{"action":"clear"}' ntfy.sh/<NTFY_ANNOUNCE_TOPIC>
-```
-
-Gotchas worth knowing:
-
-- The subscriber only receives messages published **after** it connects. Announcements sent while the server was restarting (or during downtime) are not replayed by design — just publish the message again.
-- `GET /api/announcement` returns `204` while no announcement is active. After a `post`, it returns `200` with the JSON and the server logs `announcement: active …`.
-- The browser fetches once per page load. Visitors hide a banner with the ✕ and it stays hidden for that announcement only; publishing a `clear` → new `post` (different ID) makes it reappear for everyone.
-
-### Close abusive PRs (rollback burst)
-
-After a burst attack, close all PRs created during the attack window:
-
-```bash
-curl -X POST https://gitgost.livrasand.com/admin/rollback \
-  -H "Content-Type: application/json" \
-  -d '{"password":"<PANIC_PASSWORD>"}'
-# → {"closed": 12, "failed": 0, "closed_urls": [...]}
-```
-
-This closes up to 2 hours of recorded PRs in parallel via the GitHub API. PRs older than 2 hours are not affected.
-
 ## Community Integrations
 
 > Want to add your project? Open a pull request.
@@ -846,7 +494,7 @@ This closes up to 2 hours of recorded PRs in parallel via the GitHub API. PRs ol
 
 ## Disclaimer
 
-_gitGost does not host any content. All content on gitGost is from GitHub, GitLab and Codeberg. GitHub is a trademark of GitHub, Inc. GitLab es a trademark of GitLab Inc. Codeberg is a trademark of Codeberg e.V._
+_gitGost does not host any content. All content on gitGost is from GitHub, GitLab, Codeberg and Espresso. GitHub is a trademark of GitHub, Inc. GitLab es a trademark of GitLab Inc. Codeberg is a trademark of Codeberg e.V. Espresso is a trademark of Espresso. Git is a trademark of the [Software Freedom Conservancy](http://sfconservancy.org/)._
 
 ### Political Neutrality and Legal Compliance
 

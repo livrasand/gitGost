@@ -11,10 +11,6 @@ import (
 	"github.com/livrasand/gitGost/internal/tokenpool"
 )
 
-// Historial de un archivo (vista tipo GitHub): lista paginada de commits que
-// tocaron el path indicado. Reutiliza el listado de commits del blame pero con
-// paginación real por página, para poder mostrar más allá del límite del blame.
-
 const (
 	fileHistoryPerPage    = 30
 	fileHistoryMaxPerPage = 100
@@ -77,8 +73,6 @@ func FileHistoryHandler(c *gin.Context) {
 	})
 }
 
-// listPathCommits lista los commits que tocaron un archivo, con paginación.
-// page empieza en 1; blame usa esta misma función con page=1.
 func listPathCommits(client *http.Client, provider, owner, repo, path, ref string, perPage, page int) ([]blameCommitInfo, error) {
 	q := url.Values{}
 	q.Set("path", path)
@@ -172,7 +166,7 @@ func listPathCommits(client *http.Client, provider, owner, repo, path, ref strin
 			out = append(out, blameCommitInfo{Sha: r.Id, Author: r.AuthorName, Date: date, Message: msg})
 		}
 		return out, nil
-	default: // cb (Gitea)
+	default:
 		q.Set("limit", fmt.Sprint(perPage))
 		if page > 1 {
 			q.Set("page", fmt.Sprint(page))

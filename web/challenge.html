@@ -423,8 +423,6 @@
             var retryEl = $("challenge-retry");
             var solveTimer = null, watchdog = null, t0 = 0, phase = "idle", runId = 0;
 
-            // Only relative same-origin paths (no //host, /\host, scheme:...,
-            // ?..., or /challenge.html so the flow does not restart).
             var sameOriginNextPattern = /^\/(?![a-z][a-z0-9+\-.]*:|\/\/|\\)/i;
             var params = new URLSearchParams(window.location.search);
             var next = params.get("next") || "/";
@@ -463,9 +461,6 @@
             }
             function submitGate(token, kind) {
                 setStatus("Confirming with the server…");
-                // The proof-of-work was solved against Menta; here the proof
-                // is only handed to gitGost so it can issue the session cookie
-                // (a single server-to-server call to Menta).
                 var payload = kind === "shield"
                     ? { shield_clearance: token }
                     : { captcha_token: token };
@@ -508,12 +503,6 @@
                 solveTimer = window.setInterval(function () {
                     if (myRunId === runId) tick();
                 }, 500);
-                // The challenge is solved in the browser against Menta:
-                //   1) Menta widget against its own API (adaptive PoW),
-                //   2) Menta universal /shield flow (without registering the
-                //      domain in Menta),
-                //   3) gitGost local proxy, only if the browser cannot reach
-                //      Menta.
                 window.gitgostCaptcha.solve({
                     path: window.location.pathname + window.location.search,
                     allowShield: true
@@ -532,8 +521,6 @@
 
             retryEl.addEventListener("click", function () {
                 if (phase !== "idle") return;
-                // Si la inicialización falló (no se pudo cargar el SDK ni
-                // contactar con Menta), se reintenta antes de resolver.
                 if (window.gitgostCaptcha && window.gitgostCaptcha.error) {
                     window.gitgostCaptcha.init().then(function () { runAttempt(); });
                     return;
@@ -541,12 +528,6 @@
                 runAttempt();
             });
 
-            // La cookie lleva un HMAC que el navegador no puede validar, así que
-            // se pregunta al servidor si sigue siendo válida. Si el servidor la
-            // ha borrado (clave rotada, caducada) se resuelve el challenge otra
-            // vez; si sigue siendo válida se va al destino. Sin esta
-            // comprobación una cookie caducada en el navegador provocaba un
-            // bucle infinito entre el destino y /challenge.html.
             function checkSession() {
                 fetch(apiBase() + "/api/captcha-gate/status", {
                     method: "GET",
@@ -559,8 +540,6 @@
                     if (data && data.cleared) { goNext(); return; }
                     startVerification();
                 }).catch(function () {
-                    // Sin estado no se puede decidir: se resuelve el challenge
-                    // (el servidor borra la cookie que no valida).
                     startVerification();
                 });
             }
@@ -569,15 +548,9 @@
                 window.gitgostCaptchaReady.then(function (enabled) {
                     if (!enabled) {
                         if (window.gitgostCaptcha && window.gitgostCaptcha.error) {
-                            // The verification service could not be reached: this
-                            // page is only served with the gate active, so
-                            // retrying is better than looping.
                             fail("Could not reach the verification service. Check your connection and try again.");
                             return;
                         }
-                        // This page is only served with the gate active; if the gate was
-                        // disabled while the client had the page open, just continue
-                        // to the destination.
                         goNext();
                         return;
                     }
@@ -587,8 +560,6 @@
                 });
             }
 
-            // Cookie present: the browser only knows its shape, not its
-            // validity, so the server has the last word.
             if (gateCookiePresent()) { checkSession(); return; }
 
             startVerification();

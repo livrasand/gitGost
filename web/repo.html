@@ -14,10 +14,6 @@
     <link rel="stylesheet" href="/assets/winui-scrollbar.css" />
     <link id="hljs-theme-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github.min.css" />
     <link id="hljs-theme-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github-dark.min.css" disabled />
-    <!-- El SDK de Menta lo carga /assets/captcha-loader.js: cargarlo aqui
-         ademas duplicaba la definicion de sus clases ("Can't create duplicate
-         variable: 'CapWidget'") y fijaba el widget contra Menta, que rechaza
-         los origenes no registrados. -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js" integrity="sha384-GdEWAbCjn+ghjX0gLx7/N1hyTVmPAjdC2OvoAA0RyNcAOhqwtT8qnbCxWle2+uJX" crossorigin="anonymous"></script>
     <script>if (typeof hljs !== 'undefined') hljs.configure({ ignoreUnescapedHTML: true });</script>
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js" integrity="sha384-QsSpx6a0USazT7nK7w8qXDgpSAPhFsb2XtpoLFQ5+X2yFN6hvCKnwEzN8M5FWaJb" crossorigin="anonymous"></script>
@@ -33,7 +29,6 @@
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11.16.1/dist/mermaid.min.js" integrity="sha384-aBQXj4hK6Jm05i7aQAsUV3bLdSUrHX1BGYfMB0166TtWt/RRaw+h0Eelme9OCOvy" crossorigin="anonymous"></script>
     <style>
         :root {
-            /* Paleta zen de openbin (tema claro) */
             --zen-paper: #f2f0e3;
             --zen-dark: #2e2e2e;
             --bg: var(--zen-paper);
@@ -3589,7 +3584,6 @@
         <div class="file-tree" id="file-tree"></div>
         <div class="code-panel" id="code-panel"></div>
 
-        <!-- Mobile sidebar panel (shown on small screens) -->
         <div class="mobile-sidebar-panel" id="mobile-sidebar-panel">
             <div class="msb-header" style="justify-content:flex-end;">
                 <button class="msb-close" onclick="closeMobileSidebar()" aria-label="Close">&times;</button>
@@ -11192,8 +11186,6 @@ const safeImgUrl = sanitizeHttpUrl(imageUrl);
         })();
     </script>
     <script src="/announcement.js"></script>
-    <!-- Menta SDK loader: it decides whether the gate is active and only then
-         injects the SDK (which defines the <menta-widget> custom element). -->
     <script src="/assets/captcha-loader.js"></script>
     <script>
         window.gitgostCaptchaToken = async function (id) {
@@ -11214,10 +11206,6 @@ const safeImgUrl = sanitizeHttpUrl(imageUrl);
         };
     </script>
     <script src="/ethicalmetrics.js" data-site-key="gitgost-repo"></script>
-    <!-- CAPTCHA gate anti-scraping: the backend requires the "gost_gate" cookie
-         (issued here after solving Menta) for the browsing endpoints.
-         Without a valid cookie there is no content: the first draw or the
-         24h expiry challenges again. -->
     <div id="gate-overlay" style="display:none;position:fixed;inset:0;z-index:2147483647;background:rgba(6,10,15,0.92);align-items:center;justify-content:center;padding:24px;">
         <div style="background:#0d1117;border:1px solid rgba(247,111,83,0.35);border-radius:16px;padding:28px;max-width:420px;width:100%;box-shadow:0 16px 38px rgba(0,0,0,.5);text-align:center;">
             <h2 style="margin:0 0 6px;font-size:20px;color:#f76f53;">Access verification</h2>
@@ -11227,8 +11215,6 @@ const safeImgUrl = sanitizeHttpUrl(imageUrl);
                 search. No accounts, no tracking cookies.
             </p>
             <div style="display:flex;justify-content:center;margin:0 0 12px;">
-                <!-- The proof-of-work is solved by /assets/captcha-loader.js
-                     through the local proxy: no Menta widget is created here. -->
             </div>
             <p id="gate-status" style="margin:0 0 10px;font-size:12px;color:#ffb4c4;min-height:16px;"></p>
             <button id="gate-submit" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;font-size:14px;cursor:pointer;">Continue</button>

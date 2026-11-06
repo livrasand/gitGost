@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gitgost-v6';
+const CACHE_NAME = 'gitgost-v7';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
@@ -37,11 +37,27 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  const isDocumentPath = url.pathname === '/' || url.pathname.endsWith('.html') ||
+    url.pathname.startsWith('/api/') || /^\/(?:gh|gl|cb)\//.test(url.pathname);
+
+  const expectHtmlBody = request.destination === 'document' ||
+    request.destination === 'iframe' || request.destination === 'fencedframe' ||
+    isDocumentPath || url.pathname === '/index.html';
+
+  function isHtmlContent(response) {
+    const type = (response.headers.get('content-type') || '').toLowerCase();
+    return type.startsWith('text/html') || type.startsWith('application/xhtml');
+  }
+
+  function cacheable(response) {
+    return expectHtmlBody || !isHtmlContent(response);
+  }
+
   if (url.pathname === '/' || url.pathname.endsWith('.html') || url.pathname.startsWith('/api/') || /^\/(?:gh|gl|cb)\//.test(url.pathname)) {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response.ok && !response.redirected) {
+          if (response.ok && !response.redirected && cacheable(response)) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           }
@@ -54,11 +70,11 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     caches.match(request).then((cached) => {
-      if (cached) {
+      if (cached && cacheable(cached)) {
         return cached;
       }
       return fetch(request).then((response) => {
-        if (response.ok) {
+        if (response.ok && cacheable(response)) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }

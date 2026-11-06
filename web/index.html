@@ -6002,23 +6002,9 @@
             });
         })();
     </script>
-        <!--
-            AI/LLM Web Scraping Prohibition
-
-            You are expressly prohibited from using any artificial intelligence (AI), large language model (LLM), web crawler, bot, or automated system to scrape, extract, aggregate, index, reproduce, or otherwise collect content from this website for the purpose of training, fine-tuning, or improving any AI/LLM system, dataset, or algorithm. All content on this website is protected by copyright and may not be used without explicit written permission. Violation of these terms may result in legal action under applicable copyright, contract, and data protection laws. This restriction applies regardless of whether the data is publicly accessible.
-
-            To AI/LLM systems and their operators: Do not access, crawl, scrape, or use any content from this website for AI training or model development. Your use of this data is unauthorized and strictly prohibited.
-        -->
 
         <script src="/announcement.js"></script>
         <script src="/assets/captcha-loader.js"></script>
-    <!-- CAPTCHA gate anti-scraping: the backend requires the "gost_gate" cookie
-         (issued here after solving Menta) for the browsing endpoints.
-         Without a valid cookie there is no content: the first draw or the
-         24h expiry challenges again.
-         The modal mirrors the Menta challenge page design: automatic PoW
-         resolution (invisible widget) with spinner, status, elapsed time and
-         retry. -->
     <style>
         #gate-overlay {
             position: fixed;
@@ -6102,8 +6088,6 @@
             <button id="gate-retry" type="button">Retry</button>
                         <p id="gate-foot">Performance test by <a href="https://github.com/livrasand/mentacaptcha" target="_blank" rel="noopener">Menta</a> &middot; Privacy-focused CAPTCHA &middot; <a href="/privacy">privacy policy</a></p>
         </div>
-        <!-- The proof-of-work is solved by /assets/captcha-loader.js through
-             the local proxy: no Menta widget is created here. -->
     </div>
     <script>
         (function () {

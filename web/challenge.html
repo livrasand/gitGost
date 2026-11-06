@@ -1,12 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-<!--
-    Lightweight challenge page for the anti-scraping gate (Menta-style flow):
-    the backend redirects here (302 /challenge.html?next=...) instead of
-    serving the full app when the visitor has no gost_gate session.
-    Only after solving the proof-of-work CAPTCHA are index/repo/profile
-    served, so an unverified visitor never loads nor runs the full app.
--->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -386,10 +379,6 @@
         </div>
     </footer>
 
-    <!-- El captcha se resuelve solo (proof-of-work) a traves del proxy de
-         mismo origen: /assets/captcha-loader.js no necesita un widget en el
-         DOM, asi que aqui no se inserta ninguno (Menta rechaza los origenes
-         que no tiene registrados y el widget abriria una sesion inutil). -->
     <script src="/assets/captcha-loader.js"></script>
     <script>
         (function () {
@@ -521,6 +510,10 @@
 
             retryEl.addEventListener("click", function () {
                 if (phase !== "idle") return;
+                if (!window.gitgostCaptchaReady) {
+                    recoverLoader();
+                    return;
+                }
                 if (window.gitgostCaptcha && window.gitgostCaptcha.error) {
                     window.gitgostCaptcha.init().then(function () { runAttempt(); });
                     return;
@@ -544,20 +537,46 @@
                 });
             }
 
+            function loadLoaderScript(cacheBust) {
+                return new Promise(function (resolve, reject) {
+                    var script = document.createElement("script");
+                    script.src = "/assets/captcha-loader.js" +
+                        (cacheBust ? "?v=" + String(Date.now()) : "");
+                    script.onload = function () { resolve(); };
+                    script.onerror = function () { reject(new Error("loader-load-failed")); };
+                    (document.head || document.documentElement).appendChild(script);
+                });
+            }
+            function recoverLoader() {
+                loadLoaderScript(true).then(function () {
+                    if (window.gitgostCaptchaReady) startVerification();
+                    else fail("Could not reach the verification service. Check your connection and try again.");
+                }).catch(function () {
+                    fail("Could not reach the verification service. Check your connection and try again.");
+                });
+            }
+
             function startVerification() {
-                window.gitgostCaptchaReady.then(function (enabled) {
-                    if (!enabled) {
-                        if (window.gitgostCaptcha && window.gitgostCaptcha.error) {
-                            fail("Could not reach the verification service. Check your connection and try again.");
+                var ready = window.gitgostCaptchaReady ||
+                    (window.gitgostCaptcha && typeof window.gitgostCaptcha.init === "function" &&
+                        window.gitgostCaptcha.init());
+                if (ready) {
+                    ready.then(function (enabled) {
+                        if (!enabled) {
+                            if (window.gitgostCaptcha && window.gitgostCaptcha.error) {
+                                fail("Could not reach the verification service. Check your connection and try again.");
+                                return;
+                            }
+                            goNext();
                             return;
                         }
-                        goNext();
-                        return;
-                    }
-                    runAttempt();
-                }).catch(function () {
-                    fail("Could not initialize the verification. Check your connection and try again.");
-                });
+                        runAttempt();
+                    }).catch(function () {
+                        fail("Could not initialize the verification. Check your connection and try again.");
+                    });
+                    return;
+                }
+                recoverLoader();
             }
 
             if (gateCookiePresent()) { checkSession(); return; }

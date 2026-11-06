@@ -125,11 +125,6 @@
 }
 
 .markdown-body {
-  /** CSS default easing. Use for hover state changes and micro-interactions. */
-  /** Accelerating motion. Use for elements exiting the viewport (moving off-screen). */
-  /** Smooth acceleration and deceleration. Use for elements moving or morphing within the viewport. */
-  /** Decelerating motion. Use for elements entering the viewport or appearing on screen. */
-  /** Constant motion with no acceleration. Use for continuous animations like progress bars or loaders. */
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
   margin: 0;
@@ -1245,4 +1240,3 @@
 .markdown-body .highlight pre:has(+.zeroclipboard-container) {
   min-height: 52px;
 }
-

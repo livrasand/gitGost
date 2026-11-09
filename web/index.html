@@ -6004,230 +6004,27 @@
     </script>
 
         <script src="/announcement.js"></script>
-        <script src="/assets/captcha-loader.js"></script>
-    <style>
-        #gate-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 2147483647;
-            background: rgba(6, 10, 15, 0.92);
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-        }
-        .gate-card {
-            background: #0d1117;
-            border: 1px solid rgba(247, 111, 83, 0.35);
-            border-radius: 16px;
-            padding: 28px;
-            max-width: 420px;
-            width: 100%;
-            box-shadow: 0 16px 38px rgba(0, 0, 0, 0.5);
-            text-align: center;
-            box-sizing: border-box;
-        }
-        .gate-spinner {
-            width: 34px;
-            height: 34px;
-            margin: 0 auto 18px;
-            border: 3px solid rgba(159, 179, 255, 0.25);
-            border-top-color: #f76f53;
-            border-radius: 50%;
-            animation: gate-spin 0.8s linear infinite;
-        }
-        @keyframes gate-spin { to { transform: rotate(360deg); } }
-        #gate-heading {
-            margin: 0 0 10px;
-            font-size: 22px;
-            font-weight: 700;
-            color: #f76f53;
-            line-height: 1.3;
-        }
-        #gate-status {
-            margin: 0 0 10px;
-            font-size: 13px;
-            color: #9fb3ff;
-            line-height: 1.5;
-        }
-        #gate-status.gate-error { color: #ff6b6b; }
-        #gate-status.gate-ok { color: #3fb950; }
-        #gate-meta {
-            margin: 0 auto 18px;
-            font-size: 12px;
-            color: #7d92d8;
-            min-height: 1.3em;
-            max-width: 300px;
-            line-height: 1.4;
-        }
-        #gate-retry {
-            display: none;
-            margin: 0 auto;
-            padding: 10px 28px;
-            border-radius: 10px;
-            border: none;
-            background: linear-gradient(135deg, #ffa657, #ff6b6b);
-            color: #0d1117;
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        #gate-foot {
-            margin: 18px 0 0;
-            font-size: 11px;
-            color: #7d92d8;
-            line-height: 1.5;
-        }
-        #gate-foot a { color: #f76f53; text-decoration: none; }
-    </style>
-    <div id="gate-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="gate-heading">
-        <div class="gate-card">
-            <div id="gate-spinner" class="gate-spinner" aria-hidden="true"></div>
-            <h2 id="gate-heading">Verifying you are human</h2>
-            <p id="gate-status" aria-live="polite">This is a proof-of-work check: no cookies, no tracking, no puzzles to solve.</p>
-            <p id="gate-meta"></p>
-            <button id="gate-retry" type="button">Retry</button>
-                        <p id="gate-foot">Performance test by <a href="https://github.com/livrasand/mentacaptcha" target="_blank" rel="noopener">Menta</a> &middot; Privacy-focused CAPTCHA &middot; <a href="/privacy">privacy policy</a></p>
-        </div>
-    </div>
+    <div id="menta-gate-container"></div>
     <script>
         (function () {
             "use strict";
-            function $(id) { return document.getElementById(id); }
-            function gateCookiePresent() {
-                return document.cookie.split(";").some(function (part) {
-                    var trimmed = part.trim();
-                    if (trimmed.lastIndexOf("gost_gate=", 0) !== 0) return false;
-                    var value = trimmed.slice("gost_gate=".length);
-                    var pieces = value.split("|");
-                    if (pieces.length !== 3 || pieces[0] !== "g2") return false;
-                    var exp = parseInt(pieces[1], 10);
-                    if (!isFinite(exp) || exp <= Math.floor(Date.now() / 1000)) return false;
-                    return true;
-                });
-            }
-            var headingEl = null, statusEl = null, metaEl = null, spinnerEl = null, retryEl = null;
-            var solveTimer = null, watchdog = null, t0 = 0, phase = "idle", runId = 0;
-
-            function setStatus(message, kind) {
-                if (!statusEl) return;
-                statusEl.textContent = message;
-                statusEl.classList.toggle("gate-error", kind === "error");
-                statusEl.classList.toggle("gate-ok", kind === "ok");
-            }
-            function setHeading(text) { if (headingEl) headingEl.textContent = text; }
-            function setMeta(text) { if (metaEl) metaEl.textContent = text; }
-            function setSpinner(on) { if (spinnerEl) spinnerEl.style.display = on ? "" : "none"; }
-            function setRetry(on) { if (retryEl) retryEl.style.display = on ? "" : "none"; }
-            function clearTimers() {
-                if (solveTimer) { window.clearInterval(solveTimer); solveTimer = null; }
-                if (watchdog) { window.clearTimeout(watchdog); watchdog = null; }
-            }
-            function fail(message) {
-                runId++;
-                clearTimers();
-                setSpinner(false);
-                setRetry(true);
-                setHeading("Something went wrong");
-                setStatus(message || "We could not complete the verification. Please try again.", "error");
-                setMeta("");
-                phase = "idle";
-            }
-            function tick() {
-                setMeta("Solving a proof-of-work challenge in your browser… " + ((Date.now() - t0) / 1000).toFixed(1) + " s");
-            }
-            function submitGate(token, kind) {
-                setStatus("Confirming with the server…");
-                var payload = kind === "shield"
-                    ? { shield_clearance: token }
-                    : { captcha_token: token };
-                fetch(getApiBase() + "/api/captcha-gate", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "same-origin",
-                    body: JSON.stringify(payload)
-                }).then(function (response) {
-                    if (response.ok) {
-                        clearTimers();
-                        setSpinner(false);
-                        setRetry(false);
-                        setHeading("Verification complete");
-                        setStatus("Success! Reloading…", "ok");
-                        setMeta("Completed in " + ((Date.now() - t0) / 1000).toFixed(2) + " s");
-                        phase = "done";
-                        window.setTimeout(function () { window.location.reload(); }, 1200);
-                        return;
-                    }
-                    if (response.status === 429) fail("Too many requests. Please wait a moment and try again.");
-                    else fail("Verification failed. Please try again.");
-                }).catch(function () {
-                    fail("Network error. Please try again.");
-                });
-            }
-            function runAttempt() {
-                if (phase === "busy" || phase === "done") return;
-                phase = "busy";
-                var myRunId = ++runId;
-                setSpinner(true);
-                setRetry(false);
-                setHeading("Verifying you are human");
-                setStatus("This is a proof-of-work check: no cookies, no tracking, no puzzles to solve.");
-                setMeta("");
-                t0 = Date.now();
-                watchdog = window.setTimeout(function () {
-                    if (myRunId === runId && phase === "busy") fail("The verification took too long. Please try again.");
-                }, 90000);
-                solveTimer = window.setInterval(function () {
-                    if (myRunId === runId) tick();
-                }, 500);
-                if (!window.gitgostCaptcha || typeof window.gitgostCaptcha.solve !== "function") {
-                    fail("Could not initialize the verification. Check your connection and try again.");
-                    return;
-                }
-                window.gitgostCaptcha.solve({
-                    path: window.location.pathname + window.location.search,
-                    allowShield: true
-                }).then(function (result) {
-                    if (myRunId !== runId) return;
-                    clearTimers();
-                    phase = "idle";
-                    if (result && result.token) submitGate(result.token, result.kind);
-                    else fail("Verification failed. Please try again.");
-                }).catch(function () {
-                    if (myRunId !== runId) return;
-                    clearTimers();
-                    if (window.gitgostCaptcha && window.gitgostCaptcha.error) {
-                        fail("Could not initialize the verification. Check your connection and try again.");
-                        return;
-                    }
-                    fail("Verification failed. Please try again.");
-                });
-            }
-            if (window.gitgostCaptchaReady) window.gitgostCaptchaReady.then(function (enabled) {
-                var overlay = $("gate-overlay");
-                if (!overlay || gateCookiePresent()) return;
-                headingEl = $("gate-heading");
-                statusEl = $("gate-status");
-                metaEl = $("gate-meta");
-                spinnerEl = $("gate-spinner");
-                retryEl = $("gate-retry");
-                if (retryEl) retryEl.addEventListener("click", function () {
-                    if (window.gitgostCaptcha && window.gitgostCaptcha.error &&
-                        typeof window.gitgostCaptcha.init === "function") {
-                        window.gitgostCaptcha.init().then(function () { runAttempt(); });
-                        return;
-                    }
-                    runAttempt();
-                });
-                if (!enabled) {
-                    if (window.gitgostCaptcha && window.gitgostCaptcha.error) {
-                        overlay.style.display = "flex";
-                        fail("Could not initialize the verification. Check your connection and try again.");
-                    }
-                    return;
-                }
-                overlay.style.display = "flex";
-                runAttempt();
+            var hasCookie = document.cookie.split(";").some(function (part) {
+                return part.trim().indexOf("gost_gate=") === 0;
             });
+            if (hasCookie) return;
+            var mentaApi = "https://mentacaptchaeu.eu.pythonanywhere.com";
+            var mentaNext = "/api/captcha-gate/menta-callback?next=" + encodeURIComponent(window.location.pathname + window.location.search);
+            var script = document.createElement("script");
+            script.src = mentaApi + "/menta-challenge.js";
+            script.setAttribute("data-menta-api", mentaApi);
+            script.setAttribute("data-menta-next", mentaNext);
+            script.setAttribute("data-menta-i18n-checking", "Verificando que eres humano…");
+            script.setAttribute("data-menta-i18n-blocked-title", "Acceso denegado");
+            script.setAttribute("data-menta-i18n-blocked-detail", "No se pudo completar la verificación de Menta. Inténtalo de nuevo.");
+            script.onerror = function () {
+                console.error("Menta challenge script failed to load");
+            };
+            (document.head || document.documentElement).appendChild(script);
         })();
     </script>
 </body>

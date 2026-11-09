@@ -2645,86 +2645,27 @@
         })();
     </script>
     <script src="/announcement.js"></script>
-    <script src="/assets/captcha-loader.js"></script>
-    <div id="gate-overlay" style="display:none;position:fixed;inset:0;z-index:2147483647;background:rgba(6,10,15,0.92);align-items:center;justify-content:center;padding:24px;">
-        <div style="background:#0d1117;border:1px solid rgba(247,111,83,0.35);border-radius:16px;padding:28px;max-width:420px;width:100%;box-shadow:0 16px 38px rgba(0,0,0,.5);text-align:center;">
-            <h2 style="margin:0 0 6px;font-size:20px;color:#f76f53;">Access verification</h2>
-            <p style="margin:6px 0 16px;font-size:13px;color:#9fb3ff;line-height:1.5;">
-                gitGost is for humans. Complete the captcha once per
-                session (24&nbsp;h) to browse repositories, explore and
-                search. No accounts, no tracking cookies.
-            </p>
-            <div style="display:flex;justify-content:center;margin:0 0 12px;">
-            </div>
-            <p id="gate-status" style="margin:0 0 10px;font-size:12px;color:#ffb4c4;min-height:16px;"></p>
-            <button id="gate-submit" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;font-size:14px;cursor:pointer;">Continue</button>
-            <p style="margin:12px 0 0;font-size:11px;color:#9fb3ff;">Your IP is not shared with external forges. Read our <a href="/privacy" style="color:#f76f53;text-decoration:none;">privacy policy</a>.</p>
-        </div>
-    </div>
+    <div id="menta-gate-container"></div>
     <script>
         (function () {
             "use strict";
-            function gateCookiePresent() {
-                return document.cookie.split(";").some(function (part) {
-                    var trimmed = part.trim();
-                    if (trimmed.lastIndexOf("gost_gate=", 0) !== 0) return false;
-                    var value = trimmed.slice("gost_gate=".length);
-                    var pieces = value.split("|");
-                    if (pieces.length !== 3 || pieces[0] !== "g2") return false;
-                    var exp = parseInt(pieces[1], 10);
-                    if (!isFinite(exp) || exp <= Math.floor(Date.now() / 1000)) return false;
-                    return true;
-                });
-            }
-            function gateSubmit(token, kind) {
-                const status = document.getElementById("gate-status");
-                const button = document.getElementById("gate-submit");
-                const value = token;
-                if (!value) { gateSolve(); return; }
-                const payload = kind === "shield"
-                    ? { shield_clearance: value }
-                    : { captcha_token: value };
-                if (button) { button.disabled = true; }
-                if (status) status.textContent = "Verifying…";
-                fetch(getApiBase() + "/api/captcha-gate", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "same-origin",
-                    body: JSON.stringify(payload)
-                }).then(function (response) {
-                    if (response.ok) { window.location.reload(); return; }
-                    if (status) status.textContent = "Verification failed. Please try again.";
-                }).catch(function () {
-                    if (status) status.textContent = "Network error. Please try again.";
-                }).finally(function () {
-                    if (button) { button.disabled = false; }
-                });
-            }
-            function gateSolve() {
-                const status = document.getElementById("gate-status");
-                if (status) status.textContent = "Solving a proof-of-work challenge…";
-                if (!window.gitgostCaptcha || typeof window.gitgostCaptcha.solve !== "function") {
-                    if (status) status.textContent = "Could not initialize the verification. Check your connection and try again.";
-                    return;
-                }
-                window.gitgostCaptcha.solve({
-                    path: window.location.pathname + window.location.search,
-                    allowShield: true
-                }).then(function (result) {
-                    if (result && result.token) gateSubmit(result.token, result.kind);
-                    else if (status) status.textContent = "Verification failed. Please try again.";
-                }).catch(function () {
-                    if (status) status.textContent = "Could not initialize the verification. Check your connection and try again.";
-                });
-            }
-            if (window.gitgostCaptchaReady) window.gitgostCaptchaReady.then(function (enabled) {
-                const overlay = document.getElementById("gate-overlay");
-                const button = document.getElementById("gate-submit");
-                if (!enabled || !overlay || gateCookiePresent()) return;
-                overlay.style.display = "flex";
-                if (button) button.addEventListener("click", gateSolve);
-                gateSolve();
+            var hasCookie = document.cookie.split(";").some(function (part) {
+                return part.trim().indexOf("gost_gate=") === 0;
             });
+            if (hasCookie) return;
+            var mentaApi = "https://mentacaptchaeu.eu.pythonanywhere.com";
+            var mentaNext = "/api/captcha-gate/menta-callback?next=" + encodeURIComponent(window.location.pathname + window.location.search);
+            var script = document.createElement("script");
+            script.src = mentaApi + "/menta-challenge.js";
+            script.setAttribute("data-menta-api", mentaApi);
+            script.setAttribute("data-menta-next", mentaNext);
+            script.setAttribute("data-menta-i18n-checking", "Verificando que eres humano…");
+            script.setAttribute("data-menta-i18n-blocked-title", "Acceso denegado");
+            script.setAttribute("data-menta-i18n-blocked-detail", "No se pudo completar la verificación de Menta. Inténtalo de nuevo.");
+            script.onerror = function () {
+                console.error("Menta challenge script failed to load");
+            };
+            (document.head || document.documentElement).appendChild(script);
         })();
     </script>
 </body>

@@ -378,258 +378,29 @@
             <a href="/">home</a>
         </div>
     </footer>
-
-    <script src="/assets/captcha-loader.js"></script>
     <script>
         (function () {
             "use strict";
-            function $(id) { return document.getElementById(id); }
-            function apiBase() {
-                try {
-                    if (typeof window.Capacitor !== "undefined" &&
-                        window.Capacitor.isNativePlatform &&
-                        window.Capacitor.isNativePlatform()) {
-                        return "https://gitgost.livrasand.com";
-                    }
-                } catch (e) { /* native detection fails → same origin */ }
-                return window.location.origin;
-            }
-            function gateCookiePresent() {
-                return document.cookie.split(";").some(function (part) {
-                    var trimmed = part.trim();
-                    if (trimmed.lastIndexOf("gost_gate=", 0) !== 0) return false;
-                    var value = trimmed.slice("gost_gate=".length);
-                    var pieces = value.split("|");
-                    if (pieces.length !== 3 || pieces[0] !== "g2") return false;
-                    var exp = parseInt(pieces[1], 10);
-                    if (!isFinite(exp) || exp <= Math.floor(Date.now() / 1000)) return false;
-                    return true;
-                });
-            }
-
-            var statusEl = $("challenge-status"), metaEl = $("challenge-meta");
-            var headingEl = $("challenge-heading"), spinnerEl = $("challenge-spinner");
-            var retryEl = $("challenge-retry");
-            var solveTimer = null, watchdog = null, t0 = 0, phase = "idle", runId = 0;
-
-            var sameOriginNextPattern = /^\/(?![a-z][a-z0-9+\-.]*:|\/\/|\\)/i;
+            var hasCookie = document.cookie.split(";").some(function (part) {
+                return part.trim().indexOf("gost_gate=") === 0;
+            });
+            if (hasCookie) return;
             var params = new URLSearchParams(window.location.search);
             var next = params.get("next") || "/";
-            if (!sameOriginNextPattern.test(next) || next.length > 2048 ||
-                next.slice(0, "/challenge.html".length) === "/challenge.html") {
-                next = "/";
-            }
-            function goNext() { window.location.replace(next); }
-
-            function setStatus(message, kind) {
-                statusEl.textContent = message;
-                statusEl.classList.toggle("challenge-error", kind === "error");
-                statusEl.classList.toggle("challenge-ok", kind === "ok");
-            }
-            function setHeading(text) { headingEl.textContent = text; }
-            function setMeta(text) { metaEl.textContent = text; }
-            function setSpinner(on) { spinnerEl.style.display = on ? "" : "none"; }
-            function setRetry(on) { retryEl.style.display = on ? "" : "none"; }
-            function clearTimers() {
-                if (solveTimer) { window.clearInterval(solveTimer); solveTimer = null; }
-                if (watchdog) { window.clearTimeout(watchdog); watchdog = null; }
-            }
-            function fail(message) {
-                runId++;
-                clearTimers();
-                setSpinner(false);
-                setRetry(true);
-                setHeading("Something went wrong");
-                setStatus(message || "We could not complete the verification. Please try again.", "error");
-                setMeta("");
-                phase = "idle";
-            }
-            function tick() {
-                setMeta("Solving a proof-of-work challenge in your browser… " +
-                    ((Date.now() - t0) / 1000).toFixed(1) + " s");
-            }
-            function submitGate(token, kind) {
-                setStatus("Confirming with the server…");
-                var payload = kind === "shield"
-                    ? { shield_clearance: token }
-                    : { captcha_token: token };
-                fetch(apiBase() + "/api/captcha-gate", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "same-origin",
-                    body: JSON.stringify(payload)
-                }).then(function (response) {
-                    if (response.ok) {
-                        clearTimers();
-                        setSpinner(false);
-                        setRetry(false);
-                        setHeading("Verification complete");
-                        setStatus("Success! Redirecting…", "ok");
-                        setMeta("Completed in " + ((Date.now() - t0) / 1000).toFixed(2) + " s");
-                        phase = "done";
-                        window.setTimeout(goNext, 1200);
-                        return;
-                    }
-                    if (response.status === 429) fail("Too many requests. Please wait a moment and try again.");
-                    else fail("Verification failed. Please try again.");
-                }).catch(function () {
-                    fail("Network error. Please try again.");
-                });
-            }
-            function runAttempt() {
-                if (phase === "busy" || phase === "done") return;
-                phase = "busy";
-                var myRunId = ++runId;
-                setSpinner(true);
-                setRetry(false);
-                setHeading("Verifying you are human");
-                setStatus("This is a proof-of-work check: no cookies, no tracking, no puzzles to solve.");
-                setMeta("");
-                t0 = Date.now();
-                watchdog = window.setTimeout(function () {
-                    if (myRunId === runId && phase === "busy") fail("The verification took too long. Please try again.");
-                }, 90000);
-                solveTimer = window.setInterval(function () {
-                    if (myRunId === runId) tick();
-                }, 500);
-                window.gitgostCaptcha.solve({
-                    path: window.location.pathname + window.location.search,
-                    allowShield: true
-                }).then(function (result) {
-                    if (myRunId !== runId) return;
-                    clearTimers();
-                    phase = "idle";
-                    if (result && result.token) submitGate(result.token, result.kind);
-                    else fail("Verification failed. Please try again.");
-                }).catch(function () {
-                    if (myRunId !== runId) return;
-                    clearTimers();
-                    fail("Verification failed. Please try again.");
-                });
-            }
-
-            retryEl.addEventListener("click", function () {
-                if (phase !== "idle") return;
-                if (!window.gitgostCaptchaReady) {
-                    recoverLoader();
-                    return;
-                }
-                if (window.gitgostCaptcha && window.gitgostCaptcha.error) {
-                    window.gitgostCaptcha.init().then(function () { runAttempt(); });
-                    return;
-                }
-                runAttempt();
-            });
-
-            function checkSession() {
-                fetch(apiBase() + "/api/captcha-gate/status", {
-                    method: "GET",
-                    credentials: "same-origin",
-                    headers: { "Accept": "application/json" }
-                }).then(function (response) {
-                    if (!response.ok) throw new Error("status " + response.status);
-                    return response.json();
-                }).then(function (data) {
-                    if (data && data.cleared) { goNext(); return; }
-                    startVerification();
-                }).catch(function () {
-                    startVerification();
-                });
-            }
-
-            function loadLoaderScript(cacheBust) {
-                return new Promise(function (resolve, reject) {
-                    var script = document.createElement("script");
-                    script.src = "/assets/captcha-loader.js" +
-                        (cacheBust ? "?v=" + String(Date.now()) : "");
-                    script.onload = function () { resolve(); };
-                    script.onerror = function () { reject(new Error("loader-load-failed")); };
-                    (document.head || document.documentElement).appendChild(script);
-                });
-            }
-            function recoverLoader() {
-                loadLoaderScript(true).then(function () {
-                    if (window.gitgostCaptchaReady) startVerification();
-                    else fail("Could not reach the verification service. Check your connection and try again.");
-                }).catch(function () {
-                    fail("Could not reach the verification service. Check your connection and try again.");
-                });
-            }
-
-            function startVerification() {
-                var ready = window.gitgostCaptchaReady ||
-                    (window.gitgostCaptcha && typeof window.gitgostCaptcha.init === "function" &&
-                        window.gitgostCaptcha.init());
-                if (ready) {
-                    ready.then(function (enabled) {
-                        if (!enabled) {
-                            if (window.gitgostCaptcha && window.gitgostCaptcha.error) {
-                                fail("Could not reach the verification service. Check your connection and try again.");
-                                return;
-                            }
-                            goNext();
-                            return;
-                        }
-                        runAttempt();
-                    }).catch(function () {
-                        fail("Could not initialize the verification. Check your connection and try again.");
-                    });
-                    return;
-                }
-                recoverLoader();
-            }
-
-            if (gateCookiePresent()) { checkSession(); return; }
-
-            startVerification();
+            var mentaApi = "https://mentacaptchaeu.eu.pythonanywhere.com";
+            var mentaNext = "/api/captcha-gate/menta-callback?next=" + encodeURIComponent(next);
+            var script = document.createElement("script");
+            script.src = mentaApi + "/menta-challenge.js";
+            script.setAttribute("data-menta-api", mentaApi);
+            script.setAttribute("data-menta-next", mentaNext);
+            script.setAttribute("data-menta-i18n-checking", "Verificando que eres humano…");
+            script.setAttribute("data-menta-i18n-blocked-title", "Acceso denegado");
+            script.setAttribute("data-menta-i18n-blocked-detail", "No se pudo completar la verificación de Menta. Inténtalo de nuevo.");
+            script.onerror = function () {
+                console.error("Menta challenge script failed to load");
+            };
+            (document.head || document.documentElement).appendChild(script);
         })();
     </script>
-
-    <script>
-        (function () {
-            try {
-                var saved = localStorage.getItem("theme");
-                if (saved === "dark" || saved === "light") {
-                    document.documentElement.setAttribute("data-theme", saved);
-                }
-            } catch (e) {}
-        })();
-
-        function toggleTheme() {
-            var root = document.documentElement;
-            var mode = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
-            root.setAttribute("data-theme", mode);
-            try { localStorage.setItem("theme", mode); } catch (e) {}
-            closeCommandMenu();
-        }
-
-        var trigger = document.getElementById("command-trigger");
-        var menu = document.getElementById("command-menu");
-
-        function closeCommandMenu() {
-            if (!menu) return;
-            menu.hidden = true;
-            if (trigger) trigger.setAttribute("aria-expanded", "false");
-        }
-
-        if (trigger && menu) {
-            trigger.addEventListener("click", function (e) {
-                e.stopPropagation();
-                var open = menu.hidden;
-                menu.hidden = !open;
-                trigger.setAttribute("aria-expanded", String(open));
-            });
-
-            document.addEventListener("click", function (e) {
-                if (menu.hidden) return;
-                if (!menu.contains(e.target) && e.target !== trigger) closeCommandMenu();
-            });
-
-            document.addEventListener("keydown", function (e) {
-                if (e.key === "Escape") closeCommandMenu();
-            });
-        }
-    </script>
-    <script src="/announcement.js"></script>
 </body>
 </html>

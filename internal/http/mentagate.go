@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -28,6 +29,8 @@ const (
 	captchaGateCookieMaxAge  = 60 * 60 * 24
 	captchaGateCookieVersion = "g2"
 )
+
+var sameOriginNextPattern = regexp.MustCompile(`^/(?:[a-z][a-z0-9+\-.]*:|\/\/|\\)`)
 
 var (
 	captchaGateSecret atomic.Value
@@ -142,10 +145,11 @@ func gateDocumentChallengeRedirect(c *gin.Context) {
 }
 
 func serveDocumentWithGate(c *gin.Context, fullPath string) {
-	if !captchaGateClearance(c) {
-		gateDocumentChallengeRedirect(c)
-		return
-	}
+	// The document itself embeds menta-challenge.js which handles the
+	// challenge client-side. Serve the document regardless of cookie state;
+	// menta-challenge.js will show the Menta challenge when needed and the
+	// /api/captcha-gate/menta-callback endpoint will set the gost_gate cookie
+	// after a successful Menta verification.
 	c.File(fullPath)
 }
 
@@ -333,6 +337,19 @@ func CaptchaGateStatusHandler(c *gin.Context) {
 		"enabled": captchaGateEnabled(),
 		"cleared": captchaGateClearance(c),
 	})
+}
+
+func MentaCallbackHandler(c *gin.Context) {
+	next := c.Query("next")
+	if next == "" {
+		next = "/"
+	}
+	// Only allow local paths to prevent open redirects
+	if len(next) > 2048 || sameOriginNextPattern.MatchString(next) {
+		next = "/"
+	}
+	setCaptchaGateCookie(c, newGateCookieValue(), captchaGateCookieMaxAge)
+	c.Redirect(http.StatusFound, next)
 }
 
 func MentaCaptchaProxyHandler(c *gin.Context) {

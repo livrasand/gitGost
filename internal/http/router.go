@@ -438,6 +438,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/gl-wiki/:owner/:repo", proxyLimiter(), GitLabWikiProxyHandler)
 		api.POST("/captcha-gate", captchaLimiter(), CaptchaGateTokenHandler)
 		api.GET("/captcha-gate/status", gateStatusLimiter(), CaptchaGateStatusHandler)
+		api.GET("/captcha-gate/menta-callback", MentaCallbackHandler)
 		api.Any("/captcha/*path", captchaLimiter(), MentaCaptchaProxyHandler)
 	}
 

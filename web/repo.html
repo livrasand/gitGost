@@ -1618,11 +1618,6 @@
             gap: 0.4rem;
             min-width: 0;
         }
-        .reply-box menta-widget {
-            display: block;
-            max-width: 100%;
-            overflow-x: auto;
-        }
         .reply-textarea {
             width: 100%;
             min-height: 56px;
@@ -3783,10 +3778,6 @@
         }
         const API_BASE = getApiBase();
 
-        function captchaEndpoint() {
-            return (window.gitgostCaptcha && window.gitgostCaptcha.proxy) || (API_BASE + '/api/captcha');
-        }
-
 
         const nativeFetch = window.fetch.bind(window);
         function proxiedProviderFetch(input, opts = {}) {
@@ -4922,7 +4913,7 @@
             const tokenId = `token-issue-${num}`;
             const statusId = `status-issue-${num}`;
             const listId = `comments-${num}`;
-            const captchaId = `menta-issue-${num}`;
+            const captchaId = `issue-${num}`;
 
             const milestone = issue.milestone?.title ? `<span class="milestone-badge ${issue.milestone.state || 'open'}">${escHtml(issue.milestone.title)}</span>` : '';
             const reactions = issue.reactions || {};
@@ -4963,7 +4954,7 @@
                                     </div>
                                     <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
                                     <div class="reply-preview readme" id="preview-${replyId}" hidden></div>
-                                    <menta-widget id="${captchaId}" data-cap-api-endpoint="${captchaEndpoint()}" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+
                                     <div class="reply-footer">
                                         <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                         <span class="reply-status" id="${statusId}"></span>
@@ -5260,7 +5251,6 @@
                             </select>
                         </div>
                     </div>
-                    <menta-widget id="menta-bug" data-cap-api-endpoint="${captchaEndpoint()}" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                     </div>`;
         }
 
@@ -5310,7 +5300,6 @@
                                 <option value="">No milestone</option>
                             </select>
                         </div>
-                    <menta-widget id="menta-bug" data-cap-api-endpoint="${captchaEndpoint()}" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                             </div>`;
             } else {
                 const fields = Array.isArray(template.body) ? template.body.map((field, index) => bugRenderField(_bugSelectedIndex || 0, index, field)).join('') : '';
@@ -5339,7 +5328,6 @@
                                 <option value="">No milestone</option>
                             </select>
                         </div>
-                    <menta-widget id="menta-bug" data-cap-api-endpoint="${captchaEndpoint()}" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
                                             </div>`;
             }
 
@@ -5483,9 +5471,6 @@
             const assignee = assigneeEl?.value || '';
             const milestone = milestoneEl?.value || '';
 
-            const captchaToken = await window.gitgostCaptchaToken('menta-bug');
-            if (captchaToken === null) { if (statusEl) statusEl.textContent = 'Please complete the captcha'; return; }
-
             const title = titleEl?.value.trim();
             if (!title) { if (titleEl) titleEl.focus(); return; }
 
@@ -5505,7 +5490,7 @@
             if (btn) btn.disabled = true;
             if (statusEl) statusEl.textContent = 'Sending...';
             try {
-                const payload = { title, body, labels, captcha_token: captchaToken };
+                const payload = { title, body, labels };
                 if (assignee) payload.assignee = assignee;
                 if (milestone) payload.milestone = milestone;
                 const res = await fetch(`/v1/${rv.provider}/${encodeURIComponent(rv.owner)}/${encodeURIComponent(rv.repo)}/issues/anonymous`, {
@@ -5801,7 +5786,7 @@
                 const replyId = `reply-disc-${num}`;
                 const tokenId = `token-disc-${num}`;
                 const statusId = `status-disc-${num}`;
-                const captchaId = `menta-disc-${num}`;
+                const captchaId = `disc-${num}`;
 
                 const comments = (data.comments?.nodes || []).map(c => {
                     const cUser = c.author?.login || 'anonymous';
@@ -5841,7 +5826,7 @@
                                     <div class="reply-avatar"><img src="/assets/logos/noun-anonymous-6758229.svg" width="16" height="16" style="display:block;" /></div>
                                     <div class="reply-box">
                                         <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
-                                        <menta-widget id="${captchaId}" data-cap-api-endpoint="${captchaEndpoint()}" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+    
                                         <div class="reply-footer">
                                             <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                             <span class="reply-status" id="${statusId}"></span>
@@ -5889,13 +5874,11 @@
             const statusEl = document.getElementById(statusId);
             const body = textarea?.value.trim();
             if (!body) { if (statusEl) statusEl.textContent = 'write something first'; return; }
-            const captchaToken = captchaId ? await window.gitgostCaptchaToken(captchaId) : null;
-            if (captchaToken === null) { if (statusEl) statusEl.textContent = 'please complete the captcha'; return; }
             const btn = textarea?.closest('.reply-box')?.querySelector('.reply-send-btn');
             if (btn) btn.disabled = true;
             if (statusEl) statusEl.textContent = 'sending...';
             const savedToken = sessionStorage.getItem('comment_token') || '';
-            const payload = { body, captcha_token: captchaToken };
+            const payload = { body };
             const manualToken = tokenEl?.value.trim();
             const useToken = manualToken || savedToken;
             if (useToken) payload.user_token = useToken;
@@ -7811,13 +7794,11 @@ async function loadWiki(page) {
             const statusEl = document.getElementById(statusId);
             const body = textarea?.value.trim();
             if (!body) { if (statusEl) statusEl.textContent = 'write something first'; return; }
-            const captchaToken = captchaId ? await window.gitgostCaptchaToken(captchaId) : null;
-            if (captchaToken === null) { if (statusEl) statusEl.textContent = 'please complete the captcha'; return; }
             const btn = textarea?.closest('.reply-box')?.querySelector('.reply-send-btn');
             if (btn) btn.disabled = true;
             if (statusEl) statusEl.textContent = 'sending...';
             const savedToken = sessionStorage.getItem('comment_token') || '';
-            const payload = { body, captcha_token: captchaToken };
+            const payload = { body };
             const manualToken = tokenEl?.value.trim();
             const useToken = manualToken || savedToken;
             if (useToken) payload.user_token = useToken;
@@ -7924,7 +7905,7 @@ async function loadWiki(page) {
             const replyId  = `reply-pr-${num}`;
             const tokenId  = `token-pr-${num}`;
             const statusId = `status-pr-${num}`;
-            const captchaId = `menta-pr-${num}`;
+            const captchaId = `pr-${num}`;
 
             panel.innerHTML = `
                 <div class="issue-detail">
@@ -7955,7 +7936,7 @@ async function loadWiki(page) {
                                     </div>
                                     <textarea class="reply-textarea" id="${replyId}" placeholder="Reply..."></textarea>
                                     <div class="reply-preview readme" id="preview-${replyId}" hidden></div>
-                                    <menta-widget id="${captchaId}" data-cap-api-endpoint="${captchaEndpoint()}" data-cap-i18n-initial-state="I'm not a robot"></menta-widget>
+
                                     <div class="reply-footer">
                                         <input class="reply-token" id="${tokenId}" type="text" placeholder="token (optional)" />
                                         <span class="reply-status" id="${statusId}"></span>
@@ -11186,106 +11167,6 @@ const safeImgUrl = sanitizeHttpUrl(imageUrl);
         })();
     </script>
     <script src="/announcement.js"></script>
-    <script src="/assets/captcha-loader.js"></script>
-    <script>
-        window.gitgostCaptchaToken = async function (id) {
-            const w = document.getElementById(id);
-            if (!w) return '';
-            if (w.token) return w.token;
-            if (window.gitgostCaptcha && typeof window.gitgostCaptcha.solve === "function") {
-                try {
-                    const result = await window.gitgostCaptcha.solve({
-                        widget: w,
-                        path: window.location.pathname + window.location.search,
-                        allowShield: true
-                    });
-                    if (result && result.token) return result.token;
-                } catch (e) { /* sin token: el backend responderá 403 */ }
-            }
-            return null;
-        };
-    </script>
     <script src="/ethicalmetrics.js" data-site-key="gitgost-repo"></script>
-    <div id="gate-overlay" style="display:none;position:fixed;inset:0;z-index:2147483647;background:rgba(6,10,15,0.92);align-items:center;justify-content:center;padding:24px;">
-        <div style="background:#0d1117;border:1px solid rgba(247,111,83,0.35);border-radius:16px;padding:28px;max-width:420px;width:100%;box-shadow:0 16px 38px rgba(0,0,0,.5);text-align:center;">
-            <h2 style="margin:0 0 6px;font-size:20px;color:#f76f53;">Access verification</h2>
-            <p style="margin:6px 0 16px;font-size:13px;color:#9fb3ff;line-height:1.5;">
-                gitGost is for humans. Complete the captcha once per
-                session (24&nbsp;h) to browse repositories, explore and
-                search. No accounts, no tracking cookies.
-            </p>
-            <div style="display:flex;justify-content:center;margin:0 0 12px;">
-            </div>
-            <p id="gate-status" style="margin:0 0 10px;font-size:12px;color:#ffb4c4;min-height:16px;"></p>
-            <button id="gate-submit" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#ffa657,#ff6b6b);color:#0d1117;font-weight:700;font-size:14px;cursor:pointer;">Continue</button>
-            <p style="margin:12px 0 0;font-size:11px;color:#9fb3ff;">Your IP is not shared with external forges. Read our <a href="/privacy" style="color:#f76f53;text-decoration:none;">privacy policy</a>.</p>
-        </div>
-    </div>
-    <script>
-        (function () {
-            "use strict";
-            function gateCookiePresent() {
-                return document.cookie.split(";").some(function (part) {
-                    var trimmed = part.trim();
-                    if (trimmed.lastIndexOf("gost_gate=", 0) !== 0) return false;
-                    var value = trimmed.slice("gost_gate=".length);
-                    var pieces = value.split("|");
-                    if (pieces.length !== 3 || pieces[0] !== "g2") return false;
-                    var exp = parseInt(pieces[1], 10);
-                    if (!isFinite(exp) || exp <= Math.floor(Date.now() / 1000)) return false;
-                    return true;
-                });
-            }
-            function gateSubmit(token, kind) {
-                const status = document.getElementById("gate-status");
-                const button = document.getElementById("gate-submit");
-                const value = token;
-                if (!value) { gateSolve(); return; }
-                const payload = kind === "shield"
-                    ? { shield_clearance: value }
-                    : { captcha_token: value };
-                if (button) { button.disabled = true; }
-                if (status) status.textContent = "Verifying…";
-                fetch(getApiBase() + "/api/captcha-gate", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "same-origin",
-                    body: JSON.stringify(payload)
-                }).then(function (response) {
-                    if (response.ok) { window.location.reload(); return; }
-                    if (status) status.textContent = "Verification failed. Please try again.";
-                }).catch(function () {
-                    if (status) status.textContent = "Network error. Please try again.";
-                }).finally(function () {
-                    if (button) { button.disabled = false; }
-                });
-            }
-            function gateSolve() {
-                const status = document.getElementById("gate-status");
-                if (status) status.textContent = "Solving a proof-of-work challenge…";
-                if (!window.gitgostCaptcha || typeof window.gitgostCaptcha.solve !== "function") {
-                    if (status) status.textContent = "Could not initialize the verification. Check your connection and try again.";
-                    return;
-                }
-                window.gitgostCaptcha.solve({
-                    path: window.location.pathname + window.location.search,
-                    allowShield: true
-                }).then(function (result) {
-                    if (result && result.token) gateSubmit(result.token, result.kind);
-                    else if (status) status.textContent = "Verification failed. Please try again.";
-                }).catch(function () {
-                    if (status) status.textContent = "Could not initialize the verification. Check your connection and try again.";
-                });
-            }
-            if (window.gitgostCaptchaReady) window.gitgostCaptchaReady.then(function (enabled) {
-                const overlay = document.getElementById("gate-overlay");
-                const button = document.getElementById("gate-submit");
-                if (!enabled || !overlay || gateCookiePresent()) return;
-                overlay.style.display = "flex";
-                if (button) button.addEventListener("click", gateSolve);
-                gateSolve();
-            });
-        })();
-    </script>
 </body>
 </html>

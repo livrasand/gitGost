@@ -25,9 +25,6 @@ type Config struct {
 	NtfyAnnounceToken   string
 	MaintenanceMode     bool
 	SponsorBanner       bool
-	MentaAPIEndpoint    string
-	MentaAPIKey         string
-	MentaEnforceCaptcha bool
 	GateKey             string
 }
 
@@ -48,9 +45,6 @@ func Load() *Config {
 		NtfyAnnounceToken:   getEnv("NTFY_ANNOUNCE_TOKEN", ""),
 		MaintenanceMode:     getEnv("MAINTENANCE_MODE", "") == "true",
 		SponsorBanner:       getEnv("SPONSOR_BANNER", "") == "true",
-		MentaAPIEndpoint:    getEnv("MENTA_API_ENDPOINT", ""),
-		MentaAPIKey:         getEnv("MENTA_API_KEY", ""),
-		MentaEnforceCaptcha: getEnv("MENTA_CAPTCHA_ENFORCE", "") == "true",
 		GateKey:             getEnv("GITGOST_GATE_KEY", ""),
 	}
 

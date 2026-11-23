@@ -828,11 +828,7 @@ func SetBuildInfo(hash, built, repo string) {
 }
 
 func ConfigHandler(c *gin.Context) {
-	body := gin.H{"captcha_gate": captchaGateEnabled()}
-	if captchaGateEnabled() && mentaAPIEndpoint != "" {
-		body["menta_api"] = mentaAPIEndpoint
-	}
-	c.JSON(http.StatusOK, body)
+	c.JSON(http.StatusOK, gin.H{})
 }
 
 var (
@@ -1061,8 +1057,6 @@ func isValidUserToken(token string) bool {
 	}
 	return true
 }
-
-var mentaEnforceCaptcha bool
 
 func isPanicMode() bool {
 	panicMu.Lock()

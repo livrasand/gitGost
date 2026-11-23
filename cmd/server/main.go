@@ -107,9 +107,6 @@ func main() {
 		utils.Log("Warning: Supabase not configured, stats will not be persisted")
 	}
 
-	// Initialize Menta CAPTCHA
-	handler.InitMentaConfig(cfg.MentaAPIEndpoint, cfg.MentaAPIKey, cfg.MentaEnforceCaptcha)
-
 	// Initialize the CAPTCHA gate signing key. A stable key keeps the
 	// "gost_gate" sessions valid across restarts: with a random key every
 	// restart invalidates every visitor session.

@@ -6004,28 +6004,5 @@
     </script>
 
         <script src="/announcement.js"></script>
-    <div id="menta-gate-container"></div>
-    <script>
-        (function () {
-            "use strict";
-            var hasCookie = document.cookie.split(";").some(function (part) {
-                return part.trim().indexOf("gost_gate=") === 0;
-            });
-            if (hasCookie) return;
-            var mentaApi = "https://mentacaptchaeu.eu.pythonanywhere.com";
-            var mentaNext = "/api/captcha-gate/menta-callback?next=" + encodeURIComponent(window.location.pathname + window.location.search);
-            var script = document.createElement("script");
-            script.src = mentaApi + "/menta-challenge.js";
-            script.setAttribute("data-menta-api", mentaApi);
-            script.setAttribute("data-menta-next", mentaNext);
-            script.setAttribute("data-menta-i18n-checking", "Verificando que eres humano…");
-            script.setAttribute("data-menta-i18n-blocked-title", "Acceso denegado");
-            script.setAttribute("data-menta-i18n-blocked-detail", "No se pudo completar la verificación de Menta. Inténtalo de nuevo.");
-            script.onerror = function () {
-                console.error("Menta challenge script failed to load");
-            };
-            (document.head || document.documentElement).appendChild(script);
-        })();
-    </script>
 </body>
 </html>

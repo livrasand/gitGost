@@ -47,17 +47,8 @@ func securityHeaders() gin.HandlerFunc {
 		c.Header("X-Frame-Options", "DENY")
 		c.Header("X-Content-Type-Options", "nosniff")
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
-		mentaOrigin := ""
-		if mentaAPIEndpoint != "" {
-			if u, err := url.Parse(mentaAPIEndpoint); err == nil {
-				mentaOrigin = u.Scheme + "://" + u.Host
-			}
-		}
-		if mentaOrigin == "" {
-			mentaOrigin = "https://mentacaptchaeu.eu.pythonanywhere.com"
-		}
-		scriptSrc := "script-src 'self' https://esm.sh https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com " + mentaOrigin + " 'unsafe-inline'"
-		connectSrc := "connect-src 'self' capacitor://localhost http://localhost:* https://localhost https://gitgost.livrasand.com https://en.wikipedia.org https://www.wikidata.org https://cloudflareinsights.com https://static.cloudflareinsights.com " + mentaOrigin
+		scriptSrc := "script-src 'self' https://esm.sh https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com 'unsafe-inline'"
+		connectSrc := "connect-src 'self' capacitor://localhost http://localhost:* https://localhost https://gitgost.livrasand.com https://en.wikipedia.org https://www.wikidata.org https://cloudflareinsights.com https://static.cloudflareinsights.com"
 		c.Header("Content-Security-Policy",
 			"default-src 'self'; "+
 				scriptSrc+"; "+
@@ -180,43 +171,6 @@ func gitFetchLimiter() gin.HandlerFunc {
 		count := windowAdd(gitFetchLimiterStore, ip, time.Now(), gitFetchLimiterWin, gitFetchLimiterMax)
 		if count > gitFetchLimiterMax {
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "git fetch rate limit exceeded"})
-			return
-		}
-		c.Next()
-	}
-}
-
-var (
-	captchaLimiterStore = newBoundedMap[[]time.Time](prCheckLimiterStoreMax, captchaLimiterWin)
-	captchaLimiterMax   = 30
-	captchaLimiterWin   = time.Minute
-)
-
-func captchaLimiter() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		ip := c.ClientIP()
-		count := windowAdd(captchaLimiterStore, ip, time.Now(), captchaLimiterWin, captchaLimiterMax)
-		if count > captchaLimiterMax {
-			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "captcha rate limit exceeded"})
-			return
-		}
-		c.Next()
-	}
-}
-
-const (
-	gateStatusLimiterMax = 120
-	gateStatusLimiterWin = time.Minute
-)
-
-var gateStatusLimiterStore = newBoundedMap[[]time.Time](prCheckLimiterStoreMax, gateStatusLimiterWin)
-
-func gateStatusLimiter() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		ip := c.ClientIP()
-		count := windowAdd(gateStatusLimiterStore, ip, time.Now(), gateStatusLimiterWin, gateStatusLimiterMax)
-		if count > gateStatusLimiterMax {
-			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "gate status rate limit exceeded"})
 			return
 		}
 		c.Next()
@@ -436,10 +390,6 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		api.GET("/gh-discussion/:owner/:repo/:number", proxyLimiter(), GitHubDiscussionDetailProxyHandler)
 		api.GET("/gh-wiki/:owner/:repo/:page", proxyLimiter(), GitHubWikiProxyHandler)
 		api.GET("/gl-wiki/:owner/:repo", proxyLimiter(), GitLabWikiProxyHandler)
-		api.POST("/captcha-gate", captchaLimiter(), CaptchaGateTokenHandler)
-		api.GET("/captcha-gate/status", gateStatusLimiter(), CaptchaGateStatusHandler)
-		api.GET("/captcha-gate/menta-callback", MentaCallbackHandler)
-		api.Any("/captcha/*path", captchaLimiter(), MentaCaptchaProxyHandler)
 	}
 
 	r.GET("/appeal", AppealStartHandler)

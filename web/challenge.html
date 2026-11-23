@@ -353,11 +353,7 @@
                 <p id="challenge-status" aria-live="polite">This is a proof-of-work check: no cookies, no tracking, no puzzles to solve.</p>
                 <p id="challenge-meta"></p>
                 <button id="challenge-retry" type="button">Try again</button>
-                <p id="challenge-foot">Performance test by <a href="https://github.com/livrasand/mentacaptcha" target="_blank" rel="noopener">Menta</a></p>
             </div>
-        </main>
-    </div>
-
         </main>
     </div>
 
@@ -374,33 +370,9 @@
                 <button type="button" onclick="toggleTheme()">toggle theme</button>
             </div>
         </div>
-        <div class="statusbar-right">
-            <a href="/">home</a>
-        </div>
-    </footer>
-    <script>
-        (function () {
-            "use strict";
-            var hasCookie = document.cookie.split(";").some(function (part) {
-                return part.trim().indexOf("gost_gate=") === 0;
-            });
-            if (hasCookie) return;
-            var params = new URLSearchParams(window.location.search);
-            var next = params.get("next") || "/";
-            var mentaApi = "https://mentacaptchaeu.eu.pythonanywhere.com";
-            var mentaNext = "/api/captcha-gate/menta-callback?next=" + encodeURIComponent(next);
-            var script = document.createElement("script");
-            script.src = mentaApi + "/menta-challenge.js";
-            script.setAttribute("data-menta-api", mentaApi);
-            script.setAttribute("data-menta-next", mentaNext);
-            script.setAttribute("data-menta-i18n-checking", "Verificando que eres humano…");
-            script.setAttribute("data-menta-i18n-blocked-title", "Acceso denegado");
-            script.setAttribute("data-menta-i18n-blocked-detail", "No se pudo completar la verificación de Menta. Inténtalo de nuevo.");
-            script.onerror = function () {
-                console.error("Menta challenge script failed to load");
-            };
-            (document.head || document.documentElement).appendChild(script);
-        })();
-    </script>
+    <div class="statusbar-right">
+        <a href="/">home</a>
+    </div>
+</footer>
 </body>
 </html>

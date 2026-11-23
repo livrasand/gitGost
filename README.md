@@ -80,7 +80,7 @@ That’s it. No login, token, name, or email required — gitGost provides stron
 
 ## Use Your Own Service Account
 
-gitGost works without an account or personal access token — `git push`, the GREN CLI and everything in your terminal never require any gitGost credential. If you want, you can optionally connect a dedicated **service account** (a token belonging to the forge itself — GitHub or GitLab, not gitGost) and let gitGost use that identity for forge-side actions instead of the shared operator-managed one.
+gitGost works without an account or personal access token — `git push` and everything in your terminal never require any gitGost credential. If you want, you can optionally connect a dedicated **service account** (a token belonging to the forge itself — GitHub or GitLab, not gitGost) and let gitGost use that identity for forge-side actions instead of the shared operator-managed one.
 
 This is optional. It is useful when you want your own forge-side rate limit, your own account ownership, or a simpler trust model.
 
@@ -213,102 +213,9 @@ If the file does not exist or `DENY_ALL` is not set, contributions are allowed b
 
 See [USAGE_POLICY.md](USAGE_POLICY.md) for repository opt-out, legitimate use cases, restrictions, threat model, and security limits.
 
-## gitGost for Resilient Networking
+## gitGost for Resilient Networking is now [Git UPS](https://github.com/livrasand/git-ups). Here's what that means.
 
-> [!WARNING]
-> **Beta software**
->
-> GREN is currently in **Beta**. It is under active development and **has not yet been thoroughly tested**. Expect bugs, incomplete features, and breaking changes. Do not rely on it for production or critical workflows.
-
-Git manages the repository. GREN manages the network. The GREN client pauses, resumes, queues and retries Git operations in the background — without replacing Git itself.
-
-The client is written in Go, with pre-compiled binaries available for Mac,
-Windows and Linux. Check out the [website](https://gitgost.livrasand.com/)
-for an overview of features.
-
-### From binary
-
-> [!IMPORTANT]
-> **macOS Users:** You may see a warning that Apple cannot verify GREN. This happens because the app is distributed outside the App Store and is not notarized yet. Allow it via System Settings → Privacy & Security → Open Anyway.
-
-
-<a href="https://github.com/livrasand/gitGost/releases"><img src="https://raw.githubusercontent.com/rubenpgrady/get-it-on-github/refs/heads/main/get-it-on-github.png" alt="Get it on GitHub" height="96" />
-</a>
-
-> [!TIP]
-> **macOS Users:** Install GREN with Homebrew.
-
-### From Homebrew
-
-```bash
-brew tap livrasand/tap
-brew trust livrasand/tap
-brew install git-gost
-git gost install
-```
-
-### From curl
-
-```bash
-curl -fsSL https://gitgost.livrasand.com/install | bash
-```
-
-### Using
-
-```shell
-# Clone runs like a download manager
-$ git gost clone https://github.com/openai/openai.git
-→ Job created. ID: 82 — Running in background...
-$ git gost watch 82
-→ 82   openai   74%   Downloading pack 18/35
-```
-
-### Getting started
-
-```shell
-$ git gost clone https://github.com/openai/openai.git
-# Manage the queue while the download runs in the background
-$ git gost jobs
-$ git gost watch 82
-$ git gost pause 82   # or resume / cancel
-```
-
-## Why GREN Exists
-
-Git was designed for reliable networks. Many developers don't have that luxury.
-
-Around the world, developers work with unstable, slow or expensive Internet connections. A dropped Wi-Fi signal, a temporary mobile connection or an overloaded network can interrupt a clone, fetch or push at the worst possible moment.
-
-GREN (gitGost for Resilient Networking) was created to make Git operations more resilient in these environments.
-
-Instead of replacing Git, GREN sits alongside it, running network operations in the background. Downloads and uploads can be paused, resumed, queued and retried automatically, allowing developers to continue working while GREN takes care of unreliable connectivity.
-
-Whether you're working from a rural community, using mobile data, travelling, or simply dealing with an unstable network, GREN helps Git become more tolerant of interruptions.
-
-Because access to open source software shouldn't depend on having perfect Internet.
-
-## Who is GREN for?
-
-GREN is especially useful for developers who:
-
-* live in regions with slow or unreliable Internet
-* rely on mobile or metered connections
-* frequently experience connection interruptions
-* work remotely while travelling
-* clone or push very large repositories
-* want long-running Git operations to continue in the background
-
-## Who may not benefit as much?
-
-If you have a stable high-speed Internet connection and rarely experience interrupted Git operations, GREN may provide only a small convenience.
-
-Git already works well under ideal network conditions.
-
-## My goal
-
-My goal isn't to change how Git works.
-
-My goal is to make Git more resilient when the network isn't.
+The resilient networking component formerly known as GREN (gitGost for Resilient Networking) is now **Git Uninterruptible Power Supply (Git UPS)**. Git UPS manages the network layer for Git operations — pausing, resuming, queuing, and retrying downloads/uploads in the background — without replacing Git itself. The client is written in Go with pre-compiled binaries for macOS, Windows, and Linux.
 
 ## gitGost Forge is now [Espresso](https://github.com/livrasand/espresso). Here's what that means.
 

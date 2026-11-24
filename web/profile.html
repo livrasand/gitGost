@@ -2324,7 +2324,8 @@
         async function checkServiceStatus() {
             try {
                 const response = await fetch(`${API_BASE}/api/status`);
-                if (response.ok) {
+                const statusCt = (response.headers.get('content-type') || '').toLowerCase();
+                if (response.ok && statusCt.includes('application/json')) {
                     const data = await response.json();
                     if (data.panic_mode) {
                         const banner = document.getElementById('suspension-banner');

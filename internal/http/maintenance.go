@@ -30,7 +30,10 @@ const maintenanceFallbackPage = `<!DOCTYPE html>
 
 func maintenanceAllowedPath(path string) bool {
 	if path == "/health" || path == "/api/status" || path == "/api/announcement" ||
-		path == "/announcement.js" {
+		path == "/api/config" || path == "/announcement.js" || path == "/ethicalmetrics.js" ||
+		path == "/colors.json" || path == "/robots.json" || path == "/robots.txt" ||
+		path == "/sw.js" || path == "/challenge.html" || path == "/manifest" ||
+		path == "/version" || path == "/llms.txt" {
 		return true
 	}
 	if strings.HasPrefix(path, "/admin/") {

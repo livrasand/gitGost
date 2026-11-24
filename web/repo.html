@@ -10739,10 +10739,22 @@ const safeImgUrl = sanitizeHttpUrl(imageUrl);
             document.getElementById('hljs-theme-dark').disabled = !isDark;
         }
 
+        (function () {
+            const saved = localStorage.getItem('theme');
+            if (saved) document.documentElement.setAttribute('data-theme', saved);
+        })();
+
+        function toggleThemeImpl() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            try { localStorage.setItem('theme', next); } catch (e) {}
+        }
+
         syncHljsTheme();
-        const _origToggle = window.toggleTheme;
         window.toggleTheme = function() {
-            if (_origToggle) _origToggle();
+            toggleThemeImpl();
             syncHljsTheme();
             _rethemeMermaid();
             _rethemePierreDiffs();

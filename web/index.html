@@ -2997,6 +2997,8 @@
                 try {
                     const res = await fetch('/colors.json', { signal: controller.signal });
                     if (!res.ok) return false;
+                    const colorsCt = (res.headers.get('content-type') || '').toLowerCase();
+                    if (!colorsCt.includes('application/json')) return false;
                     const data = await res.json();
                     if (data && typeof data === 'object') {
                         languageColors = data;
@@ -3094,7 +3096,8 @@
             async function checkServiceStatus() {
                 try {
                     const response = await fetch(`${API_BASE}/api/status`);
-                    if (response.ok) {
+                    const statusCt = (response.headers.get('content-type') || '').toLowerCase();
+                    if (response.ok && statusCt.includes('application/json')) {
                         const data = await response.json();
                         if (data.panic_mode) {
                             showSuspensionBanner();

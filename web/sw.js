@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gitgost-v7';
+const CACHE_NAME = 'gitgost-v8';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
@@ -37,12 +37,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Document (HTML) requests are served network-first so the app shell stays
+  // fresh; everything else is cache-first for performance.
   const isDocumentPath = url.pathname === '/' || url.pathname.endsWith('.html') ||
-    url.pathname.startsWith('/api/') || /^\/(?:gh|gl|cb)\//.test(url.pathname);
+    /^\/(?:gh|gl|cb)\//.test(url.pathname);
 
+  // API requests are dynamic JSON endpoints: treat them as network-first but
+  // never as HTML documents, so an HTML error/challenge page is never cached
+  // under an API URL (which would later break JSON parsing).
+  const isApiPath = url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/v1/') || url.pathname.startsWith('/v2/');
+
+  const networkFirst = isDocumentPath || isApiPath;
+
+  // Only document navigations are expected to carry an HTML body. API and
+  // asset responses that come back as HTML are error/challenge pages and must
+  // not be cached.
   const expectHtmlBody = request.destination === 'document' ||
     request.destination === 'iframe' || request.destination === 'fencedframe' ||
-    isDocumentPath || url.pathname === '/index.html';
+    (isDocumentPath && url.pathname !== '/sw.js');
 
   function isHtmlContent(response) {
     const type = (response.headers.get('content-type') || '').toLowerCase();
@@ -53,17 +66,23 @@ self.addEventListener('fetch', (event) => {
     return expectHtmlBody || !isHtmlContent(response);
   }
 
-  if (url.pathname === '/' || url.pathname.endsWith('.html') || url.pathname.startsWith('/api/') || /^\/(?:gh|gl|cb)\//.test(url.pathname)) {
+  if (networkFirst) {
     event.respondWith(
       fetch(request)
         .then((response) => {
           if (response.ok && !response.redirected && cacheable(response)) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          } else if (response.ok === false || isHtmlContent(response)) {
+            // Drop any previously cached HTML/error body for this URL.
+            caches.open(CACHE_NAME).then((cache) => cache.delete(request));
           }
           return response;
         })
-        .catch(() => caches.match(request).then((response) => response || caches.match('/index.html')))
+        .catch(() => caches.match(request).then((response) => {
+          if (response && cacheable(response)) return response;
+          return caches.match('/index.html');
+        }))
     );
     return;
   }
@@ -73,10 +92,16 @@ self.addEventListener('fetch', (event) => {
       if (cached && cacheable(cached)) {
         return cached;
       }
+      if (cached && !cacheable(cached)) {
+        // Purge stale HTML/error bodies cached for non-document assets.
+        caches.open(CACHE_NAME).then((cache) => cache.delete(request));
+      }
       return fetch(request).then((response) => {
         if (response.ok && cacheable(response)) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        } else if (isHtmlContent(response)) {
+          caches.open(CACHE_NAME).then((cache) => cache.delete(request));
         }
         return response;
       });

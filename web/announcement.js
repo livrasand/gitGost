@@ -145,6 +145,8 @@
         fetch('/api/announcement', { credentials: 'omit' })
             .then(function (res) {
                 if (!res.ok || res.status === 204) return null;
+                const annCt = (res.headers.get('content-type') || '').toLowerCase();
+                if (!annCt.includes('application/json')) return null;
                 return res.json();
             })
             .then(render)

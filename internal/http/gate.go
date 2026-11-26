@@ -7,7 +7,6 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"net/http"
-	"net/url"
 	"os"
 	"regexp"
 	"strconv"
@@ -112,13 +111,6 @@ func captchaGate() gin.HandlerFunc {
 	}
 }
 
-func gateDocumentChallengeRedirect(c *gin.Context) {
-	next := c.Request.URL.RequestURI()
-	if next == "" {
-		next = "/"
-	}
-	c.Redirect(http.StatusFound, "/challenge.html?next="+url.QueryEscape(next))
-}
 
 func serveDocumentWithGate(c *gin.Context, fullPath string) {
 	c.File(fullPath)

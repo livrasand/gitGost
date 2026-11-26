@@ -79,7 +79,6 @@ const (
 	blockedStoreMax         = 10000
 	flaggedStoreMax         = 10000
 	badgeCacheMax           = 10000
-	ethicalStoreMax         = 100000
 	rateLimitStoreMax       = 10000
 	reportRateLimitStoreMax = 10000
 	actionTokenMax          = 10000
@@ -4433,7 +4432,7 @@ func GitHubPackagesHandler(c *gin.Context) {
 		token = clientToken
 	}
 	if token == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "GitHub packages require the bot token or a user token"})
+		c.JSON(http.StatusOK, []gin.H{})
 		return
 	}
 
@@ -5141,7 +5140,10 @@ func UserContributionsHandler(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 			return
 		}
-		c.JSON(http.StatusBadGateway, gin.H{"error": "GitHub contributions request failed"})
+		// GitHub's profile page no longer exposes the contribution calendar
+		// in server-rendered HTML, so scraping can fail. Return an empty
+		// result instead of a 502 to avoid noisy client-side errors.
+		c.JSON(http.StatusOK, gin.H{"total": 0, "days": []map[string]any{}})
 		return
 	}
 	c.JSON(http.StatusOK, result)

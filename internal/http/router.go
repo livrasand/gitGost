@@ -264,15 +264,9 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 
 	r.GET("/VERIFY", VerifyHandler)
 	r.GET("/gitgost-bin", BinaryHandler)
-	r.POST("/v1/pageviews", EthicalMetricsPageviewHandler)
-	r.GET("/v1/sites/:site/metrics", EthicalMetricsMetricsHandler)
-	r.GET("/privacy", EthicalMetricsPrivacyHandler)
-	r.GET("/manifest", EthicalMetricsManifestHandler)
-	r.GET("/version", EthicalMetricsVersionHandler)
 	r.GET("/badges/:badge", BadgeHandler)
 	r.GET("/badge/:owner/:repo", BadgePRCountHandler)
 	r.GET("/install", InstallScriptHandler)
-	r.StaticFile("/challenge.html", "./web/challenge.html")
 	r.StaticFile("/robots.txt", "./web/robots.txt")
 	r.StaticFile("/llms.txt", "./web/llms.txt")
 	r.GET("/repo.html", func(c *gin.Context) { serveDocumentWithGate(c, "./web/repo.html") })
@@ -282,7 +276,6 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	r.StaticFile("/robots.json", "./web/robots.json")
 	r.StaticFile("/.well-known/security.txt", "./web/.well-known/security.txt")
 	r.Static("/assets", "./web/assets")
-	r.StaticFile("/ethicalmetrics.js", "./web/ethicalmetrics.js")
 	r.StaticFile("/announcement.js", "./web/announcement.js")
 
 	v1 := r.Group("/v1")

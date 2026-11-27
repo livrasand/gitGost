@@ -1,15 +1,12 @@
 package http
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io"
-	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -68,8 +65,6 @@ var remoteJobs = newBoundedMap[*remoteJob](remoteJobsMax, remoteJobsTTL)
 var remoteJobSlots = make(chan struct{}, remoteJobMaxConcurrent)
 
 var remoteJobCancels sync.Map
-
-var openbinClient = newSafeHTTPClient(30 * time.Minute)
 
 func CreateRemoteJobHandler(c *gin.Context) {
 	var req struct {
@@ -194,8 +189,8 @@ func runRemoteJob(job *remoteJob) {
 		return
 	}
 
-	publish(rjRunning, "Subiendo bundle a Openbin...", "", nil)
-	result, err := openbinUpload(ctx, bundlePath, bundleFilename(job.URL), size, hash)
+	publish(rjRunning, "Uploading bundle...", "", nil)
+	result, err := uploadBundleToR2(ctx, bundlePath, bundleFilename(job.URL), size, hash)
 	if err != nil {
 		if !jobCancelled(job.ID) {
 			publish(rjFailed, "", err.Error(), nil)
@@ -208,141 +203,6 @@ func runRemoteJob(job *remoteJob) {
 	result.DefaultBranch = defaultBranch
 
 	publish(rjReady, "Bundle listo", "", result)
-}
-
-func openbinUpload(ctx context.Context, bundlePath, filename string, size int64, hash string) (*remoteJobResult, error) {
-	base := strings.TrimRight(os.Getenv("OPENBIN_URL"), "/")
-	if base == "" {
-		base = "https://openbin.livrasand.com"
-	}
-	expiresIn := os.Getenv("OPENBIN_BUNDLE_TTL")
-	if expiresIn == "" {
-		expiresIn = "604800"
-	}
-
-	var form bytes.Buffer
-	mw := multipart.NewWriter(&form)
-	_ = mw.WriteField("mode", "presign")
-	_ = mw.WriteField("sha256", hash)
-	_ = mw.WriteField("size", strconv.FormatInt(size, 10))
-	_ = mw.WriteField("filename", filename)
-	_ = mw.WriteField("mime", "application/octet-stream")
-	_ = mw.WriteField("expires_in", expiresIn)
-	_ = mw.Close()
-
-	var presign openbinBinResponse
-	if err := openbinPost(ctx, base+"/api/upload", mw.FormDataContentType(), &form, &presign); err != nil {
-		return nil, fmt.Errorf("pedir subida a Openbin: %w", err)
-	}
-
-	if presign.AlreadyExists {
-		if presign.DownloadURL == "" {
-			return nil, fmt.Errorf("Openbin devolvió un bin sin downloadUrl")
-		}
-		return &remoteJobResult{
-			Slug:        presign.Slug,
-			Cid:         presign.Cid,
-			Size:        size,
-			Sha256:      hash,
-			DownloadURL: presign.DownloadURL,
-			DirectURL:   presign.DirectURL,
-			Filename:    presign.Filename,
-			ExpiresAt:   presign.ExpiresAt,
-		}, nil
-	}
-	if presign.PresignedURL == "" || presign.UploadToken == "" {
-		return nil, fmt.Errorf("Openbin no devolvió URL firmada (mode=%q)", presign.Mode)
-	}
-
-	if err := openbinPut(ctx, presign.PresignedURL, bundlePath, size); err != nil {
-		return nil, fmt.Errorf("subir bundle a Filebase: %w", err)
-	}
-
-	confirmBody, _ := json.Marshal(map[string]string{
-		"uploadToken": presign.UploadToken,
-		"sha256":      hash,
-	})
-	var confirm openbinBinResponse
-	if err := openbinPost(ctx, base+"/api/upload/confirm", "application/json", bytes.NewReader(confirmBody), &confirm); err != nil {
-		return nil, fmt.Errorf("confirmar subida en Openbin: %w", err)
-	}
-	if confirm.Slug == "" || confirm.Cid == "" || confirm.DownloadURL == "" {
-		return nil, fmt.Errorf("Openbin devolvió una confirmación incompleta")
-	}
-	return &remoteJobResult{
-		Slug:        confirm.Slug,
-		Cid:         confirm.Cid,
-		Size:        size,
-		Sha256:      hash,
-		DownloadURL: confirm.DownloadURL,
-		DirectURL:   confirm.DirectURL,
-		Filename:    confirm.Filename,
-		ExpiresAt:   confirm.ExpiresAt,
-	}, nil
-}
-
-type openbinBinResponse struct {
-	Mode          string `json:"mode"`
-	AlreadyExists bool   `json:"alreadyExists"`
-	PresignedURL  string `json:"presignedUrl"`
-	UploadToken   string `json:"uploadToken"`
-	ExpiresIn     int    `json:"expiresIn"`
-	Slug          string `json:"slug"`
-	Cid           string `json:"cid"`
-	Filename      string `json:"filename"`
-	Mime          string `json:"mime"`
-	Size          int64  `json:"size"`
-	URL           string `json:"url"`
-	DirectURL     string `json:"directUrl"`
-	DownloadURL   string `json:"downloadUrl"`
-	ExpiresAt     string `json:"expiresAt"`
-}
-
-func openbinPost(ctx context.Context, rawURL, contentType string, body io.Reader, out any) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, rawURL, body)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", contentType)
-	resp, err := openbinClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode >= 300 {
-		b, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
-		return fmt.Errorf("%s: %s", resp.Status, strings.TrimSpace(string(b)))
-	}
-	if err := json.NewDecoder(resp.Body).Decode(out); err != nil {
-		return fmt.Errorf("decodificar respuesta: %w", err)
-	}
-	return nil
-}
-
-func openbinPut(ctx context.Context, rawURL, path string, size int64) error {
-	f, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, rawURL, f)
-	if err != nil {
-		return err
-	}
-	req.ContentLength = size
-	req.Header.Set("Content-Type", "application/octet-stream")
-
-	resp, err := openbinClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode >= 300 {
-		b, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
-		return fmt.Errorf("%s: %s", resp.Status, strings.TrimSpace(string(b)))
-	}
-	return nil
 }
 
 func validRepoURL(raw string) bool {

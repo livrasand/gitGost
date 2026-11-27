@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/livrasand/gitGost/internal/clientip"
 )
 
 var (
@@ -30,7 +32,7 @@ func RateLimit() gin.HandlerFunc {
 
 func rateLimitWith(max int, win time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		ip := c.ClientIP()
+		ip := clientip.Key(c)
 		now := time.Now()
 		apiLimiterMu.Lock()
 		if e, ok := limiterGet(ip); ok && now.Before(e.expiry) {

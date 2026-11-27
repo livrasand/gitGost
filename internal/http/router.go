@@ -1,6 +1,7 @@
 package http
 
 import (
+	"github.com/livrasand/gitGost/internal/clientip"
 	"net/http"
 	"net/url"
 	"os"
@@ -47,6 +48,8 @@ func securityHeaders() gin.HandlerFunc {
 		c.Header("X-Frame-Options", "DENY")
 		c.Header("X-Content-Type-Options", "nosniff")
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		// Do not disclose the server software or hosting platform.
+		c.Writer.Header().Del("Server")
 		scriptSrc := "script-src 'self' https://esm.sh https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com 'unsafe-inline'"
 		connectSrc := "connect-src 'self' capacitor://localhost http://localhost:* https://localhost https://gitgost.livrasand.com https://en.wikipedia.org https://www.wikidata.org https://cloudflareinsights.com https://static.cloudflareinsights.com"
 		c.Header("Content-Security-Policy",
@@ -76,7 +79,7 @@ var (
 
 func adminLimiter() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		ip := c.ClientIP()
+		ip := clientip.Key(c)
 		count := windowAdd(adminLimiterStore, ip, time.Now(), adminLimiterWin, adminLimiterMax)
 		if count > adminLimiterMax {
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "admin rate limit exceeded"})
@@ -103,7 +106,7 @@ func proxyLimiter() gin.HandlerFunc {
 func prCheckWindowLimiter(message string, max int, win time.Duration) gin.HandlerFunc {
 	store := newBoundedMap[[]time.Time](prCheckLimiterStoreMax, win)
 	return func(c *gin.Context) {
-		ip := c.ClientIP()
+		ip := clientip.Key(c)
 		count := windowAdd(store, ip, time.Now(), win, max)
 		if count > max {
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": message})
@@ -125,7 +128,7 @@ var (
 
 func v2Limiter() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		ip := c.ClientIP()
+		ip := clientip.Key(c)
 		count := windowAdd(v2LimiterStore, ip, time.Now(), v2LimiterWin, v2LimiterMax)
 		if count > v2LimiterMax {
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "v2 rate limit exceeded"})
@@ -144,7 +147,7 @@ var v1WriteLimiterStore = newBoundedMap[[]time.Time](prCheckLimiterStoreMax, v1W
 
 func v1WriteLimiter() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		ip := c.ClientIP()
+		ip := clientip.Key(c)
 		count := windowAdd(v1WriteLimiterStore, ip, time.Now(), v1WriteLimiterWin, v1WriteLimiterMax)
 		if count > v1WriteLimiterMax {
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "anonymous write rate limit exceeded"})
@@ -167,7 +170,7 @@ func gitFetchLimiter() gin.HandlerFunc {
 			c.Next()
 			return
 		}
-		ip := c.ClientIP()
+		ip := clientip.Key(c)
 		count := windowAdd(gitFetchLimiterStore, ip, time.Now(), gitFetchLimiterWin, gitFetchLimiterMax)
 		if count > gitFetchLimiterMax {
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "git fetch rate limit exceeded"})
@@ -252,6 +255,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	if cfg.SponsorBanner {
 		InitSponsorBanner(true, "SPONSOR_BANNER env")
 	}
+	setIssueLimits(cfg)
 	r := gin.New()
 	r.SetTrustedProxies([]string{})
 	r.Use(gin.Recovery())

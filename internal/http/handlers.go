@@ -13,6 +13,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/livrasand/gitGost/internal/clientip"
 	"html/template"
 	"io"
 	"net/http"
@@ -380,7 +381,7 @@ func ReceivePackHandler(c *gin.Context) {
 		return
 	}
 
-	ip := c.ClientIP()
+	ip := clientip.Key(c)
 	if checkRateLimit(ip) {
 		c.Writer.Header().Set("Content-Type", "application/x-git-receive-pack-result")
 		c.Writer.WriteHeader(http.StatusOK)
@@ -1475,6 +1476,22 @@ func CreateAnonymousIssueHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "title and body are required"})
 		return
 	}
+
+	// Enforce per-IP and per-repo limits before contacting the provider.
+	// The slot is released if the request fails, so only attempts that reach an
+	// error response do not count against the limits.
+	ipKey := clientip.Key(c)
+	repoKey := strings.ToLower(strings.TrimSuffix(c.Request.URL.Path, "/issues/anonymous"))
+	attemptAt := time.Now()
+	if reason, ok := reserveIssueSlot(ipKey, repoKey, attemptAt); !ok {
+		c.JSON(http.StatusTooManyRequests, gin.H{"error": reason})
+		return
+	}
+	defer func() {
+		if c.Writer.Status() >= http.StatusBadRequest {
+			releaseIssueSlot(ipKey, repoKey, attemptAt)
+		}
+	}()
 
 	prov := providerFromPath(c.Request.URL.Path)
 	if req.GitHubToken != "" {
@@ -2863,7 +2880,7 @@ func ReportHashHandler(c *gin.Context) {
 
 	currentReports := getReportCountWithWindow(c.Request.Context(), hash)
 	currentState := reportStateLabel(currentReports)
-	ip := strings.TrimSpace(c.ClientIP())
+	ip := clientip.Key(c)
 	if checkReportRateLimit(ip) {
 		renderReportForm(c, hash, currentReports, currentState, fmt.Sprintf("Rate limit exceeded: max %d reports per hour per IP.", reportRateLimitMax), newReportToken())
 		return
